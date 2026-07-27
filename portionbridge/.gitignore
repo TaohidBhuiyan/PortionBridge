@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment variables
+.env
+client/.env
+server/.env
+!.env.example
+!client/.env.example
+!server/.env.example
+
+# Build output
+client/dist/
+client/build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Uploaded files (keep folder structure, ignore actual uploads)
+server/uploads/donations/*
+server/uploads/profiles/*
+server/uploads/chat/*
+!server/uploads/donations/.gitkeep
+!server/uploads/profiles/.gitkeep
+!server/uploads/chat/.gitkeep
+
+# Database dumps (backups exported locally)
+database/*.sql

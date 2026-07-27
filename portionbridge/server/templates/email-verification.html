@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your PortionBridge Account</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .content h2 {
+      color: #333;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content p {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    .button-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s;
+    }
+    .button:hover {
+      transform: translateY(-2px);
+    }
+    .expiry {
+      background-color: #f8f9fa;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .expiry-text {
+      font-size: 14px;
+      color: #666;
+      margin: 0;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+    .link-text {
+      font-size: 12px;
+      color: #999;
+      word-break: break-all;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>PortionBridge</h1>
+    </div>
+    <div class="content">
+      <h2>Verify Your Email Address</h2>
+      <p>Thank you for registering with PortionBridge! To complete your account setup and start using our platform, please verify your email address by clicking the button below.</p>
+      
+      <div class="button-container">
+        <a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+      </div>
+      
+      <div class="expiry">
+        <p class="expiry-text"><strong>This link expires in 24 hours.</strong> If you don't verify your email within this time, you'll need to request a new verification link.</p>
+      </div>
+      
+      <p>If you didn't create an account with PortionBridge, you can safely ignore this email.</p>
+      
+      <p class="link-text">
+        If the button above doesn't work, copy and paste this link into your browser:<br>
+        <a href="{{verificationUrl}}">{{verificationUrl}}</a>
+      </p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 PortionBridge. All rights reserved.</p>
+      <p>Need help? <a href="{{supportUrl}}">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>

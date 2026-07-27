@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Account Temporarily Locked - PortionBridge</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .header {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 600;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .content h2 {
+      color: #333;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .content p {
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    .alert {
+      background-color: #f8d7da;
+      border-left: 4px solid #dc3545;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .alert-text {
+      font-size: 14px;
+      color: #721c24;
+      margin: 0;
+    }
+    .info {
+      background-color: #d1ecf1;
+      border-left: 4px solid #17a2b8;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .info-text {
+      font-size: 14px;
+      color: #0c5460;
+      margin: 0;
+    }
+    .footer {
+      background-color: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      border-top: 1px solid #e0e0e0;
+    }
+    .footer a {
+      color: #667eea;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>PortionBridge</h1>
+    </div>
+    <div class="content">
+      <h2>Account Temporarily Locked</h2>
+      <p>We detected multiple failed login attempts to your PortionBridge account. As a security measure, your account has been temporarily locked to protect your information.</p>
+      
+      <div class="alert">
+        <p class="alert-text"><strong>Your account is locked for {{lockDurationMinutes}} minutes.</strong></p>
+      </div>
+      
+      <div class="info">
+        <p class="info-text"><strong>What happened?</strong><br>
+        Our security system detected several unsuccessful login attempts. This could be due to a forgotten password or someone trying to access your account without authorization.</p>
+      </div>
+      
+      <div class="info">
+        <p class="info-text"><strong>What should you do?</strong><br>
+        • Wait for the lock period to expire, then try logging in again<br>
+        • If you forgot your password, use the "Forgot Password" link on the login page<br>
+        • If you suspect unauthorized access, contact our support team immediately</p>
+      </div>
+      
+      <p>If you didn't attempt to log in to your account recently, we recommend reviewing your account security and changing your password once the lock expires.</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 PortionBridge. All rights reserved.</p>
+      <p>Concerned about your account security? <a href="{{supportUrl}}">Contact Support</a></p>
+    </div>
+  </div>
+</body>
+</html>
