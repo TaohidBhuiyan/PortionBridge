@@ -6,8 +6,8 @@ import { Reveal } from "../common/Reveal";
 import { useReveal } from "../hooks/useReveal";
 import { useSocket } from "../../context/SocketContext";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
-const PRIMARY_DEEP = "oklch(38% 0.19 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
+const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 

@@ -4,7 +4,7 @@ import { Avatar } from "../common/Avatar";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
 
 /**
  * Navbar component - Main navigation header

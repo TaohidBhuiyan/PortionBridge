@@ -26,6 +26,9 @@ DROP TABLE IF EXISTS team_invitations;
 DROP TABLE IF EXISTS team_members;
 DROP TABLE IF EXISTS teams;
 DROP TABLE IF EXISTS saved_addresses;
+DROP TABLE IF EXISTS volunteer_profiles;
+DROP TABLE IF EXISTS notification_settings;
+DROP TABLE IF EXISTS user_preferences;
 DROP TABLE IF EXISTS schema_migrations;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS ratings;
@@ -54,8 +57,11 @@ CREATE TABLE users (
   role              ENUM('donor', 'volunteer', 'admin') NOT NULL DEFAULT 'donor',
   email_verified    TINYINT(1)   NOT NULL DEFAULT 0,
   phone             VARCHAR(20)  DEFAULT NULL,
+  phone_verified    TINYINT(1)   NOT NULL DEFAULT 0,
   address           VARCHAR(255) DEFAULT NULL,
   profile_photo     VARCHAR(255) DEFAULT NULL,
+  date_of_birth     DATE         DEFAULT NULL,
+  gender            ENUM('male', 'female', 'other', 'prefer_not_to_say') DEFAULT NULL,
   is_banned         TINYINT(1)   NOT NULL DEFAULT 0,
   failed_login_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   lock_until        DATETIME     DEFAULT NULL,
@@ -212,6 +218,85 @@ CREATE TABLE saved_addresses (
 
   CONSTRAINT chk_saved_addresses_custom_label
     CHECK (label = 'custom' OR custom_label IS NULL)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: user_preferences
+-- Stores donor-specific preferences
+-- ============================================================================
+CREATE TABLE user_preferences (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id           INT UNSIGNED NOT NULL,
+  preferred_contact ENUM('email', 'phone', 'both') NOT NULL DEFAULT 'email',
+  receive_notifications TINYINT(1) NOT NULL DEFAULT 1,
+  preferred_pickup_time VARCHAR(50) DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_user_preferences_user_id (user_id),
+
+  CONSTRAINT fk_user_preferences_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: notification_settings
+-- Stores notification preferences per user
+-- ============================================================================
+CREATE TABLE notification_settings (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id           INT UNSIGNED NOT NULL,
+  email_notifications TINYINT(1) NOT NULL DEFAULT 1,
+  push_notifications TINYINT(1) NOT NULL DEFAULT 1,
+  sms_notifications TINYINT(1) NOT NULL DEFAULT 0,
+  donation_updates TINYINT(1) NOT NULL DEFAULT 1,
+  chat_messages TINYINT(1) NOT NULL DEFAULT 1,
+  rating_notifications TINYINT(1) NOT NULL DEFAULT 1,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_notification_settings_user_id (user_id),
+
+  CONSTRAINT fk_notification_settings_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: volunteer_profiles
+-- Extended profile information for volunteers
+-- ============================================================================
+CREATE TABLE volunteer_profiles (
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id           INT UNSIGNED NOT NULL,
+  bio               TEXT DEFAULT NULL,
+  skills            JSON DEFAULT NULL,
+  availability      VARCHAR(255) DEFAULT NULL,
+  service_area      VARCHAR(255) DEFAULT NULL,
+  vehicle_type      ENUM('none', 'bicycle', 'motorcycle', 'car', 'van', 'truck') DEFAULT NULL,
+  total_pickups     INT UNSIGNED NOT NULL DEFAULT 0,
+  rating            DECIMAL(3, 2) DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                      ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_volunteer_profiles_user_id (user_id),
+
+  CONSTRAINT fk_volunteer_profiles_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

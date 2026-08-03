@@ -17,6 +17,32 @@ const profileRoutes = require('./profile.routes');
 const teamRoutes = require('./team.routes');
 const publicRoutes = require('./public.routes');
 
+// Root endpoint for API v1
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'PortionBridge API v1',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      auth: '/auth',
+      donations: '/donations',
+      volunteer: '/volunteer',
+      admin: '/admin',
+      ratings: '/ratings',
+      reports: '/reports',
+      chat: '/chat',
+      notifications: '/notifications',
+      leaderboard: '/leaderboard',
+      'saved-addresses': '/saved-addresses',
+      master: '/master',
+      profile: '/profile',
+      teams: '/teams',
+      public: '/public'
+    }
+  });
+});
+
 // Every new route group (chat...) gets mounted here in later phases
 router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);

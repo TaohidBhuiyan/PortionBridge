@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const masterDataController = require('../controllers/masterData.controller');
+const masterDataController = require('../../controllers/masterData.controller');
 
 /**
  * GET /api/v1/master/donation-types

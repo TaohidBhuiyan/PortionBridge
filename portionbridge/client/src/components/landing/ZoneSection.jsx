@@ -4,8 +4,8 @@ import { useReveal } from "../hooks/useReveal";
 import { Avatar } from "../common/Avatar";
 import { Icon } from "../common/Icon";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
-const PRIMARY_DEEP = "oklch(38% 0.19 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
+const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -107,11 +107,6 @@ export function ZoneSection() {
 
   return (
     <div ref={ref} className="py-24 md:py-28 bg-white">
-      <style>{`
-        .zone-card:hover { transform: translateY(-4px); }
-        .zone-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-      `}</style>
-      
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <div className="font-mono text-xs mb-4" style={{ color: PRIMARY_DEEP }}>ZONE COVERAGE</div>
         <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-4">Teams serving your area.</h2>
@@ -124,43 +119,45 @@ export function ZoneSection() {
             <div
               key={zone.id}
               onClick={() => handleZoneClick(zone)}
-              className="zone-card bg-gray-50 rounded-2xl p-6 cursor-pointer hover:shadow-lg border border-transparent hover:border-black/5"
+              className="bg-slate-50/60 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:bg-white border border-slate-100/80 hover:border-black/10 focus-visible:outline focus-visible:outline-2"
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-1">{zone.name}</h3>
-                  <p className="text-sm text-black/55">{zone.description}</p>
+                  <h3 className="font-bold text-slate-900 text-lg mb-1 tracking-tight">{zone.name}</h3>
+                  <p className="text-sm text-slate-500 font-medium">{zone.description}</p>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  zone.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
+                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border ${
+                  zone.status === 'active' 
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-100' 
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
                 }`}>
                   {zone.status}
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 mb-4">
-                <Avatar item={{ name: zone.leader.name, photo: zone.leader.photo }} className="w-10 h-10 text-sm" />
+              <div className="flex items-center gap-3 mb-5">
+                <Avatar item={{ name: zone.leader.name, photo: zone.leader.photo }} className="w-10 h-10 text-sm ring-2 ring-slate-100" />
                 <div>
-                  <div className="text-sm font-medium">{zone.leader.name}</div>
-                  <div className="text-xs text-black/55">Team Leader</div>
+                  <div className="text-sm font-semibold text-slate-800">{zone.leader.name}</div>
+                  <div className="text-xs text-slate-400 font-medium">Team Leader</div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 pt-4 border-t border-black/5">
                 <div>
-                  <div className="text-2xl font-bold" style={{ color: PRIMARY }}>{zone.volunteerCount}</div>
-                  <div className="text-xs text-black/55">Volunteers</div>
+                  <div className="text-2xl font-bold tracking-tight" style={{ color: PRIMARY }}>{zone.volunteerCount}</div>
+                  <div className="text-xs text-slate-500 font-medium">Volunteers</div>
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" style={{ color: PRIMARY }}>{zone.stats.completedDonations}</div>
-                  <div className="text-xs text-black/55">Completed</div>
+                  <div className="text-2xl font-bold tracking-tight" style={{ color: PRIMARY }}>{zone.stats.completedDonations}</div>
+                  <div className="text-xs text-slate-500 font-medium">Completed</div>
                 </div>
               </div>
 
               {zone.stats.activeRequests > 0 && (
                 <div className="mt-4 pt-4 border-t border-black/5">
-                  <div className="flex items-center gap-2 text-sm" style={{ color: PRIMARY_DEEP }}>
-                    <Icon name="clock" className="w-4 h-4" />
+                  <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: PRIMARY_DEEP }}>
+                    <Icon name="clock" className="w-4 h-4 shrink-0" />
                     <span>{zone.stats.activeRequests} active requests</span>
                   </div>
                 </div>
@@ -171,16 +168,27 @@ export function ZoneSection() {
       </div>
 
       {showModal && selectedZone && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="font-serif text-3xl mb-2">{selectedZone.name}</h2>
-                <p className="text-black/55">{selectedZone.description}</p>
-              </div>
-              <button onClick={() => setShowModal(false)} className="text-black/40 hover:text-black">
-                <Icon name="x" className="w-6 h-6" />
-              </button>
+        <div
+          className="fixed inset-0 flex items-center justify-center p-4 z-50"
+          style={{ background: "rgba(20,12,28,0.55)", animation: "fadeIn 0.2s ease" }}
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-8 relative shadow-2xl"
+            style={{ animation: "modalIn 0.25s ease" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowModal(false)}
+              aria-label="Close"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-black/45 transition-colors focus-visible:outline focus-visible:outline-2"
+            >
+              <Icon name="x" className="w-4 h-4" />
+            </button>
+
+            <div className="flex flex-col mb-6 pr-8">
+              <h2 className="font-serif text-3xl mb-2">{selectedZone.name}</h2>
+              <p className="text-black/55 text-sm">{selectedZone.description}</p>
             </div>
 
             <div className="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl">

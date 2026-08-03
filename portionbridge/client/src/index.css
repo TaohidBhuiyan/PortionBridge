@@ -1,5 +1,66 @@
 @import "tailwindcss";
 
+@theme {
+  /* Centralize theme colors */
+  --color-primary: oklch(60.6% 0.25 292.717);
+  --color-primary-deep: oklch(38% 0.19 292.717);
+  --color-primary-deeper: oklch(22% 0.12 292.717);
+  --color-primary-tint: oklch(94% 0.03 292.717);
+
+  /* Fonts mapping */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Theme Animations */
+  --animate-scroll-rtl: scrollx-rtl 22s linear infinite;
+  --animate-scroll-ltr-to-rtl: scrollx-ltr-to-rtl 30s linear infinite;
+  --animate-float: float 9s ease-in-out infinite;
+  --animate-float-reverse: float 7s ease-in-out infinite reverse;
+  --animate-pulse-glow: pulseGlow 2.4s ease-in-out infinite;
+  --animate-float-up: floatUp 1s ease-in-out infinite;
+  --animate-fade-in: fadeIn 0.2s ease;
+  --animate-modal-in: modalIn 0.25s ease;
+}
+
+/* Global Keyframes - Declared outside @theme so Vite/Tailwind v4 doesn't purge them as unused classes */
+@keyframes scrollx-rtl {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+@keyframes scrollx-ltr-to-rtl {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-14px) rotate(6deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(60.6% 0.25 292.717 / 0.2); }
+  50% { box-shadow: 0 0 0 12px oklch(60.6% 0.25 292.717 / 0); }
+}
+
+@keyframes floatUp {
+  0% { opacity: 0; transform: translateY(4px) scale(0.9); }
+  20% { opacity: 1; transform: translateY(0) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-16px) scale(0.95); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -13,9 +74,9 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  --sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --heading: 'Fraunces', Georgia, serif;
+  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
 
   font: 18px/145% var(--sans);
   letter-spacing: 0.18px;
@@ -30,6 +91,10 @@
   @media (max-width: 1024px) {
     font-size: 16px;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -54,7 +119,7 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
 }
 
 #root {
@@ -69,7 +134,7 @@ body {
 
 h1,
 h2 {
-  font-family: var(--heading);
+  font-family: var(--sans); /* Default to sans-serif to prevent styling side-effects on Login/Register */
   font-weight: 500;
   color: var(--text-h);
 }
@@ -83,6 +148,7 @@ h1 {
     margin: 20px 0;
   }
 }
+
 h2 {
   font-size: 24px;
   line-height: 118%;
@@ -92,6 +158,7 @@ h2 {
     font-size: 20px;
   }
 }
+
 p {
   margin: 0;
 }
@@ -109,4 +176,11 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}
+
+/* Accessibility styling */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-primary, oklch(60.6% 0.25 292.717));
+  outline-offset: 2px;
 }

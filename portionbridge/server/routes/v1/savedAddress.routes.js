@@ -4,10 +4,10 @@ const router = express.Router();
 const savedAddressController = require('../../controllers/savedAddress.controller');
 const savedAddressValidator = require('../../validators/savedAddress.validator');
 const validateRequest = require('../../middleware/validateRequest');
-const { authenticate } = require('../../middleware/auth');
+const { protect } = require('../../middleware/auth.middleware');
 
 // All saved address routes require authentication
-router.use(authenticate);
+router.use(protect);
 
 /**
  * POST /api/v1/saved-addresses

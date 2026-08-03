@@ -1,28 +1,28 @@
 const express = require('express');
 const router = express.Router();
 
-const { authenticate } = require('../../middleware/auth.middleware');
-const { validateRequest } = require('../../middleware/validation.middleware');
+const { protect } = require('../../middleware/auth.middleware');
+const validateRequest = require('../../middleware/validateRequest');
 const profileController = require('../../controllers/profile.controller');
 const profileValidator = require('../../validators/profile.validator');
 
 // ============================================================
-// Common Profile Routes (All authenticated users)
+// Common Profile Routes (All protectd users)
 // ============================================================
 
 /**
  * GET /api/v1/profile
- * Get the authenticated user's complete profile
+ * Get the protectd user's complete profile
  */
-router.get('/', authenticate, profileController.getProfile);
+router.get('/', protect, profileController.getProfile);
 
 /**
  * PATCH /api/v1/profile
- * Update the authenticated user's profile information
+ * Update the protectd user's profile information
  */
 router.patch(
   '/',
-  authenticate,
+  protect,
   profileValidator.updateProfileValidationRules,
   validateRequest,
   profileController.updateProfile
@@ -30,11 +30,11 @@ router.patch(
 
 /**
  * POST /api/v1/profile/change-password
- * Change the authenticated user's password
+ * Change the protectd user's password
  */
 router.post(
   '/change-password',
-  authenticate,
+  protect,
   profileValidator.changePasswordValidationRules,
   validateRequest,
   profileController.changePassword
@@ -42,11 +42,11 @@ router.post(
 
 /**
  * POST /api/v1/profile/update-email
- * Update the authenticated user's email address
+ * Update the protectd user's email address
  */
 router.post(
   '/update-email',
-  authenticate,
+  protect,
   profileValidator.updateEmailValidationRules,
   validateRequest,
   profileController.updateEmail
@@ -54,11 +54,11 @@ router.post(
 
 /**
  * POST /api/v1/profile/update-phone
- * Update the authenticated user's phone number
+ * Update the protectd user's phone number
  */
 router.post(
   '/update-phone',
-  authenticate,
+  protect,
   profileValidator.updatePhoneValidationRules,
   validateRequest,
   profileController.updatePhone
@@ -74,7 +74,7 @@ router.post(
  */
 router.patch(
   '/preferences',
-  authenticate,
+  protect,
   profileValidator.updatePreferencesValidationRules,
   validateRequest,
   profileController.updatePreferences
@@ -86,7 +86,7 @@ router.patch(
  */
 router.get(
   '/donor/statistics',
-  authenticate,
+  protect,
   profileValidator.getDonationStatisticsValidationRules,
   validateRequest,
   profileController.getDonationStatistics
@@ -102,7 +102,7 @@ router.get(
  */
 router.patch(
   '/volunteer',
-  authenticate,
+  protect,
   profileValidator.updateVolunteerProfileValidationRules,
   validateRequest,
   profileController.updateVolunteerProfile
@@ -114,14 +114,14 @@ router.patch(
  */
 router.get(
   '/volunteer/statistics',
-  authenticate,
+  protect,
   profileValidator.getVolunteerStatisticsValidationRules,
   validateRequest,
   profileController.getVolunteerStatistics
 );
 
 // ============================================================
-// Notification Settings Routes (All authenticated users)
+// Notification Settings Routes (All protectd users)
 // ============================================================
 
 /**
@@ -130,7 +130,7 @@ router.get(
  */
 router.get(
   '/notifications',
-  authenticate,
+  protect,
   profileController.getNotificationSettings
 );
 
@@ -140,7 +140,7 @@ router.get(
  */
 router.patch(
   '/notifications',
-  authenticate,
+  protect,
   profileValidator.updateNotificationSettingsValidationRules,
   validateRequest,
   profileController.updateNotificationSettings

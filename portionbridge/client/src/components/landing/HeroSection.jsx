@@ -5,9 +5,9 @@ import { Reveal } from "../common/Reveal";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
-const PRIMARY_DEEP = "oklch(38% 0.19 292.717)";
-const PRIMARY_DEEPER = "oklch(22% 0.12 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
+const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
+const PRIMARY_DEEPER = "var(--color-primary-deeper, oklch(22% 0.12 292.717))";
 
 const ROLES = [
   {
@@ -77,23 +77,23 @@ export function HeroSection({ onGoToRole, stats, loading }) {
 
       <div className="relative max-w-6xl mx-auto px-6 md:px-10 text-white">
         <Reveal>
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] border border-white/15 rounded-full px-4 py-1.5 mb-8" style={{ background: `${PRIMARY}22` }}>
-            <span className="relative flex h-1.5 w-1.5">
+          <div className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold tracking-wider uppercase border border-white/15 rounded-full px-4.5 py-1.5 mb-8 bg-white/5 backdrop-blur-xs transition-colors hover:border-white/25 cursor-default select-none">
+            <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
             </span>
             {volunteerCount} volunteers active right now
           </div>
         </Reveal>
         <Reveal delay={80}>
-          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl leading-[1.02] max-w-3xl">
+          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl leading-[1.02] max-w-3xl tracking-tight">
             Spare food. Spare clothes.
             <br />
             <span className="italic" style={{ color: PRIMARY }}>One tap</span> to the right hands.
           </h1>
         </Reveal>
         <Reveal delay={160}>
-          <p className="mt-8 max-w-xl text-white/70 text-base md:text-lg leading-relaxed">
+          <p className="mt-8 max-w-xl text-white/80 text-base md:text-lg leading-relaxed font-normal">
             PortionBridge connects donors with verified volunteers — so every
             meal and every shirt reaches its zone, tracked from pledge to
             delivery.
@@ -103,14 +103,14 @@ export function HeroSection({ onGoToRole, stats, loading }) {
           <div className="mt-10 flex flex-wrap items-center gap-4">
             <Link 
               to={getDonatePath()}
-              className="font-medium px-7 py-3.5 rounded-full text-white transition-transform hover:scale-105" 
+              className="font-semibold px-8 py-4 rounded-full text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 cursor-pointer" 
               style={{ background: PRIMARY, animation: "pulseGlow 2.4s ease-in-out infinite" }}
             >
               {isAuthenticated ? 'Go to Dashboard' : 'Donate food or clothes'}
             </Link>
             <Link 
               to={getVolunteerPath()}
-              className="font-medium px-7 py-3.5 rounded-full border border-white/25 text-white hover:bg-white/10 transition-colors"
+              className="font-semibold px-8 py-4 rounded-full border border-white/20 text-white hover:bg-white/10 hover:border-white/40 active:scale-95 transition-all duration-300 cursor-pointer"
             >
               {isAuthenticated && user?.role === 'volunteer' ? 'Go to Dashboard' : 'Join as a volunteer'}
             </Link>

@@ -4,8 +4,8 @@ import { Stars } from "../common/Stars";
 import { Reveal } from "../common/Reveal";
 import { useReveal } from "../hooks/useReveal";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
-const PRIMARY_DEEP = "oklch(38% 0.19 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
+const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -74,8 +74,11 @@ export function ReviewSection() {
     return (
       <section ref={ref} className="py-24 md:py-28">
         <div className="max-w-6xl mx-auto px-6 md:px-10">
-          <div className="font-mono text-xs mb-4" style={{ color: PRIMARY_DEEP }}>USER REVIEWS</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-14">Loading reviews...</h2>
+          <div className="font-mono text-[10px] font-bold tracking-wider uppercase mb-3" style={{ color: PRIMARY_DEEP }}>USER REVIEWS</div>
+          <h2 className="font-serif text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-4">Loading reviews...</h2>
+          <p className="text-slate-500 max-w-lg mb-12 text-sm md:text-base font-normal">
+            Fetching feedback from our community members. Please wait.
+          </p>
           <div className="grid md:grid-cols-[0.85fr_1.15fr] gap-14">
             <div className="animate-pulse">
               <div className="h-8 w-32 bg-gray-200 rounded mb-4" />

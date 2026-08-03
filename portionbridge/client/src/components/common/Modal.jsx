@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { Icon } from "./Icon";
 
 /**
  * Modal component for displaying content in an overlay
@@ -27,9 +28,9 @@ export function Modal({ title, onClose, children }) {
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-black/45 transition-colors"
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 text-black/45 transition-colors focus-visible:outline focus-visible:outline-2"
         >
-          ✕
+          <Icon name="x" className="w-4 h-4" />
         </button>
         <h3 className="font-serif text-2xl mb-5 pr-8">{title}</h3>
         {children}

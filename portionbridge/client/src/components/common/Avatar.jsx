@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const PRIMARY = "oklch(60.6% 0.25 292.717)";
+const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
 
 /**
  * Avatar component for displaying user profile images with fallback initials
@@ -9,9 +9,9 @@ const PRIMARY = "oklch(60.6% 0.25 292.717)";
  */
 export function Avatar({ item, className }) {
   const [broken, setBroken] = useState(false);
-  const initials = item.name.split(" ").map((w) => w[0]).slice(0, 2).join("");
+  const initials = (item?.name || "User").split(" ").map((w) => w[0]).slice(0, 2).join("");
   
-  if (!item.photo || broken) {
+  if (!item?.photo || broken) {
     return (
       <div 
         className={`${className} rounded-full flex items-center justify-center text-white font-semibold shrink-0`} 
