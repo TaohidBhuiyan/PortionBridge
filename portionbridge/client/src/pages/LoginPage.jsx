@@ -1,49 +1,115 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
  * PortionBridge — Login page
- * Left: purple branding / impact-stats panel.
- * Right: EXACTLY the user-provided Flowbite login card (unmodified styling —
- * bg-white / dark:bg-gray-900 card, its own border/shadow), just wired up
- * with React state + submit handler.
- *
- * Integrated with existing AuthContext and backend authentication API.
+ * Fused branding / impact-stats panel and Flowbite login card.
+ * Styled with deep violet matching colors and viewport heights.
  */
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [successMsg, setSuccessMsg] = useState(location.state?.message || "");
 
-  const getDashboardPath = () => {
-    if (!user) return '/';
-    switch (user.role) {
-      case 'donor': return '/donor/dashboard';
-      case 'volunteer': return '/volunteer/dashboard';
-      case 'leader': return '/leader/dashboard';
-      case 'admin': return '/admin/dashboard';
-      default: return '/';
-    }
-  };
+  const { socket, connected } = useSocket();
+  const [stats, setStats] = useState({
+    mealsDelivered: 12500,
+    clothesDonated: 3200,
+    verifiedVolunteers: 180
+  });
+
+  // Initial stats fetch via API
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await axios.get(`${API_BASE}/public/stats`);
+        if (res.data && res.data.success) {
+          setStats(res.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
+
+  // Real-time stats updates via socket
+  useEffect(() => {
+    if (!socket || !connected) return;
+    const handleStatsUpdate = (newStats) => {
+      setStats(newStats);
+    };
+    socket.on('stats_updated', handleStatsUpdate);
+    return () => {
+      socket.off('stats_updated', handleStatsUpdate);
+    };
+  }, [socket, connected]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({});
+    setSuccessMsg("");
+
+    // Client-side validation
+    const errors = {};
+    if (!email.trim()) {
+      errors.email = "Email is required.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errors.email = "A valid email address is required.";
+    }
+
+    if (!password) {
+      errors.password = "Password is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError("Please fix the validation errors below.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const result = await login(email, password, 'volunteer');
+      // Use sequential role login implemented in context
+      const result = await login(email.trim(), password);
 
       if (!result.success) {
-        setError(result.error || "Login failed. Please try again.");
+        if (result.errors && Array.isArray(result.errors)) {
+          const errorsMap = {};
+          result.errors.forEach(err => {
+            errorsMap[err.field] = err.message;
+          });
+          setFieldErrors(errorsMap);
+          setError(result.error || "Validation failed.");
+        } else {
+          setError(result.error || "Login failed. Please try again.");
+        }
         return;
       }
 
-      navigate(getDashboardPath());
+      // Successful redirect based on user role
+      if (result.user) {
+        switch (result.user.role) {
+          case 'donor': navigate('/donor/dashboard'); break;
+          case 'volunteer': navigate('/volunteer/dashboard'); break;
+          case 'leader': navigate('/leader/dashboard'); break;
+          case 'admin': navigate('/admin/dashboard'); break;
+          default: navigate('/');
+        }
+      }
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -66,11 +132,11 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-4 py-10">
-      <div className="w-full max-w-[1100px] flex flex-col md:flex-row items-stretch gap-6">
-        {/* LEFT PANEL — purple branding / impact stats (unchanged) */}
+    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6 md:py-10">
+      <div className="w-full max-w-[960px] rounded-2xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-2xl border border-gray-200 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
+        {/* LEFT PANEL — purple branding / impact stats */}
         <div
-          className="hidden md:flex flex-1 relative rounded-2xl overflow-hidden flex-col items-center justify-end px-10 py-12 text-center"
+          className="hidden md:flex flex-1 relative flex-col items-center justify-center px-8 py-10 text-center"
           style={{
             background:
               "radial-gradient(ellipse 75% 45% at 50% 2%, #f0e4fb 0%, rgba(240,228,251,0) 65%), linear-gradient(180deg, #b487e8 0%, #9256e0 16%, #7c3aed 32%, #5b21b6 50%, #35127a 68%, #180a35 85%, #050208 100%)",
@@ -96,39 +162,43 @@ export function LoginPage() {
           </p>
 
           <div className="relative z-10 w-full max-w-[300px] flex flex-col gap-2.5">
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white text-[#111] text-[13.5px] font-medium">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white text-[#111] text-[13.5px] font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-[#111] text-white flex items-center justify-center text-[11px] shrink-0">
                 🍲
               </span>
-              12,500+ meals shared to date
+              {stats.mealsDelivered.toLocaleString()}+ meals shared to date
             </div>
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
                 👕
               </span>
-              3,200+ clothing items donated
+              {stats.clothesDonated.toLocaleString()}+ clothing items donated
             </div>
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
                 🤝
               </span>
-              180+ verified volunteers
+              {stats.verifiedVolunteers.toLocaleString()}+ verified volunteers
             </div>
           </div>
         </div>
 
-        {/* RIGHT PANEL — exact user-provided Flowbite login card */}
-        <div className="flex-1 flex items-center justify-center py-20 px-4">
-          <div className="flex h-full items-center justify-center">
-            <div className="rounded-lg border border-gray-200 bg-white shadow-md dark:border-gray-700 dark:bg-gray-900 flex-col flex h-full items-center justify-center sm:px-4">
-              <div className="flex h-full flex-col justify-center gap-4 p-10 min-w-[380px]">
-                <div className="left-0 right-0 inline-block border-gray-200 px-2 py-2.5 sm:px-4">
+        {/* RIGHT PANEL — merged seamlessly with left panel */}
+        <div className="flex-1 flex flex-col justify-center items-center bg-[#faf9fc] dark:bg-[#120721] px-6 py-8 sm:py-10">
+          <div className="flex w-full flex-col justify-center gap-3.5 max-w-[340px] sm:min-w-[340px]">
+            <div className="left-0 right-0 inline-block px-1 py-1.5 sm:px-2">
                   <form className="flex flex-col gap-4 pb-4" onSubmit={handleSubmit}>
                     <h1 className="mb-4 text-2xl font-bold dark:text-white">Login</h1>
 
                     {error && (
                       <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
                         {error}
+                      </div>
+                    )}
+
+                    {successMsg && (
+                      <div className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                        {successMsg}
                       </div>
                     )}
 
@@ -151,10 +221,13 @@ export function LoginPage() {
                             placeholder="email@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            required
+                            disabled={loading}
                           />
                         </div>
                       </div>
+                      {fieldErrors.email && (
+                        <span className="text-red-600 dark:text-red-400 text-xs mt-1 block">{fieldErrors.email}</span>
+                      )}
                     </div>
 
                     <div>
@@ -175,10 +248,13 @@ export function LoginPage() {
                             name="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            required
+                            disabled={loading}
                           />
                         </div>
                       </div>
+                      {fieldErrors.password && (
+                        <span className="text-red-600 dark:text-red-400 text-xs mt-1 block">{fieldErrors.password}</span>
+                      )}
                       <p
                         className="mt-2 cursor-pointer text-purple-600 hover:text-purple-700"
                         onClick={handleForgotPasswordClick}
@@ -256,8 +332,6 @@ export function LoginPage() {
               </div>
             </div>
           </div>
-        </div>
       </div>
-    </div>
   );
 }

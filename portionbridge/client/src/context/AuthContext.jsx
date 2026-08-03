@@ -1,9 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
+// Enable sending and receiving cookies in cross-origin requests
+axios.defaults.withCredentials = true;
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 const AuthContext = createContext(null);
+
+// Helper to retrieve the CSRF token from document.cookie
+function getCsrfToken() {
+  const name = 'csrfToken=';
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const ca = decodedCookie.split(';');
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return '';
+}
 
 /**
  * AuthProvider - Manages authentication state across the application
@@ -31,31 +51,52 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
-   * Login using existing backend API
+   * Login using existing backend API, trying roles sequentially if needed
    * @param {string} email - User email
    * @param {string} password - User password
-   * @param {string} role - User role (donor, volunteer, leader, admin)
+   * @param {string} initialRole - Preferred login role
    */
-  const login = async (email, password, role = 'volunteer') => {
-    try {
-      const res = await axios.post(`${API_BASE}/auth/login`, {
-        email,
-        password,
-        role,
-      });
+  const login = async (email, password, initialRole) => {
+    const rolesToTry = initialRole ? [initialRole] : [];
+    const allRoles = ['volunteer', 'donor', 'admin'];
+    
+    allRoles.forEach(r => {
+      if (!rolesToTry.includes(r)) {
+        rolesToTry.push(r);
+      }
+    });
 
-      const { accessToken, user: userData } = res.data.data;
-      
-      // Store token and user data
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      setUser(userData);
-      return { success: true, user: userData };
-    } catch (error) {
-      const message = error.response?.data?.message || "Login failed. Please try again.";
-      return { success: false, error: message };
+    let lastError = "Login failed. Please try again.";
+    let lastErrorsArray = null;
+
+    for (const r of rolesToTry) {
+      try {
+        const res = await axios.post(`${API_BASE}/auth/login`, {
+          email,
+          password,
+          role: r,
+        });
+
+        const { accessToken, user: userData } = res.data.data;
+        
+        // Store token and user data
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('user', JSON.stringify(userData));
+        
+        setUser(userData);
+        return { success: true, user: userData };
+      } catch (error) {
+        lastError = error.response?.data?.message || "Login failed. Please try again.";
+        lastErrorsArray = error.response?.data?.errors || null;
+
+        // Terminate early for validation errors (422) or lockouts/banned/unverified (403)
+        if (error.response?.status === 422 || error.response?.status === 403) {
+          return { success: false, error: lastError, errors: lastErrorsArray };
+        }
+      }
     }
+
+    return { success: false, error: lastError, errors: lastErrorsArray };
   };
 
   /**
@@ -64,9 +105,13 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       const token = localStorage.getItem('accessToken');
+      const csrfToken = getCsrfToken();
       if (token) {
         await axios.post(`${API_BASE}/auth/logout`, {}, {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken
+          }
         });
       }
     } catch (error) {
@@ -89,6 +134,21 @@ export function AuthProvider({ children }) {
       return { success: true, data: res.data.data };
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed. Please try again.";
+      const errors = error.response?.data?.errors || null;
+      return { success: false, error: message, errors };
+    }
+  };
+
+  /**
+   * Verify email using existing backend API
+   * @param {string} token - Verification token
+   */
+  const verifyEmail = async (token) => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/verify-email`, { token });
+      return { success: true, message: res.data.message };
+    } catch (error) {
+      const message = error.response?.data?.message || "Email verification failed.";
       return { success: false, error: message };
     }
   };
@@ -99,6 +159,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     register,
+    verifyEmail,
     isAuthenticated: !!user,
     userRole: user?.role,
   };

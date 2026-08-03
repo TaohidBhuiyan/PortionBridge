@@ -14,6 +14,7 @@ const {
   getMe,
   adminOnlyCheck,
 } = require('../../controllers/auth.controller');
+const { uploadProfilePhotoMiddleware } = require('../../middleware/upload.middleware');
 
 const {
   registerValidationRules,
@@ -31,7 +32,7 @@ const { loginLimiter, registerLimiter } = require('../../middleware/rateLimiter'
 const { USER_ROLES } = require('../../constants');
 
 // --- Public routes ---
-router.post('/register', registerLimiter, registerValidationRules, validateRequest, register);
+router.post('/register', registerLimiter, uploadProfilePhotoMiddleware, registerValidationRules, validateRequest, register);
 router.post('/verify-email', verifyEmailValidationRules, validateRequest, verifyEmail);
 router.post('/resend-verification', resendVerificationValidationRules, validateRequest, resendVerification);
 router.post('/login', loginLimiter, loginValidationRules, validateRequest, login);

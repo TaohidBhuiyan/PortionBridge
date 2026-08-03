@@ -23,7 +23,6 @@ const passwordPolicyChain = (field) =>
     .matches(PASSWORD_RULES.UPPERCASE_REGEX).withMessage(`${field} must contain at least one uppercase letter.`)
     .matches(PASSWORD_RULES.LOWERCASE_REGEX).withMessage(`${field} must contain at least one lowercase letter.`)
     .matches(PASSWORD_RULES.NUMBER_REGEX).withMessage(`${field} must contain at least one number.`)
-    .matches(PASSWORD_RULES.SPECIAL_CHAR_REGEX).withMessage(`${field} must contain at least one special character.`)
     .custom((value) => {
       if (isCommonWeakPassword(value)) {
         throw new Error('This password is too common and easily guessed. Please choose a stronger password.');

@@ -24,7 +24,7 @@ const auditService = require('./audit.service');
  * self-registered). Sends an email verification link; the account cannot
  * log in until that link is used.
  */
-async function register({ name, email, password, role, phone, address, ipAddress, userAgent }) {
+async function register({ name, email, password, role, phone, address, profilePhotoPath, ipAddress, userAgent }) {
   const alreadyExists = await userModel.emailExists(email);
   if (alreadyExists) {
     throw new AppError('An account with this email already exists.', HTTP_STATUS.CONFLICT);
@@ -42,6 +42,7 @@ async function register({ name, email, password, role, phone, address, ipAddress
       role: assignedRole,
       phone,
       address,
+      profilePhotoPath,
     });
   } catch (error) {
     // The unique constraint remains the source of truth when concurrent

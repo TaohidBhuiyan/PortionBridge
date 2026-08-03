@@ -1,8 +1,11 @@
+const fs = require('fs');
+const path = require('path');
 const { HTTP_STATUS, AUTH } = require('../constants');
 const { success } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const AppError = require('../utils/AppError');
 const { sanitizeUser, getClientIp, getUserAgent } = require('../utils/helpers');
+const uploadService = require('../services/upload.service');
 const authService = require('../services/auth.service');
 const { issueCsrfCookie } = require('../middleware/csrf.middleware');
 
@@ -42,29 +45,45 @@ function clearSessionCookies(res) {
  * POST /api/v1/auth/register
  */
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password, role, phone, address } = req.body;
+    const { name, email, password, role, phone, address } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = getUserAgent(req);
 
-  const { user, devVerificationToken } = await authService.register({
-    name,
-    email,
-    password,
-    role,
-    phone,
-    address,
-    ipAddress,
-    userAgent,
-  });
+  const profilePhotoPath = req.file
+    ? `profiles/${path.basename(req.file.filename || req.file.path)}`
+    : null;
 
-  return success(res, {
-    statusCode: HTTP_STATUS.CREATED,
-    message: 'Account created successfully. Please check your email to verify your account before logging in.',
-    data: {
-      user: sanitizeUser(user),
-      ...(devVerificationToken && { devVerificationToken }),
-    },
-  });
+  try {
+    const { user, devVerificationToken } = await authService.register({
+      name,
+      email,
+      password,
+      role,
+      phone,
+      address,
+      profilePhotoPath,
+      ipAddress,
+      userAgent,
+    });
+
+    return success(res, {
+      statusCode: HTTP_STATUS.CREATED,
+      message: 'Account created successfully. Please check your email to verify your account before logging in.',
+      data: {
+        user: sanitizeUser(user),
+        ...(devVerificationToken && { devVerificationToken }),
+      },
+    });
+  } catch (error) {
+    if (req.file && req.file.path && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (cleanupError) {
+        console.error('Failed to remove uploaded file after registration failure:', cleanupError);
+      }
+    }
+    throw error;
+  }
 });
 
 /**

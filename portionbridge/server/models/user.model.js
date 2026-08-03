@@ -60,10 +60,10 @@ async function emailExists(email) {
  * (the column default) — they cannot log in until verified. Returns the
  * newly created user's auto-increment ID.
  */
-async function createUser({ name, email, hashedPassword, role, phone, address }) {
+async function createUser({ name, email, hashedPassword, role, phone, address, profilePhotoPath }) {
   const [result] = await pool.query(
-    `INSERT INTO users (name, email, password, role, phone, address)
-     VALUES (:name, :email, :password, :role, :phone, :address)`,
+    `INSERT INTO users (name, email, password, role, phone, address, profile_photo)
+     VALUES (:name, :email, :password, :role, :phone, :address, :profilePhotoPath)`,
     {
       name,
       email,
@@ -71,6 +71,7 @@ async function createUser({ name, email, hashedPassword, role, phone, address })
       role,
       phone: phone || null,
       address: address || null,
+      profilePhotoPath: profilePhotoPath || null,
     }
   );
   return result.insertId;

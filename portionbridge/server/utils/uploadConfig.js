@@ -39,7 +39,12 @@ function createUploader(subfolder) {
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-      const ext = path.extname(file.originalname);
+      const extensionMap = {
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/webp': '.webp',
+      };
+      const ext = extensionMap[file.mimetype] || path.extname(file.originalname).toLowerCase() || '.jpg';
       cb(null, `${subfolder}-${uniqueSuffix}${ext}`);
     },
   });

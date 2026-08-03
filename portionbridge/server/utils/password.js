@@ -4,7 +4,7 @@ const { isCommonWeakPassword } = require('./commonPasswords');
 const SALT_ROUNDS = 12;
 
 const PASSWORD_RULES = {
-  MIN_LENGTH: 12,
+  MIN_LENGTH: 8,
   MAX_LENGTH: 64,
   UPPERCASE_REGEX: /[A-Z]/,
   LOWERCASE_REGEX: /[a-z]/,
@@ -61,9 +61,8 @@ function validatePasswordPolicy(password) {
     return { valid: false, message: 'Password must contain at least one number.' };
   }
 
-  if (!PASSWORD_RULES.SPECIAL_CHAR_REGEX.test(password)) {
-    return { valid: false, message: 'Password must contain at least one special character.' };
-  }
+  // Special character is recommended but not mandatory
+
 
   if (isCommonWeakPassword(password)) {
     return {
