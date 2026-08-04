@@ -5,6 +5,20 @@ const { getClientIp, getUserAgent } = require('../utils/helpers');
 const donationService = require('../services/donation.service');
 
 /**
+ * GET /api/v1/donations/:id
+ * Get donation details by ID.
+ */
+const getDonationDetails = asyncHandler(async (req, res) => {
+  const donation = await donationService.getDonationDetails(req.params.id, req.user.id, req.user.role);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Donation details retrieved successfully.',
+    data: { donation },
+  });
+});
+
+/**
  * POST /api/v1/donations
  */
 const createDonation = asyncHandler(async (req, res) => {
@@ -408,6 +422,7 @@ const getTeamAssignments = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getDonationDetails,
   createDonation,
   updateDonation,
   cancelDonation,

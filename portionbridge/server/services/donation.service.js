@@ -1001,7 +1001,7 @@ async function getTeamDonations(teamId, status = null) {
  * @returns {Promise<Array>} Array of donation objects
  */
 async function getMemberAssignments(memberId, status = null) {
-  return await donationModel.findByAssignedMember(memberId, status);
+  return await donationModel.findByAssignedMemberId(memberId, status);
 }
 
 /**
@@ -1011,6 +1011,42 @@ async function getMemberAssignments(memberId, status = null) {
  */
 async function getTeamAssignments(teamId) {
   return await donationModel.findTeamAssignments(teamId);
+}
+
+/**
+ * Get donation details by ID with role-based access control.
+ * Donors can only view their own donations.
+ * Volunteers can only view donations assigned to them.
+ * Admins can view any donation.
+ * @param {number} donationId - Donation ID
+ * @param {number} userId - User ID requesting the details
+ * @param {string} userRole - User role (donor, volunteer, admin)
+ * @returns {Promise<Object>} Donation object
+ */
+async function getDonationDetails(donationId, userId, userRole) {
+  const donation = await donationModel.findById(donationId);
+
+  if (!donation) {
+    throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  // Role-based access control
+  if (userRole === 'donor') {
+    if (donation.donor_id !== userId) {
+      throw new AppError('You are not allowed to view this donation request.', HTTP_STATUS.FORBIDDEN);
+    }
+  } else if (userRole === 'volunteer') {
+    // Volunteers can view if assigned to them or if it's pending (for browsing)
+    const isAssigned = donation.volunteer_id === userId || donation.assigned_member_id === userId;
+    const isPending = donation.status === DONATION_STATUS.PENDING;
+    
+    if (!isAssigned && !isPending) {
+      throw new AppError('You are not allowed to view this donation request.', HTTP_STATUS.FORBIDDEN);
+    }
+  }
+  // Admins can view any donation - no restriction needed
+
+  return donation;
 }
 
 module.exports = {
@@ -1032,4 +1068,5 @@ module.exports = {
   getTeamDonations,
   getMemberAssignments,
   getTeamAssignments,
+  getDonationDetails,
 };

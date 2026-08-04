@@ -16,6 +16,7 @@ const masterDataRoutes = require('./masterData.routes');
 const profileRoutes = require('./profile.routes');
 const teamRoutes = require('./team.routes');
 const publicRoutes = require('./public.routes');
+const uploadRoutes = require('./upload.routes');
 
 // Root endpoint for API v1
 router.get('/', (req, res) => {
@@ -38,7 +39,8 @@ router.get('/', (req, res) => {
       master: '/master',
       profile: '/profile',
       teams: '/teams',
-      public: '/public'
+      public: '/public',
+      uploads: '/uploads'
     }
   });
 });
@@ -59,5 +61,6 @@ router.use('/master', masterDataRoutes);
 router.use('/profile', profileRoutes);
 router.use('/teams', teamRoutes);
 router.use('/public', publicRoutes);
+router.use('/uploads', uploadRoutes);
 
 module.exports = router;

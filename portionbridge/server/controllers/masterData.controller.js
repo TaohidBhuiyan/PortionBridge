@@ -3,6 +3,7 @@ const { success } = require('../utils/apiResponse');
 const asyncHandler = require('../utils/asyncHandler');
 const {
   DONATION_CATEGORY,
+  DONATION_STATUS,
   FOOD_TYPE,
   QUANTITY_UNIT,
   STORAGE_REQUIREMENT,
@@ -18,6 +19,7 @@ const {
   SEASON,
   ADDRESS_LABEL,
   TIME_SLOT,
+  ASSIGNMENT_MODE,
 } = require('../constants');
 
 /**
@@ -245,6 +247,34 @@ const getTimeSlots = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/v1/master/donation-statuses
+ * Returns available donation statuses
+ */
+const getDonationStatuses = asyncHandler(async (req, res) => {
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Donation statuses retrieved successfully.',
+    data: {
+      donationStatuses: Object.values(DONATION_STATUS),
+    },
+  });
+});
+
+/**
+ * GET /api/v1/master/assignment-modes
+ * Returns available assignment modes
+ */
+const getAssignmentModes = asyncHandler(async (req, res) => {
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Assignment modes retrieved successfully.',
+    data: {
+      assignmentModes: Object.values(ASSIGNMENT_MODE),
+    },
+  });
+});
+
+/**
  * GET /api/v1/master/all
  * Returns all master data in a single response
  * Useful for frontend initialization
@@ -255,6 +285,7 @@ const getAllMasterData = asyncHandler(async (req, res) => {
     message: 'All master data retrieved successfully.',
     data: {
       donationTypes: Object.values(DONATION_CATEGORY),
+      donationStatuses: Object.values(DONATION_STATUS),
       foodTypes: Object.values(FOOD_TYPE),
       quantityUnits: Object.values(QUANTITY_UNIT),
       storageRequirements: Object.values(STORAGE_REQUIREMENT),
@@ -270,6 +301,7 @@ const getAllMasterData = asyncHandler(async (req, res) => {
       seasons: Object.values(SEASON),
       addressLabels: Object.values(ADDRESS_LABEL),
       timeSlots: Object.values(TIME_SLOT),
+      assignmentModes: Object.values(ASSIGNMENT_MODE),
     },
   });
 });
@@ -291,5 +323,7 @@ module.exports = {
   getSeasons,
   getAddressLabels,
   getTimeSlots,
+  getDonationStatuses,
+  getAssignmentModes,
   getAllMasterData,
 };

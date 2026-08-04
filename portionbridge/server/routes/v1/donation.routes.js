@@ -2,6 +2,18 @@ const express = require('express');
 const router = express.Router();
 
 const {
+  protect,
+  authorize
+} = require('../../middleware/auth.middleware');
+const {
+  loadDonation,
+  restrictToDonationOwner
+} = require('../../middleware/donation.middleware');
+const {
+  validateRequest
+} = require('../../middleware/validator.middleware');
+const {
+  getDonationDetails,
   createDonation,
   updateDonation,
   cancelDonation,
@@ -21,7 +33,6 @@ const {
   getMyAssignments,
   getTeamAssignments,
 } = require('../../controllers/donation.controller');
-
 const {
   createDonationValidationRules,
   updateDonationValidationRules,
@@ -36,10 +47,20 @@ const {
   historySummaryValidationRules,
 } = require('../../validators/donation.validator');
 
-const validateRequest = require('../../middleware/validateRequest');
-const { protect, authorize } = require('../../middleware/auth.middleware');
-const { loadDonation, restrictToDonationOwner } = require('../../middleware/donation.middleware');
-const { USER_ROLES } = require('../../constants');
+const {
+  USER_ROLES
+} = require('../../constants');
+
+// ============================================================================
+// DONOR ROUTES
+// ============================================================================
+
+/**
+ * GET /api/v1/donations/:id
+ * Get donation details by ID.
+ * Accessible by donor (own donations), volunteer (assigned/pending), and admin.
+ */
+router.get('/:id', protect, loadDonation, getDonationDetails);
 
 // Volunteers (and admins) browse pending requests.
 router.get(

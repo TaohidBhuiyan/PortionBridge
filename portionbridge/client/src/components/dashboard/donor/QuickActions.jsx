@@ -19,14 +19,14 @@ export function QuickActions() {
       icon: Utensils,
       label: 'Donate Food',
       description: 'Share excess food with those in need',
-      route: '/donor/donate-food',
+      route: '/donation/create',
       color: 'from-orange-400 to-orange-600',
     },
     {
       icon: Shirt,
       label: 'Donate Clothes',
       description: 'Give clothes a second life',
-      route: '/donor/donate-clothes',
+      route: '/donation/create',
       color: 'from-blue-400 to-blue-600',
     },
     {

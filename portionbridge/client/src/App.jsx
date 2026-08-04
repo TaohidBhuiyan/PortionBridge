@@ -8,6 +8,9 @@ import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { DonorDashboard } from "./pages/DonorDashboard";
 import { VolunteerDashboard } from "./pages/VolunteerDashboard";
 import { AdminDashboard } from "./pages/AdminDashboard";
+import { DonationFormPage } from "./pages/DonationFormPage";
+import { MyDonationsPage } from "./pages/MyDonationsPage";
+import { DonationDetailsPage } from "./pages/DonationDetailsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 
@@ -30,6 +33,9 @@ function App() {
             <Route path="/donor/dashboard" element={<DonorDashboard />} />
             <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/donation/create" element={<DonationFormPage />} />
+            <Route path="/donor/my-donations" element={<MyDonationsPage />} />
+            <Route path="/donations/:id" element={<DonationDetailsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>

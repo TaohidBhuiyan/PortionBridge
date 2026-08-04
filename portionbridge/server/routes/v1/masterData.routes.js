@@ -84,6 +84,18 @@ router.get('/address-labels', masterDataController.getAddressLabels);
 router.get('/time-slots', masterDataController.getTimeSlots);
 
 /**
+ * GET /api/v1/master/donation-statuses
+ * Returns available donation statuses
+ */
+router.get('/donation-statuses', masterDataController.getDonationStatuses);
+
+/**
+ * GET /api/v1/master/assignment-modes
+ * Returns available assignment modes
+ */
+router.get('/assignment-modes', masterDataController.getAssignmentModes);
+
+/**
  * GET /api/v1/master/all
  * Returns all master data in a single response
  */

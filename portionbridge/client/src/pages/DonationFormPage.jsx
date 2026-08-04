@@ -1,0 +1,583 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, Save, AlertTriangle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Stepper } from '../components/donation/Stepper';
+import { Step1BasicInfo } from '../components/donation/Step1BasicInfo';
+import { Step2DonationDetails } from '../components/donation/Step2DonationDetails';
+import { Step3PickupInfo } from '../components/donation/Step3PickupInfo';
+import { Step4Images } from '../components/donation/Step4Images';
+import { Step5Review } from '../components/donation/Step5Review';
+import { donationApi, transformFormDataToApi } from '../services/donationApi';
+
+/**
+ * DonationFormPage - Multi-step donation form
+ * Supports Food and Clothes donations with validation and auto-save
+ */
+export function DonationFormPage() {
+  const STEPS = [
+    { id: 'basic', title: 'Basic Information' },
+    { id: 'details', title: 'Donation Details' },
+    { id: 'pickup', title: 'Pickup Information' },
+    { id: 'images', title: 'Images' },
+    { id: 'review', title: 'Review & Submit' },
+  ];
+
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState({});
+  const [stepValidation, setStepValidation] = useState([false, false, false, false, true]);
+  const [errors, setErrors] = useState({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({});
+  const [submissionResult, setSubmissionResult] = useState(null);
+  const navigate = useNavigate();
+
+  // Load saved form data from localStorage on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('donationFormDraft');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        setFormData(parsed);
+        setHasUnsavedChanges(true);
+      } catch (e) {
+        console.error('Failed to load saved form data:', e);
+      }
+    }
+  }, []);
+
+  // Auto-save form data to localStorage
+  useEffect(() => {
+    if (hasUnsavedChanges) {
+      const saveTimer = setTimeout(() => {
+        localStorage.setItem('donationFormDraft', JSON.stringify(formData));
+        setIsSaving(true);
+        setTimeout(() => setIsSaving(false), 500);
+      }, 1000);
+
+      return () => clearTimeout(saveTimer);
+    }
+  }, [formData, hasUnsavedChanges]);
+
+  // Warn before leaving page with unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  // Validate current step
+  const validateStep = useCallback((stepIndex) => {
+    const newErrors = {};
+    const data = formData;
+
+    // Step 1 validation
+    if (stepIndex === 0) {
+      if (!data.title?.trim()) {
+        newErrors.title = 'Title is required';
+      } else if (data.title.trim().length > 200) {
+        newErrors.title = 'Title must be 200 characters or less';
+      }
+
+      if (!data.category) {
+        newErrors.category = 'Category is required';
+      }
+
+      if (!data.description?.trim()) {
+        newErrors.description = 'Description is required';
+      } else if (data.description.trim().length > 500) {
+        newErrors.description = 'Description must be 500 characters or less';
+      }
+
+      if (!data.quantity || data.quantity <= 0) {
+        newErrors.quantity = 'Quantity must be greater than 0';
+      }
+
+      if (!data.quantityUnit) {
+        newErrors.quantityUnit = 'Unit is required';
+      }
+    }
+
+    // Step 2 validation
+    if (stepIndex === 1) {
+      if (data.category === 'food') {
+        if (!data.foodType) {
+          newErrors.foodType = 'Food type is required';
+        }
+        if (!data.foodName?.trim()) {
+          newErrors.foodName = 'Food name is required';
+        }
+        if (!data.storageRequirement) {
+          newErrors.storageRequirement = 'Storage requirement is required';
+        }
+      } else if (data.category === 'clothes') {
+        if (!data.clothingCategory) {
+          newErrors.clothingCategory = 'Clothing category is required';
+        }
+        if (!data.gender) {
+          newErrors.gender = 'Gender is required';
+        }
+        if (!data.ageGroup) {
+          newErrors.ageGroup = 'Age group is required';
+        }
+        if (!data.itemCondition) {
+          newErrors.itemCondition = 'Item condition is required';
+        }
+      }
+    }
+
+    // Step 3 validation
+    if (stepIndex === 2) {
+      if (!data.savedAddressId && !data.pickupAddress?.fullAddress?.trim()) {
+        newErrors.fullAddress = 'Address is required';
+      }
+
+      if (!data.contactPhone?.trim()) {
+        newErrors.contactPhone = 'Contact phone is required';
+      } else if (data.contactPhone.trim().length < 7 || data.contactPhone.trim().length > 20) {
+        newErrors.contactPhone = 'Phone number must be between 7 and 20 characters';
+      }
+
+      if (!data.pickupDate) {
+        newErrors.pickupDate = 'Pickup date is required';
+      } else {
+        const pickupDate = new Date(data.pickupDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (pickupDate < today) {
+          newErrors.pickupDate = 'Pickup date must be in the future';
+        }
+      }
+
+      if (!data.pickupTimeSlot) {
+        newErrors.pickupTimeSlot = 'Time slot is required';
+      }
+    }
+
+    setErrors(newErrors);
+    const isValid = Object.keys(newErrors).length === 0;
+    
+    setStepValidation(prev => {
+      const updated = [...prev];
+      updated[stepIndex] = isValid;
+      return updated;
+    });
+
+    return isValid;
+  }, [formData]);
+
+  // Handle form field change
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    setHasUnsavedChanges(true);
+    
+    // Clear error for this field
+    if (errors[field]) {
+      setErrors(prev => {
+        const updated = { ...prev };
+        delete updated[field];
+        return updated;
+      });
+    }
+  };
+
+  // Handle step validation change from child components
+  const handleStepValidation = (isValid) => {
+    setStepValidation(prev => {
+      const updated = [...prev];
+      updated[currentStep] = isValid;
+      return updated;
+    });
+  };
+
+  // Handle step navigation
+  const handleNext = () => {
+    const isValid = validateStep(currentStep);
+    if (isValid) {
+      setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
+
+  const handleStepClick = (stepIndex) => {
+    if (stepIndex <= currentStep || stepValidation[stepIndex]) {
+      setCurrentStep(stepIndex);
+    }
+  };
+
+  const handleEditStep = (stepIndex) => {
+    setCurrentStep(stepIndex);
+  };
+
+  // Handle form submission
+  const handleSubmit = async () => {
+    // Validate all steps before submission
+    const allValid = stepValidation.every(Boolean);
+    if (!allValid) {
+      // Go to first invalid step
+      const firstInvalidStep = stepValidation.findIndex(v => !v);
+      setCurrentStep(firstInvalidStep);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      // Transform form data to API format
+      const apiData = transformFormDataToApi(formData);
+
+      // Create donation
+      const createResult = await donationApi.createDonation(apiData);
+
+      if (!createResult.success) {
+        // Handle validation errors from backend
+        if (createResult.errors) {
+          // Transform backend errors to form errors
+          const backendErrors = {};
+          Object.keys(createResult.errors).forEach(field => {
+            backendErrors[field] = createResult.errors[field].join(', ');
+          });
+          setErrors(backendErrors);
+        } else {
+          setErrors({ submit: createResult.error });
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      const donationId = createResult.data.donation.id;
+
+      // Upload images if any
+      if (formData.images && formData.images.length > 0) {
+        const uploadPromises = formData.images.map(async (image, index) => {
+          const progressKey = image.id;
+          setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
+
+          const uploadResult = await donationApi.uploadDonationImage(
+            donationId,
+            image.file,
+            (percent) => {
+              setUploadProgress(prev => ({ ...prev, [progressKey]: percent }));
+            }
+          );
+
+          setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
+          return uploadResult;
+        });
+
+        await Promise.all(uploadPromises);
+      }
+
+      // Clear draft on successful submission
+      localStorage.removeItem('donationFormDraft');
+      setHasUnsavedChanges(false);
+
+      // Show success result
+      setSubmissionResult({
+        success: true,
+        donationId,
+        donation: createResult.data.donation,
+      });
+    } catch (error) {
+      setErrors({ submit: 'An unexpected error occurred. Please try again.' });
+      setSubmissionResult({ success: false, error: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Clear draft
+  const handleClearDraft = () => {
+    if (window.confirm('Are you sure you want to clear the saved draft?')) {
+      localStorage.removeItem('donationFormDraft');
+      setFormData({});
+      setHasUnsavedChanges(false);
+      setCurrentStep(0);
+      setStepValidation([false, false, false, false, true]);
+      setErrors({});
+    }
+  };
+
+  const canGoNext = stepValidation[currentStep];
+  const canSubmit = stepValidation.every(Boolean) && !isSubmitting;
+
+  // Handle success actions
+  const handleViewDonation = () => {
+    if (submissionResult?.donationId) {
+      navigate(`/donations/${submissionResult.donationId}`);
+    }
+  };
+
+  const handleCreateAnother = () => {
+    setFormData({});
+    setCurrentStep(0);
+    setStepValidation([false, false, false, false, true]);
+    setErrors({});
+    setSubmissionResult(null);
+    setUploadProgress({});
+  };
+
+  const handleReturnDashboard = () => {
+    navigate('/dashboard');
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => window.history.back()}
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
+        >
+          <ArrowLeft size={20} />
+          <span className="font-medium">Back</span>
+        </button>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          Create Donation
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Fill in the details to create a new donation request
+        </p>
+      </div>
+
+      {/* Stepper */}
+      <Stepper
+        steps={STEPS}
+        currentStep={currentStep}
+        onStepClick={handleStepClick}
+      />
+
+      {/* Form Card */}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8">
+        {/* Step Content */}
+        <div className="min-h-[400px]">
+          {currentStep === 0 && (
+            <Step1BasicInfo
+              formData={formData}
+              errors={errors}
+              onChange={handleFieldChange}
+              onValidationChange={handleStepValidation}
+            />
+          )}
+          {currentStep === 1 && (
+            <Step2DonationDetails
+              formData={formData}
+              errors={errors}
+              onChange={handleFieldChange}
+              onValidationChange={handleStepValidation}
+            />
+          )}
+          {currentStep === 2 && (
+            <Step3PickupInfo
+              formData={formData}
+              errors={errors}
+              onChange={handleFieldChange}
+              onValidationChange={handleStepValidation}
+            />
+          )}
+          {currentStep === 3 && (
+            <Step4Images
+              formData={formData}
+              errors={errors}
+              onChange={handleFieldChange}
+              onValidationChange={handleStepValidation}
+            />
+          )}
+          {currentStep === 4 && (
+            <Step5Review
+              formData={formData}
+              onEditStep={handleEditStep}
+            />
+          )}
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+          {/* Previous Button */}
+          <button
+            type="button"
+            onClick={handlePrevious}
+            disabled={currentStep === 0}
+            className={`
+              flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
+              ${currentStep === 0
+                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                : 'bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+              }
+            `}
+          >
+            <ArrowLeft size={18} />
+            Previous
+          </button>
+
+          {/* Save Indicator */}
+          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            {isSaving && <Save size={16} className="animate-spin" />}
+            {hasUnsavedChanges && !isSaving && <Save size={16} />}
+            {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Draft saved' : ''}
+          </div>
+
+          {/* Next/Submit Button */}
+          {currentStep < STEPS.length - 1 ? (
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={!canGoNext}
+              className={`
+                flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
+                ${canGoNext
+                  ? 'bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white shadow-sm hover:shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                }
+              `}
+            >
+              Next
+              <ArrowRight size={18} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+              className={`
+                flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
+                ${canSubmit
+                  ? 'bg-gradient-to-r from-green-400 via-green-600 to-green-900 hover:from-green-500 hover:via-green-700 hover:to-green-950 text-white shadow-sm hover:shadow-md'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                }
+              `}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                <>
+                  Submit Donation
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Clear Draft Button */}
+        {hasUnsavedChanges && (
+          <button
+            type="button"
+            onClick={handleClearDraft}
+            className="w-full mt-4 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+          >
+            Clear Saved Draft
+          </button>
+        )}
+      </div>
+
+      {/* Submission Result Modal */}
+      {submissionResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-[modalIn_0.25s_ease]">
+            {submissionResult.success ? (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
+                  <CheckCircle size={32} className="text-green-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Donation Created Successfully!
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  Your donation request has been submitted and is now visible to volunteers.
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleViewDonation}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    View Donation
+                  </button>
+                  <button
+                    onClick={handleCreateAnother}
+                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
+                  >
+                    Create Another Donation
+                  </button>
+                  <button
+                    onClick={handleReturnDashboard}
+                    className="w-full px-4 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Return to Dashboard
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
+                  <XCircle size={32} className="text-red-500" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                  Submission Failed
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                  {submissionResult.error || 'An error occurred while submitting your donation.'}
+                </p>
+                <div className="space-y-3">
+                  <button
+                    onClick={() => setSubmissionResult(null)}
+                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    onClick={handleReturnDashboard}
+                    className="w-full px-4 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Return to Dashboard
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Upload Progress Indicator */}
+      {isSubmitting && Object.keys(uploadProgress).length > 0 && (
+        <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border-2 border-gray-200 dark:border-gray-700 max-w-xs">
+          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+            Uploading images...
+          </p>
+          <div className="space-y-2">
+            {Object.entries(uploadProgress).map(([id, progress]) => (
+              <div key={id} className="flex items-center gap-2">
+                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-purple-500 transition-all duration-300"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <span className="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">
+                  {progress}%
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
