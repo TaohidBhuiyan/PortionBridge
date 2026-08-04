@@ -758,6 +758,48 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
         });
       }
     }
+
+    // Emit leaderboard update to public namespace for real-time landing page updates
+    const io = getIO();
+    if (io) {
+      const publicNamespace = io.of('/public');
+      if (publicNamespace) {
+        // Fetch updated leaderboard data
+        const [donors] = await pool.query(
+          `SELECT user_id, donor_name as name, profile_photo,
+                  total_donations as donations, completed_count,
+                  total_quantity_donated as items, average_rating
+           FROM top_donors
+           ORDER BY completed_count DESC
+           LIMIT 10`
+        );
+
+        const [volunteers] = await pool.query(
+          `SELECT user_id, volunteer_name as name, profile_photo,
+                  total_pickups as pickups, completed_count, average_rating
+           FROM top_volunteers
+           ORDER BY completed_count DESC
+           LIMIT 10`
+        );
+
+        const donorsWithKind = donors.map(d => ({
+          ...d,
+          area: 'Various areas',
+          kind: 'Mixed donations',
+        }));
+
+        const volunteersWithKind = volunteers.map(v => ({
+          ...v,
+          area: 'Various zones',
+          kind: 'Mixed pickups',
+        }));
+
+        publicNamespace.emit('leaderboard_updated', {
+          donors: donorsWithKind,
+          volunteers: volunteersWithKind,
+        });
+      }
+    }
     if (updatedDonation.volunteer_id) {
       await notificationService.deliverLatestForRelated(updatedDonation.volunteer_id, updatedDonation.id);
     }

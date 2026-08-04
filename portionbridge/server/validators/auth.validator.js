@@ -76,6 +76,18 @@ const loginValidationRules = [
     .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
 ];
 
+const googleLoginValidationRules = [
+  body('idToken')
+    .trim()
+    .notEmpty().withMessage('Google credential is required.'),
+
+  body('role')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isIn([USER_ROLES.DONOR, USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN])
+    .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
+];
+
 const forgotPasswordValidationRules = [
   body('email')
     .trim()
@@ -86,8 +98,8 @@ const forgotPasswordValidationRules = [
 
 const resetPasswordValidationRules = [
   body('token')
-    .trim()
-    .notEmpty().withMessage('Reset token is required.'),
+    .optional({ checkFalsy: true })
+    .trim(),
 
   passwordPolicyChain('newPassword'),
 ];
@@ -109,6 +121,7 @@ const resendVerificationValidationRules = [
 module.exports = {
   registerValidationRules,
   loginValidationRules,
+  googleLoginValidationRules,
   forgotPasswordValidationRules,
   resetPasswordValidationRules,
   verifyEmailValidationRules,

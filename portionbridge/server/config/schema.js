@@ -15,7 +15,7 @@ const REQUIRED_TABLES = [
 ];
 
 const REQUIRED_COLUMNS = {
-  users: ['email_verified', 'failed_login_attempts', 'lock_until', 'last_login_at', 'last_login_ip', 'last_user_agent', 'date_of_birth', 'gender', 'phone_verified'],
+  users: ['email_verified', 'failed_login_attempts', 'lock_until', 'last_login_at', 'last_login_ip', 'last_user_agent', 'date_of_birth', 'gender', 'phone_verified', 'provider', 'google_id', 'profile_picture'],
   donation_requests: ['accepted_at', 'completed_at', 'scheduled_at'],
   reports: ['details'],
 };

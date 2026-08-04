@@ -35,7 +35,11 @@ function validateEnvironment() {
       errors.push('CLIENT_URL must use https:// in production.');
     }
 
-    // Email configuration is required in production
+    // Google OAuth and email configuration are required in production
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      errors.push('GOOGLE_CLIENT_ID is required in production for Google sign-in.');
+    }
+
     ['EMAIL_HOST', 'EMAIL_USER', 'EMAIL_PASSWORD'].forEach((name) => {
       if (!process.env[name]) {
         errors.push(`${name} is required in production for email delivery.`);

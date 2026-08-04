@@ -6,6 +6,7 @@ const {
   verifyEmail,
   resendVerification,
   login,
+  googleLogin,
   refreshToken,
   logout,
   logoutAll,
@@ -19,6 +20,7 @@ const { uploadProfilePhotoMiddleware } = require('../../middleware/upload.middle
 const {
   registerValidationRules,
   loginValidationRules,
+  googleLoginValidationRules,
   forgotPasswordValidationRules,
   resetPasswordValidationRules,
   verifyEmailValidationRules,
@@ -28,7 +30,7 @@ const {
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { verifyCsrfToken } = require('../../middleware/csrf.middleware');
-const { loginLimiter, registerLimiter } = require('../../middleware/rateLimiter');
+const { loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../../middleware/rateLimiter');
 const { USER_ROLES } = require('../../constants');
 
 // --- Public routes ---
@@ -36,8 +38,10 @@ router.post('/register', registerLimiter, uploadProfilePhotoMiddleware, register
 router.post('/verify-email', verifyEmailValidationRules, validateRequest, verifyEmail);
 router.post('/resend-verification', resendVerificationValidationRules, validateRequest, resendVerification);
 router.post('/login', loginLimiter, loginValidationRules, validateRequest, login);
-router.post('/forgot-password', forgotPasswordValidationRules, validateRequest, forgotPassword);
+router.post('/google-login', googleLoginValidationRules, validateRequest, googleLogin);
+router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidationRules, validateRequest, forgotPassword);
 router.post('/reset-password', resetPasswordValidationRules, validateRequest, resetPassword);
+router.post('/reset-password/:token', resetPasswordValidationRules, validateRequest, resetPassword);
 
 // --- Routes relying on the httpOnly refresh-token cookie: CSRF-protected ---
 router.post('/refresh-token', verifyCsrfToken, refreshToken);

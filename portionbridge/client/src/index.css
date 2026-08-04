@@ -61,6 +61,26 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(25deg); }
+}
+
+@keyframes pulseGlowGold {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.08); }
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: -120% 0; }
+  100% { background-position: 220% 0; }
+}
+
+@keyframes rowIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;

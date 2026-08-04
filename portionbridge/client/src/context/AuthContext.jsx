@@ -139,6 +139,23 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const googleLogin = async (idToken, initialRole) => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/google-login`, {
+        idToken,
+        role: initialRole,
+      });
+      const { accessToken, user: userData } = res.data.data;
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+      return { success: true, user: userData };
+    } catch (error) {
+      const message = error.response?.data?.message || "Google login failed.";
+      return { success: false, error: message };
+    }
+  };
+
   /**
    * Verify email using existing backend API
    * @param {string} token - Verification token
@@ -159,6 +176,7 @@ export function AuthProvider({ children }) {
     login,
     logout,
     register,
+    googleLogin,
     verifyEmail,
     isAuthenticated: !!user,
     userRole: user?.role,

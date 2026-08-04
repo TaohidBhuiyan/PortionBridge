@@ -145,6 +145,33 @@ const login = asyncHandler(async (req, res) => {
 });
 
 /**
+ * POST /api/v1/auth/google-login
+ */
+const googleLogin = asyncHandler(async (req, res) => {
+  const { idToken, role } = req.body;
+  const ipAddress = getClientIp(req);
+  const userAgent = getUserAgent(req);
+
+  const { user, accessToken, rawRefreshToken } = await authService.loginWithGoogle({
+    idToken,
+    role,
+    ipAddress,
+    userAgent,
+  });
+
+  attachSessionCookies(res, rawRefreshToken);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Logged in successfully.',
+    data: {
+      user: sanitizeUser(user),
+      accessToken,
+    },
+  });
+});
+
+/**
  * POST /api/v1/auth/refresh-token
  * Requires CSRF verification (see routes file) since it depends on the
  * httpOnly refresh-token cookie being sent automatically by the browser.
@@ -231,7 +258,8 @@ const forgotPassword = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/reset-password
  */
 const resetPassword = asyncHandler(async (req, res) => {
-  const { token, newPassword } = req.body;
+  const token = req.params.token || req.body.token;
+  const { newPassword } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = getUserAgent(req);
 
@@ -279,6 +307,7 @@ module.exports = {
   verifyEmail,
   resendVerification,
   login,
+  googleLogin,
   refreshToken,
   logout,
   logoutAll,

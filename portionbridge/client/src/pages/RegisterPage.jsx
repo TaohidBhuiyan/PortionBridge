@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, User, Mail, Phone, Lock, Eye, EyeOff, HandHeart, Users, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
 
 /**
  * RegisterPage - Integrated with existing AuthContext and backend API
@@ -24,7 +25,7 @@ export function RegisterPage() {
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
   
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const getPasswordStrength = () => {
@@ -148,6 +149,32 @@ export function RegisterPage() {
 
   const handleLoginClick = () => {
     navigate("/login");
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setError("");
+    setFieldErrors({});
+    setLoading(true);
+    try {
+      const result = await googleLogin(credential, role);
+      if (!result.success) {
+        setError(result.error || "Google signup failed.");
+        return;
+      }
+      if (result.user) {
+        switch (result.user.role) {
+          case 'donor': navigate('/donor/dashboard'); break;
+          case 'volunteer': navigate('/volunteer/dashboard'); break;
+          case 'leader': navigate('/leader/dashboard'); break;
+          case 'admin': navigate('/admin/dashboard'); break;
+          default: navigate('/');
+        }
+      }
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -450,20 +477,34 @@ export function RegisterPage() {
             )}
           </div>
 
-          {/* Submit button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full mt-3 py-3 rounded-full font-semibold text-white flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            style={{
-              background: "linear-gradient(90deg, #a855f7 0%, #7c3aed 100%)",
-            }}
-          >
-            <span>{loading ? "Creating Account..." : "Create Account"}</span>
-            <span className="w-4 h-4 flex items-center justify-center">
-              {!loading && <ArrowRight className="w-4 h-4" />}
-            </span>
-          </button>
+          <div className="mt-3 space-y-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-full font-semibold text-white flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              style={{
+                background: "linear-gradient(90deg, #a855f7 0%, #7c3aed 100%)",
+              }}
+            >
+              <span>{loading ? "Creating Account..." : "Create Account"}</span>
+              <span className="w-4 h-4 flex items-center justify-center">
+                {!loading && <ArrowRight className="w-4 h-4" />}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-3 my-1">
+              <div className="h-px flex-1 bg-white/20" />
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-purple-100/80">OR</span>
+              <div className="h-px flex-1 bg-white/20" />
+            </div>
+
+            <GoogleAuthButton
+              label="Continue with Google"
+              disabled={loading}
+              onSuccess={handleGoogleSuccess}
+              onError={(message) => setError(message)}
+            />
+          </div>
         </form>
 
         {/* Login link */}

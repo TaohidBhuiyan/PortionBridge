@@ -7,7 +7,7 @@ const { pool } = require('../config/db');
  */
 
 const BASE_SAFE_COLUMNS = `
-  id, name, email, role, phone, address, profile_photo,
+  id, name, email, role, phone, address, profile_photo, provider, google_id, profile_picture,
   is_banned, is_deleted, email_verified, phone_verified, failed_login_attempts, lock_until,
   last_login_at, last_login_ip, last_user_agent, date_of_birth, gender, created_at, updated_at
 `;
@@ -60,10 +60,10 @@ async function emailExists(email) {
  * (the column default) — they cannot log in until verified. Returns the
  * newly created user's auto-increment ID.
  */
-async function createUser({ name, email, hashedPassword, role, phone, address, profilePhotoPath }) {
+async function createUser({ name, email, hashedPassword, role, phone, address, profilePhotoPath, provider, googleId, profilePicture, emailVerified }) {
   const [result] = await pool.query(
-    `INSERT INTO users (name, email, password, role, phone, address, profile_photo)
-     VALUES (:name, :email, :password, :role, :phone, :address, :profilePhotoPath)`,
+    `INSERT INTO users (name, email, password, role, phone, address, profile_photo, provider, google_id, profile_picture, email_verified)
+     VALUES (:name, :email, :password, :role, :phone, :address, :profilePhotoPath, :provider, :googleId, :profilePicture, :emailVerified)`,
     {
       name,
       email,
@@ -72,6 +72,10 @@ async function createUser({ name, email, hashedPassword, role, phone, address, p
       phone: phone || null,
       address: address || null,
       profilePhotoPath: profilePhotoPath || null,
+      provider: provider || null,
+      googleId: googleId || null,
+      profilePicture: profilePicture || null,
+      emailVerified: emailVerified ? 1 : 0,
     }
   );
   return result.insertId;
@@ -94,6 +98,18 @@ async function markEmailVerified(userId) {
   await pool.query(
     `UPDATE users SET email_verified = 1 WHERE id = :id`,
     { id: userId }
+  );
+}
+
+async function linkGoogleAccount(userId, { googleId, profilePicture, emailVerified }) {
+  await pool.query(
+    `UPDATE users
+     SET provider = COALESCE(provider, 'google'),
+         google_id = :googleId,
+         profile_picture = COALESCE(profile_picture, :profilePicture),
+         email_verified = CASE WHEN :emailVerified THEN 1 ELSE email_verified END
+     WHERE id = :id`,
+    { id: userId, googleId, profilePicture: profilePicture || null, emailVerified: emailVerified ? 1 : 0 }
   );
 }
 
@@ -258,6 +274,7 @@ module.exports = {
   createUser,
   updatePassword,
   markEmailVerified,
+  linkGoogleAccount,
   registerFailedLoginAttempt,
   clearFailedLoginAttempts,
   updateLastLogin,

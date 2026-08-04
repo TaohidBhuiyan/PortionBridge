@@ -31,6 +31,15 @@ const migrations = [
       ['index', 'reports', 'uq_reports_reporter_donation'],
     ],
   },
+  {
+    id: '012_google_auth_enhancements',
+    file: 'migration_012_google_auth_enhancements.sql',
+    checks: [
+      ['column', 'users', 'provider'],
+      ['column', 'users', 'google_id'],
+      ['column', 'users', 'profile_picture'],
+    ],
+  },
 ];
 
 async function checkRequirement(connection, [type, table, value, extra]) {

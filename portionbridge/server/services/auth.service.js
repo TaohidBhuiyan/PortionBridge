@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { OAuth2Client } = require('google-auth-library');
 const AppError = require('../utils/AppError');
 const { hashPassword, comparePassword } = require('../utils/password');
 const { generateOpaqueToken, hashToken } = require('../utils/token');
@@ -24,6 +25,25 @@ const auditService = require('./audit.service');
  * self-registered). Sends an email verification link; the account cannot
  * log in until that link is used.
  */
+async function verifyGoogleToken(idToken) {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new AppError('Google OAuth is not configured.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  const ticket = await client.verifyIdToken({
+    idToken,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+  if (!payload?.email || !payload.email_verified) {
+    throw new AppError('Google account email is not verified.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  return payload;
+}
+
 async function register({ name, email, password, role, phone, address, profilePhotoPath, ipAddress, userAgent }) {
   const alreadyExists = await userModel.emailExists(email);
   if (alreadyExists) {
@@ -82,6 +102,81 @@ async function register({ name, email, password, role, phone, address, profilePh
 /**
  * Verifies a user's email using the raw token from the verification link.
  */
+async function loginWithGoogle({ idToken, role, ipAddress, userAgent }) {
+  const googlePayload = await verifyGoogleToken(idToken);
+  const email = googlePayload.email.toLowerCase();
+  const googleId = googlePayload.sub;
+  const profilePicture = googlePayload.picture || null;
+  const assignedRole = role || USER_ROLES.DONOR;
+
+  let user = await userModel.findByEmail(email);
+
+  if (!user) {
+    const randomPassword = generateOpaqueToken(32);
+    const hashedPassword = await hashPassword(randomPassword);
+    const newUserId = await userModel.createUser({
+      name: googlePayload.name || email.split('@')[0],
+      email,
+      hashedPassword,
+      role: assignedRole,
+      phone: null,
+      address: null,
+      profilePhotoPath: profilePicture,
+      provider: 'google',
+      googleId,
+      profilePicture,
+      emailVerified: true,
+    });
+
+    await passwordHistoryModel.addPasswordToHistory(newUserId, hashedPassword);
+
+    await auditService.record({
+      userId: newUserId,
+      action: AUDIT_ACTIONS.REGISTER,
+      ipAddress,
+      userAgent,
+      metadata: { email, role: assignedRole, provider: 'google' },
+    });
+
+    user = await userModel.findById(newUserId);
+  } else {
+    await userModel.linkGoogleAccount(user.id, {
+      googleId,
+      profilePicture,
+      emailVerified: true,
+    });
+    user = await userModel.findById(user.id);
+  }
+
+  if (user.is_banned) {
+    throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  if (user.lock_until && new Date(user.lock_until).getTime() > Date.now()) {
+    throw new AppError('Account temporarily locked due to repeated failed login attempts. Please try again later.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  if (!user.email_verified) {
+    await userModel.markEmailVerified(user.id);
+  }
+
+  await userModel.clearFailedLoginAttempts(user.id);
+  await userModel.updateLastLogin(user.id, { ip: ipAddress, userAgent });
+
+  const session = await tokenService.issueNewSession(user, { ipAddress, userAgent });
+
+  await auditService.record({
+    userId: user.id,
+    action: AUDIT_ACTIONS.LOGIN_SUCCESS,
+    ipAddress,
+    userAgent,
+    metadata: { provider: 'google' },
+  });
+
+  const freshUser = await userModel.findById(user.id);
+  return { user: freshUser, ...session };
+}
+
 async function verifyEmail(rawToken) {
   const tokenHash = hashToken(rawToken);
   const record = await emailVerificationModel.findValidToken(tokenHash);
@@ -433,6 +528,7 @@ async function resetPassword({ rawToken, newPassword, ipAddress, userAgent }) {
 
 module.exports = {
   register,
+  loginWithGoogle,
   verifyEmail,
   resendVerification,
   login,

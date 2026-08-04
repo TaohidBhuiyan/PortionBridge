@@ -55,4 +55,17 @@ const registerLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, loginLimiter, registerLimiter };
+const forgotPasswordLimiter = rateLimit({
+  windowMs: AUTH.FORGOT_PASSWORD_RATE_LIMIT_WINDOW_MS,
+  max: AUTH.FORGOT_PASSWORD_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Too many password reset requests. Please try again later.',
+    });
+  },
+});
+
+module.exports = { apiLimiter, loginLimiter, registerLimiter, forgotPasswordLimiter };
