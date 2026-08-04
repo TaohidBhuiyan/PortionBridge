@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Save, AlertTriangle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Stepper } from '../components/donation/Stepper';
 import { Step1BasicInfo } from '../components/donation/Step1BasicInfo';
@@ -12,14 +12,19 @@ import { donationApi, transformFormDataToApi } from '../services/donationApi';
 /**
  * DonationFormPage - Multi-step donation form
  * Supports Food and Clothes donations with validation and auto-save
+ * Supports both create and edit modes
  */
 export function DonationFormPage() {
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('edit');
+  const isEditMode = !!editId;
+
   const STEPS = [
     { id: 'basic', title: 'Basic Information' },
     { id: 'details', title: 'Donation Details' },
     { id: 'pickup', title: 'Pickup Information' },
     { id: 'images', title: 'Images' },
-    { id: 'review', title: 'Review & Submit' },
+    { id: 'review', title: isEditMode ? 'Review & Update' : 'Review & Submit' },
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -31,25 +36,87 @@ export function DonationFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [submissionResult, setSubmissionResult] = useState(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Load saved form data from localStorage on mount
+  // Load donation data if in edit mode
   useEffect(() => {
-    const savedData = localStorage.getItem('donationFormDraft');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        setFormData(parsed);
-        setHasUnsavedChanges(true);
-      } catch (e) {
-        console.error('Failed to load saved form data:', e);
+    if (isEditMode && editId) {
+      loadDonationForEdit();
+    } else {
+      // Load saved form data from localStorage on mount (only for create mode)
+      const savedData = localStorage.getItem('donationFormDraft');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData(parsed);
+          setHasUnsavedChanges(true);
+        } catch (e) {
+          console.error('Failed to load saved form data:', e);
+        }
       }
     }
-  }, []);
+  }, [isEditMode, editId]);
 
-  // Auto-save form data to localStorage
+  const loadDonationForEdit = async () => {
+    setLoading(true);
+    try {
+      const result = await donationApi.getDonationDetails(editId);
+      if (result.success) {
+        const donation = result.data.donation;
+        // Transform API data to form format
+        const formInitialData = {
+          title: donation.title,
+          category: donation.category,
+          description: donation.description,
+          quantity: donation.quantity,
+          quantityUnit: donation.quantity_unit,
+          numberOfServings: donation.number_of_servings,
+          pickupDate: donation.pickup_date,
+          pickupTimeSlot: donation.pickup_time_slot,
+          expiryDate: donation.expiry_date,
+          contactPhone: donation.contact_phone,
+          specialInstructions: donation.special_instructions,
+          // Food specific
+          foodType: donation.food_type,
+          foodName: donation.food_name,
+          ingredients: donation.ingredients,
+          allergens: donation.allergens,
+          storageRequirement: donation.storage_requirement,
+          isVegetarian: donation.is_vegetarian,
+          isHalal: donation.is_halal,
+          // Clothes specific
+          clothingCategory: donation.clothing_category,
+          gender: donation.gender,
+          ageGroup: donation.age_group,
+          itemCondition: donation.item_condition,
+          brand: donation.brand,
+          size: donation.size,
+          color: donation.color,
+          season: donation.season,
+          additionalNotes: donation.additional_notes,
+          // Address
+          pickupAddress: donation.pickup_address_details,
+          // Images
+          images: donation.images || [],
+        };
+        setFormData(formInitialData);
+        setStepValidation([true, true, true, true, true]);
+      } else {
+        alert(result.error || 'Failed to load donation');
+        navigate('/donor/my-donations');
+      }
+    } catch (err) {
+      alert('Failed to load donation. Please try again.');
+      navigate('/donor/my-donations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Auto-save form data to localStorage (only for create mode)
   useEffect(() => {
-    if (hasUnsavedChanges) {
+    if (hasUnsavedChanges && !isEditMode) {
       const saveTimer = setTimeout(() => {
         localStorage.setItem('donationFormDraft', JSON.stringify(formData));
         setIsSaving(true);
@@ -58,7 +125,7 @@ export function DonationFormPage() {
 
       return () => clearTimeout(saveTimer);
     }
-  }, [formData, hasUnsavedChanges]);
+  }, [formData, hasUnsavedChanges, isEditMode]);
 
   // Warn before leaving page with unsaved changes
   useEffect(() => {
@@ -240,58 +307,86 @@ export function DonationFormPage() {
       // Transform form data to API format
       const apiData = transformFormDataToApi(formData);
 
-      // Create donation
-      const createResult = await donationApi.createDonation(apiData);
+      if (isEditMode) {
+        // Update existing donation
+        const updateResult = await donationApi.updateDonation(editId, apiData);
 
-      if (!createResult.success) {
-        // Handle validation errors from backend
-        if (createResult.errors) {
-          // Transform backend errors to form errors
-          const backendErrors = {};
-          Object.keys(createResult.errors).forEach(field => {
-            backendErrors[field] = createResult.errors[field].join(', ');
-          });
-          setErrors(backendErrors);
-        } else {
-          setErrors({ submit: createResult.error });
+        if (!updateResult.success) {
+          // Handle validation errors from backend
+          if (updateResult.errors) {
+            const backendErrors = {};
+            Object.keys(updateResult.errors).forEach(field => {
+              backendErrors[field] = updateResult.errors[field].join(', ');
+            });
+            setErrors(backendErrors);
+          } else {
+            setErrors({ submit: updateResult.error });
+          }
+          setIsSubmitting(false);
+          return;
         }
-        setIsSubmitting(false);
-        return;
-      }
 
-      const donationId = createResult.data.donation.id;
-
-      // Upload images if any
-      if (formData.images && formData.images.length > 0) {
-        const uploadPromises = formData.images.map(async (image, index) => {
-          const progressKey = image.id;
-          setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
-
-          const uploadResult = await donationApi.uploadDonationImage(
-            donationId,
-            image.file,
-            (percent) => {
-              setUploadProgress(prev => ({ ...prev, [progressKey]: percent }));
-            }
-          );
-
-          setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
-          return uploadResult;
+        // Show success result
+        setSubmissionResult({
+          success: true,
+          donationId: editId,
+          donation: updateResult.data.donation,
+          isUpdate: true,
         });
+      } else {
+        // Create new donation
+        const createResult = await donationApi.createDonation(apiData);
 
-        await Promise.all(uploadPromises);
+        if (!createResult.success) {
+          // Handle validation errors from backend
+          if (createResult.errors) {
+            const backendErrors = {};
+            Object.keys(createResult.errors).forEach(field => {
+              backendErrors[field] = createResult.errors[field].join(', ');
+            });
+            setErrors(backendErrors);
+          } else {
+            setErrors({ submit: createResult.error });
+          }
+          setIsSubmitting(false);
+          return;
+        }
+
+        const donationId = createResult.data.donation.id;
+
+        // Upload images if any
+        if (formData.images && formData.images.length > 0) {
+          const uploadPromises = formData.images.map(async (image, index) => {
+            const progressKey = image.id;
+            setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
+
+            const uploadResult = await donationApi.uploadDonationImage(
+              donationId,
+              image.file,
+              (percent) => {
+                setUploadProgress(prev => ({ ...prev, [progressKey]: percent }));
+              }
+            );
+
+            setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
+            return uploadResult;
+          });
+
+          await Promise.all(uploadPromises);
+        }
+
+        // Clear draft on successful submission
+        localStorage.removeItem('donationFormDraft');
+        setHasUnsavedChanges(false);
+
+        // Show success result
+        setSubmissionResult({
+          success: true,
+          donationId,
+          donation: createResult.data.donation,
+          isUpdate: false,
+        });
       }
-
-      // Clear draft on successful submission
-      localStorage.removeItem('donationFormDraft');
-      setHasUnsavedChanges(false);
-
-      // Show success result
-      setSubmissionResult({
-        success: true,
-        donationId,
-        donation: createResult.data.donation,
-      });
     } catch (error) {
       setErrors({ submit: 'An unexpected error occurred. Please try again.' });
       setSubmissionResult({ success: false, error: error.message });
@@ -335,6 +430,16 @@ export function DonationFormPage() {
     navigate('/dashboard');
   };
 
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -347,10 +452,13 @@ export function DonationFormPage() {
           <span className="font-medium">Back</span>
         </button>
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-          Create Donation
+          {isEditMode ? 'Edit Donation' : 'Create Donation'}
         </h1>
         <p className="text-gray-600 dark:text-gray-400">
-          Fill in the details to create a new donation request
+          {isEditMode 
+            ? 'Update the details of your donation request' 
+            : 'Fill in the details to create a new donation request'
+          }
         </p>
       </div>
 
@@ -425,11 +533,13 @@ export function DonationFormPage() {
           </button>
 
           {/* Save Indicator */}
-          <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-            {isSaving && <Save size={16} className="animate-spin" />}
-            {hasUnsavedChanges && !isSaving && <Save size={16} />}
-            {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Draft saved' : ''}
-          </div>
+          {!isEditMode && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+              {isSaving && <Save size={16} className="animate-spin" />}
+              {hasUnsavedChanges && !isSaving && <Save size={16} />}
+              {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Draft saved' : ''}
+            </div>
+          )}
 
           {/* Next/Submit Button */}
           {currentStep < STEPS.length - 1 ? (
@@ -464,11 +574,11 @@ export function DonationFormPage() {
               {isSubmitting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  Submitting...
+                  {isEditMode ? 'Updating...' : 'Submitting...'}
                 </>
               ) : (
                 <>
-                  Submit Donation
+                  {isEditMode ? 'Update Donation' : 'Submit Donation'}
                   <ArrowRight size={18} />
                 </>
               )}
@@ -477,7 +587,7 @@ export function DonationFormPage() {
         </div>
 
         {/* Clear Draft Button */}
-        {hasUnsavedChanges && (
+        {!isEditMode && hasUnsavedChanges && (
           <button
             type="button"
             onClick={handleClearDraft}
@@ -498,10 +608,13 @@ export function DonationFormPage() {
                   <CheckCircle size={32} className="text-green-500" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  Donation Created Successfully!
+                  {submissionResult.isUpdate ? 'Donation Updated Successfully!' : 'Donation Created Successfully!'}
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Your donation request has been submitted and is now visible to volunteers.
+                  {submissionResult.isUpdate 
+                    ? 'Your donation request has been updated successfully.'
+                    : 'Your donation request has been submitted and is now visible to volunteers.'
+                  }
                 </p>
                 <div className="space-y-3">
                   <button
@@ -510,12 +623,14 @@ export function DonationFormPage() {
                   >
                     View Donation
                   </button>
-                  <button
-                    onClick={handleCreateAnother}
-                    className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
-                  >
-                    Create Another Donation
-                  </button>
+                  {!submissionResult.isUpdate && (
+                    <button
+                      onClick={handleCreateAnother}
+                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
+                    >
+                      Create Another Donation
+                    </button>
+                  )}
                   <button
                     onClick={handleReturnDashboard}
                     className="w-full px-4 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"

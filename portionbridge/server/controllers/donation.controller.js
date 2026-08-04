@@ -171,6 +171,9 @@ const updateDonation = asyncHandler(async (req, res) => {
     images,
     additionalNotes,
     savedAddressId,
+  }, {
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
   });
 
   return success(res, {
@@ -184,7 +187,10 @@ const updateDonation = asyncHandler(async (req, res) => {
  * DELETE /api/v1/donations/:id  (soft delete / cancel)
  */
 const cancelDonation = asyncHandler(async (req, res) => {
-  await donationService.cancelDonation(req.params.id, req.user.id);
+  await donationService.cancelDonation(req.params.id, req.user.id, {
+    ipAddress: req.ip,
+    userAgent: req.get('user-agent'),
+  });
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,

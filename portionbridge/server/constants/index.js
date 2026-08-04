@@ -124,6 +124,11 @@ const AUDIT_ACTIONS = {
   TOKEN_REFRESHED: 'token_refreshed',
   REFRESH_TOKEN_REUSE_DETECTED: 'refresh_token_reuse_detected',
 
+  // --- Module 8: Donation lifecycle ---
+  DONATION_CREATED: 'donation_created',
+  DONATION_UPDATED: 'donation_updated',
+  DONATION_CANCELLED: 'donation_cancelled',
+
   // --- Module 9: live status flow, ratings, reports ---
   DONATION_ON_THE_WAY: 'donation_on_the_way',
   DONATION_PICKED_UP: 'donation_picked_up',

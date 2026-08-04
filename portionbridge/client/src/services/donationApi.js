@@ -251,6 +251,36 @@ export const donationApi = {
       return { success: false, error: message };
     }
   },
+
+  /**
+   * Update a donation
+   * @param {number} donationId - Donation ID
+   * @param {Object} updates - Fields to update
+   * @returns {Promise<Object>} Update result
+   */
+  updateDonation: async (donationId, updates) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      
+      const response = await axios.patch(
+        `${API_BASE}/donations/${donationId}`,
+        updates,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update donation';
+      return { success: false, error: message };
+    }
+  },
 };
 
 /**

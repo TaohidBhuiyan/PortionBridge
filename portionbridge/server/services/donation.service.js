@@ -255,7 +255,7 @@ async function createDonation(donorId, data) {
  * @param {Object} updates - Fields to update (camelCase)
  * @returns {Promise<Object>} The updated donation object
  */
-async function updateDonation(donationId, donorId, updates) {
+async function updateDonation(donationId, donorId, updates, { ipAddress, userAgent } = {}) {
   const fields = mapToSnakeCase(updates);
 
   const connection = await pool.getConnection();
@@ -292,6 +292,15 @@ async function updateDonation(donationId, donorId, updates) {
     connection.release();
   }
 
+  // Audit logging after commit (non-transactional)
+  await auditService.record({
+    userId: donorId,
+    action: AUDIT_ACTIONS.DONATION_UPDATED,
+    ipAddress,
+    userAgent,
+    metadata: { donationId, updatedFields: Object.keys(fields) },
+  });
+
   return updatedDonation;
 }
 
@@ -305,7 +314,7 @@ async function updateDonation(donationId, donorId, updates) {
  * @param {number} donorId - ID of the donor requesting cancellation
  * @returns {Promise<void>}
  */
-async function cancelDonation(donationId, donorId) {
+async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}) {
   const connection = await pool.getConnection();
 
   try {
@@ -329,6 +338,15 @@ async function cancelDonation(donationId, donorId) {
   } finally {
     connection.release();
   }
+
+  // Audit logging after commit (non-transactional)
+  await auditService.record({
+    userId: donorId,
+    action: AUDIT_ACTIONS.DONATION_CANCELLED,
+    ipAddress,
+    userAgent,
+    metadata: { donationId },
+  });
 }
 
 /**

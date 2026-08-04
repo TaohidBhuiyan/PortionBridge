@@ -22,6 +22,7 @@ import { ImageGallery } from '../components/donation/ImageGallery';
 import { VolunteerCard } from '../components/donation/VolunteerCard';
 import { ActivityTimeline } from '../components/donation/ActivityTimeline';
 import { ErrorState } from '../components/dashboard/ErrorState';
+import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
 
 /**
  * DonationDetailsPage - Central tracking page for a donation
@@ -34,6 +35,7 @@ export function DonationDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   useEffect(() => {
     loadDonationDetails();
@@ -59,10 +61,11 @@ export function DonationDetailsPage() {
   };
 
   const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel this donation?')) {
-      return;
-    }
+    setShowCancelModal(true);
+  };
 
+  const confirmCancel = async () => {
+    setShowCancelModal(false);
     setCancelling(true);
 
     try {
@@ -352,13 +355,13 @@ export function DonationDetailsPage() {
                   {size && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 dark:text-gray-400 w-24">Size:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{size}</span>
+                      <span className="text-gray-700 dark:text-gray-300 capitalize">{size}</span>
                     </div>
                   )}
                   {color && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 dark:text-gray-400 w-24">Color:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{color}</span>
+                      <span className="text-gray-700 dark:text-gray-300">{color}</span>
                     </div>
                   )}
                   {season && (
@@ -373,7 +376,7 @@ export function DonationDetailsPage() {
               {special_instructions && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Special Instructions:</p>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{special_instructions}</p>
+                  <p className="text-gray-700 dark:text-gray-300">{special_instructions}</p>
                 </div>
               )}
             </div>
@@ -382,63 +385,49 @@ export function DonationDetailsPage() {
           {/* Pickup Information */}
           <SectionCard title="Pickup Information">
             <div className="space-y-4">
-              {pickup_address_details && (
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Address</p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {typeof pickup_address_details === 'string' 
-                        ? pickup_address_details 
-                        : pickup_address_details.full_address || 'Address not specified'}
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {pickup_address_details?.fullAddress || 'Address not specified'}
+                  </p>
+                  {pickup_address_details && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      {pickup_address_details.area}, {pickup_address_details.district}, {pickup_address_details.division}
                     </p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex items-center gap-3">
-                <Calendar size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Pickup Date</p>
-                  <p className="text-gray-700 dark:text-gray-300">{formatDate(pickup_date)}</p>
+                  )}
                 </div>
               </div>
 
-              {pickup_time_slot && (
-                <div className="flex items-center gap-3">
-                  <ClockIcon size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Time Slot</p>
-                    <p className="text-gray-700 dark:text-gray-300">{pickup_time_slot}</p>
-                  </div>
+              <div className="flex items-center gap-3">
+                <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {pickup_date ? formatDate(pickup_date) : 'Date not specified'}
+                  </p>
+                  {pickup_time_slot && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      Time slot: {pickup_time_slot}
+                    </p>
+                  )}
                 </div>
-              )}
+              </div>
 
               {contact_phone && (
                 <div className="flex items-center gap-3">
-                  <Phone size={18} className="text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Contact Phone</p>
-                    <p className="text-gray-700 dark:text-gray-300">{contact_phone}</p>
-                  </div>
+                  <Phone className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                  <p className="text-gray-700 dark:text-gray-300">{contact_phone}</p>
                 </div>
               )}
-
-              {/* Map Placeholder */}
-              <div className="mt-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600">
-                <div className="text-center">
-                  <MapPin size={32} className="mx-auto text-gray-400 dark:text-gray-500 mb-2" />
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Map integration coming soon
-                  </p>
-                </div>
-              </div>
             </div>
           </SectionCard>
 
           {/* Images */}
-          <SectionCard title="Images">
-            <ImageGallery images={images} coverImage={photo} />
+          <SectionCard title="Donation Images">
+            <ImageGallery 
+              coverImage={photo} 
+              images={images || []} 
+            />
           </SectionCard>
 
           {/* Activity History */}
@@ -462,28 +451,35 @@ export function DonationDetailsPage() {
           {/* Related Information */}
           <SectionCard title="Related Information">
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Category</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">{category}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Category</span>
+                <span className="text-gray-700 dark:text-gray-300 capitalize">{category}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Status</span>
-                <StatusBadge status={status} size="small" />
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Status</span>
+                <span className="text-gray-700 dark:text-gray-300 capitalize">{status.replace('_', ' ')}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Created</span>
-                <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(created_at)}</span>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Created</span>
+                <span className="text-gray-700 dark:text-gray-300">{formatDate(created_at)}</span>
               </div>
-              {updated_at && (
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">Updated</span>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{formatDate(updated_at)}</span>
-                </div>
-              )}
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Last Updated</span>
+                <span className="text-gray-700 dark:text-gray-300">{formatDate(updated_at)}</span>
+              </div>
             </div>
           </SectionCard>
         </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      <CancelConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={confirmCancel}
+        donationTitle={title}
+        isLoading={cancelling}
+      />
     </div>
   );
 }
