@@ -240,9 +240,11 @@ async function updatePreferences(userId, preferences) {
 /**
  * Gets donor statistics dynamically from donation data.
  * @param {number} userId - User ID
+ * @param {Object} options - Query options
+ * @param {string} [options.timeRange] - Time range filter (this_month, last_3_months, last_6_months, all_time)
  * @returns {Promise<Object>} Donor statistics
  */
-async function getDonationStatistics(userId) {
+async function getDonationStatistics(userId, options = {}) {
   const user = await userModel.findById(userId);
   if (!user) {
     throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
@@ -255,18 +257,109 @@ async function getDonationStatistics(userId) {
   // Get all donations for the donor
   const donations = await donationModel.findByDonorId(userId);
 
-  // Calculate statistics dynamically
-  const statistics = {
-    totalDonations: donations.length,
-    foodDonations: donations.filter(d => d.category === DONATION_CATEGORY.FOOD).length,
-    clothingDonations: donations.filter(d => d.category === DONATION_CATEGORY.CLOTHES).length,
-    completedDonations: donations.filter(d => d.status === DONATION_STATUS.COMPLETED).length,
-    pendingDonations: donations.filter(d => d.status === DONATION_STATUS.PENDING).length,
-    cancelledDonations: donations.filter(d => d.is_deleted === 1).length,
-    totalSuccessfulPickups: donations.filter(d => d.status === DONATION_STATUS.COMPLETED && d.is_deleted === 0).length,
-  };
+  // Filter by time range if specified
+  let filteredDonations = donations;
+  if (options.timeRange && options.timeRange !== 'all_time') {
+    const now = new Date();
+    const cutoffDate = new Date();
 
-  return statistics;
+    switch (options.timeRange) {
+      case 'this_month':
+        cutoffDate.setDate(1); // First day of current month
+        break;
+      case 'last_3_months':
+        cutoffDate.setMonth(now.getMonth() - 3);
+        break;
+      case 'last_6_months':
+        cutoffDate.setMonth(now.getMonth() - 6);
+        break;
+      default:
+        break;
+    }
+
+    filteredDonations = donations.filter(d => new Date(d.created_at) >= cutoffDate);
+  }
+
+  // Calculate statistics dynamically
+  const totalDonations = filteredDonations.length;
+  const foodDonations = filteredDonations.filter(d => d.category === DONATION_CATEGORY.FOOD).length;
+  const clothingDonations = filteredDonations.filter(d => d.category === DONATION_CATEGORY.CLOTHES).length;
+  const completedDonations = filteredDonations.filter(d => d.status === DONATION_STATUS.COMPLETED).length;
+  const pendingDonations = filteredDonations.filter(d => d.status === DONATION_STATUS.PENDING).length;
+  const cancelledDonations = filteredDonations.filter(d => d.is_deleted === 1).length;
+  const totalSuccessfulPickups = filteredDonations.filter(d => d.status === DONATION_STATUS.COMPLETED && d.is_deleted === 0).length;
+
+  // Calculate meals shared (from food donations)
+  const mealsShared = filteredDonations
+    .filter(d => d.category === DONATION_CATEGORY.FOOD && d.status === DONATION_STATUS.COMPLETED)
+    .reduce((sum, d) => sum + (d.number_of_servings || 0), 0);
+
+  // Calculate clothes donated (from clothing donations)
+  const clothesDonated = filteredDonations
+    .filter(d => d.category === DONATION_CATEGORY.CLOTHES && d.status === DONATION_STATUS.COMPLETED)
+    .reduce((sum, d) => sum + (d.quantity || 0), 0);
+
+  // Calculate people helped (estimate based on meals and clothes)
+  const peopleHelped = mealsShared + Math.floor(clothesDonated / 2);
+
+  // Calculate success rate
+  const successRate = totalDonations > 0 
+    ? ((completedDonations / totalDonations) * 100).toFixed(1) 
+    : 0;
+
+  // Calculate completion rate
+  const completionRate = totalDonations > 0
+    ? ((completedDonations / totalDonations) * 100).toFixed(1)
+    : 0;
+
+  // Calculate monthly donation trend
+  const monthlyTrend = calculateMonthlyTrend(filteredDonations);
+
+  return {
+    totalDonations,
+    foodDonations,
+    clothingDonations,
+    completedDonations,
+    pendingDonations,
+    cancelledDonations,
+    totalSuccessfulPickups,
+    mealsShared,
+    clothesDonated,
+    peopleHelped,
+    successRate: parseFloat(successRate),
+    completionRate: parseFloat(completionRate),
+    monthlyTrend,
+  };
+}
+
+/**
+ * Calculates monthly donation trend data
+ * @param {Array} donations - Array of donation objects
+ * @returns {Array} Array of monthly data points
+ */
+function calculateMonthlyTrend(donations) {
+  const monthlyData = {};
+  
+  // Initialize last 6 months
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = date.toISOString().slice(0, 7); // YYYY-MM format
+    monthlyData[key] = { month: key, count: 0, completed: 0 };
+  }
+
+  // Populate with actual data
+  donations.forEach(donation => {
+    const monthKey = donation.created_at.slice(0, 7);
+    if (monthlyData[monthKey]) {
+      monthlyData[monthKey].count++;
+      if (donation.status === DONATION_STATUS.COMPLETED) {
+        monthlyData[monthKey].completed++;
+      }
+    }
+  });
+
+  return Object.values(monthlyData);
 }
 
 // ============================================================

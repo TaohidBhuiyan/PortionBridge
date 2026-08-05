@@ -134,7 +134,8 @@ const updatePreferences = asyncHandler(async (req, res) => {
  * Get donor statistics
  */
 const getDonationStatistics = asyncHandler(async (req, res) => {
-  const statistics = await profileService.getDonationStatistics(req.user.id);
+  const { timeRange } = req.query;
+  const statistics = await profileService.getDonationStatistics(req.user.id, { timeRange });
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
