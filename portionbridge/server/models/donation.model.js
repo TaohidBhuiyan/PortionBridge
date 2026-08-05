@@ -119,6 +119,7 @@ async function create({
   additionalNotes,
   savedAddressId,
   pickupAddressDetails,
+  assignmentMode,
 }) {
   const [result] = await pool.query(
     `INSERT INTO donation_requests
@@ -127,13 +128,13 @@ async function create({
         contact_phone, description, photo, food_type, food_name, ingredients,
         allergens, storage_requirement, is_vegetarian, is_halal, refrigeration_required,
         clothing_category, gender, age_group, item_condition, brand, size, color,
-        season, images, additional_notes, saved_address_id, pickup_address_details)
+        season, images, additional_notes, saved_address_id, pickup_address_details, assignment_mode)
      VALUES (:donorId, :title, :category, :quantity, :quantityUnit, :numberOfServings,
              :pickupLocation, :pickupTime, :pickupDate, :pickupTimeSlot, :expiryDate,
              :contactPhone, :description, :photo, :foodType, :foodName, :ingredients,
              :allergens, :storageRequirement, :isVegetarian, :isHalal, :refrigerationRequired,
              :clothingCategory, :gender, :ageGroup, :itemCondition, :brand, :size, :color,
-             :season, :images, :additionalNotes, :savedAddressId, :pickupAddressDetails)`,
+             :season, :images, :additionalNotes, :savedAddressId, :pickupAddressDetails, :assignmentMode)`,
     {
       donorId,
       title,
@@ -169,6 +170,7 @@ async function create({
       additionalNotes: additionalNotes || null,
       savedAddressId: savedAddressId || null,
       pickupAddressDetails: pickupAddressDetails ? JSON.stringify(pickupAddressDetails) : null,
+      assignmentMode: assignmentMode || 'individual',
     }
   );
   return result.insertId;

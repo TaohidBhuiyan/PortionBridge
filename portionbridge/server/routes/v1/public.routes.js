@@ -10,6 +10,8 @@ const {
   getActivityFeed,
   getPublicZones,
   getPublicZoneDetails,
+  getPublicVolunteerProfile,
+  getVolunteerReviews,
 } = require('../../controllers/public.controller');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -36,5 +38,9 @@ router.get('/activity-feed', getActivityFeed);
 // Public zones
 router.get('/zones', getPublicZones);
 router.get('/zones/:id', getPublicZoneDetails);
+
+// Public volunteer profile
+router.get('/volunteers/:id', getPublicVolunteerProfile);
+router.get('/volunteers/:id/reviews', getVolunteerReviews);
 
 module.exports = router;

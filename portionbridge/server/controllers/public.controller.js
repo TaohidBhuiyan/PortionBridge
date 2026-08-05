@@ -371,6 +371,182 @@ const getPublicZones = asyncHandler(async (req, res) => {
 });
 
 /**
+ * GET /api/v1/public/volunteers/:id
+ * Public volunteer profile - no authentication required
+ */
+const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  // Get volunteer user info with profile
+  const [volunteers] = await pool.query(
+    `SELECT 
+       u.id,
+       u.name,
+       u.email,
+       u.phone,
+       u.profile_photo,
+       u.profile_picture,
+       u.email_verified,
+       u.created_at,
+       vp.bio,
+       vp.skills,
+       vp.availability,
+       vp.service_area,
+       vp.vehicle_type,
+       vp.total_pickups,
+       vp.rating,
+       vp.latitude,
+       vp.longitude,
+       vp.coverage_radius,
+       vp.is_online,
+       vp.last_location_update
+     FROM users u
+     INNER JOIN volunteer_profiles vp ON u.id = vp.user_id
+     WHERE u.id = :id AND u.role = 'volunteer' AND u.is_deleted = 0
+     LIMIT 1`,
+    { id }
+  );
+
+  if (!volunteers[0]) {
+    return error(res, {
+      statusCode: HTTP_STATUS.NOT_FOUND,
+      message: 'Volunteer not found.',
+    });
+  }
+
+  const volunteer = volunteers[0];
+
+  // Parse JSON fields
+  if (volunteer.skills) volunteer.skills = JSON.parse(volunteer.skills);
+  if (volunteer.availability) volunteer.availability = JSON.parse(volunteer.availability);
+  if (volunteer.service_area) volunteer.service_area = JSON.parse(volunteer.service_area);
+
+  // Get team information if volunteer belongs to a team
+  const [teamData] = await pool.query(
+    `SELECT 
+       t.id,
+       t.name,
+       t.description,
+       t.leader_id,
+       tm.role as team_role,
+       COUNT(DISTINCT tm2.user_id) as member_count
+     FROM team_members tm
+     INNER JOIN teams t ON tm.team_id = t.id
+     LEFT JOIN team_members tm2 ON t.id = tm2.team_id
+     WHERE tm.user_id = :id
+     GROUP BY t.id, t.name, t.description, t.leader_id, tm.role
+     LIMIT 1`,
+    { id }
+  );
+
+  let team = null;
+  if (teamData[0]) {
+    team = teamData[0];
+  }
+
+  // Get volunteer statistics
+  const [statsResult] = await pool.query(
+    `SELECT 
+       COUNT(DISTINCT CASE WHEN dr.status IN ('accepted', 'scheduled') THEN dr.id END) as active_pickups,
+       COUNT(DISTINCT CASE WHEN dr.status = 'completed' AND dr.is_deleted = 0 THEN dr.id END) as completed_pickups,
+       COUNT(DISTINCT CASE WHEN dr.is_deleted = 1 THEN dr.id END) as cancelled_pickups,
+       COUNT(DISTINCT dr.id) as total_assignments
+     FROM donation_requests dr
+     WHERE dr.volunteer_id = :id`,
+    { id }
+  );
+
+  const stats = statsResult[0] || { active_pickups: 0, completed_pickups: 0, cancelled_pickups: 0, total_assignments: 0 };
+
+  // Calculate acceptance and cancellation rates
+  const acceptanceRate = stats.total_assignments > 0 
+    ? ((stats.completed_pickups + stats.active_pickups) / stats.total_assignments) * 100 
+    : 0;
+  const cancellationRate = stats.total_assignments > 0 
+    ? (stats.cancelled_pickups / stats.total_assignments) * 100 
+    : 0;
+
+  // Get rating summary
+  const [ratingResult] = await pool.query(
+    `SELECT 
+       COUNT(*) as total_ratings,
+       AVG(stars) as average_rating
+     FROM ratings r
+     WHERE r.rated_user = :id`,
+    { id }
+  );
+
+  const ratingSummary = ratingResult[0] || { total_ratings: 0, average_rating: 0 };
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Volunteer profile retrieved successfully.',
+    data: {
+      volunteer: {
+        ...volunteer,
+        team,
+        statistics: {
+          ...stats,
+          acceptance_rate: parseFloat(acceptanceRate.toFixed(2)),
+          cancellation_rate: parseFloat(cancellationRate.toFixed(2)),
+        },
+        rating_summary: {
+          total_ratings: ratingSummary.total_ratings,
+          average_rating: ratingSummary.average_rating ? parseFloat(ratingSummary.average_rating.toFixed(2)) : 0,
+        },
+      },
+    },
+  });
+});
+
+/**
+ * GET /api/v1/public/volunteers/:id/reviews
+ * Public volunteer reviews - no authentication required
+ */
+const getVolunteerReviews = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { page, limit, offset } = getPaginationParams(req.query);
+
+  // Get reviews for this volunteer
+  const [reviews] = await pool.query(
+    `SELECT 
+       r.id,
+       r.stars as rating,
+       r.comment,
+       r.created_at,
+       u.name as reviewer_name,
+       u.profile_photo as reviewer_photo,
+       dr.title as donation_title,
+       dr.category as donation_category
+     FROM ratings r
+     INNER JOIN users u ON r.rated_by = u.id
+     LEFT JOIN donation_requests dr ON r.donation_request_id = dr.id
+     WHERE r.rated_user = :id AND u.is_deleted = 0
+     ORDER BY r.created_at DESC
+     LIMIT :limit OFFSET :offset`,
+    { id, limit, offset }
+  );
+
+  const [totalResult] = await pool.query(
+    `SELECT COUNT(*) as total
+     FROM ratings r
+     INNER JOIN users u ON r.rated_by = u.id
+     WHERE r.rated_user = :id AND u.is_deleted = 0`,
+    { id }
+  );
+
+  const totalItems = totalResult[0].total;
+  const meta = buildPaginationMeta({ page, limit, totalItems });
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Volunteer reviews retrieved successfully.',
+    data: { reviews },
+    meta,
+  });
+});
+
+/**
  * GET /api/v1/public/zones/:id
  * Public zone details - no authentication required
  */
@@ -487,4 +663,6 @@ module.exports = {
   getActivityFeed,
   getPublicZones,
   getPublicZoneDetails,
+  getPublicVolunteerProfile,
+  getVolunteerReviews,
 };

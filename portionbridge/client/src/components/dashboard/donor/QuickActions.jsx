@@ -3,7 +3,7 @@ import {
   Utensils, 
   Shirt, 
   Package, 
-  MapPin, 
+  Search, 
   Trophy, 
   HelpCircle 
 } from 'lucide-react';
@@ -37,10 +37,10 @@ export function QuickActions() {
       color: 'from-purple-400 to-purple-600',
     },
     {
-      icon: MapPin,
-      label: 'Track Donation',
-      description: 'Track your donation in real-time',
-      route: '/donor/track-donation',
+      icon: Search,
+      label: 'Discover Volunteers',
+      description: 'Find nearby volunteers and teams',
+      route: '/donor/discover-volunteers',
       color: 'from-green-400 to-green-600',
     },
     {

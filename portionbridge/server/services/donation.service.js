@@ -229,6 +229,7 @@ async function createDonation(donorId, data) {
     additionalNotes: data.additionalNotes,
     savedAddressId,
     pickupAddressDetails,
+    assignmentMode: data.assignmentMode || 'individual',
   });
 
   return donationModel.findById(insertId);

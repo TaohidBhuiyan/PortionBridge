@@ -1,0 +1,415 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Map as MapIcon, List, Users } from 'lucide-react';
+import LocationPermission from '../components/dashboard/donor/LocationPermission';
+import CurrentLocation from '../components/dashboard/donor/CurrentLocation';
+import VolunteerCard from '../components/dashboard/donor/VolunteerCard';
+import TeamCard from '../components/dashboard/donor/TeamCard';
+import VolunteerMap from '../components/dashboard/donor/VolunteerMap';
+import DiscoveryFilters from '../components/dashboard/donor/DiscoveryFilters';
+import DiscoveryEmptyStates, { NoVolunteersState, LocationDeniedState, ErrorState } from '../components/dashboard/donor/DiscoveryEmptyStates';
+import { volunteerDiscoveryApi } from '../services/volunteerDiscoveryApi';
+
+/**
+ * Volunteer Discovery Page
+ * Main page for donors to discover nearby volunteers and teams
+ */
+const VolunteerDiscoveryPage = () => {
+  const navigate = useNavigate();
+  
+  // Location state
+  const [location, setLocation] = useState(null);
+  const [locationPermission, setLocationPermission] = useState('unknown');
+  const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+  
+  // Data state
+  const [volunteers, setVolunteers] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // View state
+  const [viewMode, setViewMode] = useState('list'); // list, map, split
+  const [showTeams, setShowTeams] = useState(false);
+  
+  // Filters
+  const [filters, setFilters] = useState({
+    search: '',
+    radius: 10,
+    availableOnly: true,
+    onlineOnly: false,
+    specialty: null,
+    sortBy: 'distance',
+    sortOrder: 'asc',
+    page: 1,
+    limit: 20,
+  });
+
+  // Handle location permission granted
+  const handleLocationGranted = useCallback((locationData) => {
+    setLocation(locationData);
+    setLocationPermission('granted');
+    fetchNearbyVolunteers(locationData);
+    fetchNearbyTeams(locationData);
+  }, []);
+
+  // Handle location permission denied
+  const handleLocationDenied = useCallback(() => {
+    setLocationPermission('denied');
+  }, []);
+
+  // Handle location permission blocked
+  const handleLocationBlocked = useCallback(() => {
+    setLocationPermission('blocked');
+  }, []);
+
+  // Refresh location
+  const handleRefreshLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
+    
+    setIsRefreshingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const locationData = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        };
+        setLocation(locationData);
+        setIsRefreshingLocation(false);
+        fetchNearbyVolunteers(locationData);
+        fetchNearbyTeams(locationData);
+      },
+      (error) => {
+        console.error('Error refreshing location:', error);
+        setIsRefreshingLocation(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }, []);
+
+  // Fetch nearby volunteers
+  const fetchNearbyVolunteers = useCallback(async (locationData) => {
+    if (!locationData) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await volunteerDiscoveryApi.findNearbyVolunteers({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        radius: filters.radius,
+        availableOnly: filters.availableOnly,
+        onlineOnly: filters.onlineOnly,
+        specialty: filters.specialty,
+        search: filters.search,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+        page: filters.page,
+        limit: filters.limit,
+      });
+      
+      if (result.success) {
+        setVolunteers(result.data.volunteers || []);
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Failed to fetch volunteers');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  // Fetch nearby teams
+  const fetchNearbyTeams = useCallback(async (locationData) => {
+    if (!locationData) return;
+    
+    try {
+      const result = await volunteerDiscoveryApi.findNearbyTeams({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        radius: filters.radius,
+        search: filters.search,
+        page: filters.page,
+        limit: filters.limit,
+      });
+      
+      if (result.success) {
+        setTeams(result.data.teams || []);
+      }
+    } catch (err) {
+      console.error('Error fetching teams:', err);
+    }
+  }, [filters]);
+
+  // Handle filter changes
+  const handleFiltersChange = useCallback((newFilters) => {
+    setFilters(newFilters);
+  }, []);
+
+  // Reset filters
+  const handleResetFilters = useCallback(() => {
+    setFilters({
+      search: '',
+      radius: 10,
+      availableOnly: true,
+      onlineOnly: false,
+      specialty: null,
+      sortBy: 'distance',
+      sortOrder: 'asc',
+      page: 1,
+      limit: 20,
+    });
+  }, []);
+
+  // Handle volunteer click
+  const handleVolunteerClick = useCallback((volunteer) => {
+    console.log('Volunteer clicked:', volunteer);
+    // TODO: Navigate to volunteer profile or show modal
+  }, []);
+
+  // Handle team click
+  const handleTeamClick = useCallback((team) => {
+    console.log('Team clicked:', team);
+    // TODO: Navigate to team profile or show modal
+  }, []);
+
+  // Handle request pickup (disabled for now - future phase)
+  const handleRequestPickup = useCallback((volunteerOrTeam) => {
+    console.log('Request pickup for:', volunteerOrTeam);
+    // TODO: Implement pickup request flow in future phase
+    alert('Pickup requests will be available in the next phase!');
+  }, []);
+
+  // Expand search radius
+  const handleExpandRadius = useCallback(() => {
+    setFilters(prev => ({ ...prev, radius: prev.radius + 10 }));
+  }, []);
+
+  // Fetch data when filters change
+  useEffect(() => {
+    if (location && locationPermission === 'granted') {
+      fetchNearbyVolunteers(location);
+      fetchNearbyTeams(location);
+    }
+  }, [filters, location, locationPermission, fetchNearbyVolunteers, fetchNearbyTeams]);
+
+  // Show location permission modal if not granted
+  if (locationPermission === 'unknown' || locationPermission === 'prompt') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <LocationPermission
+          onLocationGranted={handleLocationGranted}
+          onLocationDenied={handleLocationDenied}
+          onLocationBlocked={handleLocationBlocked}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => navigate(-1)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              </button>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Discover Volunteers
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Find nearby volunteers and teams
+                </p>
+              </div>
+            </div>
+
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+                title="List View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'map'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+                title="Map View"
+              >
+                <MapIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('split')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'split'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+                title="Split View"
+              >
+                <div className="w-4 h-4 flex gap-0.5">
+                  <div className="w-1.5 h-4 bg-current rounded-sm" />
+                  <div className="w-1.5 h-4 bg-current rounded-sm" />
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Location Display */}
+        <div className="mb-6">
+          <CurrentLocation
+            location={location}
+            onRefresh={handleRefreshLocation}
+            isRefreshing={isRefreshingLocation}
+            onManualLocation={() => setLocationPermission('denied')}
+          />
+        </div>
+
+        {/* Location Denied State */}
+        {locationPermission === 'denied' && (
+          <div className="mb-6">
+            <LocationDeniedState
+              onEnableLocation={() => setLocationPermission('prompt')}
+              onManualLocation={() => {
+                // TODO: Implement manual location entry
+                alert('Manual location entry coming soon!');
+              }}
+            />
+          </div>
+        )}
+
+        {/* Content */}
+        {locationPermission === 'granted' && location && (
+          <div className={`grid gap-6 ${
+            viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
+          }`}>
+            {/* Left Column - Filters & List */}
+            <div className="space-y-6">
+              {/* Filters */}
+              <DiscoveryFilters
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                onReset={handleResetFilters}
+                totalCount={volunteers.length}
+              />
+
+              {/* Toggle between Volunteers/Teams */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowTeams(false)}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    !showTeams
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Volunteers
+                </button>
+                <button
+                  onClick={() => setShowTeams(true)}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    showTeams
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  }`}
+                >
+                  Teams
+                </button>
+              </div>
+
+              {/* Loading State */}
+              {loading && (
+                <DiscoveryEmptyStates type="loading" />
+              )}
+
+              {/* Error State */}
+              {error && !loading && (
+                <ErrorState error={error} onRetry={() => fetchNearbyVolunteers(location)} />
+              )}
+
+              {/* No Results State */}
+              {!loading && !error && volunteers.length === 0 && teams.length === 0 && (
+                <NoVolunteersState
+                  onExpandRadius={handleExpandRadius}
+                  onResetFilters={handleResetFilters}
+                />
+              )}
+
+              {/* Volunteers List */}
+              {!loading && !error && !showTeams && volunteers.length > 0 && (
+                <div className="grid gap-4">
+                  {volunteers.map((volunteer) => (
+                    <VolunteerCard
+                      key={volunteer.id}
+                      volunteer={volunteer}
+                      onViewDetails={handleVolunteerClick}
+                      onRequestPickup={handleRequestPickup}
+                      disabled={true} // Disabled until future phase
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Teams List */}
+              {!loading && !error && showTeams && teams.length > 0 && (
+                <div className="grid gap-4">
+                  {teams.map((team) => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      onViewDetails={handleTeamClick}
+                      onRequestPickup={handleRequestPickup}
+                      disabled={true} // Disabled until future phase
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Map */}
+            {(viewMode === 'map' || viewMode === 'split') && (
+              <div className="lg:sticky lg:top-20 lg:self-start">
+                <VolunteerMap
+                  userLocation={location}
+                  volunteers={volunteers}
+                  teams={teams}
+                  onVolunteerClick={handleVolunteerClick}
+                  onTeamClick={handleTeamClick}
+                  className="h-[500px] lg:h-[600px]"
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default VolunteerDiscoveryPage;

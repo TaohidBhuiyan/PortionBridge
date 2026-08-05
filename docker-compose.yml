@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: examplepassword
+      MYSQL_DATABASE: portionbridge
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  server:
+    build:
+      context: ./portionbridge/server
+    working_dir: /usr/src/app
+    env_file:
+      - ./portionbridge/server/.env.example
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASSWORD: examplepassword
+      DB_NAME: portionbridge
+    depends_on:
+      - db
+    ports:
+      - "5000:5000"
+
+  client:
+    build:
+      context: ./portionbridge/client
+    depends_on:
+      - server
+    ports:
+      - "80:80"
+
+volumes:
+  db_data:

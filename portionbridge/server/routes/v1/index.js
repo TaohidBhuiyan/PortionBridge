@@ -17,6 +17,7 @@ const profileRoutes = require('./profile.routes');
 const teamRoutes = require('./team.routes');
 const publicRoutes = require('./public.routes');
 const uploadRoutes = require('./upload.routes');
+const volunteerDiscoveryRoutes = require('./volunteerDiscovery.routes');
 
 // Root endpoint for API v1
 router.get('/', (req, res) => {
@@ -40,7 +41,8 @@ router.get('/', (req, res) => {
       profile: '/profile',
       teams: '/teams',
       public: '/public',
-      uploads: '/uploads'
+      uploads: '/uploads',
+      'volunteer-discovery': '/volunteer-discovery'
     }
   });
 });
@@ -62,5 +64,6 @@ router.use('/profile', profileRoutes);
 router.use('/teams', teamRoutes);
 router.use('/public', publicRoutes);
 router.use('/uploads', uploadRoutes);
+router.use('/volunteer-discovery', volunteerDiscoveryRoutes);
 
 module.exports = router;

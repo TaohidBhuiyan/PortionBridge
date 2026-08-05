@@ -11,6 +11,8 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { DonationFormPage } from "./pages/DonationFormPage";
 import { MyDonationsPage } from "./pages/MyDonationsPage";
 import { DonationDetailsPage } from "./pages/DonationDetailsPage";
+import { VolunteerDiscoveryPage } from "./pages/VolunteerDiscoveryPage";
+import { VolunteerProfilePage } from "./pages/VolunteerProfilePage";
 import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider } from "./context/SocketContext";
 
@@ -36,6 +38,8 @@ function App() {
             <Route path="/donation/create" element={<DonationFormPage />} />
             <Route path="/donor/my-donations" element={<MyDonationsPage />} />
             <Route path="/donations/:id" element={<DonationDetailsPage />} />
+            <Route path="/donor/discover-volunteers" element={<VolunteerDiscoveryPage />} />
+            <Route path="/volunteers/:id" element={<VolunteerProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>
