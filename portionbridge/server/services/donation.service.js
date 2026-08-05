@@ -1,11 +1,11 @@
 const { pool } = require('../config/db');
-const { HTTP_STATUS, DONATION_STATUS, NOTIFICATION_TYPES, AUDIT_ACTIONS, DONATION_CATEGORY } = require('../constants');
+const { HTTP_STATUS, DONATION_STATUS, NOTIFICATION_TYPES, AUDIT_ACTIONS } = require('../constants');
 const AppError = require('../utils/AppError');
 const donationModel = require('../models/donation.model');
-const savedAddressModel = require('../models/savedAddress.model');
 const notificationModel = require('../models/notification.model');
 const notificationService = require('./notification.service');
 const auditService = require('./audit.service');
+const achievementService = require('./achievement.service');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 const { getIO } = require('../sockets/ioInstance');
 const { broadcastTeamActivity } = require('../sockets/handlers/team.handler');
@@ -771,6 +771,14 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     updatedDonation = await donationModel.completeDonation(connection, donationId);
 
     await connection.commit();
+
+    // Check and unlock achievements for donor
+    try {
+      await achievementService.checkAndUnlockAchievements(donorId, 'donor');
+    } catch (err) {
+      // Don't let achievement errors block the completion flow
+      console.error('Achievement check failed:', err);
+    }
 
     // trg_donation_status_update already inserted the 'completed'
     // notifications (donor always, volunteer too when assigned) as part

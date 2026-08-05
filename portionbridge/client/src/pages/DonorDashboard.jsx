@@ -11,6 +11,7 @@ import {
   ImpactSummary,
   NotificationPreview,
 } from '../components/dashboard/donor';
+import { AchievementsPanel } from '../components/common/AchievementsPanel';
 
 /**
  * Donor Dashboard Home - Production-ready overview page
@@ -51,6 +52,9 @@ export function DonorDashboard() {
 
             {/* Section 7: Profile Completion */}
             <ProfileCompletion />
+
+            {/* Achievements */}
+            <AchievementsPanel userId={user?.id} userRole="donor" />
 
             {/* Section 9: Notification Preview */}
             <NotificationPreview />

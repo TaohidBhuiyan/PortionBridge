@@ -8,6 +8,7 @@ import VolunteerReviews from '../components/dashboard/donor/VolunteerReviews';
 import VolunteerGallery from '../components/dashboard/donor/VolunteerGallery';
 import VolunteerTeamInfo from '../components/dashboard/donor/VolunteerTeamInfo';
 import VolunteerQuickActions from '../components/dashboard/donor/VolunteerQuickActions';
+import { AchievementsPanel } from '../components/common/AchievementsPanel';
 import { volunteerProfileApi } from '../services/volunteerProfileApi';
 
 /**
@@ -187,6 +188,9 @@ const VolunteerProfilePage = () => {
             <div className="space-y-6">
               {/* Team Information */}
               <VolunteerTeamInfo team={volunteer.team} />
+
+              {/* Achievements */}
+              <AchievementsPanel userId={volunteer.id} userRole="volunteer" />
 
               {/* Quick Actions */}
               <VolunteerQuickActions
