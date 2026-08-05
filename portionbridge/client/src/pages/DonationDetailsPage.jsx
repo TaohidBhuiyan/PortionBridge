@@ -23,6 +23,10 @@ import { VolunteerCard } from '../components/donation/VolunteerCard';
 import { ActivityTimeline } from '../components/donation/ActivityTimeline';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
+import { TrackingPanel } from '../components/donation/TrackingPanel';
+import { ChatWindow } from '../components/donation/ChatWindow';
+import { useDonationTracking } from '../hooks/useDonationTracking';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * DonationDetailsPage - Central tracking page for a donation
@@ -30,16 +34,34 @@ import { CancelConfirmationModal } from '../components/common/CancelConfirmation
 export function DonationDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
 
   const [donation, setDonation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [volunteerLocation, setVolunteerLocation] = useState(null);
 
   useEffect(() => {
     loadDonationDetails();
   }, [id]);
+
+  // Real-time tracking
+  useDonationTracking(id, {
+    onStatusUpdate: (data) => {
+      console.log('Status update received:', data);
+      loadDonationDetails(); // Reload donation details on status change
+    },
+    onLocationUpdate: (data) => {
+      console.log('Location update received:', data);
+      setVolunteerLocation({
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timestamp: data.timestamp,
+      });
+    },
+  });
 
   const loadDonationDetails = async () => {
     setLoading(true);
@@ -169,6 +191,8 @@ export function DonationDetailsPage() {
     completed_pickups: 42,
     current_status: 'On the way to pickup',
   } : null;
+
+  const isVolunteerAssigned = volunteer_id && status !== 'pending';
 
   const activities = generateMockActivities(donation);
 
@@ -438,6 +462,17 @@ export function DonationDetailsPage() {
 
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
+          {/* Live Tracking Panel - Only show when volunteer is assigned */}
+          {(status === 'scheduled' || status === 'on_the_way' || status === 'picked_up') && (
+            <SectionCard title="Live Tracking">
+              <TrackingPanel
+                donation={donation}
+                volunteer={volunteer}
+                volunteerLocation={volunteerLocation}
+              />
+            </SectionCard>
+          )}
+
           {/* Status Timeline */}
           <SectionCard title="Status Timeline">
             <StatusTimeline currentStatus={status} />
@@ -447,6 +482,13 @@ export function DonationDetailsPage() {
           <SectionCard title="Volunteer Information">
             <VolunteerCard volunteer={volunteer} />
           </SectionCard>
+
+          {/* Chat Window - Only show when volunteer is assigned */}
+          {isVolunteerAssigned && (
+            <SectionCard title="Chat with Volunteer">
+              <ChatWindow donation={donation} currentUser={currentUser} />
+            </SectionCard>
+          )}
 
           {/* Related Information */}
           <SectionCard title="Related Information">

@@ -637,6 +637,17 @@ async function markOnTheWay(donation, volunteerId, { ipAddress, userAgent } = {}
     // Real-time delivery happens AFTER commit — never tell a connected
     // client about a notification that might still be rolled back.
     await notificationService.deliverById(updatedDonation.donor_id, notificationId);
+
+    // Emit real-time status update for live tracking
+    const io = getIO();
+    if (io) {
+      io.to(`donation_${updatedDonation.id}`).emit('donation_status_updated', {
+        donationId: updatedDonation.id,
+        status: updatedDonation.status,
+        volunteerId: updatedDonation.volunteer_id,
+        timestamp: updatedDonation.updated_at,
+      });
+    }
   } catch (err) {
     await connection.rollback();
     throw err;

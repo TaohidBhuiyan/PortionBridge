@@ -13,8 +13,9 @@ import { MyDonationsPage } from "./pages/MyDonationsPage";
 import { DonationDetailsPage } from "./pages/DonationDetailsPage";
 import { VolunteerDiscoveryPage } from "./pages/VolunteerDiscoveryPage";
 import { VolunteerProfilePage } from "./pages/VolunteerProfilePage";
+import { NotificationsPage } from "./pages/NotificationsPage";
 import { AuthProvider } from "./context/AuthContext";
-import { SocketProvider } from "./context/SocketContext";
+import { SocketProvider, AuthSocketProvider } from "./context/SocketContext";
 
 /**
  * Main App component with React Router setup
@@ -32,14 +33,78 @@ function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/donor/dashboard" element={<DonorDashboard />} />
-            <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/donation/create" element={<DonationFormPage />} />
-            <Route path="/donor/my-donations" element={<MyDonationsPage />} />
-            <Route path="/donations/:id" element={<DonationDetailsPage />} />
-            <Route path="/donor/discover-volunteers" element={<VolunteerDiscoveryPage />} />
-            <Route path="/volunteers/:id" element={<VolunteerProfilePage />} />
+            <Route 
+              path="/donor/dashboard" 
+              element={
+                <AuthSocketProvider>
+                  <DonorDashboard />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/volunteer/dashboard" 
+              element={
+                <AuthSocketProvider>
+                  <VolunteerDashboard />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/admin/dashboard" 
+              element={
+                <AuthSocketProvider>
+                  <AdminDashboard />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/donation/create" 
+              element={
+                <AuthSocketProvider>
+                  <DonationFormPage />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/donor/my-donations" 
+              element={
+                <AuthSocketProvider>
+                  <MyDonationsPage />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/donations/:id" 
+              element={
+                <AuthSocketProvider>
+                  <DonationDetailsPage />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/donor/discover-volunteers" 
+              element={
+                <AuthSocketProvider>
+                  <VolunteerDiscoveryPage />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/volunteers/:id" 
+              element={
+                <AuthSocketProvider>
+                  <VolunteerProfilePage />
+                </AuthSocketProvider>
+              } 
+            />
+            <Route 
+              path="/notifications" 
+              element={
+                <AuthSocketProvider>
+                  <NotificationsPage />
+                </AuthSocketProvider>
+              } 
+            />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </SocketProvider>

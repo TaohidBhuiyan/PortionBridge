@@ -38,7 +38,14 @@ const DONATION_STATUS = {
 };
 
 const NOTIFICATION_TYPES = {
+  DONATION_CREATED: 'donation_created',
+  VOLUNTEER_ASSIGNED: 'volunteer_assigned',
   DONATION_ACCEPTED: 'donation_accepted',
+  PICKUP_SCHEDULED: 'pickup_scheduled',
+  VOLUNTEER_ON_THE_WAY: 'volunteer_on_the_way',
+  PICKUP_COMPLETED: 'pickup_completed',
+  DONATION_CANCELLED: 'donation_cancelled',
+  ASSIGNMENT_CHANGED: 'assignment_changed',
   NEW_MESSAGE: 'new_message',
   STATUS_UPDATED: 'status_updated',
   RATING_RECEIVED: 'rating_received',

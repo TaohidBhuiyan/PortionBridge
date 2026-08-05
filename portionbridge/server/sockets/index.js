@@ -5,6 +5,7 @@ const { registerChatHandlers } = require('./handlers/chat.handler');
 const { registerNotificationHandlers } = require('./handlers/notification.handler');
 const { registerTeamHandlers } = require('./handlers/team.handler');
 const { registerPublicHandlers } = require('./handlers/public.handler');
+const { registerTrackingHandlers } = require('./handlers/tracking.handler');
 
 /**
  * Socket.io bootstrap. Called once from server.js with the shared `io` 
@@ -29,6 +30,7 @@ function initializeSocket(io) {
     registerChatHandlers(io, socket);
     registerNotificationHandlers(io, socket);
     registerTeamHandlers(io, socket);
+    registerTrackingHandlers(io, socket);
 
     // MODULE 6 — continuous token-expiry enforcement. socketAuthMiddleware
     // only validates the token once, at the initial handshake; without

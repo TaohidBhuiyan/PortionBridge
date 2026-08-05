@@ -103,7 +103,7 @@ async function findNearbyTeams(query) {
  * @returns {Promise<void>}
  */
 async function updateVolunteerLocation(userId, data) {
-  const { latitude, longitude, isOnline } = data;
+  const { latitude, longitude, isOnline, donationId } = data;
 
   // Validate coordinates
   if (!latitude || !longitude) {
@@ -129,6 +129,21 @@ async function updateVolunteerLocation(userId, data) {
     longitude: Number(longitude),
     isOnline: isOnline !== undefined ? isOnline : true,
   });
+
+  // Emit real-time location update for live tracking if donationId is provided
+  if (donationId) {
+    const { getIO } = require('../sockets/ioInstance');
+    const io = getIO();
+    if (io) {
+      io.to(`donation_${donationId}`).emit('volunteer_location_updated', {
+        donationId,
+        volunteerId: userId,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 }
 
 /**
