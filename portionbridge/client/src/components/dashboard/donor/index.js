@@ -25,3 +25,8 @@ export { default as VolunteerReviews } from './VolunteerReviews';
 export { default as VolunteerGallery } from './VolunteerGallery';
 export { default as VolunteerTeamInfo } from './VolunteerTeamInfo';
 export { default as VolunteerQuickActions } from './VolunteerQuickActions';
+
+// Smart Assignment Components
+export { default as AssignmentModeSelection } from './AssignmentModeSelection';
+export { default as AutoAssignRecommendation } from './AutoAssignRecommendation';
+export { default as VolunteerSelection } from './VolunteerSelection';

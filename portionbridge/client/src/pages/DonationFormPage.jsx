@@ -7,6 +7,7 @@ import { Step2DonationDetails } from '../components/donation/Step2DonationDetail
 import { Step3PickupInfo } from '../components/donation/Step3PickupInfo';
 import { Step4Images } from '../components/donation/Step4Images';
 import { Step5Review } from '../components/donation/Step5Review';
+import { Step6Assignment } from '../components/donation/Step6Assignment';
 import { donationApi, transformFormDataToApi } from '../services/donationApi';
 
 /**
@@ -24,12 +25,13 @@ export function DonationFormPage() {
     { id: 'details', title: 'Donation Details' },
     { id: 'pickup', title: 'Pickup Information' },
     { id: 'images', title: 'Images' },
+    { id: 'assignment', title: 'Assignment' },
     { id: 'review', title: isEditMode ? 'Review & Update' : 'Review & Submit' },
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
-  const [stepValidation, setStepValidation] = useState([false, false, false, false, true]);
+  const [stepValidation, setStepValidation] = useState([false, false, false, false, false, true]);
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -402,7 +404,7 @@ export function DonationFormPage() {
       setFormData({});
       setHasUnsavedChanges(false);
       setCurrentStep(0);
-      setStepValidation([false, false, false, false, true]);
+      setStepValidation([false, false, false, false, false, true]);
       setErrors({});
     }
   };
@@ -420,7 +422,7 @@ export function DonationFormPage() {
   const handleCreateAnother = () => {
     setFormData({});
     setCurrentStep(0);
-    setStepValidation([false, false, false, false, true]);
+    setStepValidation([false, false, false, false, false, true]);
     setErrors({});
     setSubmissionResult(null);
     setUploadProgress({});
@@ -506,6 +508,14 @@ export function DonationFormPage() {
             />
           )}
           {currentStep === 4 && (
+            <Step6Assignment
+              formData={formData}
+              errors={errors}
+              onChange={handleFieldChange}
+              pickupLocation={formData.pickupAddress}
+            />
+          )}
+          {currentStep === 5 && (
             <Step5Review
               formData={formData}
               onEditStep={handleEditStep}

@@ -330,5 +330,13 @@ export const transformFormDataToApi = (formData) => {
     apiData.pickupAddress = formData.pickupAddress;
   }
 
+  // Assignment fields
+  if (formData.assignmentMode) {
+    apiData.assignmentMode = formData.assignmentMode;
+  }
+  if (formData.volunteerId) {
+    apiData.volunteerId = formData.volunteerId;
+  }
+
   return apiData;
 };
