@@ -13,7 +13,8 @@ import {
   Utensils,
   Shirt,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  Star
 } from 'lucide-react';
 import { donationApi } from '../services/donationApi';
 import { StatusBadge } from '../components/donation/StatusBadge';
@@ -25,6 +26,7 @@ import { ErrorState } from '../components/dashboard/ErrorState';
 import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
 import { TrackingPanel } from '../components/donation/TrackingPanel';
 import { ChatWindow } from '../components/donation/ChatWindow';
+import { RatingSubmission } from '../components/donation/RatingSubmission';
 import { useDonationTracking } from '../hooks/useDonationTracking';
 import { useAuth } from '../context/AuthContext';
 
@@ -42,6 +44,7 @@ export function DonationDetailsPage() {
   const [cancelling, setCancelling] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [volunteerLocation, setVolunteerLocation] = useState(null);
+  const [existingRating, setExistingRating] = useState(null);
 
   useEffect(() => {
     loadDonationDetails();
@@ -72,6 +75,10 @@ export function DonationDetailsPage() {
 
       if (result.success) {
         setDonation(result.data.donation);
+        // Check if donation has existing rating
+        if (result.data.donation.rating) {
+          setExistingRating(result.data.donation.rating);
+        }
       } else {
         setError(result.error);
       }
@@ -117,6 +124,11 @@ export function DonationDetailsPage() {
   const handlePrint = () => {
     // Placeholder for print functionality
     alert('Print functionality coming soon');
+  };
+
+  const handleRatingSubmitted = (rating) => {
+    setExistingRating(rating);
+    loadDonationDetails(); // Reload to get updated donation details
   };
 
   if (loading) {
@@ -487,6 +499,50 @@ export function DonationDetailsPage() {
           {isVolunteerAssigned && (
             <SectionCard title="Chat with Volunteer">
               <ChatWindow donation={donation} currentUser={currentUser} />
+            </SectionCard>
+          )}
+
+          {/* Rating Submission - Only show when donation is completed and user hasn't rated */}
+          {status === 'completed' && !existingRating && currentUser?.role === 'donor' && (
+            <SectionCard title="Rate Your Experience">
+              <RatingSubmission 
+                donation={donation} 
+                onRatingSubmitted={handleRatingSubmitted}
+              />
+            </SectionCard>
+          )}
+
+          {/* Existing Rating Display - Show if user has already rated */}
+          {existingRating && (
+            <SectionCard title="Your Rating">
+              <div className="flex items-center gap-4">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={24}
+                      className={`${
+                        star <= existingRating.stars
+                          ? 'text-yellow-500 fill-yellow-500'
+                          : 'text-gray-300 dark:text-gray-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div>
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {existingRating.stars} / 5
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Rated on {formatDate(existingRating.created_at)}
+                  </p>
+                </div>
+              </div>
+              {existingRating.comment && (
+                <p className="mt-3 text-gray-700 dark:text-gray-300 text-sm italic">
+                  "{existingRating.comment}"
+                </p>
+              )}
             </SectionCard>
           )}
 
