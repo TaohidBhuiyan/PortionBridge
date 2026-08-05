@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Clock, Star, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { volunteerDiscoveryApi } from '../../services/volunteerDiscoveryApi';
+import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
 
 /**
  * Auto Assign Recommendation Component

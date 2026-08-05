@@ -112,7 +112,7 @@ const AUTH = {
 
   // --- Login/register rate limiting (stricter than the global API limiter) ---
   LOGIN_RATE_LIMIT_WINDOW_MS: 15 * 60 * 1000,
-  LOGIN_RATE_LIMIT_MAX: 10,
+  LOGIN_RATE_LIMIT_MAX: 20,
   REGISTER_RATE_LIMIT_WINDOW_MS: 60 * 60 * 1000,
   REGISTER_RATE_LIMIT_MAX: 5,
 };

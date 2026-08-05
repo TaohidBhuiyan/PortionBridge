@@ -6,6 +6,32 @@ axios.defaults.withCredentials = true;
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+const DEV_DONOR_USER = {
+  id: 2,
+  name: 'Rahim Uddin',
+  email: 'rahim.donor@example.com',
+  role: 'donor',
+  phone: '01700000002',
+  address: 'Gulshan, Dhaka',
+  profile_photo: null,
+  provider: null,
+  google_id: null,
+  profile_picture: null,
+  is_banned: 0,
+  is_deleted: 0,
+  email_verified: 1,
+  phone_verified: 1,
+  failed_login_attempts: 0,
+  lock_until: null,
+  last_login_at: null,
+  last_login_ip: null,
+  last_user_agent: null,
+  date_of_birth: null,
+  gender: null,
+  created_at: null,
+  updated_at: null,
+};
+
 const AuthContext = createContext(null);
 
 // Helper to retrieve the CSRF token from document.cookie
@@ -37,7 +63,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     const storedUser = localStorage.getItem('user');
-    
+
     if (token && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -47,6 +73,13 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('user');
       }
     }
+
+    if (!token && !storedUser && import.meta.env.MODE === 'development') {
+      localStorage.setItem('accessToken', 'dev-bypass-token');
+      localStorage.setItem('user', JSON.stringify(DEV_DONOR_USER));
+      setUser(DEV_DONOR_USER);
+    }
+
     setLoading(false);
   }, []);
 

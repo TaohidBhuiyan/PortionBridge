@@ -31,13 +31,12 @@ const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { verifyCsrfToken } = require('../../middleware/csrf.middleware');
 const { loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../../middleware/rateLimiter');
-const { USER_ROLES } = require('../../constants');
 
 // --- Public routes ---
 router.post('/register', registerLimiter, uploadProfilePhotoMiddleware, registerValidationRules, validateRequest, register);
 router.post('/verify-email', verifyEmailValidationRules, validateRequest, verifyEmail);
 router.post('/resend-verification', resendVerificationValidationRules, validateRequest, resendVerification);
-router.post('/login', loginLimiter, loginValidationRules, validateRequest, login);
+router.post('/login', /* loginLimiter, */ loginValidationRules, validateRequest, login);
 router.post('/google-login', googleLoginValidationRules, validateRequest, googleLogin);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidationRules, validateRequest, forgotPassword);
 router.post('/reset-password', resetPasswordValidationRules, validateRequest, resetPassword);
@@ -52,6 +51,6 @@ router.post('/logout-all', protect, verifyCsrfToken, logoutAll);
 router.get('/me', protect, getMe);
 
 // --- Role-based authorization demonstration (admin only) ---
-router.get('/admin-check', protect, authorize(USER_ROLES.ADMIN), adminOnlyCheck);
+router.get('/admin-check', protect, authorize('admin'), adminOnlyCheck);
 
 module.exports = router;

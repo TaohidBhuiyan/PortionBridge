@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Clock, Star, CheckCircle, Users, Car, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { volunteerDiscoveryApi } from '../../services/volunteerDiscoveryApi';
+import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
 
 /**
  * Volunteer Selection Component
@@ -19,7 +19,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
     setLoading(true);
     setError(null);
 
-    const result = await volunteerDiscoveryApi.getNearbyVolunteers({
+    const result = await volunteerDiscoveryApi.findNearbyVolunteers({
       latitude,
       longitude,
       radius: 10,

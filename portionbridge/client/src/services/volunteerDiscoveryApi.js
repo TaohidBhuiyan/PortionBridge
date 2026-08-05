@@ -164,6 +164,40 @@ export const volunteerDiscoveryApi = {
   },
 
   /**
+   * Get the recommended volunteer for a pickup location
+   * @param {Object} params - Query parameters
+   * @param {number} params.latitude - Donor latitude
+   * @param {number} params.longitude - Donor longitude
+   * @param {string} [params.pickupTime] - Pickup time
+   * @param {string} [params.category] - Donation category
+   * @returns {Promise<Object>} Recommended volunteer data
+   */
+  getRecommendedVolunteer: async (params = {}) => {
+    try {
+      const token = getAuthToken();
+      const queryParams = new URLSearchParams();
+      if (params.latitude !== undefined) queryParams.append('latitude', params.latitude);
+      if (params.longitude !== undefined) queryParams.append('longitude', params.longitude);
+      if (params.pickupTime) queryParams.append('pickupTime', params.pickupTime);
+      if (params.category) queryParams.append('category', params.category);
+
+      const response = await axios.get(
+        `${API_BASE}/volunteer-discovery/recommend${queryParams.toString() ? `?${queryParams.toString()}` : ''}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch recommended volunteer';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
    * Get volunteer statistics for discovery
    * @param {number} volunteerId - Volunteer ID
    * @returns {Promise<Object>} Volunteer statistics
@@ -173,7 +207,7 @@ export const volunteerDiscoveryApi = {
       const token = getAuthToken();
       
       const response = await axios.get(
-        `${API_BASE}/volunteer-discovery/volunteers/${volunteerId}/stats`,
+        `${API_BASE}/volunteer-discovery/volunteer/${volunteerId}/stats`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

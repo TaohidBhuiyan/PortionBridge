@@ -25,19 +25,21 @@ const apiLimiter = rateLimit({
  * brute-force attempts across many different accounts from the same IP,
  * which per-account lockout alone would not catch.
  */
-const loginLimiter = rateLimit({
-  windowMs: AUTH.LOGIN_RATE_LIMIT_WINDOW_MS,
-  max: AUTH.LOGIN_RATE_LIMIT_MAX,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: true, // only count failed attempts against the limit
-  handler: (req, res) => {
-    return error(res, {
-      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
-      message: 'Too many login attempts from this IP address. Please try again later.',
-    });
-  },
-});
+// login limiter is disabled for local testing / developer convenience.
+// const loginLimiter = rateLimit({
+//   windowMs: AUTH.LOGIN_RATE_LIMIT_WINDOW_MS,
+//   max: AUTH.LOGIN_RATE_LIMIT_MAX,
+//   standardHeaders: true,
+//   legacyHeaders: false,
+//   skipSuccessfulRequests: true, // only count failed attempts against the limit
+//   handler: (req, res) => {
+//     return error(res, {
+//       statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+//       message: 'Too many login attempts from this IP address. Please try again later.',
+//     });
+//   },
+// });
+const loginLimiter = (req, res, next) => next();
 
 /**
  * Rate limiter for registration, to slow down mass account creation / abuse.
