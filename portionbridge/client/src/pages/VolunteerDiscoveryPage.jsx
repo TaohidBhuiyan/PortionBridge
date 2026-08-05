@@ -81,7 +81,6 @@ const VolunteerDiscoveryPage = () => {
         fetchNearbyTeams(locationData);
       },
       (error) => {
-        console.error('Error refreshing location:', error);
         setIsRefreshingLocation(false);
       },
       {
@@ -144,7 +143,7 @@ const VolunteerDiscoveryPage = () => {
         setTeams(result.data.teams || []);
       }
     } catch (err) {
-      console.error('Error fetching teams:', err);
+      // Error fetching teams
     }
   }, [filters]);
 
@@ -170,20 +169,16 @@ const VolunteerDiscoveryPage = () => {
 
   // Handle volunteer click
   const handleVolunteerClick = useCallback((volunteer) => {
-    console.log('Volunteer clicked:', volunteer);
-    // TODO: Navigate to volunteer profile or show modal
+    // Navigate to volunteer profile or show modal
   }, []);
 
   // Handle team click
   const handleTeamClick = useCallback((team) => {
-    console.log('Team clicked:', team);
-    // TODO: Navigate to team profile or show modal
+    // Navigate to team profile or show modal
   }, []);
 
   // Handle request pickup (disabled for now - future phase)
   const handleRequestPickup = useCallback((volunteerOrTeam) => {
-    console.log('Request pickup for:', volunteerOrTeam);
-    // TODO: Implement pickup request flow in future phase
     alert('Pickup requests will be available in the next phase!');
   }, []);
 
@@ -216,13 +211,13 @@ const VolunteerDiscoveryPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <div className="bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
               </button>
@@ -237,37 +232,40 @@ const VolunteerDiscoveryPage = () => {
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-xl p-1" role="group" aria-label="View mode">
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-md transition-all ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                     : 'text-gray-500 dark:text-gray-400'
-                }`}
-                title="List View"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
               >
                 <List className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('map')}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-md transition-all ${
                   viewMode === 'map'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                     : 'text-gray-500 dark:text-gray-400'
-                }`}
-                title="Map View"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                aria-label="Map view"
+                aria-pressed={viewMode === 'map'}
               >
                 <MapIcon className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewMode('split')}
-                className={`p-2 rounded-md transition-colors ${
+                className={`p-2 rounded-md transition-all ${
                   viewMode === 'split'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                     : 'text-gray-500 dark:text-gray-400'
-                }`}
-                title="Split View"
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                aria-label="Split view"
+                aria-pressed={viewMode === 'split'}
               >
                 <div className="w-4 h-4 flex gap-0.5">
                   <div className="w-1.5 h-4 bg-current rounded-sm" />

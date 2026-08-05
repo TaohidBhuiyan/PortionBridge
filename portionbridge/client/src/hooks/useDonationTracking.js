@@ -21,41 +21,40 @@ export function useDonationTracking(donationId, callbacks = {}) {
     if (!roomJoinedRef.current) {
       socket.emit('join_donation_tracking', { donationId });
       roomJoinedRef.current = true;
-      console.log(`[Tracking] Joined room for donation ${donationId}`);
     }
 
     // Listen for status updates
     const handleStatusUpdate = (data) => {
-      console.log('[Tracking] Status update:', data);
       callbacks.onStatusUpdate?.(data);
     };
 
     // Listen for location updates
     const handleLocationUpdate = (data) => {
-      console.log('[Tracking] Location update:', data);
       callbacks.onLocationUpdate?.(data);
     };
 
     // Listen for volunteer assignment
     const handleVolunteerAssigned = (data) => {
-      console.log('[Tracking] Volunteer assigned:', data);
       callbacks.onVolunteerAssigned?.(data);
     };
 
     socket.on('donation_status_updated', handleStatusUpdate);
     socket.on('volunteer_location_updated', handleLocationUpdate);
     socket.on('volunteer_assigned', handleVolunteerAssigned);
+    socket.on('error', (error) => {
+      // Socket error
+    });
 
     // Cleanup: leave room and remove listeners
     return () => {
       socket.off('donation_status_updated', handleStatusUpdate);
       socket.off('volunteer_location_updated', handleLocationUpdate);
       socket.off('volunteer_assigned', handleVolunteerAssigned);
+      socket.off('error');
       
       if (roomJoinedRef.current) {
         socket.emit('leave_donation_tracking', { donationId });
         roomJoinedRef.current = false;
-        console.log(`[Tracking] Left room for donation ${donationId}`);
       }
     };
   }, [socket, connected, donationId]);

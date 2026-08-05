@@ -102,7 +102,7 @@ export function MyDonationsPage() {
         setSummary(result.data);
       }
     } catch (err) {
-      console.error('Failed to load summary:', err);
+      // Failed to load summary
     }
   };
 
@@ -191,7 +191,8 @@ export function MyDonationsPage() {
           </div>
           <button
             onClick={() => navigate('/donation/create')}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+            aria-label="Create new donation"
           >
             <Plus size={18} />
             Create Donation
@@ -201,7 +202,7 @@ export function MyDonationsPage() {
 
       {/* Stats Cards */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <StatCard
             label="Total"
             value={summary.totalDonations || 0}
@@ -226,54 +227,31 @@ export function MyDonationsPage() {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500" size={18} />
-            <input
-              type="text"
-              placeholder="Search by title, description..."
-              value={searchQuery}
-              onChange={handleSearch}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
-            />
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-200 dark:border-gray-700 p-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1 w-full sm:w-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search donations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                aria-label="Search donations"
+              />
+            </div>
           </div>
-
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all ${
-              showFilters
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400'
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:border-purple-400 dark:hover:border-purple-500'
-            }`}
-          >
-            <Filter size={18} />
-            Filters
-            {showFilters && <ChevronDown size={18} />}
-          </button>
-
-          {/* Sort */}
-          <select
-            value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all appearance-none cursor-pointer"
-          >
-            <option value="created_at">Newest</option>
-            <option value="pickup_date">Pickup Date</option>
-            <option value="title">Alphabetical</option>
-          </select>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center border-2 border-gray-300 dark:border-gray-600 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-2" role="group" aria-label="View mode">
             <button
-              onClick={() => setViewMode('card')}
+              onClick={() => setViewMode('grid')}
               className={`p-2.5 transition-colors ${
-                viewMode === 'card'
+                viewMode === 'grid'
                   ? 'bg-purple-500 text-white'
                   : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
             >
               <Grid size={18} />
             </button>
@@ -284,6 +262,8 @@ export function MyDonationsPage() {
                   ? 'bg-purple-500 text-white'
                   : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
               }`}
+              aria-label="Table view"
+              aria-pressed={viewMode === 'table'}
             >
               <List size={18} />
             </button>
@@ -292,7 +272,7 @@ export function MyDonationsPage() {
 
         {/* Expanded Filters */}
         {showFilters && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="mt-4 pt-4 border-t-2 border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Category
@@ -300,7 +280,7 @@ export function MyDonationsPage() {
               <select
                 value={categoryFilter}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
                 <option value="">All Categories</option>
                 <option value="food">Food</option>
@@ -314,7 +294,7 @@ export function MyDonationsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
               >
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -336,7 +316,7 @@ export function MyDonationsPage() {
                   setSortOrder('desc');
                   setPage(1);
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 Clear Filters
               </button>
@@ -378,7 +358,7 @@ export function MyDonationsPage() {
               ))}
             </div>
           ) : (
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
               <DonationTable
                 donations={donations}
                 onViewDetails={handleViewDetails}
@@ -394,7 +374,7 @@ export function MyDonationsPage() {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="p-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <ChevronDown size={20} className="rotate-90" />
               </button>
@@ -403,7 +383,7 @@ export function MyDonationsPage() {
                 <button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  className={`w-10 h-10 rounded-lg font-medium transition-all ${
+                  className={`w-10 h-10 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
                     pageNum === page
                       ? 'bg-purple-500 text-white'
                       : 'border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -416,7 +396,7 @@ export function MyDonationsPage() {
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="p-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-2 rounded-lg border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <ChevronDown size={20} className="-rotate-90" />
               </button>

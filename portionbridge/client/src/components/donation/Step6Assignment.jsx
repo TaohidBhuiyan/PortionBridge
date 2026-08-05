@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AssignmentModeSelection } from '../dashboard/donor/AssignmentModeSelection';
-import { AutoAssignRecommendation } from '../dashboard/donor/AutoAssignRecommendation';
-import { VolunteerSelection } from '../dashboard/donor/VolunteerSelection';
+import { AssignmentModeSelection, AutoAssignRecommendation, VolunteerSelection } from '../dashboard/donor';
 
 /**
  * Step 6: Assignment Selection

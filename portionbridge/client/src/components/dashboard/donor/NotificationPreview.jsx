@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SkeletonCard } from '../skeletons';
 import { Bell, Check, ArrowRight } from 'lucide-react';
-import { useAuthSocket } from '../../context/SocketContext';
+import { useAuthSocket } from '../../../context/SocketContext';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';

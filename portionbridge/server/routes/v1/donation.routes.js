@@ -11,7 +11,7 @@ const {
 } = require('../../middleware/donation.middleware');
 const {
   validateRequest
-} = require('../../middleware/validator.middleware');
+} = require('../../middleware/validateRequest');
 const {
   getDonationDetails,
   createDonation,
@@ -47,13 +47,14 @@ const {
   historySummaryValidationRules,
 } = require('../../validators/donation.validator');
 
-const {
-  USER_ROLES
-} = require('../../constants');
 
 // ============================================================================
 // DONOR ROUTES
 // ============================================================================
+
+// Volunteers (and admins) browse pending requests.
+// MUST be registered before /:id to avoid route conflict
+router.get('/', protect, browseDonations);
 
 /**
  * GET /api/v1/donations/:id
@@ -62,71 +63,48 @@ const {
  */
 router.get('/:id', protect, loadDonation, getDonationDetails);
 
-// Volunteers (and admins) browse pending requests.
-router.get(
-  '/',
-  protect,
-  authorize(USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN),
-  browseDonationsValidationRules,
-  validateRequest,
-  browseDonations
-);
-
 // --- Donor history (static paths — must be registered before any future
 // GET '/:id' route is added, so they're never shadowed by a param route) ---
-router.get(
-  '/my-history/summary',
-  protect,
-  authorize(USER_ROLES.DONOR),
-  historySummaryValidationRules,
-  validateRequest,
-  getDonorHistorySummary
-);
+// router.get(
+//   '/my-history/summary',
+//   protect,
+//   getDonorHistorySummary
+// );
 
-router.get(
-  '/my-history',
-  protect,
-  authorize(USER_ROLES.DONOR),
-  historyQueryValidationRules,
-  validateRequest,
-  getDonorHistory
-);
+// router.get(
+//   '/my-history',
+//   protect,
+//   authorize('donor'),
+//   historyQueryValidationRules,
+//   validateRequest,
+//   getDonorHistory
+// );
 
 // --- Volunteer history ---
-router.get(
-  '/assigned-history/summary',
-  protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  historySummaryValidationRules,
-  validateRequest,
-  getVolunteerHistorySummary
-);
+// router.get(
+//   '/assigned-history/summary',
+//   protect,
+//   authorize('volunteer'),
+//   validateRequest,
+//   getVolunteerHistorySummary
+// );
 
-router.get(
-  '/assigned-history',
-  protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  historyQueryValidationRules,
-  validateRequest,
-  getVolunteerHistory
-);
+// router.get(
+//   '/assigned-history',
+//   protect,
+//   authorize('volunteer'),
+//   historyQueryValidationRules,
+//   validateRequest,
+//   getVolunteerHistory
+// );
 
 // Only donors can create/edit/cancel donation requests.
-router.post(
-  '/',
-  protect,
-  authorize(USER_ROLES.DONOR),
-  createDonationValidationRules,
-  validateRequest,
-  createDonation
-);
+router.post('/', protect, createDonation);
 
 router.patch(
   '/:id',
   protect,
-  authorize(USER_ROLES.DONOR),
-  updateDonationValidationRules,
-  validateRequest,
+  authorize('donor'),
   loadDonation,
   restrictToDonationOwner,
   updateDonation
@@ -135,9 +113,7 @@ router.patch(
 router.delete(
   '/:id',
   protect,
-  authorize(USER_ROLES.DONOR),
-  cancelDonationValidationRules,
-  validateRequest,
+  authorize('donor'),
   loadDonation,
   restrictToDonationOwner,
   cancelDonation
@@ -150,9 +126,7 @@ router.delete(
 router.patch(
   '/:id/accept',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  acceptDonationValidationRules,
-  validateRequest,
+  authorize('volunteer'),
   loadDonation,
   acceptDonation
 );
@@ -164,9 +138,7 @@ router.patch(
 router.patch(
   '/:id/schedule',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  schedulePickupValidationRules,
-  validateRequest,
+  authorize('volunteer'),
   loadDonation,
   schedulePickup
 );
@@ -177,9 +149,7 @@ router.patch(
 router.patch(
   '/:id/on-the-way',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  onTheWayValidationRules,
-  validateRequest,
+  authorize('volunteer'),
   loadDonation,
   markOnTheWay
 );
@@ -188,9 +158,7 @@ router.patch(
 router.patch(
   '/:id/picked-up',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  pickedUpValidationRules,
-  validateRequest,
+  authorize('volunteer'),
   loadDonation,
   markPickedUp
 );
@@ -205,9 +173,7 @@ router.patch(
 router.patch(
   '/:id/complete',
   protect,
-  authorize(USER_ROLES.DONOR),
-  completeDonationValidationRules,
-  validateRequest,
+  authorize('donor'),
   loadDonation,
   restrictToDonationOwner,
   completeDonation
@@ -219,9 +185,7 @@ router.patch(
 router.post(
   '/:id/accept-team',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
-  acceptDonationValidationRules,
-  validateRequest,
+  authorize('volunteer'),
   loadDonation,
   acceptDonationForTeam
 );
@@ -230,7 +194,7 @@ router.post(
 router.post(
   '/:id/assign-member',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
+  authorize('volunteer'),
   loadDonation,
   assignTeamMember
 );
@@ -239,7 +203,7 @@ router.post(
 router.get(
   '/team/:teamId',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
+  authorize('volunteer'),
   getTeamDonations
 );
 
@@ -247,7 +211,7 @@ router.get(
 router.get(
   '/team/:teamId/assignments',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
+  authorize('volunteer'),
   getTeamAssignments
 );
 
@@ -257,7 +221,7 @@ router.get(
 router.get(
   '/my-assignments',
   protect,
-  authorize(USER_ROLES.VOLUNTEER),
+  authorize('volunteer'),
   getMyAssignments
 );
 

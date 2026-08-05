@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { Trophy, Medal, ArrowRight } from 'lucide-react';
 import axios from 'axios';
@@ -9,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * LeaderboardWidget component showing current rank and top donors
  */
 export function LeaderboardWidget({ currentRank, currentPoints }) {
+  const navigate = useNavigate();
   const [topDonors, setTopDonors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,11 +65,14 @@ export function LeaderboardWidget({ currentRank, currentPoints }) {
   return (
     <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-purple-50 dark:from-purple-950/30 dark:via-orange-950/20 dark:to-purple-950/30 rounded-xl border border-yellow-200 dark:border-purple-950/50 p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <Trophy size={20} className="text-yellow-500" />
           Leaderboard
         </h2>
-        <button className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1">
+        <button 
+          onClick={() => window.location.href = '/#leaderboard'}
+          className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold flex items-center gap-1 focus:outline-none focus:underline"
+        >
           View All
           <ArrowRight size={16} />
         </button>

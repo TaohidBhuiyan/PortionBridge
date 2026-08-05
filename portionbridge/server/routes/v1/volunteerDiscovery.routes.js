@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   getNearbyVolunteers,
   getNearbyTeams,
-  updateVolunteerLocation,
+  updateMyLocation,
   updateTeamLocation,
   getVolunteerStats,
   getRecommendedVolunteer,

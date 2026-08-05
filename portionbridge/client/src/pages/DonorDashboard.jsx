@@ -32,9 +32,9 @@ export function DonorDashboard() {
         {/* Section 3: Quick Actions */}
         <QuickActions />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - 2/3 width */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column - 2/3 width on large screens */}
+          <div className="xl:col-span-2 space-y-6">
             {/* Section 4: Active Donations */}
             <ActiveDonations />
 
@@ -45,7 +45,7 @@ export function DonorDashboard() {
             <ImpactSummary />
           </div>
 
-          {/* Right Column - 1/3 width */}
+          {/* Right Column - 1/3 width on large screens */}
           <div className="space-y-6">
             {/* Section 6: Leaderboard Widget */}
             <LeaderboardWidget currentRank={15} currentPoints={1250} />

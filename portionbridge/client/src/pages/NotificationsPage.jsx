@@ -98,7 +98,7 @@ export function NotificationsPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (err) {
-      console.error('Failed to mark as read:', err);
+      // Failed to mark as read
     }
   };
 
@@ -109,7 +109,7 @@ export function NotificationsPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (err) {
-      console.error('Failed to mark all as read:', err);
+      // Failed to mark all as read
     }
   };
 
@@ -226,7 +226,7 @@ export function NotificationsPage() {
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllAsRead}
-              className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm font-medium"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white rounded-xl transition-all shadow-sm hover:shadow-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               <CheckCheck size={16} />
               Mark All as Read
@@ -244,17 +244,19 @@ export function NotificationsPage() {
 
         {/* Filters */}
         <div className="flex items-center gap-2">
-          <Filter size={18} className="text-gray-500 dark:text-gray-400" />
-          <div className="flex gap-2">
+          <Filter size={18} className="text-gray-500 dark:text-gray-400" aria-hidden="true" />
+          <div className="flex gap-2" role="group" aria-label="Filter notifications">
             {['all', 'unread', 'donation', 'volunteer', 'system'].map(f => (
               <button
                 key={f}
                 onClick={() => { setFilter(f); setPage(1); }}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   filter === f
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 text-white shadow-sm'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
+                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                aria-label={`Show ${f} notifications`}
+                aria-pressed={filter === f}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
@@ -265,13 +267,14 @@ export function NotificationsPage() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6">
+        <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-6 shadow-sm" role="alert" aria-live="assertive">
           <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-            <AlertCircle size={20} />
+            <AlertCircle size={20} aria-hidden="true" />
             <p>{error}</p>
             <button
               onClick={fetchNotifications}
-              className="ml-auto text-sm underline"
+              className="ml-auto text-sm underline font-medium focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded px-2 py-1"
+              aria-label="Retry loading notifications"
             >
               Retry
             </button>
@@ -281,7 +284,7 @@ export function NotificationsPage() {
 
       {/* Notifications List */}
       {notifications.length === 0 && !loading ? (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-12 text-center">
+        <div className="bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-12 text-center shadow-sm">
           <Bell size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             No notifications

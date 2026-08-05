@@ -67,7 +67,7 @@ export function ForgotPasswordPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              className="block w-full rounded-xl border-2 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
               placeholder="email@example.com"
               disabled={loading}
             />
@@ -76,7 +76,7 @@ export function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg border border-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700"
+            className="w-full rounded-xl border border-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm hover:shadow-md"
           >
             {loading ? "Sending..." : "Send Reset Link"}
           </button>

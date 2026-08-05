@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const { uploadDonationImage, uploadProfilePhoto } = require('../controllers/upload.controller');
-const { protect } = require('../middleware/auth.middleware');
-const { loadDonation, restrictToDonationOwner } = require('../middleware/donation.middleware');
-const { uploadDonationImageMiddleware, uploadProfilePhotoMiddleware } = require('../middleware/upload.middleware');
+const { uploadDonationImage, uploadProfilePhoto } = require('../../controllers/upload.controller');
+const { protect } = require('../../middleware/auth.middleware');
+const { loadDonation, restrictToDonationOwner } = require('../../middleware/donation.middleware');
+const { uploadDonationImageMiddleware, uploadProfilePhotoMiddleware } = require('../../middleware/upload.middleware');
 
 /**
  * POST /api/v1/uploads/donation/:id/image

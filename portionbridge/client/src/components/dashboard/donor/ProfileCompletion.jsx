@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { Phone, MapPin, Camera, CheckCircle } from 'lucide-react';
 import axios from 'axios';

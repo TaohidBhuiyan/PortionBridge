@@ -250,7 +250,7 @@ const VolunteerCard = ({ volunteer, onRequestPickup, disabled = false }) => {
           )}
 
           <button
-            onClick={() => onViewDetails?.(volunteer)}
+            onClick={() => handleVolunteerClick(volunteer)}
             className="w-full text-center text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
           >
             View Full Profile

@@ -5,14 +5,13 @@ const { createReport, listMyReports } = require('../../controllers/report.contro
 const { createReportValidationRules, listMyReportsValidationRules } = require('../../validators/report.validator');
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
-const { USER_ROLES } = require('../../constants');
 
 // Both donors and volunteers may file reports — further restricted inside
 // reportService.createReport to only participants of the named donation.
 router.post(
   '/',
   protect,
-  authorize(USER_ROLES.DONOR, USER_ROLES.VOLUNTEER),
+  authorize('donor', 'volunteer'),
   createReportValidationRules,
   validateRequest,
   createReport
@@ -21,7 +20,7 @@ router.post(
 router.get(
   '/my',
   protect,
-  authorize(USER_ROLES.DONOR, USER_ROLES.VOLUNTEER),
+  authorize('donor', 'volunteer'),
   listMyReportsValidationRules,
   validateRequest,
   listMyReports

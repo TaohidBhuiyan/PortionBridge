@@ -181,7 +181,7 @@ const getRecommendedVolunteer = asyncHandler(async (req, res) => {
 module.exports = {
   getNearbyVolunteers,
   getNearbyTeams,
-  updateVolunteerLocation,
+  updateMyLocation,
   updateTeamLocation,
   getVolunteerStats,
   getRecommendedVolunteer,

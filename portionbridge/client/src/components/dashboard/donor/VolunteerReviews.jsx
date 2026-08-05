@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Star, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
-import { volunteerProfileApi } from '../../services/volunteerProfileApi';
+import { volunteerProfileApi } from '../../../services/volunteerProfileApi';
 
 /**
  * Volunteer Reviews Component

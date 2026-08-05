@@ -5,13 +5,12 @@ const { createRating, getRatingByDonation } = require('../../controllers/rating.
 const { createRatingValidationRules, getRatingValidationRules } = require('../../validators/rating.validator');
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
-const { USER_ROLES } = require('../../constants');
 
 // Only donors can submit ratings.
 router.post(
   '/',
   protect,
-  authorize(USER_ROLES.DONOR),
+  authorize('donor'),
   createRatingValidationRules,
   validateRequest,
   createRating

@@ -39,7 +39,7 @@ export function LoginPage() {
           setStats(res.data.data);
         }
       } catch (error) {
-        console.error('Failed to fetch stats:', error);
+        // Failed to fetch stats
       }
     };
     fetchStats();
@@ -235,13 +235,11 @@ export function LoginPage() {
                       <div className="flex w-full rounded-lg pt-1">
                         <div className="relative w-full">
                           <input
-                            className="block w-full border disabled:cursor-not-allowed disabled:opacity-50 bg-gray-50 border-gray-300 text-gray-900 focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-500 dark:focus:ring-cyan-500 p-2.5 text-sm rounded-lg"
-                            id="email"
                             type="email"
-                            name="email"
-                            placeholder="email@example.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
+                            className="block w-full rounded-xl border-2 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
+                            placeholder="email@example.com"
                             disabled={loading}
                           />
                         </div>
@@ -263,7 +261,7 @@ export function LoginPage() {
                       <div className="flex w-full rounded-lg pt-1">
                         <div className="relative w-full">
                           <input
-                            className="block w-full border disabled:cursor-not-allowed disabled:opacity-50 bg-gray-50 border-gray-300 text-gray-900 focus:border-cyan-500 focus:ring-cyan-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-cyan-500 dark:focus:ring-cyan-500 p-2.5 text-sm rounded-lg"
+                            className="block w-full rounded-xl border-2 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
                             id="password"
                             type="password"
                             name="password"
@@ -288,11 +286,9 @@ export function LoginPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="border transition-colors focus:ring-2 p-0.5 disabled:cursor-not-allowed border-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white disabled:bg-gray-300 disabled:text-gray-700 rounded-lg"
+                        className="w-full rounded-xl border border-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm hovering:shadow-md"
                       >
-                        <span className="flex items-center justify-center gap-1 font-medium py-1 px-2.5 text-base">
-                          {loading ? "Logging in..." : "Login"}
-                        </span>
+                        {loading ? "Signing in..." : "Sign In"}
                       </button>
 
                       <div className="flex items-center gap-3 my-1">

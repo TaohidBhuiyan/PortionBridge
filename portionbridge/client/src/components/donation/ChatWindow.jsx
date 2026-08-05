@@ -40,7 +40,6 @@ export function ChatWindow({ donation, currentUser }) {
         if (response.success) {
           setRoomJoined(true);
           roomJoinedRef.current = true;
-          console.log('[Chat] Joined room:', response.data.roomName);
         } else {
           setError(response.error || 'Failed to join chat room');
         }
@@ -49,14 +48,12 @@ export function ChatWindow({ donation, currentUser }) {
 
     // Listen for new messages
     const handleNewMessage = (message) => {
-      console.log('[Chat] New message received:', message);
       setMessages(prev => [...prev, message]);
       scrollToBottom();
     };
 
     // Listen for messages read
     const handleMessagesRead = (data) => {
-      console.log('[Chat] Messages read:', data);
       setMessages(prev => 
         prev.map(msg => 
           msg.sender_id !== data.readBy ? { ...msg, is_read: 1 } : msg

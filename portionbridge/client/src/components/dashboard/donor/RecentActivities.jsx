@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
@@ -17,6 +18,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * RecentActivities timeline component
  */
 export function RecentActivities() {
+  const navigate = useNavigate();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -149,20 +151,24 @@ export function RecentActivities() {
   }
 
   return (
-    <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Activities</h2>
+    <div className="bg-white/80 dark:bg-[#120721]/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/20 p-6 mb-6 shadow-sm">
+      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Recent Activities</h2>
 
       <div className="relative">
         {/* Timeline line */}
-        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-purple-950/30" />
+        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-purple-950/20" />
 
         <div className="space-y-4">
           {activities.map((activity) => {
             const Icon = activity.icon;
             return (
-              <div key={activity.id} className="relative flex items-start gap-4 pl-10">
+              <div 
+                key={activity.id} 
+                onClick={() => navigate(`/donations/${activity.id}`)}
+                className="relative flex items-start gap-4 pl-10 cursor-pointer group/item"
+              >
                 {/* Timeline dot */}
-                <div className={`absolute left-0 w-8 h-8 rounded-full ${getIconColor(activity.type)} flex items-center justify-center border-4 border-white dark:border-[#120721]`}>
+                <div className={`absolute left-0 w-8 h-8 rounded-full ${getIconColor(activity.type)} flex items-center justify-center border-4 border-white dark:border-[#120721] group-hover/item:scale-110 transition-transform duration-200`}>
                   <Icon size={16} />
                 </div>
 
@@ -170,14 +176,14 @@ export function RecentActivities() {
                 <div className="flex-1 pb-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-white mb-1">
+                      <p className="font-semibold text-gray-900 dark:text-white mb-1 group-hover/item:text-purple-600 dark:group-hover/item:text-purple-400 transition-colors">
                         {activity.title}
                       </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                      <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
                         {activity.description}
                       </p>
                     </div>
-                    <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+                    <span className="text-[10px] md:text-xs text-gray-450 dark:text-gray-500 shrink-0">
                       {formatTimestamp(activity.timestamp)}
                     </span>
                   </div>

@@ -56,10 +56,10 @@ function AnimatedCounter({ value, duration = 2000 }) {
 /**
  * StatCard component for individual statistics
  */
-function StatCard({ icon: Icon, label, value, color, loading, error }) {
+function StatCard({ icon: Icon, label, value, suffix = '', color, loading, error }) {
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6">
+      <div className="bg-white dark:bg-[#120721]/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/30 p-6 shadow-sm">
         <SkeletonCard count={1} />
       </div>
     );
@@ -67,7 +67,7 @@ function StatCard({ icon: Icon, label, value, color, loading, error }) {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6">
+      <div className="bg-white dark:bg-[#120721]/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/30 p-6 shadow-sm">
         <div className="text-center text-gray-400 dark:text-gray-600">
           <Icon size={24} className="mx-auto mb-2 opacity-50" />
           <p className="text-sm">Unavailable</p>
@@ -77,16 +77,18 @@ function StatCard({ icon: Icon, label, value, color, loading, error }) {
   }
 
   return (
-    <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6 hover:shadow-lg hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 group">
-      <div className={`w-12 h-12 rounded-lg ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+    <div className="bg-white dark:bg-[#120721]/60 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/20 p-6 hover:shadow-xl hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-300 group shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors duration-300" />
+      <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-md`}>
         <Icon size={24} className="text-white" />
       </div>
-      <p className="text-3xl font-bold text-gray-900 dark:text-white mb-1">
-        <AnimatedCounter value={value} />
+      <p className="text-3xl font-extrabold text-gray-900 dark:text-white mb-1 tracking-tight">
+        <AnimatedCounter value={value} />{suffix}
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+      <p className="text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
     </div>
   );
+}
 }
 
 /**
@@ -219,6 +221,7 @@ export function StatisticsCards() {
           icon={card.icon}
           label={card.label}
           value={card.value}
+          suffix={card.suffix}
           color={card.color}
           loading={loading}
           error={error}

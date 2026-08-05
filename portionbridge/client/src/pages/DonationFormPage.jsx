@@ -54,7 +54,7 @@ export function DonationFormPage() {
           setFormData(parsed);
           setHasUnsavedChanges(true);
         } catch (e) {
-          console.error('Failed to load saved form data:', e);
+          // Failed to load saved form data
         }
       }
     }
@@ -434,9 +434,34 @@ export function DonationFormPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header Skeleton */}
+        <div className="mb-8">
+          <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-4" />
+          <div className="space-y-2">
+            <div className="h-10 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          </div>
+        </div>
+
+        {/* Stepper Skeleton */}
+        <div className="flex items-center gap-2 mb-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+          ))}
+        </div>
+
+        {/* Form Card Skeleton */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8 animate-pulse">
+          <div className="min-h-[400px] space-y-4">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="space-y-2">
+                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+                <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -448,7 +473,7 @@ export function DonationFormPage() {
       <div className="mb-8">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-lg px-2 py-1"
         >
           <ArrowLeft size={20} />
           <span className="font-medium">Back</span>
@@ -465,16 +490,18 @@ export function DonationFormPage() {
       </div>
 
       {/* Stepper */}
-      <Stepper
-        steps={STEPS}
-        currentStep={currentStep}
-        onStepClick={handleStepClick}
-      />
+      <nav aria-label="Donation form progress">
+        <Stepper
+          steps={STEPS}
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+        />
+      </nav>
 
       {/* Form Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8">
         {/* Step Content */}
-        <div className="min-h-[400px]">
+        <div className="min-h-[400px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
           {currentStep === 0 && (
             <Step1BasicInfo
               formData={formData}
@@ -542,58 +569,46 @@ export function DonationFormPage() {
             Previous
           </button>
 
-          {/* Save Indicator */}
-          {!isEditMode && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              {isSaving && <Save size={16} className="animate-spin" />}
-              {hasUnsavedChanges && !isSaving && <Save size={16} />}
-              {isSaving ? 'Saving...' : hasUnsavedChanges ? 'Draft saved' : ''}
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {hasUnsavedChanges && (
+              <button
+                type="button"
+                onClick={handleClearDraft}
+                className="px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              >
+                Clear Draft
+              </button>
+            )}
 
-          {/* Next/Submit Button */}
-          {currentStep < STEPS.length - 1 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              disabled={!canGoNext}
-              className={`
-                flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
-                ${canGoNext
-                  ? 'bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white shadow-sm hover:shadow-md'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                }
-              `}
-            >
-              Next
-              <ArrowRight size={18} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSubmit}
-              disabled={!canSubmit}
-              className={`
-                flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
-                ${canSubmit
-                  ? 'bg-gradient-to-r from-green-400 via-green-600 to-green-900 hover:from-green-500 hover:via-green-700 hover:to-green-950 text-white shadow-sm hover:shadow-md'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                }
-              `}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={18} className="animate-spin" />
-                  {isEditMode ? 'Updating...' : 'Submitting...'}
-                </>
-              ) : (
-                <>
-                  {isEditMode ? 'Update Donation' : 'Submit Donation'}
-                  <ArrowRight size={18} />
-                </>
-              )}
-            </button>
-          )}
+            {currentStep < STEPS.length - 1 ? (
+              <button
+                onClick={handleNext}
+                disabled={!canGoNext}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              >
+                Next
+                <ArrowRight size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!canSubmit}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={18} />
+                    Submit Donation
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Clear Draft Button */}

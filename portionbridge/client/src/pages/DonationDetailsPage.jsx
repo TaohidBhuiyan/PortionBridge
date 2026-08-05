@@ -23,6 +23,7 @@ import { ImageGallery } from '../components/donation/ImageGallery';
 import { VolunteerCard } from '../components/donation/VolunteerCard';
 import { ActivityTimeline } from '../components/donation/ActivityTimeline';
 import { ErrorState } from '../components/dashboard/ErrorState';
+import { LoadingSkeleton } from '../components/dashboard/skeletons/LoadingSkeleton';
 import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
 import { TrackingPanel } from '../components/donation/TrackingPanel';
 import { ChatWindow } from '../components/donation/ChatWindow';
@@ -53,11 +54,9 @@ export function DonationDetailsPage() {
   // Real-time tracking
   useDonationTracking(id, {
     onStatusUpdate: (data) => {
-      console.log('Status update received:', data);
       loadDonationDetails(); // Reload donation details on status change
     },
     onLocationUpdate: (data) => {
-      console.log('Location update received:', data);
       setVolunteerLocation({
         latitude: data.latitude,
         longitude: data.longitude,
@@ -227,7 +226,7 @@ export function DonationDetailsPage() {
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4"
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-lg px-2 py-1"
         >
           <ArrowLeft size={20} />
           <span className="font-medium">Back</span>
@@ -248,7 +247,7 @@ export function DonationDetailsPage() {
             {canEdit && (
               <button
                 onClick={handleEdit}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <Edit size={18} />
                 Edit
@@ -258,7 +257,7 @@ export function DonationDetailsPage() {
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-950/50 transition-colors disabled:opacity-50"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-950/50 transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 {cancelling ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
                 Cancel
@@ -266,14 +265,14 @@ export function DonationDetailsPage() {
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               <Share2 size={18} />
               Share
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
             >
               <Printer size={18} />
               Print
@@ -283,11 +282,11 @@ export function DonationDetailsPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Left Column - Main Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-6">
           {/* Donation Overview */}
-          <SectionCard title="Donation Overview">
+          <SectionCard title="Donation Overview" className="shadow-sm hover:shadow-md transition-shadow">
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 {category === 'food' ? <Utensils size={16} /> : <Shirt size={16} />}
@@ -304,7 +303,7 @@ export function DonationDetailsPage() {
               </div>
 
               {category === 'food' && (
-                <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="space-y-2 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
                   {food_type && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 dark:text-gray-400 w-24">Type:</span>
@@ -357,7 +356,7 @@ export function DonationDetailsPage() {
               )}
 
               {category === 'clothes' && (
-                <div className="space-y-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="space-y-2 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
                   {clothing_category && (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="text-gray-500 dark:text-gray-400 w-24">Category:</span>
@@ -613,45 +612,6 @@ function ClockIcon({ size, className }) {
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
-  );
-}
-
-/**
- * LoadingSkeleton component
- */
-function LoadingSkeleton() {
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="mb-8">
-        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-        <div className="h-6 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3" />
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2" />
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
-              <div className="space-y-3">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-2/3" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
 

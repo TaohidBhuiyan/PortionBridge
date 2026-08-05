@@ -9,7 +9,7 @@ import { useAuth } from '../../context/AuthContext';
  * Provides Sidebar, TopNavbar, and Main Content Area
  * Reusable across Donor, Volunteer, and Admin dashboards
  */
-export function DashboardLayout() {
+export function DashboardLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
@@ -98,7 +98,7 @@ export function DashboardLayout() {
 
         {/* Page Content */}
         <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-64px)]">
-          <Outlet />
+          {children || <Outlet />}
         </main>
       </div>
     </div>

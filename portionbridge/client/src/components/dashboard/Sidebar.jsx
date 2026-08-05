@@ -17,6 +17,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const PRIMARY = 'var(--color-primary, oklch(60.6% 0.25 292.717))';
 
@@ -26,6 +27,7 @@ const PRIMARY = 'var(--color-primary, oklch(60.6% 0.25 292.717))';
  */
 export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, currentPath, onLogout }) {
   const location = useLocation();
+  const { user } = useAuth();
   const [expandedMenus, setExpandedMenus] = useState({});
 
   // Menu configuration based on role
@@ -33,55 +35,82 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     {
       title: 'Dashboard',
       icon: LayoutDashboard,
-      path: `/${userRole}/dashboard`,
+      path: userRole === 'admin' ? '/admin/dashboard' : (userRole === 'volunteer' ? '/volunteer/dashboard' : '/donor/dashboard'),
     },
-    {
-      title: 'Donate Food',
-      icon: Utensils,
-      path: `/${userRole}/donate-food`,
-    },
-    {
-      title: 'Donate Clothes',
-      icon: Shirt,
-      path: `/${userRole}/donate-clothes`,
-    },
-    {
-      title: 'My Donations',
-      icon: Package,
-      path: `/${userRole}/my-donations`,
-    },
-    {
-      title: 'Track Donation',
-      icon: MapPin,
-      path: `/${userRole}/track-donation`,
-    },
+  ];
+
+  if (userRole === 'donor') {
+    menuItems.push(
+      {
+        title: 'Donate Food',
+        icon: Utensils,
+        path: '/donation/create',
+      },
+      {
+        title: 'Donate Clothes',
+        icon: Shirt,
+        path: '/donation/create',
+      },
+      {
+        title: 'My Donations',
+        icon: Package,
+        path: '/donor/my-donations',
+      },
+      {
+        title: 'Track Donation',
+        icon: MapPin,
+        path: '/donor/my-donations',
+      },
+      {
+        title: 'Discover Volunteers',
+        icon: MapPin,
+        path: '/donor/discover-volunteers',
+      }
+    );
+  }
+
+  menuItems.push(
     {
       title: 'Leaderboard',
       icon: Trophy,
-      path: `/${userRole}/leaderboard`,
+      path: '/#leaderboard',
     },
     {
       title: 'Notifications',
       icon: Bell,
-      path: `/${userRole}/notifications`,
+      path: '/notifications',
       badge: 3,
-    },
-    {
-      title: 'Profile',
-      icon: User,
-      path: `/${userRole}/profile`,
-    },
-    {
-      title: 'Settings',
-      icon: Settings,
-      path: `/${userRole}/settings`,
-    },
-    {
-      title: 'Help',
-      icon: HelpCircle,
-      path: `/${userRole}/help`,
-    },
-  ];
+    }
+  );
+
+  if (userRole === 'donor') {
+    menuItems.push(
+      {
+        title: 'Profile',
+        icon: User,
+        path: '/donor/profile',
+      },
+      {
+        title: 'Settings',
+        icon: Settings,
+        path: '/donor/settings',
+      }
+    );
+  } else if (userRole === 'volunteer') {
+    menuItems.push(
+      {
+        title: 'Profile',
+        icon: User,
+        path: user?.id ? `/volunteers/${user.id}` : '/volunteer/dashboard',
+      }
+    );
+  }
+
+  menuItems.push({
+    title: 'Help',
+    icon: HelpCircle,
+    path: '/#roles',
+  });
 
   // Toggle nested menu expansion
   const toggleMenu = (title) => {

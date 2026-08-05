@@ -31,7 +31,6 @@ const {
 
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
-const { USER_ROLES } = require('../../constants');
 
 // Every route in this file is admin-only. Applied per-route (rather than
 // router.use()) to stay consistent with donation.routes.js / volunteer.routes.js,
@@ -40,7 +39,7 @@ const { USER_ROLES } = require('../../constants');
 router.get(
   '/dashboard',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   dashboardValidationRules,
   validateRequest,
   getDashboard
@@ -50,7 +49,7 @@ router.get(
 router.get(
   '/users',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   listUsersValidationRules,
   validateRequest,
   listUsers
@@ -59,7 +58,7 @@ router.get(
 router.get(
   '/users/:id/activity',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   getUserActivityValidationRules,
   validateRequest,
   getUserActivity
@@ -68,7 +67,7 @@ router.get(
 router.patch(
   '/users/:id/disable',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   disableUserValidationRules,
   validateRequest,
   disableUser
@@ -77,7 +76,7 @@ router.patch(
 router.patch(
   '/users/:id/enable',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   enableUserValidationRules,
   validateRequest,
   enableUser
@@ -86,7 +85,7 @@ router.patch(
 router.get(
   '/users/:id',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   getUserValidationRules,
   validateRequest,
   getUser
@@ -96,7 +95,7 @@ router.get(
 router.get(
   '/donations',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   listDonationsValidationRules,
   validateRequest,
   listDonations
@@ -105,7 +104,7 @@ router.get(
 router.get(
   '/donations/:id/history',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   getDonationHistoryValidationRules,
   validateRequest,
   getDonationHistory
@@ -114,7 +113,7 @@ router.get(
 router.get(
   '/donations/:id',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   getDonationValidationRules,
   validateRequest,
   getDonation
@@ -124,7 +123,7 @@ router.get(
 router.get(
   '/volunteers',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   listVolunteersValidationRules,
   validateRequest,
   listVolunteers
@@ -133,7 +132,7 @@ router.get(
 router.get(
   '/volunteers/:id',
   protect,
-  authorize(USER_ROLES.ADMIN),
+  authorize('admin'),
   getVolunteerValidationRules,
   validateRequest,
   getVolunteer
