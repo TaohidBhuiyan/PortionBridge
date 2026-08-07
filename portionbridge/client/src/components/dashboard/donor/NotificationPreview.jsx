@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { Bell, Check, ArrowRight } from 'lucide-react';
 import { useAuthSocket } from '../../../context/SocketContext';
@@ -10,6 +11,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * NotificationPreview widget showing latest 5 notifications with real-time updates
  */
 export function NotificationPreview() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const { socket, connected, unreadCount: socketUnreadCount } = useAuthSocket();
@@ -116,20 +118,20 @@ export function NotificationPreview() {
   }
 
   return (
-    <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6 mb-6">
+    <div className="bg-white/80 dark:bg-[#120721]/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/20 p-6 mb-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
           <Bell size={20} className="text-purple-600 dark:text-purple-400" />
           Notifications
           {socketUnreadCount > 0 && (
-            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-red-500 rounded-full">
+            <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-red-500 rounded-full animate-pulse">
               {socketUnreadCount}
             </span>
           )}
         </h2>
         <button 
-          onClick={() => window.location.href = '/notifications'}
-          className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium flex items-center gap-1"
+          onClick={() => navigate('/notifications')}
+          className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold flex items-center gap-1 focus:outline-none focus:underline"
         >
           View All
           <ArrowRight size={16} />

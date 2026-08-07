@@ -10,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * ProfileCompletion card component showing profile completion percentage
  */
 export function ProfileCompletion() {
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -136,7 +137,10 @@ export function ProfileCompletion() {
               </div>
             );
           })}
-          <button className="w-full mt-4 py-2.5 px-4 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md">
+          <button 
+            onClick={() => navigate('/donor/profile')}
+            className="w-full mt-4 py-2.5 px-4 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-800 hover:from-purple-600 hover:via-purple-700 hover:to-purple-900 text-white font-semibold rounded-xl transition-all duration-300 shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+          >
             Complete Profile
           </button>
         </div>

@@ -89,7 +89,6 @@ function StatCard({ icon: Icon, label, value, suffix = '', color, loading, error
     </div>
   );
 }
-}
 
 /**
  * StatisticsCards component with 8 summary cards
