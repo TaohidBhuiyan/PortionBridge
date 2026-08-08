@@ -32,20 +32,24 @@ export function ErrorState({
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+      {/* Error Icon */}
       <div
         className={`${classes.icon} rounded-full bg-danger-soft flex items-center justify-center mb-3`}
       >
         <AlertCircle size={size === 'small' ? 18 : size === 'medium' ? 22 : 26} className="text-danger" />
       </div>
 
+      {/* Title */}
       <h3 className={`${classes.title} font-semibold text-text-primary mb-1`}>
         {title}
       </h3>
 
+      {/* Message */}
       <p className={`${classes.message} text-text-secondary max-w-sm mb-4`}>
         {message}
       </p>
 
+      {/* Retry Button */}
       {showRetry && onRetry && (
         <button
           onClick={onRetry}

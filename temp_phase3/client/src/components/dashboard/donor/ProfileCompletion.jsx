@@ -7,7 +7,7 @@ import axios from 'axios';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
- * ProfileCompletion card component showing profile completion percentage.
+ * ProfileCompletion card — encourages the donor to complete their profile.
  */
 export function ProfileCompletion() {
   const navigate = useNavigate();
@@ -43,7 +43,14 @@ export function ProfileCompletion() {
   const calculateCompletion = (user) => {
     if (!user) return 0;
 
-    const fields = [user.name, user.email, user.phone, user.address, user.photo];
+    const fields = [
+      user.name,
+      user.email,
+      user.phone,
+      user.address,
+      user.photo,
+    ];
+
     const completedFields = fields.filter(field => field && field.trim() !== '').length;
     return Math.round((completedFields / fields.length) * 100);
   };
@@ -72,58 +79,81 @@ export function ProfileCompletion() {
 
   return (
     <div className="bg-surface rounded-xl border border-border p-5">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h2 className="text-base font-semibold text-text-primary mb-1">Profile Completion</h2>
-          <p className="text-sm text-text-secondary">Complete your profile to get the most out of PortionBridge.</p>
+      <div className="flex items-start justify-between mb-3 gap-3">
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-text-primary mb-0.5">
+            Profile Completion
+          </h2>
+          <p className="text-xs text-text-secondary">
+            Complete your profile to get the most out of PortionBridge
+          </p>
         </div>
-        <div className="relative w-20 h-20">
-          <svg className="w-full h-full transform -rotate-90">
-            <circle cx="40" cy="40" r="36" stroke="currentColor" strokeWidth="8" fill="none" className="text-border" />
+        <div className="relative w-14 h-14 shrink-0">
+          <svg className="w-full h-full -rotate-90">
             <circle
-              cx="40"
-              cy="40"
-              r="36"
+              cx="28"
+              cy="28"
+              r="24"
               stroke="currentColor"
-              strokeWidth="8"
+              strokeWidth="5"
               fill="none"
-              strokeDasharray={`${2 * Math.PI * 36}`}
-              strokeDashoffset={`${2 * Math.PI * 36 * (1 - completion / 100)}`}
+              className="text-border"
+            />
+            <circle
+              cx="28"
+              cy="28"
+              r="24"
+              stroke="currentColor"
+              strokeWidth="5"
+              fill="none"
+              strokeDasharray={`${2 * Math.PI * 24}`}
+              strokeDashoffset={`${2 * Math.PI * 24 * (1 - completion / 100)}`}
               strokeLinecap="round"
-              className="text-dash-primary transition-all duration-1000"
+              className="text-dash-primary transition-all duration-700"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-2xl font-bold text-text-primary">{completion}%</span>
+            <span className="text-sm font-semibold text-text-primary">
+              {completion}%
+            </span>
           </div>
         </div>
       </div>
 
       {missingFields.length > 0 ? (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-text-secondary mb-2">Missing Information:</p>
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-text-secondary mb-2">
+            Missing Information
+          </p>
           {missingFields.map((item, index) => {
             const Icon = item.icon;
             return (
-              <div key={index} className="flex items-center gap-3 p-3 rounded-lg bg-surface-hover border border-border">
-                <Icon size={18} className="text-text-secondary" />
-                <span className="text-sm text-text-secondary">{item.field}</span>
+              <div
+                key={index}
+                className="flex items-center gap-2.5 p-2 rounded-lg bg-page border border-border"
+              >
+                <Icon size={14} className="text-text-secondary" />
+                <span className="text-xs text-text-secondary">{item.field}</span>
               </div>
             );
           })}
           <button
             onClick={() => navigate('/donor/profile')}
-            className="w-full mt-2 py-2.5 px-4 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-lg transition-colors"
+            className="w-full mt-3 py-2 px-4 text-sm bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary focus-visible:ring-offset-2"
           >
             Complete Profile
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-3 p-4 rounded-lg bg-success-soft border border-border">
-          <CheckCircle size={20} className="text-success" />
+        <div className="flex items-center gap-2.5 p-3 rounded-lg bg-success-soft">
+          <CheckCircle size={18} className="text-success shrink-0" />
           <div>
-            <p className="font-medium text-text-primary">Profile Complete!</p>
-            <p className="text-sm text-text-secondary">Your profile is fully set up.</p>
+            <p className="text-sm font-medium text-success">
+              Profile Complete!
+            </p>
+            <p className="text-xs text-success">
+              Your profile is fully set up.
+            </p>
           </div>
         </div>
       )}

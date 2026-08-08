@@ -36,20 +36,24 @@ export function EmptyState({
 
   return (
     <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+      {/* Icon/Illustration */}
       <div
         className={`${classes.icon} rounded-full bg-dash-primary-soft flex items-center justify-center mb-3`}
       >
         <Icon size={size === 'small' ? 20 : size === 'medium' ? 24 : 28} className="text-dash-primary" />
       </div>
 
+      {/* Title */}
       <h3 className={`${classes.title} font-semibold text-text-primary mb-1`}>
         {title}
       </h3>
 
+      {/* Description */}
       <p className={`${classes.description} text-text-secondary max-w-sm mb-4`}>
         {description}
       </p>
 
+      {/* CTA Button */}
       {showAction && onAction && (
         <button
           onClick={onAction}

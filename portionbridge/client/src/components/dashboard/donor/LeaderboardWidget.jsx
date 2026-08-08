@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { SkeletonCard } from '../skeletons';
 import { Trophy, Medal, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
- * LeaderboardWidget component showing current rank and top donors
+ * LeaderboardWidget component showing current rank and top donors.
  */
 export function LeaderboardWidget({ currentRank, currentPoints }) {
-  const navigate = useNavigate();
   const [topDonors, setTopDonors] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,7 +17,7 @@ export function LeaderboardWidget({ currentRank, currentPoints }) {
         setLoading(true);
 
         const response = await axios.get(`${API_BASE}/leaderboard/donors?limit=3`);
-        
+
         if (response.data?.success) {
           setTopDonors(response.data.data.donors || []);
         } else {
@@ -38,95 +35,86 @@ export function LeaderboardWidget({ currentRank, currentPoints }) {
   }, []);
 
   const getRankIcon = (rank) => {
-    if (rank === 1) return <Medal size={20} className="text-yellow-500" />;
-    if (rank === 2) return <Medal size={20} className="text-gray-400" />;
-    if (rank === 3) return <Medal size={20} className="text-orange-400" />;
-    return <span className="text-sm font-medium text-gray-500 dark:text-gray-400">#{rank}</span>;
+    if (rank === 1) return <Medal size={20} className="text-warning" />;
+    if (rank === 2) return <Medal size={20} className="text-text-secondary" />;
+    if (rank === 3) return <Medal size={20} className="text-dash-primary" />;
+    return <span className="text-sm font-medium text-text-secondary">#{rank}</span>;
   };
 
   const getRankBadge = (rank) => {
     const badges = {
-      1: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-      2: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
-      3: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+      1: 'bg-warning-soft text-warning',
+      2: 'bg-surface-hover text-text-secondary',
+      3: 'bg-dash-primary-soft text-dash-primary',
     };
-    return badges[rank] || 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+    return badges[rank] || 'bg-success-soft text-success';
   };
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-[#120721] rounded-xl border border-gray-200 dark:border-purple-950/30 p-6 mb-6">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Leaderboard</h2>
-        <SkeletonCard count={3} />
+      <div className="bg-surface rounded-xl border border-border p-5">
+        <h2 className="text-base font-semibold text-text-primary mb-4">Leaderboard</h2>
+        <div className="space-y-3">
+          <div className="h-16 rounded-lg bg-surface-hover animate-pulse" />
+          <div className="h-16 rounded-lg bg-surface-hover animate-pulse" />
+          <div className="h-16 rounded-lg bg-surface-hover animate-pulse" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-purple-50 dark:from-purple-950/30 dark:via-orange-950/20 dark:to-purple-950/30 rounded-xl border border-yellow-200 dark:border-purple-950/50 p-6 mb-6">
+    <div className="bg-surface rounded-xl border border-border p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <Trophy size={20} className="text-yellow-500" />
+        <h2 className="text-base font-semibold text-text-primary flex items-center gap-2">
+          <Trophy size={16} className="text-warning" />
           Leaderboard
         </h2>
-        <button 
-          onClick={() => window.location.href = '/#leaderboard'}
-          className="text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-semibold flex items-center gap-1 focus:outline-none focus:underline"
+        <button
+          onClick={() => (window.location.href = '/#leaderboard')}
+          className="text-xs text-dash-primary hover:text-dash-primary-hover font-medium flex items-center gap-1"
         >
           View All
-          <ArrowRight size={16} />
+          <ArrowRight size={14} />
         </button>
       </div>
 
-      {/* Current User Stats */}
       {currentRank && (
-        <div className="bg-white dark:bg-[#120721] rounded-lg p-4 mb-4 border border-purple-200 dark:border-purple-950/30">
+        <div className="bg-surface-hover rounded-lg p-3 mb-4 border border-border">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-full ${getRankBadge(currentRank)} flex items-center justify-center`}>
+              <div className={`w-9 h-9 rounded-full ${getRankBadge(currentRank)} flex items-center justify-center`}>
                 {getRankIcon(currentRank)}
               </div>
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Your Rank</p>
-                <p className="font-semibold text-gray-900 dark:text-white">#{currentRank}</p>
+                <p className="text-xs text-text-secondary">Your Rank</p>
+                <p className="font-semibold text-text-primary">#{currentRank}</p>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500 dark:text-gray-400">Points</p>
-              <p className="font-semibold text-gray-900 dark:text-white">{currentPoints || 0}</p>
+              <p className="text-xs text-text-secondary">Points</p>
+              <p className="font-semibold text-text-primary">{currentPoints || 0}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Top 3 Donors */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Top Donors</p>
+      <div className="space-y-2">
+        <p className="text-xs font-medium text-text-secondary mb-2">Top Donors</p>
         {topDonors.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            No leaderboard data available
-          </p>
+          <p className="text-sm text-text-secondary text-center py-4">No leaderboard data available</p>
         ) : (
           topDonors.map((donor, index) => (
-            <div
-              key={donor.id || index}
-              className="flex items-center gap-3 bg-white dark:bg-[#120721] rounded-lg p-3 border border-gray-200 dark:border-purple-950/30"
-            >
+            <div key={donor.id || index} className="flex items-center gap-3 bg-surface-hover rounded-lg p-3 border border-border">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getRankBadge(index + 1)}`}>
                 {getRankIcon(index + 1)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 dark:text-white truncate">
-                  {donor.name || 'Anonymous'}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {donor.totalDonations || 0} donations
-                </p>
+                <p className="font-medium text-text-primary truncate">{donor.name || 'Anonymous'}</p>
+                <p className="text-xs text-text-secondary">{donor.totalDonations || 0} donations</p>
               </div>
               <div className="text-right">
-                <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                  {donor.points || 0} pts
-                </p>
+                <p className="font-semibold text-text-primary text-sm">{donor.points || 0} pts</p>
               </div>
             </div>
           ))
