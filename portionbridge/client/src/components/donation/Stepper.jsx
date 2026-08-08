@@ -3,11 +3,11 @@ import { Check, ChevronRight } from 'lucide-react';
 
 /**
  * Stepper component for multi-step form progress indicator
- * Shows current step, completed steps, and remaining steps
+ * Redesigned for compact, professional appearance
  */
 export function Stepper({ steps, currentStep, onStepClick }) {
   return (
-    <div className="w-full mb-8">
+    <div className="w-full mb-6">
       {/* Desktop Stepper */}
       <div className="hidden md:flex items-center justify-between">
         {steps.map((step, index) => {
@@ -22,35 +22,35 @@ export function Stepper({ steps, currentStep, onStepClick }) {
                   onClick={() => onStepClick && onStepClick(index)}
                   disabled={!isCompleted && !isCurrent}
                   className={`
-                    flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 w-full
                     ${isCurrent 
-                      ? 'bg-purple-100 dark:bg-purple-950/30 border-2 border-purple-500 dark:border-purple-400' 
+                      ? 'bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-600 dark:border-primary-400' 
                       : isCompleted 
-                        ? 'green-100 dark:bg-green-950/30 border-2 border-green-500 dark:border-green-400 cursor-pointer hover:bg-green-200 dark:hover:bg-green-950/40'
-                        : 'bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600'
+                        ? 'bg-success-50 dark:bg-success-950/30 border-2 border-success-600 dark:border-success-400 cursor-pointer hover:bg-success-100 dark:hover:bg-success-950/40'
+                        : 'bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
                     }
                   `}
                   aria-label={`Go to ${step.title}`}
                   aria-current={isCurrent ? 'step' : undefined}
                 >
                   <div className={`
-                    w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm
+                    w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs
                     ${isCurrent 
-                      ? 'bg-purple-500 text-white' 
+                      ? 'bg-primary-600 dark:bg-primary-400 text-white' 
                       : isCompleted 
-                        ? 'bg-green-500 text-white' 
-                        : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                        ? 'bg-success-600 dark:bg-success-400 text-white' 
+                        : 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
                     }
                   `}>
-                    {isCompleted ? <Check size={16} /> : index + 1}
+                    {isCompleted ? <Check size={12} /> : index + 1}
                   </div>
                   <span className={`
-                    font-medium text-sm
+                    font-medium text-xs
                     ${isCurrent 
-                      ? 'text-purple-900 dark:text-purple-100' 
+                      ? 'text-primary-900 dark:text-primary-100' 
                       : isCompleted 
-                        ? 'text-green-900 dark:text-green-100' 
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'text-success-900 dark:text-success-100' 
+                        : 'text-slate-600 dark:text-slate-400'
                     }
                   `}>
                     {step.title}
@@ -60,8 +60,8 @@ export function Stepper({ steps, currentStep, onStepClick }) {
 
               {!isLast && (
                 <div className={`
-                  w-12 h-0.5 mx-2
-                  ${isCompleted ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'}
+                  w-8 h-0.5 mx-2
+                  ${isCompleted ? 'bg-success-500' : 'bg-slate-200 dark:bg-slate-700'}
                 `} />
               )}
             </React.Fragment>
@@ -71,7 +71,7 @@ export function Stepper({ steps, currentStep, onStepClick }) {
 
       {/* Mobile Stepper - Compact */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           {steps.map((step, index) => {
             const isCompleted = index < currentStep;
             const isCurrent = index === currentStep;
@@ -80,26 +80,26 @@ export function Stepper({ steps, currentStep, onStepClick }) {
               <div
                 key={step.id}
                 className={`
-                  w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs transition-all duration-200
+                  w-6 h-6 rounded-full flex items-center justify-center font-semibold text-[10px] transition-all duration-200
                   ${isCurrent 
-                    ? 'bg-purple-500 text-white scale-110' 
+                    ? 'bg-primary-600 dark:bg-primary-400 text-white scale-110' 
                     : isCompleted 
-                      ? 'bg-green-500 text-white' 
-                      : 'bg-gray-300 dark:bg-gray-600 text-gray-600 dark:text-gray-400'
+                      ? 'bg-success-600 dark:bg-success-400 text-white' 
+                      : 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
                   }
                 `}
               >
-                {isCompleted ? <Check size={14} /> : index + 1}
+                {isCompleted ? <Check size={10} /> : index + 1}
               </div>
             );
           })}
         </div>
-        <div className="flex items-center justify-between text-sm">
-          <span className="font-medium text-gray-900 dark:text-white">
+        <div className="flex items-center justify-between text-xs">
+          <span className="font-medium text-slate-900 dark:text-slate-50">
             {steps[currentStep].title}
           </span>
-          <span className="text-gray-500 dark:text-gray-400">
-            Step {currentStep + 1} of {steps.length}
+          <span className="text-slate-500 dark:text-slate-400">
+            {currentStep + 1} of {steps.length}
           </span>
         </div>
       </div>

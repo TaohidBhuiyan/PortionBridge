@@ -223,23 +223,23 @@ export function DonationDetailsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+          className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg px-2 py-1"
         >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
+          <ArrowLeft size={18} />
+          <span className="font-medium text-sm">Back</span>
         </button>
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
                 {title}
               </h1>
               <StatusBadge status={status} />
             </div>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               ID: #{donationId} • Created {formatDate(created_at)}
             </p>
           </div>
@@ -247,9 +247,9 @@ export function DonationDetailsPage() {
             {canEdit && (
               <button
                 onClick={handleEdit}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
               >
-                <Edit size={18} />
+                <Edit size={16} />
                 Edit
               </button>
             )}
@@ -257,24 +257,24 @@ export function DonationDetailsPage() {
               <button
                 onClick={handleCancel}
                 disabled={cancelling}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-100 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-950/50 transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-danger-50 dark:bg-danger-950/30 text-danger-600 dark:text-danger-400 hover:bg-danger-100 dark:hover:bg-danger-950/50 transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:ring-offset-2 text-sm"
               >
-                {cancelling ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                {cancelling ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
                 Cancel
               </button>
             )}
             <button
               onClick={handleShare}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
             >
-              <Share2 size={18} />
+              <Share2 size={16} />
               Share
             </button>
             <button
               onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
             >
-              <Printer size={18} />
+              <Printer size={16} />
               Print
             </button>
           </div>
@@ -282,136 +282,136 @@ export function DonationDetailsPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
         {/* Left Column - Main Details */}
-        <div className="xl:col-span-2 space-y-6">
+        <div className="xl:col-span-2 space-y-4">
           {/* Donation Overview */}
-          <SectionCard title="Donation Overview" className="shadow-sm hover:shadow-md transition-shadow">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                {category === 'food' ? <Utensils size={16} /> : <Shirt size={16} />}
+          <SectionCard title="Donation Overview">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                {category === 'food' ? <Utensils size={14} /> : <Shirt size={14} />}
                 <span className="capitalize">{category}</span>
               </div>
               
-              <p className="text-gray-700 dark:text-gray-300">{description}</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{description}</p>
               
               <div className="flex items-center gap-2 text-sm">
-                <Package size={16} className="text-gray-400 dark:text-gray-500" />
-                <span className="text-gray-700 dark:text-gray-300">
+                <Package size={14} className="text-slate-400 dark:text-slate-500" />
+                <span className="text-slate-700 dark:text-slate-300">
                   {quantity} {quantity_unit}
                 </span>
               </div>
 
               {category === 'food' && (
-                <div className="space-y-2 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
+                <div className="space-y-1.5 pt-3 border-t border-slate-200 dark:border-slate-800">
                   {food_type && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Type:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{food_type}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Type:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{food_type}</span>
                     </div>
                   )}
                   {food_name && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Name:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{food_name}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Name:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{food_name}</span>
                     </div>
                   )}
                   {ingredients && (
                     <div className="flex items-start gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Ingredients:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{ingredients}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Ingredients:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{ingredients}</span>
                     </div>
                   )}
                   {allergens && (
                     <div className="flex items-start gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Allergens:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{allergens}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Allergens:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{allergens}</span>
                     </div>
                   )}
                   {storage_requirement && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Storage:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{storage_requirement}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Storage:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{storage_requirement}</span>
                     </div>
                   )}
                   {expiry_date && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Expiry:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{formatDate(expiry_date)}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Expiry:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{formatDate(expiry_date)}</span>
                     </div>
                   )}
                   {is_vegetarian !== undefined && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Vegetarian:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{is_vegetarian ? 'Yes' : 'No'}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Vegetarian:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{is_vegetarian ? 'Yes' : 'No'}</span>
                     </div>
                   )}
                   {is_halal !== undefined && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Halal:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{is_halal ? 'Yes' : 'No'}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Halal:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{is_halal ? 'Yes' : 'No'}</span>
                     </div>
                   )}
                 </div>
               )}
 
               {category === 'clothes' && (
-                <div className="space-y-2 pt-4 border-t-2 border-gray-200 dark:border-gray-700">
+                <div className="space-y-1.5 pt-3 border-t border-slate-200 dark:border-slate-800">
                   {clothing_category && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Category:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{clothing_category}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Category:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{clothing_category}</span>
                     </div>
                   )}
                   {gender && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Gender:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{gender}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Gender:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{gender}</span>
                     </div>
                   )}
                   {age_group && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Age Group:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{age_group}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Age Group:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{age_group}</span>
                     </div>
                   )}
                   {item_condition && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Condition:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{item_condition}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Condition:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{item_condition}</span>
                     </div>
                   )}
                   {brand && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Brand:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{brand}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Brand:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{brand}</span>
                     </div>
                   )}
                   {size && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Size:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{size}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Size:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{size}</span>
                     </div>
                   )}
                   {color && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Color:</span>
-                      <span className="text-gray-700 dark:text-gray-300">{color}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Color:</span>
+                      <span className="text-slate-700 dark:text-slate-300">{color}</span>
                     </div>
                   )}
                   {season && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400 w-24">Season:</span>
-                      <span className="text-gray-700 dark:text-gray-300 capitalize">{season}</span>
+                      <span className="text-slate-500 dark:text-slate-400 w-20">Season:</span>
+                      <span className="text-slate-700 dark:text-slate-300 capitalize">{season}</span>
                     </div>
                   )}
                 </div>
               )}
 
               {special_instructions && (
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Special Instructions:</p>
-                  <p className="text-gray-700 dark:text-gray-300">{special_instructions}</p>
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Special Instructions:</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{special_instructions}</p>
                 </div>
               )}
             </div>
@@ -419,15 +419,15 @@ export function DonationDetailsPage() {
 
           {/* Pickup Information */}
           <SectionCard title="Pickup Information">
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
                     {pickup_address_details?.fullAddress || 'Address not specified'}
                   </p>
                   {pickup_address_details && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {pickup_address_details.area}, {pickup_address_details.district}, {pickup_address_details.division}
                     </p>
                   )}
@@ -435,13 +435,13 @@ export function DonationDetailsPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
+                <Calendar className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-gray-700 dark:text-gray-300">
+                  <p className="text-sm text-slate-700 dark:text-slate-300">
                     {pickup_date ? formatDate(pickup_date) : 'Date not specified'}
                   </p>
                   {pickup_time_slot && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Time slot: {pickup_time_slot}
                     </p>
                   )}
@@ -450,8 +450,8 @@ export function DonationDetailsPage() {
 
               {contact_phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <p className="text-gray-700 dark:text-gray-300">{contact_phone}</p>
+                  <Phone className="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" />
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{contact_phone}</p>
                 </div>
               )}
             </div>
@@ -472,7 +472,7 @@ export function DonationDetailsPage() {
         </div>
 
         {/* Right Column - Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Live Tracking Panel - Only show when volunteer is assigned */}
           {(status === 'scheduled' || status === 'on_the_way' || status === 'picked_up') && (
             <SectionCard title="Live Tracking">
@@ -514,31 +514,31 @@ export function DonationDetailsPage() {
           {/* Existing Rating Display - Show if user has already rated */}
           {existingRating && (
             <SectionCard title="Your Rating">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
-                      size={24}
+                      size={20}
                       className={`${
                         star <= existingRating.stars
-                          ? 'text-yellow-500 fill-yellow-500'
-                          : 'text-gray-300 dark:text-gray-600'
+                          ? 'text-warning-500 fill-warning-500'
+                          : 'text-slate-300 dark:text-slate-600'
                       }`}
                     />
                   ))}
                 </div>
                 <div>
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium text-slate-900 dark:text-slate-50 text-sm">
                     {existingRating.stars} / 5
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Rated on {formatDate(existingRating.created_at)}
                   </p>
                 </div>
               </div>
               {existingRating.comment && (
-                <p className="mt-3 text-gray-700 dark:text-gray-300 text-sm italic">
+                <p className="mt-2 text-sm text-slate-700 dark:text-slate-300 italic">
                   "{existingRating.comment}"
                 </p>
               )}
@@ -547,22 +547,22 @@ export function DonationDetailsPage() {
 
           {/* Related Information */}
           <SectionCard title="Related Information">
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Category</span>
-                <span className="text-gray-700 dark:text-gray-300 capitalize">{category}</span>
+                <span className="text-slate-500 dark:text-slate-400">Category</span>
+                <span className="text-slate-700 dark:text-slate-300 capitalize">{category}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Status</span>
-                <span className="text-gray-700 dark:text-gray-300 capitalize">{status.replace('_', ' ')}</span>
+                <span className="text-slate-500 dark:text-slate-400">Status</span>
+                <span className="text-slate-700 dark:text-slate-300 capitalize">{status.replace('_', ' ')}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Created</span>
-                <span className="text-gray-700 dark:text-gray-300">{formatDate(created_at)}</span>
+                <span className="text-slate-500 dark:text-slate-400">Created</span>
+                <span className="text-slate-700 dark:text-slate-300">{formatDate(created_at)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">Last Updated</span>
-                <span className="text-gray-700 dark:text-gray-300">{formatDate(updated_at)}</span>
+                <span className="text-slate-500 dark:text-slate-400">Last Updated</span>
+                <span className="text-slate-700 dark:text-slate-300">{formatDate(updated_at)}</span>
               </div>
             </div>
           </SectionCard>

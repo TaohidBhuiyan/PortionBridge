@@ -1,16 +1,202 @@
 @import "tailwindcss";
 
-@theme {
-  /* Centralize theme colors */
-  --color-primary: oklch(60.6% 0.25 292.717);
-  --color-primary-deep: oklch(38% 0.19 292.717);
-  --color-primary-deeper: oklch(22% 0.12 292.717);
-  --color-primary-tint: oklch(94% 0.03 292.717);
+/* Enables class-based dark mode (`.dark` on <html>) for Tailwind v4's `dark:` variant.
+   Without this, `dark:` falls back to the `prefers-color-scheme` media query and
+   ignores the toggle in DashboardLayout. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Fonts mapping */
+/* ========================================
+   CENTRALIZED DESIGN SYSTEM - PORTIONBRIDGE
+   ======================================== */
+
+/* Dashboard Design System Tokens */
+:root {
+  /* Dashboard primary colors (sky blue) - separate from landing page purple */
+  --pb-primary: #0284c7;
+  --pb-primary-hover: #0369a1;
+  --pb-primary-soft: #e0f2fe;
+  --pb-page: #ffffff;
+  --pb-surface: #ffffff;
+  --pb-surface-hover: #f8fafc;
+  --pb-border: #e5e7eb;
+  --pb-text-primary: #0f172a;
+  --pb-text-secondary: #64748b;
+  --pb-success: #16a34a;
+  --pb-success-soft: #dcfce7;
+  --pb-warning: #d97706;
+  --pb-warning-soft: #fef3c7;
+  --pb-danger: #dc2626;
+  --pb-danger-soft: #fee2e2;
+  --pb-info: #0284c7;
+  --pb-info-soft: #e0f2fe;
+}
+
+.dark {
+  --pb-primary: #38bdf8;
+  --pb-primary-hover: #0ea5e9;
+  --pb-primary-soft: rgba(56, 189, 248, 0.12);
+  --pb-page: #0a0e1a;
+  --pb-surface: #111827;
+  --pb-surface-hover: #17202f;
+  --pb-border: rgba(255, 255, 255, 0.08);
+  --pb-text-primary: #f1f5f9;
+  --pb-text-secondary: #94a3b8;
+  --pb-success: #22c55e;
+  --pb-success-soft: rgba(34, 197, 94, 0.14);
+  --pb-warning: #f59e0b;
+  --pb-warning-soft: rgba(245, 158, 11, 0.14);
+  --pb-danger: #f87171;
+  --pb-danger-soft: rgba(248, 113, 113, 0.14);
+  --pb-info: #38bdf8;
+  --pb-info-soft: rgba(56, 189, 248, 0.12);
+}
+
+:root {
+  /* Dashboard color tokens (mapped to Tailwind theme) */
+  --color-dash-primary: var(--pb-primary);
+  --color-dash-primary-hover: var(--pb-primary-hover);
+  --color-dash-primary-soft: var(--pb-primary-soft);
+  --color-page: var(--pb-page);
+  --color-surface: var(--pb-surface);
+  --color-surface-hover: var(--pb-surface-hover);
+  --color-border: var(--pb-border);
+  --color-text-primary: var(--pb-text-primary);
+  --color-text-secondary: var(--pb-text-secondary);
+  --color-success: var(--pb-success);
+  --color-success-soft: var(--pb-success-soft);
+  --color-warning: var(--pb-warning);
+  --color-warning-soft: var(--pb-warning-soft);
+  --color-danger: var(--pb-danger);
+  --color-danger-soft: var(--pb-danger-soft);
+  --color-info: var(--pb-info);
+  --color-info-soft: var(--pb-info-soft);
+
+  /* Primary Brand Colors - Sky Blue (legacy, kept for compatibility) */
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #0284c7;
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
+  
+  --color-primary: var(--color-primary-500);
+  --color-primary-hover: var(--color-primary-600);
+  --color-primary-soft: var(--color-primary-50);
+  --color-primary-deep: var(--color-primary-700);
+  --color-primary-deeper: var(--color-primary-900);
+
+  /* Supporting Colors */
+  --color-cyan-500: #06b6d4;
+  --color-emerald-500: #10b981;
+  --color-slate-500: #64748b;
+  --color-slate-900: #0f172a;
+
+  /* Status Colors */
+  --color-success-50: #f0fdf4;
+  --color-success-500: #22c55e;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  
+  --color-warning-50: #fefce8;
+  --color-warning-500: #eab308;
+  --color-warning-600: #ca8a04;
+  --color-warning-700: #a16207;
+  
+  --color-danger-50: #fef2f2;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  
+  --color-info-50: #eff6ff;
+  --color-info-500: #3b82f6;
+  --color-info-600: #2563eb;
+  --color-info-700: #1d4ed8;
+
+  /* Light Mode Colors */
+  --color-bg-main: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-surface: #f8fafc;
+  --color-bg-surface-hover: #f1f5f9;
+  
+  --color-border-card: #e2e8f0;
+  --color-border-subtle: #f1f5f9;
+  --color-border-strong: #cbd5e1;
+  
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #64748b;
+  --color-text-disabled: #94a3b8;
+  
+  --color-text-on-primary: #ffffff;
+
+  /* Dark Mode Colors */
+  --color-dark-bg-main: #0f172a;
+  --color-dark-bg-card: #1e293b;
+  --color-dark-bg-surface: #334155;
+  --color-dark-bg-surface-hover: #475569;
+  
+  --color-dark-border-card: #334155;
+  --color-dark-border-subtle: #1e293b;
+  --color-dark-border-strong: #475569;
+  
+  --color-dark-text-primary: #f8fafc;
+  --color-dark-text-secondary: #cbd5e1;
+  --color-dark-text-muted: #94a3b8;
+  --color-dark-text-disabled: #64748b;
+  
+  --color-dark-text-on-primary: #ffffff;
+
+  /* Legacy mappings for compatibility */
+  --color-main: var(--color-bg-main);
+  --color-card: var(--color-bg-card);
+  --color-card-border: var(--color-border-card);
+  --color-muted: var(--color-text-muted);
+  --color-content: var(--color-text-primary);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-serif: 'Fraunces', Georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /*Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
 
   /* Theme Animations */
   --animate-scroll-rtl: scrollx-rtl 22s linear infinite;
@@ -21,6 +207,14 @@
   --animate-float-up: floatUp 1s ease-in-out infinite;
   --animate-fade-in: fadeIn 0.2s ease;
   --animate-modal-in: modalIn 0.25s ease;
+
+  /* Landing-page brand color (purple) — kept separate from the dashboard's
+     --color-dash-primary (sky blue) so the two products can use different
+     accent colors without one silently overriding the other. */
+  --color-primary-purple: oklch(60.6% 0.25 292.717);
+  --color-primary-purple-deep: oklch(38% 0.19 292.717);
+  --color-primary-purple-deeper: oklch(22% 0.12 292.717);
+  --color-primary-purple-tint: oklch(94% 0.03 292.717);
 }
 
 /* Global Keyframes - Declared outside @theme so Vite/Tailwind v4 doesn't purge them as unused classes */
@@ -40,8 +234,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 oklch(60.6% 0.25 292.717 / 0.2); }
-  50% { box-shadow: 0 0 0 12px oklch(60.6% 0.25 292.717 / 0); }
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-primary-purple) / 0.2; }
+  50% { box-shadow: 0 0 0 12px var(--color-primary-purple) / 0; }
 }
 
 @keyframes floatUp {
@@ -82,24 +276,27 @@
 }
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Light Mode - Apply Design System Variables */
+  --bg: var(--color-bg-main);
+  --text: var(--color-text-secondary);
+  --text-h: var(--color-text-primary);
+  --border: var(--color-border-card);
+  --code-bg: var(--color-bg-surface);
+  
+  /* Legacy accent colors - mapped to primary */
+  --accent: var(--color-primary);
+  --accent-bg: var(--color-primary-soft);
+  --accent-border: var(--color-primary-300);
+  --social-bg: var(--color-bg-surface);
+  --shadow: var(--shadow-md);
 
-  --sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --heading: 'Fraunces', Georgia, serif;
-  --mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+  /* Typography */
+  --sans: var(--font-sans);
+  --heading: var(--font-serif);
+  --mono: var(--font-mono);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  font: 16px/1.5 var(--sans);
+  letter-spacing: 0.01em;
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
@@ -109,7 +306,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 1024px) {
-    font-size: 16px;
+    font-size: 15px;
   }
 }
 
@@ -119,22 +316,88 @@ html {
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+    /* Dark Mode - Apply Design System Variables */
+    --bg: var(--color-dark-bg-main);
+    --text: var(--color-dark-text-secondary);
+    --text-h: var(--color-dark-text-primary);
+    --border: var(--color-dark-border-card);
+    --code-bg: var(--color-dark-bg-surface);
+    
+    /* Accent colors in dark mode */
+    --accent: var(--color-primary-400);
+    --accent-bg: rgba(56, 189, 248, 0.15);
+    --accent-border: rgba(56, 189, 248, 0.5);
+    --social-bg: var(--color-dark-bg-surface);
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.25);
   }
 
   #social .button-icon {
     filter: invert(1) brightness(2);
   }
+}
+
+.dark {
+  /* Dark Mode - Apply Design System Variables */
+  --color-primary: var(--color-primary-400);
+  --color-primary-hover: var(--color-primary-300);
+  --color-primary-soft: rgba(56, 189, 248, 0.15);
+  --color-primary-deep: var(--color-primary-600);
+  --color-primary-deeper: var(--color-primary-700);
+
+  --color-bg-main: var(--color-dark-bg-main);
+  --color-bg-card: var(--color-dark-bg-card);
+  --color-bg-surface: var(--color-dark-bg-surface);
+  --color-bg-surface-hover: var(--color-dark-bg-surface-hover);
+  
+  --color-border-card: var(--color-dark-border-card);
+  --color-border-subtle: var(--color-dark-border-subtle);
+  --color-border-strong: var(--color-dark-border-strong);
+  
+  --color-text-primary: var(--color-dark-text-primary);
+  --color-text-secondary: var(--color-dark-text-secondary);
+  --color-text-muted: var(--color-dark-text-muted);
+  --color-text-disabled: var(--color-dark-text-disabled);
+  
+  --color-text-on-primary: var(--color-dark-text-on-primary);
+  
+  /* Update legacy mappings */
+  --color-main: var(--color-dark-bg-main);
+  --color-card: var(--color-dark-bg-card);
+  --color-card-border: var(--color-dark-border-card);
+  --color-muted: var(--color-dark-text-muted);
+  --color-content: var(--color-dark-text-primary);
+  
+  /* Update root variables for dark mode */
+  --bg: var(--color-dark-bg-main);
+  --text: var(--color-dark-text-secondary);
+  --text-h: var(--color-dark-text-primary);
+  --border: var(--color-dark-border-card);
+  --code-bg: var(--color-dark-bg-surface);
+  
+  --accent: var(--color-primary-400);
+  --accent-bg: rgba(56, 189, 248, 0.15);
+  --accent-border: rgba(56, 189, 248, 0.5);
+  --social-bg: var(--color-dark-bg-surface);
+  --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.25);
+
+  /* Update dashboard tokens in dark mode */
+  --color-dash-primary: var(--pb-primary);
+  --color-dash-primary-hover: var(--pb-primary-hover);
+  --color-dash-primary-soft: var(--pb-primary-soft);
+  --color-page: var(--pb-page);
+  --color-surface: var(--pb-surface);
+  --color-surface-hover: var(--pb-surface-hover);
+  --color-border: var(--pb-border);
+  --color-text-primary: var(--pb-text-primary);
+  --color-text-secondary: var(--pb-text-secondary);
+  --color-success: var(--pb-success);
+  --color-success-soft: var(--pb-success-soft);
+  --color-warning: var(--pb-warning);
+  --color-warning-soft: var(--pb-warning-soft);
+  --color-danger: var(--pb-danger);
+  --color-danger-soft: var(--pb-danger-soft);
+  --color-info: var(--pb-info);
+  --color-info-soft: var(--pb-info-soft);
 }
 
 body {

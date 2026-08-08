@@ -60,7 +60,7 @@ export function DashboardLayout({ children }) {
   };
 
   return (
-    <div className={`min-h-screen bg-[#fbfbfe] dark:bg-[#0a0518] transition-colors duration-200 ${darkMode ? 'dark' : ''}`}>
+    <div className={`min-h-screen bg-page transition-colors duration-200 ${darkMode ? 'dark' : ''}`}>
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
@@ -82,13 +82,12 @@ export function DashboardLayout({ children }) {
 
       {/* Main Content Area */}
       <div
-        className={`transition-all duration-300 ${
-          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-64'
+        className={`transition-all duration-200 ${
+          sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-60'
         }`}
       >
         {/* Top Navbar */}
         <TopNavbar
-          onSidebarToggle={toggleSidebar}
           onMobileSidebarToggle={toggleMobileSidebar}
           darkMode={darkMode}
           onDarkModeToggle={() => setDarkMode(!darkMode)}

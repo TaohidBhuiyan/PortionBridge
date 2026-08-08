@@ -136,30 +136,30 @@ export function NotificationDropdown({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#120721] rounded-lg shadow-lg border border-gray-200 dark:border-purple-950/30 z-50 animate-fade-in">
+    <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-slate-900 rounded-lg shadow-lg border border-slate-200 dark:border-slate-800 z-50 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-purple-950/30">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-2">
-          <Bell size={18} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>
+          <Bell size={16} className="text-primary-600 dark:text-primary-400" />
+          <h3 className="font-medium text-slate-900 dark:text-slate-50 text-sm">Notifications</h3>
           {socketUnreadCount > 0 && (
-            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-danger-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
               {socketUnreadCount}
             </span>
           )}
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-purple-950/20 text-gray-400 transition-colors"
+          className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 transition-colors"
         >
-          <X size={16} />
+          <X size={14} />
         </button>
       </div>
 
       {/* Connection Status */}
       {!connected && (
-        <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800">
-          <p className="text-xs text-yellow-600 dark:text-yellow-400">Real-time updates disconnected</p>
+        <div className="px-4 py-2 bg-warning-50 dark:bg-warning-950/20 border-b border-warning-200 dark:border-warning-800">
+          <p className="text-xs text-warning-600 dark:text-warning-400">Real-time updates disconnected</p>
         </div>
       )}
 
@@ -167,43 +167,43 @@ export function NotificationDropdown({ isOpen, onClose }) {
       <div className="max-h-80 overflow-y-auto">
         {loading ? (
           <div className="px-4 py-8 text-center">
-            <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+            <Loader2 className="w-5 h-5 animate-spin text-slate-400 dark:text-slate-500 mx-auto" />
           </div>
         ) : notifications.length === 0 ? (
           <div className="px-4 py-8 text-center">
-            <Bell size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">No notifications</p>
+            <Bell size={28} className="mx-auto text-slate-300 dark:text-slate-600 mb-2" />
+            <p className="text-xs text-slate-500 dark:text-slate-400">No notifications</p>
           </div>
         ) : (
           notifications.map((notification) => (
             <button
               key={notification.id}
               onClick={() => handleNotificationClick(notification)}
-              className={`w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-purple-950/10 transition-colors border-b border-gray-100 dark:border-purple-950/20 last:border-b-0 ${
-                !notification.is_read ? 'bg-purple-50/50 dark:bg-purple-950/10' : ''
+              className={`w-full px-4 py-3 text-left hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b border-slate-100 dark:border-slate-800 last:border-b-0 ${
+                !notification.is_read ? 'bg-primary-50/50 dark:bg-primary-950/10' : ''
               }`}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 ${
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0 ${
                   !notification.is_read
-                    ? 'bg-purple-100 dark:bg-purple-900/50'
-                    : 'bg-gray-100 dark:bg-gray-700'
+                    ? 'bg-primary-100 dark:bg-primary-900/50'
+                    : 'bg-slate-100 dark:bg-slate-800'
                 }`}>
                   {getNotificationIcon(notification.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white line-clamp-1">
+                    <p className="font-medium text-xs text-slate-900 dark:text-slate-50 line-clamp-1">
                       {notification.title}
                     </p>
                     {!notification.is_read && (
-                      <div className="w-2 h-2 bg-purple-500 rounded-full shrink-0 mt-1.5" />
+                      <div className="w-1.5 h-1.5 bg-primary-500 rounded-full shrink-0 mt-1" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">
                     {formatTimestamp(notification.created_at)}
                   </p>
                 </div>
@@ -215,10 +215,10 @@ export function NotificationDropdown({ isOpen, onClose }) {
 
       {/* Footer - View All */}
       {notifications.length > 0 && (
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-purple-950/30">
+        <div className="px-4 py-3 border-t border-slate-200 dark:border-slate-800">
           <button
             onClick={handleViewAll}
-            className="w-full py-2 text-sm font-medium text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20 rounded-lg transition-colors"
+            className="w-full py-2 text-xs font-medium text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-950/20 rounded-lg transition-colors"
           >
             View All Notifications
           </button>

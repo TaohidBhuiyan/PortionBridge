@@ -470,18 +470,18 @@ export function DonationFormPage() {
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+          className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg px-2 py-1"
         >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
+          <ArrowLeft size={18} />
+          <span className="font-medium text-sm">Back</span>
         </button>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 mb-1">
           {isEditMode ? 'Edit Donation' : 'Create Donation'}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-sm text-slate-600 dark:text-slate-400">
           {isEditMode 
             ? 'Update the details of your donation request' 
             : 'Fill in the details to create a new donation request'
@@ -499,9 +499,9 @@ export function DonationFormPage() {
       </nav>
 
       {/* Form Card */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-shadow border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8">
+      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
         {/* Step Content */}
-        <div className="min-h-[400px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
+        <div className="min-h-[350px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
           {currentStep === 0 && (
             <Step1BasicInfo
               formData={formData}
@@ -551,30 +551,30 @@ export function DonationFormPage() {
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
           {/* Previous Button */}
           <button
             type="button"
             onClick={handlePrevious}
             disabled={currentStep === 0}
             className={`
-              flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-200
+              flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm
               ${currentStep === 0
-                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                : 'bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
+                : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
               }
             `}
           >
-            <ArrowLeft size={18} />
+            <ArrowLeft size={16} />
             Previous
           </button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {hasUnsavedChanges && (
               <button
                 type="button"
                 onClick={handleClearDraft}
-                className="px-4 py-2.5 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
               >
                 Clear Draft
               </button>
@@ -584,25 +584,25 @@ export function DonationFormPage() {
               <button
                 onClick={handleNext}
                 disabled={!canGoNext}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
               >
                 Next
-                <ArrowRight size={18} />
+                <ArrowRight size={16} />
               </button>
             ) : (
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 size={18} className="animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                     Submitting...
                   </>
                 ) : (
                   <>
-                    <CheckCircle size={18} />
+                    <CheckCircle size={16} />
                     Submit Donation
                   </>
                 )}
@@ -616,7 +616,7 @@ export function DonationFormPage() {
           <button
             type="button"
             onClick={handleClearDraft}
-            className="w-full mt-4 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+            className="w-full mt-3 text-xs text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 transition-colors"
           >
             Clear Saved Draft
           </button>

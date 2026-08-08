@@ -1,119 +1,96 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu, Search, Bell, Sun, Moon, ChevronDown } from 'lucide-react';
+import { Search, Bell, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { ProfileDropdown } from './ProfileDropdown';
 import { NotificationDropdown } from './NotificationDropdown';
+import { useAuthSocket } from '../../context/SocketContext';
+import { Avatar } from '../common/Avatar';
 
-const PRIMARY = 'var(--color-primary, oklch(60.6% 0.25 292.717))';
+// Maps known dashboard routes to a short, human page title. Falls back to a
+// capitalized version of the last path segment for anything not listed here,
+// so new routes don't end up with a blank title.
+const PAGE_TITLES = {
+  '/donor/dashboard': 'Dashboard',
+  '/volunteer/dashboard': 'Dashboard',
+  '/admin/dashboard': 'Dashboard',
+  '/donation/create': 'New Donation',
+  '/donor/my-donations': 'My Donations',
+  '/donor/discover-volunteers': 'Discover Volunteers',
+  '/donor/analytics': 'Analytics',
+  '/donor/profile': 'Profile',
+  '/donor/settings': 'Settings',
+  '/notifications': 'Notifications',
+};
+
+function getPageTitle(pathname) {
+  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
+  const matchedPrefix = Object.keys(PAGE_TITLES).find((path) => pathname.startsWith(path + '/'));
+  if (matchedPrefix) return PAGE_TITLES[matchedPrefix];
+  const lastSegment = pathname.split('/').filter(Boolean).pop() || 'Dashboard';
+  return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1);
+}
 
 /**
- * TopNavbar component with breadcrumb, search, notifications, profile, and dark mode toggle
+ * TopNavbar component with page title, search, notifications, profile, and dark mode toggle
  */
-export function TopNavbar({ onSidebarToggle, onMobileSidebarToggle, darkMode, onDarkModeToggle, user, onLogout }) {
+export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, user, onLogout }) {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const { unreadCount } = useAuthSocket();
 
-  // Generate breadcrumb from current path
-  const generateBreadcrumb = () => {
-    const pathSegments = location.pathname.split('/').filter(Boolean);
-    
-    if (pathSegments.length === 0) {
-      return [{ label: 'Home', path: '/' }];
-    }
-
-    const breadcrumb = [];
-    let currentPath = '';
-
-    pathSegments.forEach((segment, index) => {
-      currentPath += `/${segment}`;
-      breadcrumb.push({
-        label: segment.charAt(0).toUpperCase() + segment.slice(1),
-        path: currentPath,
-      });
-    });
-
-    return breadcrumb;
-  };
-
-  const breadcrumb = generateBreadcrumb();
-
-  // Mock notifications
-  const notifications = [
-    { id: 1, title: 'Donation picked up', message: 'Your food donation has been picked up', time: '5 min ago', unread: true },
-    { id: 2, title: 'New volunteer nearby', message: 'A new volunteer joined your area', time: '1 hour ago', unread: true },
-    { id: 3, title: 'Donation delivered', message: 'Your clothes donation reached the shelter', time: '2 hours ago', unread: false },
-  ];
-
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header className="sticky top-0 z-20 bg-white dark:bg-[#120721] border-b border-gray-200 dark:border-purple-950/30">
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Left Section - Mobile Menu Toggle & Breadcrumb */}
-        <div className="flex items-center gap-3 flex-1">
-          {/* Mobile Menu Toggle */}
+    <header className="sticky top-0 z-20 h-16 bg-surface border-b border-border">
+      <div className="flex items-center justify-between h-full px-4 md:px-6 gap-4">
+        {/* Left Section - Mobile Menu Toggle & Page Title */}
+        <div className="flex items-center gap-3">
+          {/* Mobile Menu Toggle (Phase 2 is desktop-focused; kept functional for mobile) */}
           <button
             onClick={onMobileSidebarToggle}
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-purple-950/20 text-gray-600 dark:text-gray-400 transition-colors"
+            aria-label="Open menu"
+            className="lg:hidden p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
           >
             <Menu size={20} />
           </button>
 
-          {/* Breadcrumb */}
-          <nav className="hidden sm:flex items-center gap-2 text-sm">
-            {breadcrumb.map((item, index) => (
-              <div key={item.path} className="flex items-center gap-2">
-                {index > 0 && (
-                  <span className="text-gray-400 dark:text-gray-600">/</span>
-                )}
-                <span
-                  className={`${
-                    index === breadcrumb.length - 1
-                      ? 'text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer'
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </nav>
+          <h1 className="text-base font-semibold text-text-primary">{pageTitle}</h1>
         </div>
 
         {/* Center Section - Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-md mx-4">
+        <div className="hidden md:flex flex-1 max-w-md">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
             <input
               type="text"
               placeholder="Search donations, volunteers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 dark:border-purple-950/30 bg-gray-50 dark:bg-purple-950/10 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+              className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-border bg-page text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-dash-primary/40 focus:border-dash-primary transition-colors"
             />
           </div>
         </div>
 
         {/* Right Section - Notifications, Dark Mode, Profile */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Notification Bell */}
           <div className="relative">
             <button
-              onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-              className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-purple-950/20 text-gray-600 dark:text-gray-400 transition-colors"
+              onClick={() => setShowNotificationDropdown((v) => !v)}
+              aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
+              className="relative p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
             >
-              <Bell size={20} />
+              <Bell size={18} />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
               )}
             </button>
 
             {showNotificationDropdown && (
               <NotificationDropdown
-                notifications={notifications}
-                unreadCount={unreadCount}
+                isOpen={showNotificationDropdown}
                 onClose={() => setShowNotificationDropdown(false)}
               />
             )}
@@ -122,22 +99,21 @@ export function TopNavbar({ onSidebarToggle, onMobileSidebarToggle, darkMode, on
           {/* Dark Mode Toggle */}
           <button
             onClick={onDarkModeToggle}
-            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-purple-950/20 text-gray-600 dark:text-gray-400 transition-colors"
-            title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
           >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           {/* Profile Dropdown */}
           <div className="relative">
             <button
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-              className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-purple-950/20 transition-colors"
+              onClick={() => setShowProfileDropdown((v) => !v)}
+              aria-label="Open profile menu"
+              className="flex items-center gap-1.5 p-1 pr-1.5 rounded-lg hover:bg-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm" style={{ background: PRIMARY }}>
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
-              <ChevronDown size={16} className="text-gray-400 hidden sm:block" />
+              <Avatar item={user} tone="dash" className="w-8 h-8 text-sm" />
+              <ChevronDown size={14} className="text-text-secondary hidden sm:block" />
             </button>
 
             {showProfileDropdown && (

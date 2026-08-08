@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { 
-  Utensils, 
-  Shirt, 
-  Package, 
-  Search, 
-  Trophy, 
+import {
+  Utensils,
+  Shirt,
+  Package,
+  Search,
+  Trophy,
   HelpCircle,
   BarChart3
 } from 'lucide-react';
@@ -21,49 +21,44 @@ export function QuickActions() {
       label: 'Donate Food',
       description: 'Share excess food with those in need',
       route: '/donation/create',
-      color: 'from-orange-400 to-orange-600',
+      primary: true,
     },
     {
       icon: Shirt,
       label: 'Donate Clothes',
       description: 'Give clothes a second life',
       route: '/donation/create',
-      color: 'from-blue-400 to-blue-600',
+      primary: true,
     },
     {
       icon: Package,
       label: 'My Donations',
       description: 'View and manage your donations',
       route: '/donor/my-donations',
-      color: 'from-purple-400 to-purple-600',
     },
     {
       icon: Search,
       label: 'Discover Volunteers',
       description: 'Find nearby volunteers and teams',
       route: '/donor/discover-volunteers',
-      color: 'from-green-400 to-green-600',
     },
     {
       icon: Trophy,
       label: 'Leaderboard',
       description: 'See top donors and volunteers',
       route: '/#leaderboard',
-      color: 'from-yellow-400 to-yellow-600',
     },
     {
       icon: BarChart3,
       label: 'Analytics',
       description: 'View your donation impact and trends',
       route: '/donor/analytics',
-      color: 'from-indigo-400 to-indigo-600',
     },
     {
       icon: HelpCircle,
       label: 'Support Center',
       description: 'Get help and support',
       route: '/#roles',
-      color: 'from-teal-400 to-teal-600',
     },
   ];
 
@@ -78,26 +73,31 @@ export function QuickActions() {
 
   return (
     <div className="mb-6">
-      <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h2 className="text-base font-semibold text-text-primary mb-3">Quick Actions</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
               onClick={() => handleActionClick(action.route)}
-              className="group bg-white/80 dark:bg-[#120721]/80 backdrop-blur-md rounded-2xl border border-gray-200 dark:border-purple-950/20 p-6 text-left hover:shadow-xl hover:-translate-y-1 hover:border-purple-500/50 dark:hover:border-purple-500/50 transition-all duration-300 shadow-sm relative overflow-hidden focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="group bg-surface rounded-xl border border-border p-4 text-left hover:border-dash-primary/40 hover:bg-surface-hover transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 flex items-start gap-3"
             >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl group-hover:bg-purple-500/10 transition-colors duration-300" />
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300 shadow-md`}>
-                <Icon size={24} className="text-white" />
+              <div
+                className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                  action.primary ? 'bg-dash-primary text-white' : 'bg-dash-primary-soft text-dash-primary'
+                }`}
+              >
+                <Icon size={18} />
               </div>
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                {action.label}
-              </h3>
-              <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                {action.description}
-              </p>
+              <div className="min-w-0">
+                <h3 className="text-sm font-medium text-text-primary mb-0.5 truncate">
+                  {action.label}
+                </h3>
+                <p className="text-xs text-text-secondary line-clamp-2">
+                  {action.description}
+                </p>
+              </div>
             </button>
           );
         })}
