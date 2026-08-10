@@ -20,26 +20,26 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
     <div className="overflow-x-auto">
       <table className="w-full">
         <thead>
-          <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+          <tr className="border-b border-border">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Donation
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Category
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Status
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Volunteer
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Pickup Date
             </th>
-            <th className="text-left py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-primary">
               Created
             </th>
-            <th className="text-right py-3 px-4 text-sm font-semibold text-gray-900 dark:text-white">
+            <th className="text-right py-3 px-4 text-sm font-semibold text-text-primary">
               Actions
             </th>
           </tr>
@@ -67,7 +67,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
             return (
               <tr 
                 key={id}
-                className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                className="border-b border-border hover:bg-surface-hover transition-colors"
               >
                 {/* Donation */}
                 <td className="py-4 px-4">
@@ -76,22 +76,22 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                       <img
                         src={coverImage}
                         alt={title}
-                        className="w-12 h-12 rounded-lg object-cover bg-gray-100 dark:bg-gray-900"
+                        className="w-12 h-12 rounded-lg object-cover bg-surface-hover"
                       />
                     ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-950/30 dark:to-purple-900/30 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-dash-primary-soft to-dash-primary-soft/50 dark:from-dash-primary-soft/30 dark:to-dash-primary-soft/10 flex items-center justify-center">
                         {category === 'food' ? (
-                          <Utensils size={20} className="text-purple-400 dark:text-purple-600" />
+                          <Utensils size={20} className="text-dash-primary dark:text-dash-primary" />
                         ) : (
-                          <Shirt size={20} className="text-purple-400 dark:text-purple-600" />
+                          <Shirt size={20} className="text-dash-primary dark:text-dash-primary" />
                         )}
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
+                      <p className="text-sm font-medium text-text-primary truncate max-w-[200px]">
                         {title}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <p className="text-xs text-text-secondary flex items-center gap-1">
                         <Package size={12} />
                         {quantity} {quantity_unit}
                       </p>
@@ -101,11 +101,11 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
 
                 {/* Category */}
                 <td className="py-4 px-4">
-                  <span className="text-sm text-gray-700 dark:text-gray-300 capitalize flex items-center gap-1">
+                  <span className="text-sm text-text-primary capitalize flex items-center gap-1">
                     {category === 'food' ? (
-                      <Utensils size={14} className="text-purple-500" />
+                      <Utensils size={14} className="text-dash-primary" />
                     ) : (
-                      <Shirt size={14} className="text-purple-500" />
+                      <Shirt size={14} className="text-dash-primary" />
                     )}
                     {category}
                   </span>
@@ -119,26 +119,26 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                 {/* Volunteer */}
                 <td className="py-4 px-4">
                   {volunteer_name ? (
-                    <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                      <User size={14} className="text-gray-400 dark:text-gray-500" />
+                    <span className="text-sm text-text-primary flex items-center gap-1">
+                      <User size={14} className="text-text-secondary" />
                       {volunteer_name}
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                    <span className="text-sm text-text-secondary">-</span>
                   )}
                 </td>
 
                 {/* Pickup Date */}
                 <td className="py-4 px-4">
-                  <span className="text-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                    <Calendar size={14} className="text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-text-primary flex items-center gap-1">
+                    <Calendar size={14} className="text-text-secondary" />
                     {formatDate(pickup_date)}
                   </span>
                 </td>
 
                 {/* Created */}
                 <td className="py-4 px-4">
-                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-sm text-text-secondary">
                     {formatDate(created_at)}
                   </span>
                 </td>
@@ -148,7 +148,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => onViewDetails?.(id)}
-                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                      className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
                       title="View Details"
                     >
                       <Eye size={16} />
@@ -156,7 +156,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                     {canEdit && (
                       <button
                         onClick={() => onEdit?.(id)}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                        className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
                         title="Edit"
                       >
                         <Edit size={16} />
@@ -165,7 +165,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                     {canCancel && (
                       <button
                         onClick={() => onCancel?.(id)}
-                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 transition-colors"
+                        className="p-2 rounded-lg hover:bg-danger-soft text-danger transition-colors"
                         title="Cancel"
                       >
                         <Trash2 size={16} />

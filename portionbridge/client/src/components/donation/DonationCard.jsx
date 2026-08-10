@@ -65,10 +65,10 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
   const canCancel = status === 'pending' || status === 'accepted';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border-2 border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow duration-200">
       {/* Cover Image */}
       {coverImage ? (
-        <div className="aspect-video w-full overflow-hidden bg-gray-100 dark:bg-gray-900">
+        <div className="aspect-video w-full overflow-hidden bg-surface-hover">
           <img
             src={coverImage}
             alt={title}
@@ -76,11 +76,11 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
           />
         </div>
       ) : (
-        <div className="aspect-video w-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-950/30 dark:to-purple-900/30 flex items-center justify-center">
+        <div className="aspect-video w-full bg-gradient-to-br from-dash-primary-soft to-dash-primary-soft/50 dark:from-dash-primary-soft/30 dark:to-dash-primary-soft/10 flex items-center justify-center">
           {category === 'food' ? (
-            <Utensils size={48} className="text-purple-400 dark:text-purple-600" />
+            <Utensils size={48} className="text-dash-primary dark:text-dash-primary" />
           ) : (
-            <Shirt size={48} className="text-purple-400 dark:text-purple-600" />
+            <Shirt size={48} className="text-dash-primary dark:text-dash-primary" />
           )}
         </div>
       )}
@@ -90,12 +90,12 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
         {/* Header */}
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate mb-1">
+            <h3 className="text-lg font-semibold text-text-primary truncate mb-1">
               {title}
             </h3>
             <div className="flex items-center gap-2">
               <StatusBadge status={status} size="small" />
-              <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <span className="text-xs text-text-secondary flex items-center gap-1">
                 {category === 'food' ? (
                   <Utensils size={12} />
                 ) : (
@@ -109,7 +109,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
 
         {/* Description */}
         {shortDescription && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+          <p className="text-sm text-text-secondary mb-4 line-clamp-2">
             {shortDescription}
           </p>
         )}
@@ -117,21 +117,21 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
         {/* Details Grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="flex items-center gap-2 text-sm">
-            <Package size={16} className="text-gray-400 dark:text-gray-500" />
-            <span className="text-gray-700 dark:text-gray-300">
+            <Package size={16} className="text-text-secondary" />
+            <span className="text-text-primary">
               {quantity} {quantity_unit}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <Calendar size={16} className="text-gray-400 dark:text-gray-500" />
-            <span className="text-gray-700 dark:text-gray-300">
+            <Calendar size={16} className="text-text-secondary" />
+            <span className="text-text-primary">
               {formatDate(pickup_date)}
             </span>
           </div>
           {volunteer_name && (
             <div className="flex items-center gap-2 text-sm col-span-2">
-              <User size={16} className="text-gray-400 dark:text-gray-500" />
-              <span className="text-gray-700 dark:text-gray-300 truncate">
+              <User size={16} className="text-text-secondary" />
+              <span className="text-text-primary truncate">
                 {volunteer_name}
               </span>
             </div>
@@ -139,10 +139,10 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
         </div>
 
         {/* Quick Actions */}
-        <div className="flex items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-2 pt-4 border-t border-border">
           <button
             onClick={handleViewDetails}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-purple-50 dark:bg-purple-950/30 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-950/50 transition-colors text-sm font-medium"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary-soft text-dash-primary hover:bg-dash-primary-soft/70 transition-colors text-sm font-medium"
           >
             <Eye size={16} />
             View
@@ -150,7 +150,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
           {canEdit && (
             <button
               onClick={handleEdit}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-sm font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-page border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
             >
               <Edit size={16} />
               Edit
@@ -159,7 +159,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
           {canCancel && (
             <button
               onClick={handleCancel}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors text-sm font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-danger-soft text-danger hover:bg-danger-soft/70 transition-colors text-sm font-medium"
             >
               <Trash2 size={16} />
               Cancel

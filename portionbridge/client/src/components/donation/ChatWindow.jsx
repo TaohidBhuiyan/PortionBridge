@@ -141,8 +141,8 @@ export function ChatWindow({ donation, currentUser }) {
   // Show empty state if no volunteer assigned
   if (!isVolunteerAssigned) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-3 text-gray-500 dark:text-gray-400">
+      <div className="bg-surface rounded-xl border border-border p-6">
+        <div className="flex items-center gap-3 text-text-secondary">
           <AlertCircle size={20} />
           <p>Chat is available once a volunteer accepts this donation.</p>
         </div>
@@ -153,8 +153,8 @@ export function ChatWindow({ donation, currentUser }) {
   // Show loading state
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
+      <div className="bg-surface rounded-xl border border-border p-6">
+        <div className="flex items-center justify-center gap-2 text-text-secondary">
           <Loader2 size={20} className="animate-spin" />
           <p>Loading chat...</p>
         </div>
@@ -165,8 +165,8 @@ export function ChatWindow({ donation, currentUser }) {
   // Show error state
   if (error && messages.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+      <div className="bg-surface rounded-xl border border-border p-6">
+        <div className="flex items-center gap-3 text-danger">
           <AlertCircle size={20} />
           <p>{error}</p>
         </div>
@@ -175,18 +175,18 @@ export function ChatWindow({ donation, currentUser }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+    <div className="bg-surface rounded-xl border border-border overflow-hidden">
       {/* Chat Header */}
-      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-            <MessageSquare size={20} className="text-purple-600 dark:text-purple-400" />
+          <div className="w-10 h-10 rounded-full bg-dash-primary-soft flex items-center justify-center">
+            <MessageSquare size={20} className="text-dash-primary" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 dark:text-white">
+            <h3 className="font-semibold text-text-primary">
               {donation.volunteer_name || 'Volunteer'}
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-text-secondary">
               {connected ? 'Connected' : 'Connecting...'}
             </p>
           </div>
@@ -196,7 +196,7 @@ export function ChatWindow({ donation, currentUser }) {
       {/* Messages */}
       <div className="h-96 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary">
             <MessageSquare size={48} className="mb-2 opacity-50" />
             <p>No messages yet. Start the conversation!</p>
           </div>
@@ -212,13 +212,13 @@ export function ChatWindow({ donation, currentUser }) {
                 <div
                   className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                     isOwnMessage
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
+                      ? 'bg-dash-primary text-white'
+                      : 'bg-page border border-border text-text-primary'
                   }`}
                 >
                   <p className="text-sm break-words">{message.message}</p>
                   <div className={`flex items-center gap-2 mt-1 text-xs ${
-                    isOwnMessage ? 'text-purple-200' : 'text-gray-500 dark:text-gray-400'
+                    isOwnMessage ? 'text-dash-primary-soft' : 'text-text-secondary'
                   }`}>
                     <span>{formatTime(message.created_at)}</span>
                     {isOwnMessage && (
@@ -236,7 +236,7 @@ export function ChatWindow({ donation, currentUser }) {
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="p-4 border-t border-border">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
@@ -244,13 +244,13 @@ export function ChatWindow({ donation, currentUser }) {
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             disabled={sending || !roomJoined}
-            className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+            className="flex-1 px-4 py-2 rounded-lg border border-border bg-page text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-dash-primary disabled:opacity-50"
             maxLength={2000}
           />
           <button
             type="submit"
             disabled={sending || !newMessage.trim() || !roomJoined}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {sending ? (
               <Loader2 size={20} className="animate-spin" />
@@ -260,7 +260,7 @@ export function ChatWindow({ donation, currentUser }) {
           </button>
         </form>
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400 mt-2">{error}</p>
+          <p className="text-sm text-danger mt-2">{error}</p>
         )}
       </div>
     </div>

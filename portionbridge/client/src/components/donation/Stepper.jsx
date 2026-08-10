@@ -24,10 +24,10 @@ export function Stepper({ steps, currentStep, onStepClick }) {
                   className={`
                     flex items-center gap-2.5 px-3 py-2 rounded-lg transition-all duration-200 w-full
                     ${isCurrent 
-                      ? 'bg-primary-50 dark:bg-primary-950/30 border-2 border-primary-600 dark:border-primary-400' 
+                      ? 'bg-dash-primary-soft border-2 border-dash-primary' 
                       : isCompleted 
-                        ? 'bg-success-50 dark:bg-success-950/30 border-2 border-success-600 dark:border-success-400 cursor-pointer hover:bg-success-100 dark:hover:bg-success-950/40'
-                        : 'bg-slate-50 dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700'
+                        ? 'bg-success-soft border-2 border-success cursor-pointer hover:bg-success-soft/70'
+                        : 'bg-page border-2 border-border'
                     }
                   `}
                   aria-label={`Go to ${step.title}`}
@@ -36,10 +36,10 @@ export function Stepper({ steps, currentStep, onStepClick }) {
                   <div className={`
                     w-6 h-6 rounded-full flex items-center justify-center font-semibold text-xs
                     ${isCurrent 
-                      ? 'bg-primary-600 dark:bg-primary-400 text-white' 
+                      ? 'bg-dash-primary text-white' 
                       : isCompleted 
-                        ? 'bg-success-600 dark:bg-success-400 text-white' 
-                        : 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
+                        ? 'bg-success text-white' 
+                        : 'bg-surface text-text-secondary'
                     }
                   `}>
                     {isCompleted ? <Check size={12} /> : index + 1}
@@ -47,10 +47,10 @@ export function Stepper({ steps, currentStep, onStepClick }) {
                   <span className={`
                     font-medium text-xs
                     ${isCurrent 
-                      ? 'text-primary-900 dark:text-primary-100' 
+                      ? 'text-dash-primary' 
                       : isCompleted 
-                        ? 'text-success-900 dark:text-success-100' 
-                        : 'text-slate-600 dark:text-slate-400'
+                        ? 'text-success' 
+                        : 'text-text-secondary'
                     }
                   `}>
                     {step.title}
@@ -61,7 +61,7 @@ export function Stepper({ steps, currentStep, onStepClick }) {
               {!isLast && (
                 <div className={`
                   w-8 h-0.5 mx-2
-                  ${isCompleted ? 'bg-success-500' : 'bg-slate-200 dark:bg-slate-700'}
+                  ${isCompleted ? 'bg-success' : 'bg-border'}
                 `} />
               )}
             </React.Fragment>
@@ -82,10 +82,10 @@ export function Stepper({ steps, currentStep, onStepClick }) {
                 className={`
                   w-6 h-6 rounded-full flex items-center justify-center font-semibold text-[10px] transition-all duration-200
                   ${isCurrent 
-                    ? 'bg-primary-600 dark:bg-primary-400 text-white scale-110' 
+                    ? 'bg-dash-primary text-white scale-110' 
                     : isCompleted 
-                      ? 'bg-success-600 dark:bg-success-400 text-white' 
-                      : 'bg-slate-300 dark:bg-slate-600 text-slate-600 dark:text-slate-400'
+                      ? 'bg-success text-white' 
+                      : 'bg-surface text-text-secondary'
                   }
                 `}
               >
@@ -95,10 +95,10 @@ export function Stepper({ steps, currentStep, onStepClick }) {
           })}
         </div>
         <div className="flex items-center justify-between text-xs">
-          <span className="font-medium text-slate-900 dark:text-slate-50">
+          <span className="font-medium text-text-primary">
             {steps[currentStep].title}
           </span>
-          <span className="text-slate-500 dark:text-slate-400">
+          <span className="text-text-secondary">
             {currentStep + 1} of {steps.length}
           </span>
         </div>

@@ -437,28 +437,28 @@ export function DonationFormPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header Skeleton */}
         <div className="mb-8">
-          <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-4" />
+          <div className="h-8 w-32 bg-border rounded-lg animate-pulse mb-4" />
           <div className="space-y-2">
-            <div className="h-10 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="h-10 w-48 bg-border rounded-lg animate-pulse" />
+            <div className="h-4 w-64 bg-border rounded-lg animate-pulse" />
           </div>
         </div>
 
         {/* Stepper Skeleton */}
         <div className="flex items-center gap-2 mb-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div key={i} className="flex-1 h-2 bg-border rounded-lg animate-pulse" />
           ))}
         </div>
 
         {/* Form Card Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 md:p-8 animate-pulse">
+        <div className="bg-surface rounded-2xl border border-border p-6 md:p-8 animate-pulse">
           <div className="min-h-[400px] space-y-4">
-            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="h-6 w-48 bg-border rounded-lg animate-pulse" />
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="space-y-2">
-                <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-                <div className="h-12 w-full bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+                <div className="h-4 w-24 bg-border rounded-lg animate-pulse" />
+                <div className="h-12 w-full bg-border rounded-lg animate-pulse" />
               </div>
             ))}
           </div>
@@ -473,15 +473,15 @@ export function DonationFormPage() {
       <div className="mb-6">
         <button
           onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-50 transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg px-2 py-1"
+          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 rounded-lg px-2 py-1"
         >
           <ArrowLeft size={18} />
           <span className="font-medium text-sm">Back</span>
         </button>
-        <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50 mb-1">
+        <h1 className="text-2xl font-semibold text-text-primary mb-1">
           {isEditMode ? 'Edit Donation' : 'Create Donation'}
         </h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400">
+        <p className="text-sm text-text-secondary">
           {isEditMode 
             ? 'Update the details of your donation request' 
             : 'Fill in the details to create a new donation request'
@@ -499,7 +499,7 @@ export function DonationFormPage() {
       </nav>
 
       {/* Form Card */}
-      <div className="bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 p-5 md:p-6 shadow-sm">
+      <div className="bg-surface rounded-lg border border-border p-5 md:p-6 shadow-sm">
         {/* Step Content */}
         <div className="min-h-[350px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
           {currentStep === 0 && (
@@ -551,7 +551,7 @@ export function DonationFormPage() {
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
           {/* Previous Button */}
           <button
             type="button"
@@ -560,8 +560,8 @@ export function DonationFormPage() {
             className={`
               flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm
               ${currentStep === 0
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed'
-                : 'bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'
+                ? 'bg-page text-text-secondary cursor-not-allowed'
+                : 'bg-surface border border-border text-text-primary hover:bg-surface-hover'
               }
             `}
           >
@@ -574,7 +574,7 @@ export function DonationFormPage() {
               <button
                 type="button"
                 onClick={handleClearDraft}
-                className="px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
+                className="px-3 py-2 rounded-lg text-text-secondary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
               >
                 Clear Draft
               </button>
@@ -584,7 +584,7 @@ export function DonationFormPage() {
               <button
                 onClick={handleNext}
                 disabled={!canGoNext}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
               >
                 Next
                 <ArrowRight size={16} />
@@ -593,7 +593,7 @@ export function DonationFormPage() {
               <button
                 onClick={handleSubmit}
                 disabled={!canSubmit}
-                className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-400 text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
               >
                 {isSubmitting ? (
                   <>
@@ -616,7 +616,7 @@ export function DonationFormPage() {
           <button
             type="button"
             onClick={handleClearDraft}
-            className="w-full mt-3 text-xs text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 transition-colors"
+            className="w-full mt-3 text-xs text-danger hover:text-danger/80 transition-colors"
           >
             Clear Saved Draft
           </button>
@@ -626,16 +626,16 @@ export function DonationFormPage() {
       {/* Submission Result Modal */}
       {submissionResult && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-[modalIn_0.25s_ease]">
+          <div className="bg-surface rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-[modalIn_0.25s_ease]">
             {submissionResult.success ? (
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-950/30 flex items-center justify-center">
-                  <CheckCircle size={32} className="text-green-500" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success-soft flex items-center justify-center">
+                  <CheckCircle size={32} className="text-success" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-semibold text-text-primary mb-2">
                   {submissionResult.isUpdate ? 'Donation Updated Successfully!' : 'Donation Created Successfully!'}
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-text-secondary mb-6">
                   {submissionResult.isUpdate 
                     ? 'Your donation request has been updated successfully.'
                     : 'Your donation request has been submitted and is now visible to volunteers.'
@@ -644,21 +644,21 @@ export function DonationFormPage() {
                 <div className="space-y-3">
                   <button
                     onClick={handleViewDonation}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     View Donation
                   </button>
                   {!submissionResult.isUpdate && (
                     <button
                       onClick={handleCreateAnother}
-                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
+                      className="w-full px-4 py-3 bg-surface border-2 border-border text-text-primary font-medium rounded-xl hover:bg-surface-hover transition-all duration-200"
                     >
                       Create Another Donation
                     </button>
                   )}
                   <button
                     onClick={handleReturnDashboard}
-                    className="w-full px-4 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="w-full px-4 py-3 text-text-secondary font-medium hover:text-text-primary transition-colors"
                   >
                     Return to Dashboard
                   </button>
@@ -666,25 +666,25 @@ export function DonationFormPage() {
               </div>
             ) : (
               <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center">
-                  <XCircle size={32} className="text-red-500" />
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger-soft flex items-center justify-center">
+                  <XCircle size={32} className="text-danger" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                <h3 className="text-xl font-semibold text-text-primary mb-2">
                   Submission Failed
                 </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-text-secondary mb-6">
                   {submissionResult.error || 'An error occurred while submitting your donation.'}
                 </p>
                 <div className="space-y-3">
                   <button
                     onClick={() => setSubmissionResult(null)}
-                    className="w-full px-4 py-3 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
+                    className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
                   >
                     Try Again
                   </button>
                   <button
                     onClick={handleReturnDashboard}
-                    className="w-full px-4 py-3 text-gray-600 dark:text-gray-400 font-medium hover:text-gray-900 dark:hover:text-white transition-colors"
+                    className="w-full px-4 py-3 text-text-secondary font-medium hover:text-text-primary transition-colors"
                   >
                     Return to Dashboard
                   </button>
@@ -697,20 +697,20 @@ export function DonationFormPage() {
 
       {/* Upload Progress Indicator */}
       {isSubmitting && Object.keys(uploadProgress).length > 0 && (
-        <div className="fixed bottom-4 right-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 border-2 border-gray-200 dark:border-gray-700 max-w-xs">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        <div className="fixed bottom-4 right-4 bg-surface rounded-xl shadow-lg p-4 border border-border max-w-xs">
+          <p className="text-sm font-medium text-text-primary mb-2">
             Uploading images...
           </p>
           <div className="space-y-2">
             {Object.entries(uploadProgress).map(([id, progress]) => (
               <div key={id} className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-purple-500 transition-all duration-300"
+                    className="h-full bg-dash-primary transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   />
                 </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400 w-10 text-right">
+                <span className="text-xs text-text-secondary w-10 text-right">
                   {progress}%
                 </span>
               </div>
