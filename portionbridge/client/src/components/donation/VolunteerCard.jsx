@@ -1,110 +1,71 @@
-import React from 'react';
-import { User, Star, MapPin, MessageSquare, ExternalLink } from 'lucide-react';
+import { User, Star, MapPin } from 'lucide-react';
 
 /**
- * VolunteerCard component for displaying volunteer information
+ * VolunteerCard — shows real volunteer info when assigned. Only renders
+ * rating/completed-pickups if the caller actually provides them; never
+ * fabricates a status message. A working chat entry point already exists
+ * elsewhere on the donation details page when a volunteer is assigned, so
+ * this card doesn't duplicate it with a disabled placeholder button.
  */
 export function VolunteerCard({ volunteer }) {
   if (!volunteer) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-            <User size={32} className="text-gray-400 dark:text-gray-500" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900 dark:text-white">No Volunteer Assigned</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Waiting for a volunteer to accept this donation
-            </p>
-          </div>
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-full bg-page border border-border flex items-center justify-center shrink-0">
+          <User size={22} className="text-text-secondary" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-text-primary">No volunteer assigned yet</p>
+          <p className="text-xs text-text-secondary">
+            We'll update this donation once one becomes available.
+          </p>
         </div>
       </div>
     );
   }
 
-  const {
-    name,
-    profile_photo,
-    team_name,
-    rating,
-    completed_pickups,
-    current_status,
-  } = volunteer;
+  const { name, profile_photo, team_name, rating, completed_pickups } = volunteer;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6">
-      {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
+    <div>
+      <div className="flex items-center gap-3 mb-3">
         {profile_photo ? (
           <img
             src={profile_photo}
             alt={name}
-            className="w-16 h-16 rounded-full object-cover"
+            className="w-12 h-12 rounded-full object-cover shrink-0"
           />
         ) : (
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-950/30 dark:to-purple-900/30 flex items-center justify-center">
-            <User size={32} className="text-purple-400 dark:text-purple-600" />
+          <div className="w-12 h-12 rounded-full bg-dash-primary-soft flex items-center justify-center shrink-0">
+            <User size={22} className="text-dash-primary" />
           </div>
         )}
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 dark:text-white text-lg">
-            {name}
-          </h3>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-text-primary truncate">{name}</p>
           {team_name && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <MapPin size={14} />
+            <p className="text-xs text-text-secondary flex items-center gap-1 truncate">
+              <MapPin size={12} />
               {team_name}
             </p>
           )}
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {rating !== undefined && (
-          <div className="flex items-center gap-2">
-            <Star size={16} className="text-yellow-500 fill-yellow-500" />
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {rating.toFixed(1)}
-            </span>
-          </div>
-        )}
-        {completed_pickups !== undefined && (
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {completed_pickups} completed
-          </div>
-        )}
-      </div>
-
-      {/* Current Status */}
-      {current_status && (
-        <div className="mb-4 p-3 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
-          <p className="text-sm text-purple-700 dark:text-purple-300">
-            {current_status}
-          </p>
+      {(rating !== undefined || completed_pickups !== undefined) && (
+        <div className="flex items-center gap-4">
+          {rating !== undefined && (
+            <div className="flex items-center gap-1.5">
+              <Star size={14} className="text-warning fill-warning" />
+              <span className="text-xs font-medium text-text-primary">{rating.toFixed(1)}</span>
+            </div>
+          )}
+          {completed_pickups !== undefined && (
+            <div className="text-xs text-text-secondary">
+              {completed_pickups} completed pickups
+            </div>
+          )}
         </div>
       )}
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        <button
-          disabled
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed transition-colors text-sm font-medium"
-          title="Chat coming soon"
-        >
-          <MessageSquare size={16} />
-          Chat
-        </button>
-        <button
-          disabled
-          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed transition-colors text-sm font-medium"
-          title="Profile coming soon"
-        >
-          <ExternalLink size={16} />
-          Profile
-        </button>
-      </div>
     </div>
   );
 }

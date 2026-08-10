@@ -1,87 +1,58 @@
-import React from 'react';
-import { Check, Clock, X } from 'lucide-react';
+import { Check } from 'lucide-react';
+
+// These are the exact statuses supported by the backend's donation_requests.status
+// ENUM ('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed').
+// There is no 'cancelled' status — cancellation is a soft-delete, not a status
+// value, so it isn't part of this progression.
+const STATUSES = [
+  { key: 'pending', label: 'Pending' },
+  { key: 'accepted', label: 'Accepted' },
+  { key: 'scheduled', label: 'Scheduled' },
+  { key: 'on_the_way', label: 'On The Way' },
+  { key: 'picked_up', label: 'Picked Up' },
+  { key: 'completed', label: 'Completed' },
+];
 
 /**
- * StatusTimeline component for displaying donation status progression
+ * StatusTimeline — compact vertical progression through the real donation
+ * lifecycle statuses.
  */
 export function StatusTimeline({ currentStatus }) {
-  const statuses = [
-    { key: 'pending', label: 'Pending', icon: Clock },
-    { key: 'accepted', label: 'Accepted', icon: Check },
-    { key: 'scheduled', label: 'Scheduled', icon: Check },
-    { key: 'on_the_way', label: 'On The Way', icon: Check },
-    { key: 'picked_up', label: 'Picked Up', icon: Check },
-    { key: 'completed', label: 'Completed', icon: Check },
-  ];
-
-  // Find current status index
-  const currentIndex = statuses.findIndex(s => s.key === currentStatus);
-  const isCancelled = currentStatus === 'cancelled';
-
-  if (isCancelled) {
-    return (
-      <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 rounded-xl border-2 border-red-200 dark:border-red-800">
-        <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/30 flex items-center justify-center flex-shrink-0">
-          <X size={20} className="text-red-600 dark:text-red-400" />
-        </div>
-        <div>
-          <p className="font-semibold text-red-900 dark:text-red-100">Cancelled</p>
-          <p className="text-sm text-red-600 dark:text-red-400">This donation has been cancelled</p>
-        </div>
-      </div>
-    );
-  }
+  const currentIndex = STATUSES.findIndex((s) => s.key === currentStatus);
 
   return (
-    <div className="space-y-4">
-      {statuses.map((status, index) => {
-        const Icon = status.icon;
-        const isCurrent = index === currentIndex;
-        const isPast = index < currentIndex;
-        const isFuture = index > currentIndex;
+    <div className="relative">
+      <div className="absolute left-3.5 top-1 bottom-1 w-px bg-border" />
+      <div className="space-y-3">
+        {STATUSES.map((s, index) => {
+          const isPast = index < currentIndex;
+          const isCurrent = index === currentIndex;
 
-        return (
-          <div key={status.key} className="flex items-start gap-4">
-            {/* Icon */}
-            <div
-              className={`
-                w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                ${isPast || isCurrent
-                  ? 'bg-purple-500 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-                }
-              `}
-            >
-              <Icon size={18} />
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 pt-1">
-              <p
-                className={`
-                  font-medium
-                  ${isPast || isCurrent
-                    ? 'text-gray-900 dark:text-white'
-                    : 'text-gray-400 dark:text-gray-500'
-                  }
-                `}
+          return (
+            <div key={s.key} className="relative flex items-center gap-3 pl-9">
+              <div
+                className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center ring-4 ring-surface shrink-0 ${
+                  isPast
+                    ? 'bg-success text-white'
+                    : isCurrent
+                      ? 'bg-dash-primary text-white'
+                      : 'bg-page border border-border text-text-secondary'
+                }`}
               >
-                {status.label}
-              </p>
-              {isCurrent && (
-                <p className="text-sm text-purple-600 dark:text-purple-400 mt-1">
-                  Current Status
+                {isPast ? <Check size={13} /> : <span className="text-[10px] font-semibold">{index + 1}</span>}
+              </div>
+              <div>
+                <p className={`text-sm ${isPast || isCurrent ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                  {s.label}
                 </p>
-              )}
+                {isCurrent && (
+                  <p className="text-xs text-dash-primary">Current status</p>
+                )}
+              </div>
             </div>
-
-            {/* Connector Line */}
-            {index < statuses.length - 1 && (
-              <div className="absolute left-5 mt-10 w-0.5 h-8 bg-gray-200 dark:bg-gray-700" />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }

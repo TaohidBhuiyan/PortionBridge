@@ -198,7 +198,7 @@ const VolunteerDiscoveryPage = () => {
   // Show location permission modal if not granted
   if (locationPermission === 'unknown' || locationPermission === 'prompt') {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-page">
         <LocationPermission
           onLocationGranted={handleLocationGranted}
           onLocationDenied={handleLocationDenied}
@@ -209,37 +209,37 @@ const VolunteerDiscoveryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-page">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b-2 border-gray-200 dark:border-gray-700 sticky top-0 z-40 shadow-sm">
+      <div className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                className="p-2 hover:bg-surface-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <ArrowLeft className="w-5 h-5 text-text-secondary" />
               </button>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-semibold text-text-primary">
                   Discover Volunteers
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-text-secondary">
                   Find nearby volunteers and teams
                 </p>
               </div>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-xl p-1" role="group" aria-label="View mode">
+            <div className="flex items-center gap-2 bg-page border border-border rounded-xl p-1" role="group" aria-label="View mode">
               <button
                 onClick={() => setViewMode('list')}
                 className={`p-2 rounded-md transition-all ${
                   viewMode === 'list'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400'
-                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-secondary'
+                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
                 aria-label="List view"
                 aria-pressed={viewMode === 'list'}
               >
@@ -249,9 +249,9 @@ const VolunteerDiscoveryPage = () => {
                 onClick={() => setViewMode('map')}
                 className={`p-2 rounded-md transition-all ${
                   viewMode === 'map'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400'
-                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-secondary'
+                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
                 aria-label="Map view"
                 aria-pressed={viewMode === 'map'}
               >
@@ -261,9 +261,9 @@ const VolunteerDiscoveryPage = () => {
                 onClick={() => setViewMode('split')}
                 className={`p-2 rounded-md transition-all ${
                   viewMode === 'split'
-                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                    : 'text-gray-500 dark:text-gray-400'
-                } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2`}
+                    ? 'bg-surface text-text-primary shadow-sm'
+                    : 'text-text-secondary'
+                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
                 aria-label="Split view"
                 aria-pressed={viewMode === 'split'}
               >
@@ -323,8 +323,8 @@ const VolunteerDiscoveryPage = () => {
                   onClick={() => setShowTeams(false)}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     !showTeams
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? 'bg-dash-primary text-white'
+                      : 'bg-page border border-border text-text-primary'
                   }`}
                 >
                   Volunteers
@@ -333,8 +333,8 @@ const VolunteerDiscoveryPage = () => {
                   onClick={() => setShowTeams(true)}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     showTeams
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      ? 'bg-dash-primary text-white'
+                      : 'bg-page border border-border text-text-primary'
                   }`}
                 >
                   Teams

@@ -3,13 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
-import { Package, UserCheck, Calendar, CheckCircle, Clock } from 'lucide-react';
+import {
+  Package,
+  UserCheck,
+  Calendar,
+  CheckCircle,
+  Clock
+} from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+const TONE_CLASSES = {
+  primary: 'bg-dash-primary-soft text-dash-primary',
+  info: 'bg-info-soft text-info',
+  warning: 'bg-warning-soft text-warning',
+  success: 'bg-success-soft text-success',
+};
+
 /**
- * RecentActivities timeline component.
+ * RecentActivities timeline component — answers "what recently happened?"
  */
 export function RecentActivities() {
   const navigate = useNavigate();
@@ -31,33 +44,39 @@ export function RecentActivities() {
         if (response.data?.success) {
           const donations = response.data.data.donations || [];
 
+          // Transform donations into activity timeline
           const transformedActivities = donations.map((donation) => {
             let activityType = 'created';
             let icon = Package;
             let title = 'Donation Created';
             let description = `You created a donation for ${donation.title}`;
+            let tone = 'primary';
 
             if (donation.status === 'completed') {
               activityType = 'completed';
               icon = CheckCircle;
               title = 'Donation Completed';
               description = `Your donation "${donation.title}" was successfully delivered`;
+              tone = 'success';
             } else if (donation.assignedVolunteer) {
               activityType = 'accepted';
               icon = UserCheck;
               title = 'Volunteer Accepted';
               description = `${donation.assignedVolunteer.name} accepted your donation`;
+              tone = 'info';
             } else if (donation.scheduledPickupTime) {
               activityType = 'scheduled';
               icon = Calendar;
               title = 'Pickup Scheduled';
               description = `Pickup scheduled for ${new Date(donation.scheduledPickupTime).toLocaleString()}`;
+              tone = 'warning';
             }
 
             return {
               id: donation.id,
               type: activityType,
               icon,
+              tone,
               title,
               description,
               timestamp: donation.updatedAt || donation.createdAt,
@@ -89,27 +108,19 @@ export function RecentActivities() {
     const diffDays = Math.floor(diffMs / 86400000);
 
     if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
     return activityTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const getIconColor = (type) => {
-    const colors = {
-      created: 'bg-warning-soft text-warning',
-      accepted: 'bg-info-soft text-info',
-      scheduled: 'bg-warning-soft text-warning',
-      completed: 'bg-success-soft text-success',
-    };
-    return colors[type] || colors.created;
   };
 
   if (loading) {
     return (
       <div className="bg-surface rounded-xl border border-border p-5">
         <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
-        <SkeletonCard count={3} />
+        <div className="space-y-3">
+          <SkeletonCard count={3} />
+        </div>
       </div>
     );
   }
@@ -117,7 +128,7 @@ export function RecentActivities() {
   if (error) {
     return (
       <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
+        <h2 className="text-base font-semibold text-text-primary mb-2">Recent Activities</h2>
         <ErrorState
           title="Failed to load activities"
           message="Unable to fetch your recent activities. Please try again."
@@ -131,7 +142,7 @@ export function RecentActivities() {
   if (activities.length === 0) {
     return (
       <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
+        <h2 className="text-base font-semibold text-text-primary mb-2">Recent Activities</h2>
         <EmptyState
           icon={Clock}
           title="No recent activities"
@@ -148,32 +159,35 @@ export function RecentActivities() {
       <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
 
       <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
+        {/* Timeline line */}
+        <div className="absolute left-3.5 top-1 bottom-1 w-px bg-border" />
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {activities.map((activity) => {
             const Icon = activity.icon;
             return (
               <div
                 key={activity.id}
                 onClick={() => navigate(`/donations/${activity.id}`)}
-                className="relative flex items-start gap-4 pl-10 cursor-pointer group/item"
+                className="relative flex items-start gap-3 pl-9 cursor-pointer group/item"
               >
-                <div className={`absolute left-0 w-8 h-8 rounded-full ${getIconColor(activity.type)} flex items-center justify-center border-4 border-surface group-hover/item:scale-110 transition-transform duration-200`}>
-                  <Icon size={16} />
+                {/* Timeline dot */}
+                <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center ring-4 ring-surface ${TONE_CLASSES[activity.tone]}`}>
+                  <Icon size={13} />
                 </div>
 
-                <div className="flex-1 pb-4">
+                {/* Activity content */}
+                <div className="flex-1 pb-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-semibold text-text-primary mb-1 group-hover/item:text-dash-primary transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-text-primary group-hover/item:text-dash-primary transition-colors truncate">
                         {activity.title}
                       </p>
-                      <p className="text-xs md:text-sm text-text-secondary">
+                      <p className="text-xs text-text-secondary line-clamp-1">
                         {activity.description}
                       </p>
                     </div>
-                    <span className="text-[10px] md:text-xs text-text-secondary shrink-0">
+                    <span className="text-[11px] text-text-secondary shrink-0">
                       {formatTimestamp(activity.timestamp)}
                     </span>
                   </div>

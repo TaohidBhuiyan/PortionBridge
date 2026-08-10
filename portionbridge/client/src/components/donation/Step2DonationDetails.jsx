@@ -1,12 +1,18 @@
 import React from 'react';
 import { AlertCircle, ChefHat, Shirt, Snowflake, Leaf, Moon, Calendar } from 'lucide-react';
 
+const inputBase = 'w-full px-3.5 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary/40 text-text-primary placeholder:text-text-secondary';
+const inputOk = 'border-border bg-page focus:border-dash-primary';
+const inputErr = 'border-danger bg-danger-soft';
+const labelClass = 'block text-sm font-medium text-text-primary mb-1.5';
+const errorClass = 'mt-1 text-xs text-danger flex items-center gap-1';
+
 /**
  * Step 2 - Donation Details
  * Shows category-specific fields based on Food or Clothes selection
  */
 export function Step2DonationDetails({ formData, errors, onChange, onValidationChange }) {
-  const { category, foodType, foodName, numberOfServings, ingredients, allergens, storageRequirement, isVegetarian, isHalal, refrigerationRequired, expiryDate, clothingCategory, gender, ageGroup, itemCondition, brand, size, color, season } = formData;
+  const { category, foodType, foodName, numberOfServings, ingredients, allergens, storageRequirement, isVegetarian, isHalal, expiryDate, clothingCategory, gender, ageGroup, itemCondition, brand, size, color, season } = formData;
 
   // Validation
   React.useEffect(() => {
@@ -34,33 +40,43 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
     'Soy', 'Wheat', 'Gluten', 'Sesame', 'Mustard', 'Sulfites'
   ];
 
+  // Reusable segmented-choice button (storage requirement, vegetarian, halal)
+  const ChoiceButton = ({ selected, onClick, icon: Icon, label }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-2.5 rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+        selected
+          ? 'border-dash-primary bg-dash-primary-soft'
+          : 'border-border bg-page hover:border-dash-primary/50'
+      }`}
+    >
+      {Icon && <Icon size={16} className={selected ? 'text-dash-primary' : 'text-text-secondary'} />}
+      <span className={`text-xs font-medium ${selected ? 'text-dash-primary' : 'text-text-secondary'}`}>
+        {label}
+      </span>
+    </button>
+  );
+
   // Food Donation Fields
   if (category === 'food') {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <ChefHat className="text-purple-500" size={20} />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Food Donation Details</h3>
+      <div className="space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <ChefHat className="text-dash-primary" size={18} />
+          <h3 className="text-base font-semibold text-text-primary">Food Donation Details</h3>
         </div>
 
         {/* Food Type */}
         <div>
-          <label htmlFor="foodType" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Food Type <span className="text-red-500">*</span>
+          <label htmlFor="foodType" className={labelClass}>
+            Food Type <span className="text-danger">*</span>
           </label>
           <select
             id="foodType"
             value={foodType || ''}
             onChange={(e) => onChange('foodType', e.target.value)}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 appearance-none cursor-pointer
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.foodType 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white
-            `}
+            className={`${inputBase} appearance-none cursor-pointer ${errors.foodType ? inputErr : inputOk}`}
             aria-invalid={errors.foodType ? 'true' : 'false'}
           >
             <option value="">Select food type</option>
@@ -69,8 +85,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             <option value="packaged">Packaged</option>
           </select>
           {errors.foodType && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.foodType}
             </p>
           )}
@@ -78,8 +94,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Food Name */}
         <div>
-          <label htmlFor="foodName" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Food Name <span className="text-red-500">*</span>
+          <label htmlFor="foodName" className={labelClass}>
+            Food Name <span className="text-danger">*</span>
           </label>
           <input
             type="text"
@@ -88,20 +104,12 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             onChange={(e) => onChange('foodName', e.target.value)}
             placeholder="e.g., Biryani, Vegetables, Rice"
             maxLength={200}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.foodName 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500
-            `}
+            className={`${inputBase} ${errors.foodName ? inputErr : inputOk}`}
             aria-invalid={errors.foodName ? 'true' : 'false'}
           />
           {errors.foodName && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.foodName}
             </p>
           )}
@@ -109,7 +117,7 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Number of Servings */}
         <div>
-          <label htmlFor="numberOfServings" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="numberOfServings" className={labelClass}>
             Number of Servings (Optional)
           </label>
           <input
@@ -119,13 +127,13 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             onChange={(e) => onChange('numberOfServings', parseInt(e.target.value) || null)}
             min="1"
             placeholder="e.g., 10"
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className={`${inputBase} ${inputOk}`}
           />
         </div>
 
         {/* Ingredients */}
         <div>
-          <label htmlFor="ingredients" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="ingredients" className={labelClass}>
             Ingredients (Optional)
           </label>
           <textarea
@@ -135,13 +143,13 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             placeholder="List main ingredients..."
             rows={3}
             maxLength={500}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 resize-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className={`${inputBase} resize-none ${inputOk}`}
           />
         </div>
 
         {/* Allergens */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">
+          <label className="block text-sm font-medium text-text-primary mb-2">
             Allergens (Optional)
           </label>
           <div className="flex flex-wrap gap-2">
@@ -150,13 +158,11 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
                 key={allergen}
                 type="button"
                 onClick={() => handleAllergenToggle(allergen)}
-                className={`
-                  px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200
-                  ${(allergens || []).includes(allergen)
-                    ? 'bg-purple-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }
-                `}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  (allergens || []).includes(allergen)
+                    ? 'bg-dash-primary text-white'
+                    : 'bg-page border border-border text-text-secondary hover:border-dash-primary/50'
+                }`}
               >
                 {allergen}
               </button>
@@ -166,37 +172,27 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Storage Requirement */}
         <div>
-          <label htmlFor="storageRequirement" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Storage Requirement <span className="text-red-500">*</span>
+          <label className={labelClass}>
+            Storage Requirement <span className="text-danger">*</span>
           </label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2.5">
             {[
-              { value: 'room_temperature', label: 'Room Temperature', icon: null },
+              { value: 'room_temperature', label: 'Room Temp.', icon: null },
               { value: 'refrigerated', label: 'Refrigerated', icon: Snowflake },
               { value: 'frozen', label: 'Frozen', icon: Snowflake },
             ].map((option) => (
-              <button
+              <ChoiceButton
                 key={option.value}
-                type="button"
+                selected={storageRequirement === option.value}
                 onClick={() => onChange('storageRequirement', option.value)}
-                className={`
-                  p-3 rounded-xl border-2 transition-all duration-200 flex flex-col items-center gap-2
-                  ${storageRequirement === option.value
-                    ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-950/20'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-400 dark:hover:border-purple-500'
-                  }
-                `}
-              >
-                {option.icon && <option.icon size={20} className={storageRequirement === option.value ? 'text-purple-500' : 'text-gray-500'} />}
-                <span className={`text-xs font-medium ${storageRequirement === option.value ? 'text-purple-900 dark:text-purple-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {option.label}
-                </span>
-              </button>
+                icon={option.icon}
+                label={option.label}
+              />
             ))}
           </div>
           {errors.storageRequirement && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.storageRequirement}
             </p>
           )}
@@ -204,98 +200,58 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Vegetarian / Non-Vegetarian */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">
+          <label className="block text-sm font-medium text-text-primary mb-2">
             Vegetarian / Non-Vegetarian
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {[
               { value: 'vegetarian', label: 'Vegetarian', icon: Leaf },
               { value: 'non_vegetarian', label: 'Non-Vegetarian', icon: null },
             ].map((option) => (
-              <button
+              <ChoiceButton
                 key={option.value}
-                type="button"
+                selected={isVegetarian === option.value}
                 onClick={() => onChange('isVegetarian', option.value)}
-                className={`
-                  p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2
-                  ${isVegetarian === option.value
-                    ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-950/20'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-400 dark:hover:border-purple-500'
-                  }
-                `}
-              >
-                {option.icon && <option.icon size={18} className={isVegetarian === option.value ? 'text-purple-500' : 'text-gray-500'} />}
-                <span className={`text-sm font-medium ${isVegetarian === option.value ? 'text-purple-900 dark:text-purple-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {option.label}
-                </span>
-              </button>
+                icon={option.icon}
+                label={option.label}
+              />
             ))}
           </div>
         </div>
 
         {/* Halal */}
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-3">
+          <label className="block text-sm font-medium text-text-primary mb-2">
             Halal
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             {[
               { value: 'yes', label: 'Yes', icon: Moon },
               { value: 'no', label: 'No', icon: null },
             ].map((option) => (
-              <button
+              <ChoiceButton
                 key={option.value}
-                type="button"
+                selected={isHalal === option.value}
                 onClick={() => onChange('isHalal', option.value)}
-                className={`
-                  p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2
-                  ${isHalal === option.value
-                    ? 'border-purple-500 dark:border-purple-400 bg-purple-50 dark:bg-purple-950/20'
-                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:border-purple-400 dark:hover:border-purple-500'
-                  }
-                `}
-              >
-                {option.icon && <option.icon size={18} className={isHalal === option.value ? 'text-purple-500' : 'text-gray-500'} />}
-                <span className={`text-sm font-medium ${isHalal === option.value ? 'text-purple-900 dark:text-purple-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                  {option.label}
-                </span>
-              </button>
+                icon={option.icon}
+                label={option.label}
+              />
             ))}
           </div>
         </div>
 
         {/* Expiry Date */}
         <div>
-          <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="expiryDate" className={labelClass}>
             Expiry Date (Optional)
           </label>
-          <div className="relative">
-            <input
-              type="datetime-local"
-              id="expiryDate"
-              value={expiryDate || ''}
-              onChange={(e) => onChange('expiryDate', e.target.value)}
-              className={`
-                w-full px-4 py-3 rounded-xl border-2 transition-all duration-200
-                focus:outline-none focus:ring-2 focus:ring-purple-500/50
-                ${errors.expiryDate 
-                  ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                  : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-                }
-                text-gray-900 dark:text-white
-              `}
-              aria-invalid={errors.expiryDate ? 'true' : 'false'}
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-              <Calendar size={18} className="text-gray-400 dark:text-gray-500" />
-            </div>
-          </div>
-          {errors.expiryDate && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
-              {errors.expiryDate}
-            </p>
-          )}
+          <input
+            type="datetime-local"
+            id="expiryDate"
+            value={expiryDate || ''}
+            onChange={(e) => onChange('expiryDate', e.target.value)}
+            className={`${inputBase} ${inputOk}`}
+          />
         </div>
       </div>
     );
@@ -304,30 +260,22 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
   // Clothes Donation Fields
   if (category === 'clothes') {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Shirt className="text-purple-500" size={20} />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Clothes Donation Details</h3>
+      <div className="space-y-5">
+        <div className="flex items-center gap-2 mb-1">
+          <Shirt className="text-dash-primary" size={18} />
+          <h3 className="text-base font-semibold text-text-primary">Clothes Donation Details</h3>
         </div>
 
         {/* Clothing Category */}
         <div>
-          <label htmlFor="clothingCategory" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Category <span className="text-red-500">*</span>
+          <label htmlFor="clothingCategory" className={labelClass}>
+            Clothing Category <span className="text-danger">*</span>
           </label>
           <select
             id="clothingCategory"
             value={clothingCategory || ''}
             onChange={(e) => onChange('clothingCategory', e.target.value)}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 appearance-none cursor-pointer
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.clothingCategory 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white
-            `}
+            className={`${inputBase} appearance-none cursor-pointer ${errors.clothingCategory ? inputErr : inputOk}`}
             aria-invalid={errors.clothingCategory ? 'true' : 'false'}
           >
             <option value="">Select category</option>
@@ -345,8 +293,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             <option value="others">Others</option>
           </select>
           {errors.clothingCategory && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.clothingCategory}
             </p>
           )}
@@ -354,22 +302,14 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Gender */}
         <div>
-          <label htmlFor="gender" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Gender <span className="text-red-500">*</span>
+          <label htmlFor="gender" className={labelClass}>
+            Gender <span className="text-danger">*</span>
           </label>
           <select
             id="gender"
             value={gender || ''}
             onChange={(e) => onChange('gender', e.target.value)}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 appearance-none cursor-pointer
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.gender 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white
-            `}
+            className={`${inputBase} appearance-none cursor-pointer ${errors.gender ? inputErr : inputOk}`}
             aria-invalid={errors.gender ? 'true' : 'false'}
           >
             <option value="">Select gender</option>
@@ -378,8 +318,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             <option value="unisex">Unisex</option>
           </select>
           {errors.gender && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.gender}
             </p>
           )}
@@ -387,22 +327,14 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Age Group */}
         <div>
-          <label htmlFor="ageGroup" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Age Group <span className="text-red-500">*</span>
+          <label htmlFor="ageGroup" className={labelClass}>
+            Age Group <span className="text-danger">*</span>
           </label>
           <select
             id="ageGroup"
             value={ageGroup || ''}
             onChange={(e) => onChange('ageGroup', e.target.value)}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 appearance-none cursor-pointer
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.ageGroup 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white
-            `}
+            className={`${inputBase} appearance-none cursor-pointer ${errors.ageGroup ? inputErr : inputOk}`}
             aria-invalid={errors.ageGroup ? 'true' : 'false'}
           >
             <option value="">Select age group</option>
@@ -413,8 +345,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             <option value="senior">Senior</option>
           </select>
           {errors.ageGroup && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.ageGroup}
             </p>
           )}
@@ -422,22 +354,14 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Item Condition */}
         <div>
-          <label htmlFor="itemCondition" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-            Condition <span className="text-red-500">*</span>
+          <label htmlFor="itemCondition" className={labelClass}>
+            Item Condition <span className="text-danger">*</span>
           </label>
           <select
             id="itemCondition"
             value={itemCondition || ''}
             onChange={(e) => onChange('itemCondition', e.target.value)}
-            className={`
-              w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 appearance-none cursor-pointer
-              focus:outline-none focus:ring-2 focus:ring-purple-500/50
-              ${errors.itemCondition 
-                ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400'
-              }
-              text-gray-900 dark:text-white
-            `}
+            className={`${inputBase} appearance-none cursor-pointer ${errors.itemCondition ? inputErr : inputOk}`}
             aria-invalid={errors.itemCondition ? 'true' : 'false'}
           >
             <option value="">Select condition</option>
@@ -447,8 +371,8 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             <option value="fair">Fair</option>
           </select>
           {errors.itemCondition && (
-            <p className="mt-1 text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-              <AlertCircle size={14} />
+            <p className={errorClass}>
+              <AlertCircle size={13} />
               {errors.itemCondition}
             </p>
           )}
@@ -456,7 +380,7 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Brand */}
         <div>
-          <label htmlFor="brand" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="brand" className={labelClass}>
             Brand (Optional)
           </label>
           <input
@@ -465,21 +389,20 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             value={brand || ''}
             onChange={(e) => onChange('brand', e.target.value)}
             placeholder="e.g., Nike, Zara"
-            maxLength={100}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            className={`${inputBase} ${inputOk}`}
           />
         </div>
 
         {/* Size */}
         <div>
-          <label htmlFor="size" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="size" className={labelClass}>
             Size (Optional)
           </label>
           <select
             id="size"
             value={size || ''}
             onChange={(e) => onChange('size', e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 appearance-none cursor-pointer text-gray-900 dark:text-white"
+            className={`${inputBase} appearance-none cursor-pointer ${inputOk}`}
           >
             <option value="">Select size</option>
             <option value="xs">XS</option>
@@ -494,7 +417,7 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
         {/* Color */}
         <div>
-          <label htmlFor="color" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="color" className={labelClass}>
             Color (Optional)
           </label>
           <input
@@ -502,22 +425,21 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             id="color"
             value={color || ''}
             onChange={(e) => onChange('color', e.target.value)}
-            placeholder="e.g., Blue, Black, Red"
-            maxLength={50}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+            placeholder="e.g., Blue, Black"
+            className={`${inputBase} ${inputOk}`}
           />
         </div>
 
         {/* Season */}
         <div>
-          <label htmlFor="season" className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label htmlFor="season" className={labelClass}>
             Season (Optional)
           </label>
           <select
             id="season"
             value={season || ''}
             onChange={(e) => onChange('season', e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:border-purple-500 dark:focus:border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all duration-200 appearance-none cursor-pointer text-gray-900 dark:text-white"
+            className={`${inputBase} appearance-none cursor-pointer ${inputOk}`}
           >
             <option value="">Select season</option>
             <option value="summer">Summer</option>
@@ -532,15 +454,9 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
 
   // No category selected
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-        <AlertCircle size={32} className="text-gray-400 dark:text-gray-500" />
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-        Select a Category First
-      </h3>
-      <p className="text-gray-500 dark:text-gray-400 max-w-md">
-        Please go back to Step 1 and select a donation category (Food or Clothes) to continue.
+    <div className="bg-warning-soft border border-warning/30 rounded-lg p-4">
+      <p className="text-warning text-sm">
+        Please select a donation category in Step 1 to continue.
       </p>
     </div>
   );

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
  * ImageGallery component for displaying donation images
@@ -11,8 +11,8 @@ export function ImageGallery({ images = [], coverImage }) {
 
   if (allImages.length === 0) {
     return (
-      <div className="aspect-video bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-950/30 dark:to-purple-900/30 rounded-2xl flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400">No images</p>
+      <div className="aspect-video bg-page border border-border rounded-xl flex items-center justify-center">
+        <p className="text-sm text-text-secondary">No images</p>
       </div>
     );
   }

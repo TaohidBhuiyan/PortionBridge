@@ -1,5 +1,35 @@
-import React from 'react';
-import { Utensils, Shirt, Package, MapPin, Phone, Calendar, Clock, Edit2, CheckCircle } from 'lucide-react';
+import { Utensils, Shirt, Package, MapPin, Calendar, Clock, Edit2, CheckCircle } from 'lucide-react';
+
+function Row({ label, children }) {
+  return (
+    <div className="flex justify-between items-start gap-4">
+      <span className="text-xs text-text-secondary shrink-0">{label}</span>
+      <span className="text-sm font-medium text-text-primary text-right">{children}</span>
+    </div>
+  );
+}
+
+function SectionCard({ icon: Icon, title: sectionTitle, stepIndex, onEditStep, children }) {
+  return (
+    <div className="bg-page rounded-lg p-4 border border-border">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+          <Icon size={16} className="text-dash-primary" />
+          {sectionTitle}
+        </h3>
+        <button
+          type="button"
+          onClick={() => onEditStep(stepIndex)}
+          className="text-dash-primary hover:text-dash-primary-hover flex items-center gap-1 text-xs font-medium transition-colors focus:outline-none focus-visible:underline"
+        >
+          <Edit2 size={13} />
+          Edit
+        </button>
+      </div>
+      <div className="space-y-2.5">{children}</div>
+    </div>
+  );
+}
 
 /**
  * Step 5 - Review & Submit
@@ -30,6 +60,7 @@ export function Step5Review({ formData, onEditStep }) {
     color,
     season,
     savedAddressId,
+    savedAddressLabel,
     pickupAddress,
     contactPhone,
     pickupDate,
@@ -92,297 +123,89 @@ export function Step5Review({ formData, onEditStep }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Basic Information */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Package size={20} className="text-purple-500" />
-            Basic Information
-          </h3>
-          <button
-            type="button"
-            onClick={() => onEditStep(0)}
-            className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 text-sm font-medium transition-colors"
-          >
-            <Edit2 size={16} />
-            Edit
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Title</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-              {title || '-'}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Category</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-2">
-              {category === 'food' ? (
-                <>
-                  <Utensils size={16} className="text-purple-500" />
-                  Food
-                </>
-              ) : category === 'clothes' ? (
-                <>
-                  <Shirt size={16} className="text-purple-500" />
-                  Clothes
-                </>
-              ) : '-'}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Description</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-              {description || '-'}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Quantity</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {quantity} {quantityUnit || '-'}
-            </span>
-          </div>
-        </div>
-      </div>
+      <SectionCard icon={Package} title="Basic Information" stepIndex={0} onEditStep={onEditStep}>
+        <Row label="Title">{title || '-'}</Row>
+        <Row label="Category">
+          <span className="inline-flex items-center gap-1.5">
+            {category === 'food' ? <Utensils size={14} className="text-dash-primary" /> : category === 'clothes' ? <Shirt size={14} className="text-dash-primary" /> : null}
+            {category === 'food' ? 'Food' : category === 'clothes' ? 'Clothes' : '-'}
+          </span>
+        </Row>
+        <Row label="Description">{description || '-'}</Row>
+        <Row label="Quantity">{quantity} {quantityUnit || '-'}</Row>
+      </SectionCard>
 
       {/* Donation Details */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            {category === 'food' ? (
-              <Utensils size={20} className="text-purple-500" />
-            ) : (
-              <Shirt size={20} className="text-purple-500" />
-            )}
-            {category === 'food' ? 'Food Details' : 'Clothes Details'}
-          </h3>
-          <button
-            type="button"
-            onClick={() => onEditStep(1)}
-            className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 text-sm font-medium transition-colors"
-          >
-            <Edit2 size={16} />
-            Edit
-          </button>
-        </div>
-
+      <SectionCard icon={category === 'food' ? Utensils : Shirt} title={category === 'food' ? 'Food Details' : 'Clothes Details'} stepIndex={1} onEditStep={onEditStep}>
         {category === 'food' ? (
-          <div className="space-y-3">
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Food Type</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                {foodType || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Food Name</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {foodName || '-'}
-              </span>
-            </div>
-            {numberOfServings && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Servings</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {numberOfServings}
-                </span>
-              </div>
-            )}
-            {ingredients && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Ingredients</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-                  {ingredients}
-                </span>
-              </div>
-            )}
-            {allergens && allergens.length > 0 && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Allergens</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-                  {allergens.join(', ')}
-                </span>
-              </div>
-            )}
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Storage</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatStorageRequirement(storageRequirement) || '-'}
-              </span>
-            </div>
-            {isVegetarian && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Type</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                  {isVegetarian === 'vegetarian' ? 'Vegetarian' : 'Non-Vegetarian'}
-                </span>
-              </div>
-            )}
-            {isHalal && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Halal</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                  {isHalal}
-                </span>
-              </div>
-            )}
-            {expiryDate && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Expiry Date</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {formatDateTime(expiryDate)}
-                </span>
-              </div>
-            )}
-          </div>
+          <>
+            <Row label="Food Type"><span className="capitalize">{foodType || '-'}</span></Row>
+            <Row label="Food Name">{foodName || '-'}</Row>
+            {numberOfServings && <Row label="Servings">{numberOfServings}</Row>}
+            {ingredients && <Row label="Ingredients">{ingredients}</Row>}
+            {allergens && allergens.length > 0 && <Row label="Allergens">{allergens.join(', ')}</Row>}
+            <Row label="Storage">{formatStorageRequirement(storageRequirement) || '-'}</Row>
+            {isVegetarian && <Row label="Type">{isVegetarian === 'vegetarian' ? 'Vegetarian' : 'Non-Vegetarian'}</Row>}
+            {isHalal && <Row label="Halal"><span className="capitalize">{isHalal}</span></Row>}
+            {expiryDate && <Row label="Expiry Date">{formatDateTime(expiryDate)}</Row>}
+          </>
         ) : category === 'clothes' ? (
-          <div className="space-y-3">
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Category</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                {clothingCategory?.replace('_', ' ') || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Gender</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                {gender || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Age Group</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                {ageGroup || '-'}
-              </span>
-            </div>
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Condition</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">
-                {formatItemCondition(itemCondition) || '-'}
-              </span>
-            </div>
-            {brand && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Brand</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {brand}
-                </span>
-              </div>
-            )}
-            {size && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Size</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white uppercase">
-                  {size}
-                </span>
-              </div>
-            )}
-            {color && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Color</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
-                  {color}
-                </span>
-              </div>
-            )}
-            {season && (
-              <div className="flex justify-between items-start">
-                <span className="text-sm text-gray-500 dark:text-gray-400">Season</span>
-                <span className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                  {season}
-                </span>
-              </div>
-            )}
-          </div>
+          <>
+            <Row label="Category"><span className="capitalize">{clothingCategory?.replace('_', ' ') || '-'}</span></Row>
+            <Row label="Gender"><span className="capitalize">{gender || '-'}</span></Row>
+            <Row label="Age Group"><span className="capitalize">{ageGroup || '-'}</span></Row>
+            <Row label="Condition">{formatItemCondition(itemCondition) || '-'}</Row>
+            {brand && <Row label="Brand">{brand}</Row>}
+            {size && <Row label="Size"><span className="uppercase">{size}</span></Row>}
+            {color && <Row label="Color">{color}</Row>}
+            {season && <Row label="Season"><span className="capitalize">{season}</span></Row>}
+          </>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            No category selected
-          </p>
+          <p className="text-sm text-text-secondary text-center py-3">No category selected</p>
         )}
-      </div>
+      </SectionCard>
 
       {/* Pickup Information */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <MapPin size={20} className="text-purple-500" />
-            Pickup Information
-          </h3>
-          <button
-            type="button"
-            onClick={() => onEditStep(2)}
-            className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 text-sm font-medium transition-colors"
-          >
-            <Edit2 size={16} />
-            Edit
-          </button>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Address</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-              {savedAddressId ? 'Saved Address' : (pickupAddress?.fullAddress || '-')}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Contact Phone</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">
-              {contactPhone || '-'}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Pickup Date</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-              <Calendar size={14} />
-              {formatDate(pickupDate)}
-            </span>
-          </div>
-          <div className="flex justify-between items-start">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Time Slot</span>
-            <span className="text-sm font-medium text-gray-900 dark:text-white flex items-center gap-1">
-              <Clock size={14} />
-              {formatTimeSlot(pickupTimeSlot)}
-            </span>
-          </div>
-          {specialInstructions && (
-            <div className="flex justify-between items-start">
-              <span className="text-sm text-gray-500 dark:text-gray-400">Special Instructions</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white text-right max-w-[60%]">
-                {specialInstructions}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      <SectionCard icon={MapPin} title="Pickup Information" stepIndex={2} onEditStep={onEditStep}>
+        <Row label="Address">
+          {savedAddressId ? (savedAddressLabel || 'Saved address') : (pickupAddress?.fullAddress || '-')}
+        </Row>
+        <Row label="Contact Phone">{contactPhone || '-'}</Row>
+        <Row label="Pickup Date">
+          <span className="inline-flex items-center gap-1"><Calendar size={13} />{formatDate(pickupDate)}</span>
+        </Row>
+        <Row label="Time Slot">
+          <span className="inline-flex items-center gap-1"><Clock size={13} />{formatTimeSlot(pickupTimeSlot)}</span>
+        </Row>
+        {specialInstructions && <Row label="Special Instructions">{specialInstructions}</Row>}
+      </SectionCard>
 
       {/* Images */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border-2 border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Package size={20} className="text-purple-500" />
+      <div className="bg-page rounded-lg p-4 border border-border">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+            <Package size={16} className="text-dash-primary" />
             Images ({images?.length || 0})
           </h3>
           <button
             type="button"
             onClick={() => onEditStep(3)}
-            className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 flex items-center gap-1 text-sm font-medium transition-colors"
+            className="text-dash-primary hover:text-dash-primary-hover flex items-center gap-1 text-xs font-medium transition-colors focus:outline-none focus-visible:underline"
           >
-            <Edit2 size={16} />
+            <Edit2 size={13} />
             Edit
           </button>
         </div>
 
         {images && images.length > 0 ? (
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
             {images.map((image, index) => (
               <div
                 key={image.id}
-                className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
-                  coverImage === image.id ? 'border-purple-500' : 'border-gray-200 dark:border-gray-700'
+                className={`relative aspect-square rounded-lg overflow-hidden border ${
+                  coverImage === image.id ? 'border-dash-primary' : 'border-border'
                 }`}
               >
                 <img
@@ -391,7 +214,7 @@ export function Step5Review({ formData, onEditStep }) {
                   className="w-full h-full object-cover"
                 />
                 {coverImage === image.id && (
-                  <div className="absolute top-1 left-1 bg-purple-500 text-white text-xs px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                  <div className="absolute top-1 left-1 bg-dash-primary text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
                     <CheckCircle size={10} />
                   </div>
                 )}
@@ -399,25 +222,8 @@ export function Step5Review({ formData, onEditStep }) {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-            No images uploaded
-          </p>
+          <p className="text-sm text-text-secondary text-center py-4">No images uploaded</p>
         )}
-      </div>
-
-      {/* Ready Message */}
-      <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950/30 dark:to-purple-900/30 rounded-2xl p-6 border-2 border-purple-200 dark:border-purple-800">
-        <div className="flex items-start gap-3">
-          <CheckCircle size={24} className="text-purple-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-1">
-              Ready to Submit
-            </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Please review all information above. Once submitted, your donation will be visible to volunteers.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

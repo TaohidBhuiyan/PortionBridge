@@ -7,6 +7,9 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
 
 /**
  * ImpactSummary — a contextual, narrative view of the donor's impact.
+ * Deliberately distinct from StatisticsCards (which already shows the raw
+ * counts as a grid): this reads as a sentence plus a compact inline stat
+ * row, not another set of colored boxes.
  */
 export function ImpactSummary() {
   const [impact, setImpact] = useState(null);

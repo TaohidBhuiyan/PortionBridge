@@ -19,7 +19,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
     e.preventDefault();
     e.stopPropagation();
     if (dragAreaRef.current) {
-      dragAreaRef.current.classList.add('border-purple-500', 'bg-purple-50', 'dark:bg-purple-950/20');
+      dragAreaRef.current.classList.add('border-dash-primary', 'bg-dash-primary-soft');
     }
   };
 
@@ -27,7 +27,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
     e.preventDefault();
     e.stopPropagation();
     if (dragAreaRef.current) {
-      dragAreaRef.current.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-950/20');
+      dragAreaRef.current.classList.remove('border-dash-primary', 'bg-dash-primary-soft');
     }
   };
 
@@ -35,7 +35,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
     e.preventDefault();
     e.stopPropagation();
     if (dragAreaRef.current) {
-      dragAreaRef.current.classList.remove('border-purple-500', 'bg-purple-50', 'dark:bg-purple-950/20');
+      dragAreaRef.current.classList.remove('border-dash-primary', 'bg-dash-primary-soft');
     }
 
     const files = Array.from(e.dataTransfer.files);
@@ -94,20 +94,16 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Upload Area */}
       <div
         ref={dragAreaRef}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`
-          relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
-          ${errors.images 
-            ? 'border-red-500 dark:border-red-400 bg-red-50 dark:bg-red-950/20' 
-            : 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 hover:border-purple-400 dark:hover:border-purple-500'
-          }
-        `}
+        className={`relative border border-dashed rounded-lg p-6 text-center transition-colors ${
+          errors.images ? 'border-danger bg-danger-soft' : 'border-border bg-page hover:border-dash-primary/50'
+        }`}
       >
         <input
           ref={fileInputRef}
@@ -119,27 +115,27 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
           aria-label="Upload images"
         />
 
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center">
-            <Upload size={32} className="text-purple-500" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-dash-primary-soft flex items-center justify-center">
+            <Upload size={22} className="text-dash-primary" />
           </div>
           <div>
-            <p className="text-lg font-medium text-gray-900 dark:text-white mb-1">
+            <p className="text-sm font-medium text-text-primary mb-0.5">
               Upload Images
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-xs text-text-secondary mb-3">
               Drag & drop files here, or click to browse
             </p>
           </div>
           <button
             type="button"
             onClick={handleBrowseClick}
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 text-white font-medium rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary focus-visible:ring-offset-2"
           >
-            <ImageIcon size={18} />
+            <ImageIcon size={15} />
             Browse Files
           </button>
-          <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+          <div className="text-xs text-text-secondary space-y-0.5">
             <p>Supported formats: JPEG, PNG, WebP</p>
             <p>Maximum file size: 5MB per image</p>
           </div>
@@ -147,28 +143,24 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
       </div>
 
       {/* Image Previews */}
-      {images && images.length > 0 && (
-        <div className="space-y-4">
+      {images && images.length > 0 ? (
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+            <h4 className="text-sm font-medium text-text-primary">
               Uploaded Images ({images.length})
             </h4>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-text-secondary">
               Select cover image
             </span>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {images.map((image, index) => (
               <div
                 key={image.id}
-                className={`
-                  relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 group
-                  ${coverImage === image.id
-                    ? 'border-purple-500 ring-2 ring-purple-500/20'
-                    : 'border-gray-200 dark:border-gray-700'
-                  }
-                `}
+                className={`relative aspect-square rounded-lg overflow-hidden border transition-colors group ${
+                  coverImage === image.id ? 'border-dash-primary ring-2 ring-dash-primary/20' : 'border-border'
+                }`}
               >
                 {/* Image Preview */}
                 <img
@@ -179,8 +171,8 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
 
                 {/* Cover Badge */}
                 {coverImage === image.id && (
-                  <div className="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                    <Check size={12} />
+                  <div className="absolute top-2 left-2 bg-dash-primary text-white text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <Check size={10} />
                     Cover
                   </div>
                 )}
@@ -194,7 +186,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
                     title="Set as cover"
                     aria-label="Set as cover image"
                   >
-                    <Check size={16} className="text-gray-900" />
+                    <Check size={15} className="text-gray-900" />
                   </button>
                   <button
                     type="button"
@@ -203,25 +195,16 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
                     title="Remove image"
                     aria-label="Remove image"
                   >
-                    <X size={16} className="text-gray-900" />
+                    <X size={15} className="text-gray-900" />
                   </button>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* No Images State */}
-      {(!images || images.length === 0) && (
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
-            <ImageIcon size={24} className="text-gray-400 dark:text-gray-500" />
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No images uploaded yet
-          </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+      ) : (
+        <div className="flex flex-col items-center justify-center py-6 text-center">
+          <p className="text-xs text-text-secondary">
             Images are optional but recommended
           </p>
         </div>
@@ -229,8 +212,8 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
 
       {/* Error Message */}
       {errors.images && (
-        <p className="text-sm text-red-600 dark:text-red-400 flex items-center gap-1">
-          <AlertCircle size={14} />
+        <p className="text-xs text-danger flex items-center gap-1">
+          <AlertCircle size={13} />
           {errors.images}
         </p>
       )}

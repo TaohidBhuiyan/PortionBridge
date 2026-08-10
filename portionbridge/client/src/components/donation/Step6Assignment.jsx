@@ -20,17 +20,20 @@ export function Step6Assignment({ formData, onChange, onValidationChange, errors
   }, [pickupLocation]);
 
   useEffect(() => {
-    // Update form data when selection changes
-    onChange({
-      assignmentMode,
-      selectedVolunteer,
-      volunteerId: selectedVolunteer?.id || null,
-    });
+    // Update form data when selection changes.
+    // Note: onChange has signature (field, value) — call it once per field
+    // rather than passing a merged object (which previously silently wrote
+    // to a single "[object Object]" key and never actually stored these
+    // values in form state).
+    onChange('assignmentMode', assignmentMode);
+    onChange('selectedVolunteer', selectedVolunteer);
+    onChange('volunteerId', selectedVolunteer?.id || null);
 
     // Validate step - valid if coordinates exist and volunteer is selected
     const isValid = latitude && longitude && selectedVolunteer !== null;
     onValidationChange(isValid);
-  }, [assignmentMode, selectedVolunteer, latitude, longitude, onChange, onValidationChange]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentMode, selectedVolunteer, latitude, longitude]);
 
   const handleModeChange = (mode) => {
     setAssignmentMode(mode);
@@ -47,8 +50,8 @@ export function Step6Assignment({ formData, onChange, onValidationChange, errors
 
   if (!latitude || !longitude) {
     return (
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-        <p className="text-yellow-800 dark:text-yellow-200 text-sm">
+      <div className="bg-warning-soft border border-warning/30 rounded-lg p-4">
+        <p className="text-warning text-sm">
           Please provide pickup location coordinates to enable volunteer assignment.
         </p>
       </div>
@@ -79,7 +82,7 @@ export function Step6Assignment({ formData, onChange, onValidationChange, errors
       )}
 
       {errors?.assignment && (
-        <p className="text-red-600 dark:text-red-400 text-sm">{errors.assignment}</p>
+        <p className="text-danger text-sm">{errors.assignment}</p>
       )}
     </div>
   );

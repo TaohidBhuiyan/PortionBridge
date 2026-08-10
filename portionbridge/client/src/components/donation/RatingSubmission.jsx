@@ -57,7 +57,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
       } else {
         setError(result.error || 'Failed to submit rating');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to submit rating. Please try again.');
     } finally {
       setSubmitting(false);
@@ -81,7 +81,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
           className={`${
             isActive
               ? 'text-yellow-500 fill-yellow-500'
-              : 'text-gray-300 dark:text-gray-600'
+              : 'text-border'
           }`}
         />
       </button>
@@ -90,9 +90,9 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
 
   if (success) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-3 text-green-600 dark:text-green-400">
-          <CheckCircle size={24} />
+      <div className="bg-page rounded-lg border border-border p-4">
+        <div className="flex items-center gap-3 text-success">
+          <CheckCircle size={22} />
           <div>
             <p className="font-medium">Rating Submitted!</p>
             <p className="text-sm">Thank you for your feedback.</p>
@@ -103,22 +103,22 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-page rounded-lg border border-border p-4">
+      <h3 className="text-sm font-semibold text-text-primary mb-3">
         Rate Your Experience
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Star Rating */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-text-primary mb-1.5">
             How was your experience with {donation.volunteer_name || 'the volunteer'}?
           </label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((value) => renderStar(value))}
           </div>
           {rating > 0 && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-text-secondary mt-1">
               {rating === 1 && 'Poor'}
               {rating === 2 && 'Fair'}
               {rating === 3 && 'Good'}
@@ -130,7 +130,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
 
         {/* Comment */}
         <div>
-          <label htmlFor="comment" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label htmlFor="comment" className="block text-sm font-medium text-text-primary mb-1.5">
             Additional Feedback (Optional)
           </label>
           <textarea
@@ -144,16 +144,16 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
             disabled={submitting}
             maxLength={500}
             rows={3}
-            className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 resize-none"
+            className="w-full px-3.5 py-2.5 rounded-lg border border-border bg-surface text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-dash-primary/40 focus:border-dash-primary disabled:opacity-50 resize-none transition-colors"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-right">
+          <p className="text-xs text-text-secondary mt-1 text-right">
             {comment.length}/500
           </p>
         </div>
 
         {/* Error Message */}
         {error && (
-          <div className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+          <div className="flex items-center gap-2 text-sm text-danger">
             <AlertCircle size={16} />
             <p>{error}</p>
           </div>
@@ -163,7 +163,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
         <button
           type="submit"
           disabled={submitting || rating === 0}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {submitting ? (
             <>

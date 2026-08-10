@@ -57,19 +57,19 @@ const VolunteerProfilePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen bg-page">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="bg-surface border-b border-border sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16">
               <button
                 onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
               >
-                <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+                <ArrowLeft className="w-5 h-5 text-text-secondary" />
               </button>
               <div className="ml-4">
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+                <h1 className="text-xl font-semibold text-text-primary">
                   Volunteer Profile
                 </h1>
               </div>
@@ -79,16 +79,16 @@ const VolunteerProfilePage = () => {
 
         {/* Loading Skeleton */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-2xl h-48" />
+          <div className="animate-pulse bg-surface-hover rounded-2xl h-48" />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl h-64" />
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl h-48" />
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl h-64" />
+              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
+              <div className="animate-pulse bg-surface-hover rounded-xl h-48" />
+              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
             </div>
             <div className="space-y-6">
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl h-48" />
-              <div className="animate-pulse bg-gray-200 dark:bg-gray-700 rounded-xl h-64" />
+              <div className="animate-pulse bg-surface-hover rounded-xl h-48" />
+              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
             </div>
           </div>
         </div>
@@ -98,16 +98,16 @@ const VolunteerProfilePage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <div className="bg-surface border border-border rounded-xl p-8 max-w-md text-center">
+          <AlertCircle className="w-16 h-16 text-danger mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
             Error Loading Profile
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
+          <p className="text-text-secondary mb-6">{error}</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-6 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
           >
             Go Back
           </button>
@@ -118,18 +118,18 @@ const VolunteerProfilePage = () => {
 
   if (!volunteer) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-8 max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <div className="bg-surface border border-border rounded-xl p-8 max-w-md text-center">
+          <AlertCircle className="w-16 h-16 text-text-secondary mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-text-primary mb-2">
             Volunteer Not Found
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-text-secondary mb-6">
             The volunteer profile you're looking for doesn't exist or has been removed.
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="px-6 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
           >
             Go Back
           </button>
@@ -139,19 +139,19 @@ const VolunteerProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-page">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+      <div className="bg-surface border-b border-border sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
             <button
               onClick={() => navigate(-1)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+              <ArrowLeft className="w-5 h-5 text-text-secondary" />
             </button>
             <div className="ml-4">
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-xl font-semibold text-text-primary">
                 Volunteer Profile
               </h1>
             </div>

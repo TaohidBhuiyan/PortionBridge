@@ -1,4 +1,3 @@
-import React from 'react';
 import { Clock, User, CheckCircle, Calendar, MapPin, Package } from 'lucide-react';
 
 /**
@@ -7,9 +6,9 @@ import { Clock, User, CheckCircle, Calendar, MapPin, Package } from 'lucide-reac
 export function ActivityTimeline({ activities = [] }) {
   if (activities.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Clock size={48} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-        <p className="text-gray-500 dark:text-gray-400">No activity yet</p>
+      <div className="text-center py-6">
+        <Clock size={32} className="mx-auto text-text-secondary opacity-50 mb-2" />
+        <p className="text-sm text-text-secondary">No activity yet</p>
       </div>
     );
   }
@@ -47,40 +46,37 @@ export function ActivityTimeline({ activities = [] }) {
   };
 
   return (
-    <div className="space-y-4">
-      {activities.map((activity, index) => {
-        const Icon = getIconForType(activity.type);
-        const isLast = index === activities.length - 1;
+    <div className="relative">
+      <div className="absolute left-3.5 top-1 bottom-1 w-px bg-border" />
+      <div className="space-y-3">
+        {activities.map((activity, index) => {
+          const Icon = getIconForType(activity.type);
 
-        return (
-          <div key={index} className="flex items-start gap-4 relative">
-            {/* Icon */}
-            <div className="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center flex-shrink-0">
-              <Icon size={18} className="text-purple-600 dark:text-purple-400" />
-            </div>
+          return (
+            <div key={index} className="relative flex items-start gap-3 pl-9">
+              {/* Icon */}
+              <div className="absolute left-0 w-7 h-7 rounded-full bg-dash-primary-soft flex items-center justify-center shrink-0 ring-4 ring-surface">
+                <Icon size={14} className="text-dash-primary" />
+              </div>
 
-            {/* Content */}
-            <div className="flex-1 pt-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {activity.title}
-              </p>
-              {activity.description && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {activity.description}
+              {/* Content */}
+              <div className="flex-1">
+                <p className="text-sm font-medium text-text-primary">
+                  {activity.title}
                 </p>
-              )}
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                {formatDate(activity.timestamp)}
-              </p>
+                {activity.description && (
+                  <p className="text-xs text-text-secondary mt-0.5">
+                    {activity.description}
+                  </p>
+                )}
+                <p className="text-[11px] text-text-secondary mt-0.5">
+                  {formatDate(activity.timestamp)}
+                </p>
+              </div>
             </div>
-
-            {/* Connector Line */}
-            {!isLast && (
-              <div className="absolute left-5 mt-10 w-0.5 h-8 bg-gray-200 dark:bg-gray-700" />
-            )}
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
