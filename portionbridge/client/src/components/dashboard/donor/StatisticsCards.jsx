@@ -67,7 +67,7 @@ const TONE_CLASSES = {
 function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loading, error }) {
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-4">
+      <div className="bg-surface rounded-lg border border-border/50 p-3">
         <SkeletonCard count={1} />
       </div>
     );
@@ -75,24 +75,24 @@ function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loa
 
   if (error) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-4">
+      <div className="bg-surface rounded-lg border border-border/50 p-3">
         <div className="text-center text-text-secondary">
-          <Icon size={20} className="mx-auto mb-1.5 opacity-50" />
-          <p className="text-xs">Unavailable</p>
+          <Icon size={18} className="mx-auto mb-1.5 opacity-50" />
+          <p className="text-[11px]">Unavailable</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4 hover:border-dash-primary/30 transition-colors duration-150">
-      <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${TONE_CLASSES[tone]}`}>
-        <Icon size={18} />
+    <div className="bg-surface rounded-lg border border-border/50 p-3 hover:border-dash-primary/20 transition-colors duration-150">
+      <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2 ${TONE_CLASSES[tone]}`}>
+        <Icon size={16} />
       </div>
-      <p className="text-2xl font-semibold text-text-primary mb-0.5 tracking-tight">
+      <p className="text-xl font-semibold text-text-primary mb-0.5 tracking-tight">
         <AnimatedCounter value={value} />{suffix}
       </p>
-      <p className="text-xs font-medium text-text-secondary">{label}</p>
+      <p className="text-[11px] font-medium text-text-secondary">{label}</p>
     </div>
   );
 }
@@ -199,7 +199,7 @@ export function StatisticsCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         {cardConfig.map((_, index) => (
           <SkeletonCard key={index} count={1} />
         ))}
@@ -209,7 +209,7 @@ export function StatisticsCards() {
 
   if (error && !stats) {
     return (
-      <div className="mb-6">
+      <div className="mb-5">
         <ErrorState
           title="Failed to load statistics"
           message="Unable to fetch your donation statistics. Please try again later."
@@ -220,7 +220,7 @@ export function StatisticsCards() {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
       {cardConfig.map((card, index) => (
         <StatCard
           key={index}

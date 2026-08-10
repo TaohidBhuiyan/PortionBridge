@@ -49,8 +49,8 @@ export function ImpactSummary() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Your Impact</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Your Impact</h2>
         <SkeletonCard count={1} />
       </div>
     );
@@ -63,26 +63,26 @@ export function ImpactSummary() {
   ];
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
-      <h2 className="text-base font-semibold text-text-primary mb-2 flex items-center gap-2">
-        <Leaf size={16} className="text-success" />
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
+      <h2 className="text-sm font-semibold text-text-primary mb-2 flex items-center gap-2">
+        <Leaf size={14} className="text-success" />
         Your Impact
       </h2>
 
-      <p className="text-sm text-text-secondary mb-4">
+      <p className="text-xs text-text-secondary mb-3">
         <span className="font-semibold text-text-primary">{impact.completedDonations.toLocaleString()}</span>{' '}
         {impact.completedDonations === 1 ? 'donation' : 'donations'} completed — your contributions are
         making a real difference in your community.
       </p>
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-4 border-t border-border">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-3 border-t border-border/50">
         {stats.map(({ icon: Icon, value, label }) => (
-          <div key={label} className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-success-soft flex items-center justify-center shrink-0">
-              <Icon size={14} className="text-success" />
+          <div key={label} className="flex items-center gap-1.5">
+            <div className="w-6 h-6 rounded-md bg-success-soft flex items-center justify-center shrink-0">
+              <Icon size={12} className="text-success" />
             </div>
-            <span className="text-base font-semibold text-text-primary">{value.toLocaleString()}</span>
-            <span className="text-xs text-text-secondary">{label}</span>
+            <span className="text-sm font-semibold text-text-primary">{value.toLocaleString()}</span>
+            <span className="text-[11px] text-text-secondary">{label}</span>
           </div>
         ))}
       </div>

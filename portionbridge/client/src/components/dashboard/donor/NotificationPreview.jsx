@@ -111,9 +111,9 @@ export function NotificationPreview() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Notifications</h2>
-        <div className="space-y-3">
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Notifications</h2>
+        <div className="space-y-2">
           <SkeletonCard count={3} />
         </div>
       </div>
@@ -121,67 +121,67 @@ export function NotificationPreview() {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-semibold text-text-primary flex items-center gap-1.5">
-          <Bell size={16} className="text-dash-primary" />
+        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+          <Bell size={14} className="text-dash-primary" />
           Notifications
           {socketUnreadCount > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-semibold text-white bg-danger rounded-full">
+            <span className="inline-flex items-center justify-center min-w-[16px] h-[16px] px-0.5 text-[9px] font-semibold text-white bg-danger rounded-full">
               {socketUnreadCount}
             </span>
           )}
         </h2>
         <button
           onClick={() => navigate('/notifications')}
-          className="text-xs text-dash-primary hover:text-dash-primary-hover font-medium flex items-center gap-1 focus:outline-none focus-visible:underline"
+          className="text-[11px] text-dash-primary hover:text-dash-primary-hover font-medium flex items-center gap-1 focus:outline-none focus-visible:underline"
         >
           View All
-          <ArrowRight size={12} />
+          <ArrowRight size={10} />
         </button>
       </div>
 
       {/* Connection Status */}
       {!connected && (
-        <div className="flex items-center gap-1.5 text-warning text-xs mb-2.5">
+        <div className="flex items-center gap-1 text-warning text-[10px] mb-2">
           <span>⚠️ Real-time updates disconnected</span>
         </div>
       )}
 
       {notifications.length === 0 ? (
-        <div className="text-center py-6">
-          <Bell size={24} className="mx-auto text-text-secondary opacity-50 mb-2" />
-          <p className="text-sm text-text-secondary">You're all caught up.</p>
+        <div className="text-center py-4">
+          <Bell size={20} className="mx-auto text-text-secondary opacity-50 mb-2" />
+          <p className="text-xs text-text-secondary">You're all caught up.</p>
         </div>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-1">
           {notifications.map((notification) => (
             <div
               key={notification.id}
-              className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors ${
+              className={`flex items-start gap-2 p-2 rounded-md transition-colors ${
                 notification.is_read ? '' : 'bg-dash-primary-soft'
               }`}
             >
-              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs shrink-0 ${
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
                 notification.is_read ? 'bg-page text-text-secondary' : 'bg-surface text-text-primary'
               }`}>
                 {getNotificationIcon(notification.type)}
               </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm mb-0.5 truncate ${
+                <p className={`text-[11px] mb-0.5 truncate ${
                   notification.is_read ? 'font-normal text-text-secondary' : 'font-medium text-text-primary'
                 }`}>
                   {notification.title}
                 </p>
-                <p className="text-xs text-text-secondary line-clamp-1">
+                <p className="text-[10px] text-text-secondary line-clamp-1">
                   {notification.message}
                 </p>
               </div>
-              <span className="text-[10px] text-text-secondary shrink-0">
+              <span className="text-[9px] text-text-secondary shrink-0">
                 {formatTimestamp(notification.created_at)}
               </span>
               {!notification.is_read && (
-                <div className="w-1.5 h-1.5 bg-dash-primary rounded-full shrink-0 mt-1.5" />
+                <div className="w-1 h-1 bg-dash-primary rounded-full shrink-0 mt-1" />
               )}
             </div>
           ))}

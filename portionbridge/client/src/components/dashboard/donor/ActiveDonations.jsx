@@ -64,9 +64,9 @@ export function ActiveDonations() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Active Donations</h2>
-        <div className="space-y-3">
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Active Donations</h2>
+        <div className="space-y-2">
           <SkeletonCard count={3} />
         </div>
       </div>
@@ -75,8 +75,8 @@ export function ActiveDonations() {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-2">Active Donations</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-2">Active Donations</h2>
         <ErrorState
           title="Failed to load donations"
           message="Unable to fetch your active donations. Please try again."
@@ -89,8 +89,8 @@ export function ActiveDonations() {
 
   if (donations.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-2">Active Donations</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-2">Active Donations</h2>
         <EmptyState
           icon={Package}
           title="No active donations yet"
@@ -104,12 +104,12 @@ export function ActiveDonations() {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-semibold text-text-primary">Active Donations</h2>
+        <h2 className="text-sm font-semibold text-text-primary">Active Donations</h2>
         <button
           onClick={() => navigate('/donor/my-donations')}
-          className="text-xs text-dash-primary hover:text-dash-primary-hover font-medium focus:outline-none focus-visible:underline"
+          className="text-[11px] text-dash-primary hover:text-dash-primary-hover font-medium focus:outline-none focus-visible:underline"
         >
           View All
         </button>
@@ -120,35 +120,35 @@ export function ActiveDonations() {
           <div
             key={donation.id}
             onClick={() => navigate(`/donations/${donation.id}`)}
-            className="flex items-start gap-3 p-3 rounded-lg border border-border hover:border-dash-primary/40 hover:bg-surface-hover cursor-pointer transition-colors"
+            className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover cursor-pointer transition-colors"
           >
-            <div className="w-9 h-9 rounded-lg bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Package size={16} className="text-dash-primary" />
+            <div className="w-8 h-8 rounded-md bg-dash-primary-soft flex items-center justify-center shrink-0">
+              <Package size={14} className="text-dash-primary" />
             </div>
 
             <div className="flex-1 min-w-0">
-              <div className="flex items-start justify-between gap-2 mb-1.5">
-                <h3 className="text-sm font-medium text-text-primary truncate">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <h3 className="text-xs font-medium text-text-primary truncate">
                   {donation.title}
                 </h3>
                 <StatusBadge status={donation.status} size="small" />
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+              <div className="flex flex-wrap items-center gap-2.5 text-[11px] text-text-secondary">
                 <span className="capitalize">{donation.category}</span>
                 <span className="flex items-center gap-1">
-                  <Calendar size={12} />
+                  <Calendar size={10} />
                   {formatDate(donation.createdAt)}
                 </span>
                 {donation.assignedVolunteer && (
                   <span className="flex items-center gap-1">
-                    <User size={12} />
+                    <User size={10} />
                     {donation.assignedVolunteer.name}
                   </span>
                 )}
                 {formatTime(donation.scheduledPickupTime) && (
                   <span className="flex items-center gap-1">
-                    <Clock size={12} />
+                    <Clock size={10} />
                     {formatTime(donation.scheduledPickupTime)}
                   </span>
                 )}
@@ -158,9 +158,9 @@ export function ActiveDonations() {
             <button
               onClick={(e) => { e.stopPropagation(); navigate(`/donations/${donation.id}`); }}
               aria-label="View donation details"
-              className="p-1.5 rounded-lg hover:bg-dash-primary-soft text-dash-primary transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
+              className="p-1 rounded-md hover:bg-dash-primary-soft text-dash-primary transition-colors shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
             >
-              <ArrowRight size={16} />
+              <ArrowRight size={14} />
             </button>
           </div>
         ))}

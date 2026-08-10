@@ -31,21 +31,21 @@ export function WelcomeHeader({ user, leaderboardRank }) {
   const userRole = user?.role || 'Donor';
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5 mb-6 shadow-sm">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="bg-surface rounded-lg border border-border/50 p-4 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Left Section - Greeting and User Info */}
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary border border-border shrink-0">
+          <div className="w-9 h-9 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary border border-border/50 shrink-0">
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="text-left">
-            <h1 className="text-lg font-semibold text-text-primary mb-0.5">
+            <h1 className="text-base font-semibold text-text-primary mb-0.5">
               {greeting}, {displayName} 👋
             </h1>
-            <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center gap-2 text-[11px]">
               <span className="text-text-secondary">{currentDate}</span>
-              <span className="text-text-secondary opacity-50">•</span>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-dash-primary-soft text-dash-primary uppercase tracking-wide">
+              <span className="text-text-secondary opacity-40">•</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-dash-primary-soft text-dash-primary uppercase tracking-wide">
                 {userRole}
               </span>
             </div>
@@ -54,13 +54,13 @@ export function WelcomeHeader({ user, leaderboardRank }) {
 
         {/* Right Section - Leaderboard Rank */}
         {leaderboardRank && (
-          <div className="flex items-center gap-2.5 bg-surface-hover rounded-lg px-3 py-2 border border-border">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-              <Trophy size={14} className="text-white" />
+          <div className="flex items-center gap-2 bg-surface-hover rounded-md px-2.5 py-1.5 border border-border/50">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+              <Trophy size={12} className="text-white" />
             </div>
             <div className="text-left">
-              <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wide">Rank</p>
-              <p className="text-sm font-bold text-text-primary">
+              <p className="text-[9px] text-text-secondary font-medium uppercase tracking-wide">Rank</p>
+              <p className="text-xs font-bold text-text-primary">
                 #{leaderboardRank}
               </p>
             </div>

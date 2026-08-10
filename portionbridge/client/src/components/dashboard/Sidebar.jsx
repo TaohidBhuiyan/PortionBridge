@@ -27,7 +27,7 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
       aria-current={active ? 'page' : undefined}
       aria-label={isCollapsed ? item.title : undefined}
       title={isCollapsed ? item.title : undefined}
-      className={`relative flex items-center gap-3 px-3 py-2 rounded-lg mb-0.5 text-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary ${
+      className={`relative flex items-center gap-3 px-3 py-2 rounded-md mb-0.5 text-xs transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
         active
           ? 'bg-dash-primary-soft text-dash-primary font-medium'
           : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -36,12 +36,12 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
       {active && !isCollapsed && (
         <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-dash-primary" />
       )}
-      <item.icon size={18} className="shrink-0" />
+      <item.icon size={16} className="shrink-0" />
       {!isCollapsed && (
         <>
           <span className="flex-1 truncate">{item.title}</span>
           {item.badge ? (
-            <span className="bg-danger text-white text-[10px] leading-none px-1.5 py-1 rounded-full">
+            <span className="bg-danger text-white text-[9px] leading-none px-1 py-0.5 rounded-full">
               {item.badge}
             </span>
           ) : null}
@@ -53,11 +53,11 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
 
 function GroupLabel({ children, collapsed }) {
   return !collapsed ? (
-    <p className="px-3 mt-4 mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-secondary first:mt-0">
+    <p className="px-3 mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary first:mt-0">
       {children}
     </p>
   ) : (
-    <div className="my-3 border-t border-border" />
+    <div className="my-2 border-t border-border/50" />
   );
 }
 
@@ -136,31 +136,31 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-surface border-r border-border transition-all duration-200 z-30 ${
-          collapsed ? 'w-16' : 'w-60'
+        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-surface border-r border-border/50 transition-all duration-200 z-30 ${
+          collapsed ? 'w-14' : 'w-56'
         }`}
       >
         {/* Logo */}
-        <div className={`flex items-center h-16 px-4 border-b border-border ${collapsed ? 'justify-center px-0' : 'justify-between'}`}>
+        <div className={`flex items-center h-14 px-4 border-b border-border/50 ${collapsed ? 'justify-center px-0' : 'justify-between'}`}>
           {!collapsed && (
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-full border-2 border-dash-primary flex items-center justify-center shrink-0">
-                <span className="w-2 h-2 bg-dash-primary rounded-full" />
+              <div className="w-6 h-6 rounded-full border-2 border-dash-primary flex items-center justify-center shrink-0">
+                <span className="w-1.5 h-1.5 bg-dash-primary rounded-full" />
               </div>
-              <span className="font-semibold text-text-primary truncate">PortionBridge</span>
+              <span className="font-semibold text-text-primary truncate text-sm">PortionBridge</span>
             </div>
           )}
           <button
             onClick={onToggle}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
+            className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
           >
-            <Menu size={18} />
+            <Menu size={16} />
           </button>
         </div>
 
         {/* Menu Items */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <nav className="flex-1 overflow-y-auto py-2.5 px-2">
           {groups.map((group) =>
             group.items.length ? (
               <div key={group.label}>
@@ -174,7 +174,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
         </nav>
 
         {/* Account section (Profile / Settings) + Logout */}
-        <div className="px-2 py-2 border-t border-border">
+        <div className="px-2 py-2 border-t border-border/50">
           {accountItems.map((item) => (
             <NavLink key={item.title} item={item} active={isActive(item.path)} isCollapsed={collapsed} />
           ))}
@@ -182,25 +182,25 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
             onClick={handleLogout}
             aria-label="Logout"
             title={collapsed ? 'Logout' : undefined}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg mt-0.5 w-full text-sm transition-colors text-danger hover:bg-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-danger ${
+            className={`flex items-center gap-3 px-3 py-2 rounded-md mt-0.5 w-full text-xs transition-colors text-danger hover:bg-danger-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-danger/50 ${
               collapsed ? 'justify-center px-0' : ''
             }`}
           >
-            <LogOut size={18} className="shrink-0" />
+            <LogOut size={16} className="shrink-0" />
             {!collapsed && <span>Logout</span>}
           </button>
         </div>
 
         {/* User Info */}
         {!collapsed && (
-          <div className="p-3 border-t border-border">
-            <div className="flex items-center gap-2.5">
-              <Avatar item={user} tone="dash" className="w-9 h-9 text-sm" />
+          <div className="p-2.5 border-t border-border/50">
+            <div className="flex items-center gap-2">
+              <Avatar item={user} tone="dash" className="w-8 h-8 text-xs" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-text-primary truncate">
+                <p className="text-xs font-medium text-text-primary truncate">
                   {user?.name || (userRole ? userRole.charAt(0).toUpperCase() + userRole.slice(1) : 'User')}
                 </p>
-                <p className="text-xs text-text-secondary capitalize truncate">
+                <p className="text-[10px] text-text-secondary capitalize truncate">
                   {userRole} Account
                 </p>
               </div>

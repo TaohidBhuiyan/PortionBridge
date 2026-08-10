@@ -17,14 +17,14 @@ export function DashboardLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Initialize dark mode from localStorage or system preference
+  // Initialize dark mode from localStorage, default to light mode
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
     if (savedDarkMode !== null) {
       setDarkMode(JSON.parse(savedDarkMode));
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      setDarkMode(prefersDark);
+      // Default to light mode
+      setDarkMode(false);
     }
   }, []);
 

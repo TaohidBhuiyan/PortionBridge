@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Bell, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
+import { Bell, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { ProfileDropdown } from './ProfileDropdown';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -35,7 +35,6 @@ function getPageTitle(pathname) {
  */
 export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, user, onLogout }) {
   const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState('');
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const { unreadCount } = useAuthSocket();
@@ -43,48 +42,34 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
   const pageTitle = getPageTitle(location.pathname);
 
   return (
-    <header className="sticky top-0 z-20 h-16 bg-surface border-b border-border">
-      <div className="flex items-center justify-between h-full px-4 md:px-6 gap-4">
+    <header className="sticky top-0 z-20 h-14 bg-surface border-b border-border/50">
+      <div className="flex items-center justify-between h-full px-4 md:px-5 gap-4">
         {/* Left Section - Mobile Menu Toggle & Page Title */}
         <div className="flex items-center gap-3">
           {/* Mobile Menu Toggle (Phase 2 is desktop-focused; kept functional for mobile) */}
           <button
             onClick={onMobileSidebarToggle}
             aria-label="Open menu"
-            className="lg:hidden p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
+            className="lg:hidden p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors"
           >
-            <Menu size={20} />
+            <Menu size={18} />
           </button>
 
-          <h1 className="text-base font-semibold text-text-primary">{pageTitle}</h1>
-        </div>
-
-        {/* Center Section - Search Bar */}
-        <div className="hidden md:flex flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
-            <input
-              type="text"
-              placeholder="Search donations, volunteers..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-sm rounded-lg border border-border bg-page text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-dash-primary/40 focus:border-dash-primary transition-colors"
-            />
-          </div>
+          <h1 className="text-sm font-semibold text-text-primary">{pageTitle}</h1>
         </div>
 
         {/* Right Section - Notifications, Dark Mode, Profile */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 ml-auto">
           {/* Notification Bell */}
           <div className="relative">
             <button
               onClick={() => setShowNotificationDropdown((v) => !v)}
               aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-              className="relative p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
+              className="relative p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
             >
-              <Bell size={18} />
+              <Bell size={16} />
               {unreadCount > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-danger rounded-full" />
               )}
             </button>
 
@@ -100,9 +85,9 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
           <button
             onClick={onDarkModeToggle}
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
+            className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
           >
-            {darkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
 
           {/* Profile Dropdown */}
@@ -110,10 +95,10 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
             <button
               onClick={() => setShowProfileDropdown((v) => !v)}
               aria-label="Open profile menu"
-              className="flex items-center gap-1.5 p-1 pr-1.5 rounded-lg hover:bg-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary"
+              className="flex items-center gap-1 p-1 pr-1 rounded-md hover:bg-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
             >
-              <Avatar item={user} tone="dash" className="w-8 h-8 text-sm" />
-              <ChevronDown size={14} className="text-text-secondary hidden sm:block" />
+              <Avatar item={user} tone="dash" className="w-7 h-7 text-xs" />
+              <ChevronDown size={12} className="text-text-secondary hidden sm:block" />
             </button>
 
             {showProfileDropdown && (

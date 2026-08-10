@@ -21,7 +21,7 @@ export function DonorDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <WelcomeHeader user={user} />
 
         <StatisticsCards />
@@ -30,12 +30,12 @@ export function DonorDashboard() {
 
         <ActiveDonations />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <ImpactSummary />
           <RecentActivities />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-5">
           <LeaderboardWidget />
           <ProfileCompletion />
           <AchievementsPanel userId={user?.id} userRole="donor" />

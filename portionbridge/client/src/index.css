@@ -12,43 +12,43 @@
 /* Dashboard Design System Tokens */
 :root {
   /* Dashboard primary colors (sky blue) - separate from landing page purple */
-  --pb-primary: #0284c7;
-  --pb-primary-hover: #0369a1;
-  --pb-primary-soft: #e0f2fe;
+  --pb-primary: #0ea5e9;
+  --pb-primary-hover: #0284c7;
+  --pb-primary-soft: #f0f9ff;
   --pb-page: #ffffff;
   --pb-surface: #ffffff;
   --pb-surface-hover: #f8fafc;
-  --pb-border: #e5e7eb;
+  --pb-border: #e2e8f0;
   --pb-text-primary: #0f172a;
   --pb-text-secondary: #64748b;
-  --pb-success: #16a34a;
-  --pb-success-soft: #dcfce7;
-  --pb-warning: #d97706;
-  --pb-warning-soft: #fef3c7;
-  --pb-danger: #dc2626;
-  --pb-danger-soft: #fee2e2;
-  --pb-info: #0284c7;
-  --pb-info-soft: #e0f2fe;
+  --pb-success: #10b981;
+  --pb-success-soft: #f0fdf4;
+  --pb-warning: #f59e0b;
+  --pb-warning-soft: #fffbeb;
+  --pb-danger: #ef4444;
+  --pb-danger-soft: #fef2f2;
+  --pb-info: #0ea5e9;
+  --pb-info-soft: #f0f9ff;
 }
 
 .dark {
   --pb-primary: #38bdf8;
   --pb-primary-hover: #0ea5e9;
-  --pb-primary-soft: rgba(56, 189, 248, 0.12);
-  --pb-page: #0a0e1a;
-  --pb-surface: #111827;
-  --pb-surface-hover: #17202f;
-  --pb-border: rgba(255, 255, 255, 0.08);
+  --pb-primary-soft: rgba(56, 189, 248, 0.1);
+  --pb-page: #0f172a;
+  --pb-surface: #1e293b;
+  --pb-surface-hover: #334155;
+  --pb-border: rgba(148, 163, 184, 0.1);
   --pb-text-primary: #f1f5f9;
   --pb-text-secondary: #94a3b8;
-  --pb-success: #22c55e;
-  --pb-success-soft: rgba(34, 197, 94, 0.14);
-  --pb-warning: #f59e0b;
-  --pb-warning-soft: rgba(245, 158, 11, 0.14);
+  --pb-success: #34d399;
+  --pb-success-soft: rgba(52, 211, 153, 0.1);
+  --pb-warning: #fbbf24;
+  --pb-warning-soft: rgba(251, 191, 36, 0.1);
   --pb-danger: #f87171;
-  --pb-danger-soft: rgba(248, 113, 113, 0.14);
+  --pb-danger-soft: rgba(248, 113, 113, 0.1);
   --pb-info: #38bdf8;
-  --pb-info-soft: rgba(56, 189, 248, 0.12);
+  --pb-info-soft: rgba(56, 189, 248, 0.1);
 }
 
 :root {

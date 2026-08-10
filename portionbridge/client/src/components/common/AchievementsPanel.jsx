@@ -51,10 +51,10 @@ export function AchievementsPanel({ userId, userRole }) {
 
   if (loading) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400">
-          <Loader2 size={20} className="animate-spin" />
-          <p>Loading achievements...</p>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <div className="flex items-center justify-center gap-2 text-text-secondary">
+          <Loader2 size={16} className="animate-spin" />
+          <p className="text-xs">Loading achievements...</p>
         </div>
       </div>
     );
@@ -62,41 +62,41 @@ export function AchievementsPanel({ userId, userRole }) {
 
   if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
-          <Award size={20} />
-          <p>{error}</p>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <div className="flex items-center gap-2 text-danger">
+          <Award size={16} />
+          <p className="text-xs">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Award size={20} className="text-purple-500" />
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+          <Award size={14} className="text-dash-primary" />
           Achievements
         </h3>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-            <Sparkles size={16} className="text-yellow-500" />
-            <span className="font-medium text-gray-900 dark:text-white">{summary.totalPoints}</span>
+        <div className="flex items-center gap-3 text-[11px]">
+          <div className="flex items-center gap-1 text-text-secondary">
+            <Sparkles size={12} className="text-warning" />
+            <span className="font-medium text-text-primary">{summary.totalPoints}</span>
             <span>Points</span>
           </div>
-          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
-            <Award size={16} className="text-purple-500" />
-            <span className="font-medium text-gray-900 dark:text-white">{summary.totalCount}</span>
+          <div className="flex items-center gap-1 text-text-secondary">
+            <Award size={12} className="text-dash-primary" />
+            <span className="font-medium text-text-primary">{summary.totalCount}</span>
             <span>Badges</span>
           </div>
         </div>
       </div>
 
       {achievements.length === 0 ? (
-        <div className="text-center py-8">
-          <Award size={48} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-500 dark:text-gray-400">No achievements yet</p>
-          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
+        <div className="text-center py-4">
+          <Award size={32} className="text-text-secondary opacity-50 mx-auto mb-2" />
+          <p className="text-xs text-text-secondary">No achievements yet</p>
+          <p className="text-[10px] text-text-secondary opacity-70 mt-1">
             Complete donations to unlock badges!
           </p>
         </div>
@@ -105,7 +105,7 @@ export function AchievementsPanel({ userId, userRole }) {
           {achievements.map((achievement) => (
             <div key={achievement.id} className="relative">
               <AchievementBadge achievement={achievement} />
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 ml-14">
+              <p className="text-[10px] text-text-secondary mt-1 ml-12">
                 Unlocked {formatDate(achievement.unlocked_at)}
               </p>
             </div>

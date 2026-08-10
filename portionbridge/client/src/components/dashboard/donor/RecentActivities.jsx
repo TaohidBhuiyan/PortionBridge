@@ -116,9 +116,9 @@ export function RecentActivities() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
-        <div className="space-y-3">
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Recent Activities</h2>
+        <div className="space-y-2">
           <SkeletonCard count={3} />
         </div>
       </div>
@@ -127,8 +127,8 @@ export function RecentActivities() {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-2">Recent Activities</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-2">Recent Activities</h2>
         <ErrorState
           title="Failed to load activities"
           message="Unable to fetch your recent activities. Please try again."
@@ -141,8 +141,8 @@ export function RecentActivities() {
 
   if (activities.length === 0) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-2">Recent Activities</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-2">Recent Activities</h2>
         <EmptyState
           icon={Clock}
           title="No recent activities"
@@ -155,39 +155,39 @@ export function RecentActivities() {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
-      <h2 className="text-base font-semibold text-text-primary mb-4">Recent Activities</h2>
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
+      <h2 className="text-sm font-semibold text-text-primary mb-3">Recent Activities</h2>
 
       <div className="relative">
         {/* Timeline line */}
-        <div className="absolute left-3.5 top-1 bottom-1 w-px bg-border" />
+        <div className="absolute left-3 top-1 bottom-1 w-px bg-border/50" />
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           {activities.map((activity) => {
             const Icon = activity.icon;
             return (
               <div
                 key={activity.id}
                 onClick={() => navigate(`/donations/${activity.id}`)}
-                className="relative flex items-start gap-3 pl-9 cursor-pointer group/item"
+                className="relative flex items-start gap-3 pl-8 cursor-pointer group/item"
               >
                 {/* Timeline dot */}
-                <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center ring-4 ring-surface ${TONE_CLASSES[activity.tone]}`}>
-                  <Icon size={13} />
+                <div className={`absolute left-0 w-6 h-6 rounded-full flex items-center justify-center ring-4 ring-surface ${TONE_CLASSES[activity.tone]}`}>
+                  <Icon size={12} />
                 </div>
 
                 {/* Activity content */}
                 <div className="flex-1 pb-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-text-primary group-hover/item:text-dash-primary transition-colors truncate">
+                      <p className="text-xs font-medium text-text-primary group-hover/item:text-dash-primary transition-colors truncate">
                         {activity.title}
                       </p>
-                      <p className="text-xs text-text-secondary line-clamp-1">
+                      <p className="text-[11px] text-text-secondary line-clamp-1">
                         {activity.description}
                       </p>
                     </div>
-                    <span className="text-[11px] text-text-secondary shrink-0">
+                    <span className="text-[10px] text-text-secondary shrink-0">
                       {formatTimestamp(activity.timestamp)}
                     </span>
                   </div>

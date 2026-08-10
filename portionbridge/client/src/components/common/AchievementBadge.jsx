@@ -21,20 +21,20 @@ export function AchievementBadge({ achievement, size = 'md' }) {
 
   const sizeClasses = {
     sm: 'w-8 h-8 text-sm',
-    md: 'w-12 h-12 text-base',
-    lg: 'w-16 h-16 text-xl',
+    md: 'w-10 h-10 text-base',
+    lg: 'w-12 h-12 text-xl',
   };
 
   return (
-    <div className="flex items-center gap-3 p-3 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/30 dark:to-pink-950/30 rounded-lg border border-purple-200 dark:border-purple-950/50">
-      <div className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-md`}>
-        <Icon size={size === 'sm' ? 16 : size === 'md' ? 24 : 32} />
+    <div className="flex items-center gap-2.5 p-2 bg-dash-primary-soft rounded-md border border-border/50">
+      <div className={`${sizeClasses[size]} rounded-full bg-dash-primary flex items-center justify-center text-white shadow-sm`}>
+        <Icon size={size === 'sm' ? 16 : size === 'md' ? 20 : 24} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-900 dark:text-white text-sm truncate">
+        <p className="font-medium text-text-primary text-xs truncate">
           {achievement.achievement_name}
         </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+        <p className="text-[10px] text-text-secondary truncate">
           {achievement.description}
         </p>
       </div>

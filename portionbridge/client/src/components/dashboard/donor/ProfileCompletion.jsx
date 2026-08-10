@@ -71,49 +71,49 @@ export function ProfileCompletion() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
         <SkeletonCard count={1} />
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
       <div className="flex items-start justify-between mb-3 gap-3">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-text-primary mb-0.5">
+          <h2 className="text-sm font-semibold text-text-primary mb-0.5">
             Profile Completion
           </h2>
-          <p className="text-xs text-text-secondary">
+          <p className="text-[11px] text-text-secondary">
             Complete your profile to get the most out of PortionBridge
           </p>
         </div>
-        <div className="relative w-14 h-14 shrink-0">
+        <div className="relative w-12 h-12 shrink-0">
           <svg className="w-full h-full -rotate-90">
             <circle
-              cx="28"
-              cy="28"
-              r="24"
+              cx="24"
+              cy="24"
+              r="20"
               stroke="currentColor"
-              strokeWidth="5"
+              strokeWidth="4"
               fill="none"
-              className="text-border"
+              className="text-border/50"
             />
             <circle
-              cx="28"
-              cy="28"
-              r="24"
+              cx="24"
+              cy="24"
+              r="20"
               stroke="currentColor"
-              strokeWidth="5"
+              strokeWidth="4"
               fill="none"
-              strokeDasharray={`${2 * Math.PI * 24}`}
-              strokeDashoffset={`${2 * Math.PI * 24 * (1 - completion / 100)}`}
+              strokeDasharray={`${2 * Math.PI * 20}`}
+              strokeDashoffset={`${2 * Math.PI * 20 * (1 - completion / 100)}`}
               strokeLinecap="round"
               className="text-dash-primary transition-all duration-700"
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-sm font-semibold text-text-primary">
+            <span className="text-xs font-semibold text-text-primary">
               {completion}%
             </span>
           </div>
@@ -121,8 +121,8 @@ export function ProfileCompletion() {
       </div>
 
       {missingFields.length > 0 ? (
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-text-secondary mb-2">
+        <div className="space-y-1">
+          <p className="text-[10px] font-medium text-text-secondary mb-1.5">
             Missing Information
           </p>
           {missingFields.map((item, index) => {
@@ -130,28 +130,28 @@ export function ProfileCompletion() {
             return (
               <div
                 key={index}
-                className="flex items-center gap-2.5 p-2 rounded-lg bg-page border border-border"
+                className="flex items-center gap-2 p-1.5 rounded-md bg-page border border-border/50"
               >
-                <Icon size={14} className="text-text-secondary" />
-                <span className="text-xs text-text-secondary">{item.field}</span>
+                <Icon size={12} className="text-text-secondary" />
+                <span className="text-[10px] text-text-secondary">{item.field}</span>
               </div>
             );
           })}
           <button
             onClick={() => navigate('/donor/profile')}
-            className="w-full mt-3 py-2 px-4 text-sm bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary focus-visible:ring-offset-2"
+            className="w-full mt-2.5 py-1.5 px-3 text-xs bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 focus-visible:ring-offset-2"
           >
             Complete Profile
           </button>
         </div>
       ) : (
-        <div className="flex items-center gap-2.5 p-3 rounded-lg bg-success-soft">
-          <CheckCircle size={18} className="text-success shrink-0" />
+        <div className="flex items-center gap-2 p-2 rounded-md bg-success-soft">
+          <CheckCircle size={14} className="text-success shrink-0" />
           <div>
-            <p className="text-sm font-medium text-success">
+            <p className="text-xs font-medium text-success">
               Profile Complete!
             </p>
-            <p className="text-xs text-success">
+            <p className="text-[10px] text-success">
               Your profile is fully set up.
             </p>
           </div>

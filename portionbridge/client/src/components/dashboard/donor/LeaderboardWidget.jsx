@@ -59,23 +59,23 @@ export function LeaderboardWidget() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-text-primary mb-4">Leaderboard</h2>
+      <div className="bg-surface rounded-lg border border-border/50 p-4">
+        <h2 className="text-sm font-semibold text-text-primary mb-3">Leaderboard</h2>
         <SkeletonCard count={3} />
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
+    <div className="bg-surface rounded-lg border border-border/50 p-4">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-base font-semibold text-text-primary flex items-center gap-1.5">
-          <Trophy size={16} className="text-warning" />
+        <h2 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+          <Trophy size={14} className="text-warning" />
           Leaderboard
         </h2>
         <button
           onClick={() => navigate('/#leaderboard')}
-          className="text-xs text-dash-primary hover:text-dash-primary-hover font-medium focus:outline-none focus-visible:underline"
+          className="text-[11px] text-dash-primary hover:text-dash-primary-hover font-medium focus:outline-none focus-visible:underline"
         >
           View All
         </button>
@@ -83,27 +83,27 @@ export function LeaderboardWidget() {
 
       {/* Current User Stats — only rendered when real data places them in the list */}
       {currentUserEntry && (
-        <div className="flex items-center justify-between bg-dash-primary-soft rounded-lg p-2.5 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${RANK_TONE[currentUserRank] || 'bg-surface text-text-secondary'}`}>
+        <div className="flex items-center justify-between bg-dash-primary-soft rounded-md p-2 mb-3">
+          <div className="flex items-center gap-2">
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${RANK_TONE[currentUserRank] || 'bg-surface text-text-secondary'}`}>
               {getRankIcon(currentUserRank)}
             </div>
             <div>
-              <p className="text-xs text-text-secondary">Your Rank</p>
-              <p className="text-sm font-semibold text-dash-primary">#{currentUserRank}</p>
+              <p className="text-[10px] text-text-secondary">Your Rank</p>
+              <p className="text-xs font-semibold text-dash-primary">#{currentUserRank}</p>
             </div>
           </div>
           <div className="text-right">
-            <p className="text-xs text-text-secondary">Points</p>
-            <p className="text-sm font-semibold text-text-primary">{currentUserEntry.points || 0}</p>
+            <p className="text-[10px] text-text-secondary">Points</p>
+            <p className="text-xs font-semibold text-text-primary">{currentUserEntry.points || 0}</p>
           </div>
         </div>
       )}
 
       {/* Top Donors */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         {topDonors.length === 0 ? (
-          <p className="text-sm text-text-secondary text-center py-4">
+          <p className="text-xs text-text-secondary text-center py-3">
             No leaderboard data available
           </p>
         ) : (
@@ -113,21 +113,21 @@ export function LeaderboardWidget() {
             return (
               <div
                 key={donor.id || index}
-                className={`flex items-center gap-2.5 rounded-lg p-2 ${isCurrentUser ? 'bg-dash-primary-soft' : ''}`}
+                className={`flex items-center gap-2 rounded-md p-1.5 ${isCurrentUser ? 'bg-dash-primary-soft' : ''}`}
               >
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${RANK_TONE[rank] || 'bg-page text-text-secondary'}`}>
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${RANK_TONE[rank] || 'bg-page text-text-secondary'}`}>
                   {getRankIcon(rank)}
                 </div>
-                <Avatar item={donor} tone="dash" className="w-7 h-7 text-xs" />
+                <Avatar item={donor} tone="dash" className="w-6 h-6 text-[10px]" />
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm truncate ${isCurrentUser ? 'font-semibold text-dash-primary' : 'font-medium text-text-primary'}`}>
+                  <p className={`text-[11px] truncate ${isCurrentUser ? 'font-semibold text-dash-primary' : 'font-medium text-text-primary'}`}>
                     {donor.name || 'Anonymous'}
                   </p>
-                  <p className="text-xs text-text-secondary">
+                  <p className="text-[10px] text-text-secondary">
                     {donor.totalDonations || 0} donations
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-text-primary shrink-0">
+                <p className="text-[11px] font-semibold text-text-primary shrink-0">
                   {donor.points || 0} pts
                 </p>
               </div>

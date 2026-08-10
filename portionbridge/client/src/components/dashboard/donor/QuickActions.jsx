@@ -72,29 +72,29 @@ export function QuickActions() {
   };
 
   return (
-    <div className="mb-6">
-      <h2 className="text-base font-semibold text-text-primary mb-3">Quick Actions</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+    <div className="mb-5">
+      <h2 className="text-sm font-semibold text-text-primary mb-3">Quick Actions</h2>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {actions.map((action, index) => {
           const Icon = action.icon;
           return (
             <button
               key={index}
               onClick={() => handleActionClick(action.route)}
-              className="group bg-surface rounded-xl border border-border p-4 text-left hover:border-dash-primary/40 hover:bg-surface-hover transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 flex items-start gap-3"
+              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
             >
               <div
-                className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
                   action.primary ? 'bg-dash-primary text-white' : 'bg-dash-primary-soft text-dash-primary'
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={16} />
               </div>
               <div className="min-w-0">
-                <h3 className="text-sm font-medium text-text-primary mb-0.5 truncate">
+                <h3 className="text-xs font-semibold text-text-primary mb-0.5 truncate">
                   {action.label}
                 </h3>
-                <p className="text-xs text-text-secondary line-clamp-2">
+                <p className="text-[11px] text-text-secondary line-clamp-2">
                   {action.description}
                 </p>
               </div>
