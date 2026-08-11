@@ -281,3 +281,5 @@ function ImpactItem({ label, value, color }) {
     </div>
   );
 }
+
+export default DonorAnalyticsPage;

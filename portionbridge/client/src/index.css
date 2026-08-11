@@ -12,17 +12,18 @@
 /* Dashboard Design System Tokens */
 :root {
   /* Dashboard primary colors (sky blue) - separate from landing page purple */
-  --pb-primary: #0ea5e9;
-  --pb-primary-hover: #0284c7;
+  --pb-primary: #0284c7;
+  --pb-primary-hover: #0369a1;
   --pb-primary-soft: #f0f9ff;
-  --pb-page: #ffffff;
+  --pb-page: #f8fafc;
   --pb-surface: #ffffff;
-  --pb-surface-hover: #f8fafc;
+  --pb-surface-hover: #f1f5f9;
   --pb-border: #e2e8f0;
   --pb-text-primary: #0f172a;
-  --pb-text-secondary: #64748b;
+  --pb-text-secondary: #475569;
+  --pb-text-muted: #64748b;
   --pb-success: #10b981;
-  --pb-success-soft: #f0fdf4;
+  --pb-success-soft: #ecfdf5;
   --pb-warning: #f59e0b;
   --pb-warning-soft: #fffbeb;
   --pb-danger: #ef4444;
@@ -34,24 +35,25 @@
 .dark {
   --pb-primary: #38bdf8;
   --pb-primary-hover: #0ea5e9;
-  --pb-primary-soft: rgba(56, 189, 248, 0.1);
-  --pb-page: #0f172a;
-  --pb-surface: #1e293b;
-  --pb-surface-hover: #334155;
-  --pb-border: rgba(148, 163, 184, 0.1);
-  --pb-text-primary: #f1f5f9;
-  --pb-text-secondary: #94a3b8;
+  --pb-primary-soft: rgba(56, 189, 248, 0.08);
+  --pb-page: #0b0f19;
+  --pb-surface: #151e2e;
+  --pb-surface-hover: #1f2a3f;
+  --pb-border: rgba(148, 163, 184, 0.08);
+  --pb-text-primary: #f8fafc;
+  --pb-text-secondary: #cbd5e1;
+  --pb-text-muted: #94a3b8;
   --pb-success: #34d399;
-  --pb-success-soft: rgba(52, 211, 153, 0.1);
+  --pb-success-soft: rgba(52, 211, 153, 0.08);
   --pb-warning: #fbbf24;
-  --pb-warning-soft: rgba(251, 191, 36, 0.1);
+  --pb-warning-soft: rgba(251, 191, 36, 0.08);
   --pb-danger: #f87171;
-  --pb-danger-soft: rgba(248, 113, 113, 0.1);
+  --pb-danger-soft: rgba(248, 113, 113, 0.08);
   --pb-info: #38bdf8;
-  --pb-info-soft: rgba(56, 189, 248, 0.1);
+  --pb-info-soft: rgba(56, 189, 248, 0.08);
 }
 
-:root {
+@theme {
   /* Dashboard color tokens (mapped to Tailwind theme) */
   --color-dash-primary: var(--pb-primary);
   --color-dash-primary-hover: var(--pb-primary-hover);
@@ -62,6 +64,7 @@
   --color-border: var(--pb-border);
   --color-text-primary: var(--pb-text-primary);
   --color-text-secondary: var(--pb-text-secondary);
+  --color-text-muted: var(--pb-text-muted);
   --color-success: var(--pb-success);
   --color-success-soft: var(--pb-success-soft);
   --color-warning: var(--pb-warning);
@@ -390,6 +393,7 @@ html {
   --color-border: var(--pb-border);
   --color-text-primary: var(--pb-text-primary);
   --color-text-secondary: var(--pb-text-secondary);
+  --color-text-muted: var(--pb-text-muted);
   --color-success: var(--pb-success);
   --color-success-soft: var(--pb-success-soft);
   --color-warning: var(--pb-warning);
@@ -419,7 +423,7 @@ h1,
 h2 {
   font-family: var(--sans); /* Default to sans-serif to prevent styling side-effects on Login/Register */
   font-weight: 500;
-  color: var(--text-h);
+  color: var(--color-text-primary);
 }
 
 h1 {

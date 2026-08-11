@@ -31,16 +31,16 @@ export function WelcomeHeader({ user, leaderboardRank }) {
   const userRole = user?.role || 'Donor';
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-4 shadow-sm">
+    <div className="bg-gradient-to-r from-dash-primary-soft/50 to-surface rounded-lg border border-border/50 p-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         {/* Left Section - Greeting and User Info */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary border border-border/50 shrink-0">
+          <div className="w-9 h-9 rounded-full bg-surface/80 flex items-center justify-center text-text-secondary border border-border/50 shrink-0 shadow-sm">
             {displayName.charAt(0).toUpperCase()}
           </div>
           <div className="text-left">
             <h1 className="text-base font-semibold text-text-primary mb-0.5">
-              {greeting}, {displayName} 👋
+              {greeting}, <span className="text-dash-primary">{displayName}</span> 👋
             </h1>
             <div className="flex items-center gap-2 text-[11px]">
               <span className="text-text-secondary">{currentDate}</span>

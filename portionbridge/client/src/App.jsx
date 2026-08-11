@@ -17,13 +17,13 @@ const DonorSettingsPage = lazy(() => import("./pages/DonorSettingsPage").then(m 
 const DonationFormPage = lazy(() => import("./pages/DonationFormPage").then(m => ({ default: m.DonationFormPage })));
 const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => ({ default: m.MyDonationsPage })));
 const DonationDetailsPage = lazy(() => import("./pages/DonationDetailsPage").then(m => ({ default: m.DonationDetailsPage })));
-const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage"));
+const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage").then(m => ({ default: m.VolunteerDiscoveryPage })));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
 
 // Lazy load volunteer and admin dashboards (not part of donor module review)
 const VolunteerDashboard = lazy(() => import("./pages/VolunteerDashboard").then(m => ({ default: m.VolunteerDashboard })));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage"));
+const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage").then(m => ({ default: m.VolunteerProfilePage })));
 
 // Loading fallback component
 const PageLoader = () => (
