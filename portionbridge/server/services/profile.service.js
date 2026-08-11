@@ -1,6 +1,6 @@
 const AppError = require('../utils/AppError');
 const { hashPassword, comparePassword } = require('../utils/password');
-const { USER_ROLES, DONATION_STATUS, DONATION_CATEGORY, AUTH, HTTP_STATUS } = require('../constants');
+const { USER_ROLES, DONATION_STATUS, DONATION_CATEGORY, AUTH, HTTP_STATUS, AUDIT_ACTIONS } = require('../constants');
 
 const userModel = require('../models/user.model');
 const userPreferencesModel = require('../models/userPreferences.model');
@@ -415,14 +415,38 @@ async function getVolunteerStatistics(userId) {
   const cancelledPickups = donations.filter(d => d.is_deleted === 1).length;
 
   const totalRatings = ratings.length;
-  const averageRating = totalRatings > 0 
-    ? ratings.reduce((sum, r) => sum + r.rating, 0) / totalRatings 
+  // NOTE: the `ratings` table column is `stars` (see ratings schema /
+  // rating.model.js RATING_COLUMNS), not `rating` — using `r.rating` here
+  // previously summed `undefined` for every row, silently forcing
+  // averageRating to 0 regardless of actual ratings. Fixed to read `stars`.
+  const averageRating = totalRatings > 0
+    ? ratings.reduce((sum, r) => sum + r.stars, 0) / totalRatings
     : 0;
 
   const totalAssignments = donations.length;
   const completionRate = totalAssignments > 0 
     ? (completedPickups / totalAssignments) * 100 
     : 0;
+
+  // "People helped" — reuses the exact same business rule as the donor-side
+  // statistics (getDonorStatistics, above): mealsShared (sum of servings on
+  // completed food donations) + floor(clothesDonated / 2) (sum of quantity
+  // on completed clothes donations, halved as an estimate of people per
+  // clothing lot). Computed from this volunteer's own completed donations
+  // rather than inventing a new formula.
+  const completedDonations = donations.filter(
+    d => d.status === DONATION_STATUS.COMPLETED && d.is_deleted === 0
+  );
+
+  const mealsShared = completedDonations
+    .filter(d => d.category === DONATION_CATEGORY.FOOD)
+    .reduce((sum, d) => sum + (d.number_of_servings || 0), 0);
+
+  const clothesDonated = completedDonations
+    .filter(d => d.category === DONATION_CATEGORY.CLOTHES)
+    .reduce((sum, d) => sum + (d.quantity || 0), 0);
+
+  const peopleHelped = mealsShared + Math.floor(clothesDonated / 2);
 
   return {
     acceptedDonations,
@@ -431,6 +455,7 @@ async function getVolunteerStatistics(userId) {
     averageRating: parseFloat(averageRating.toFixed(2)),
     totalRatings,
     completionRate: parseFloat(completionRate.toFixed(2)),
+    peopleHelped,
   };
 }
 

@@ -56,6 +56,29 @@ const {
 // MUST be registered before /:id to avoid route conflict
 router.get('/', protect, browseDonations);
 
+// --- Volunteer history (static paths — MUST be registered before the
+// '/:id' route below, otherwise Express would match '/assigned-history'
+// and '/assigned-history/summary' as :id = "assigned-history" and they'd
+// never reach these handlers. This is why re-enabling these two routes
+// requires moving them above '/:id', not just uncommenting them in place. ---
+router.get(
+  '/assigned-history/summary',
+  protect,
+  authorize('volunteer'),
+  historySummaryValidationRules,
+  validateRequest,
+  getVolunteerHistorySummary
+);
+
+router.get(
+  '/assigned-history',
+  protect,
+  authorize('volunteer'),
+  historyQueryValidationRules,
+  validateRequest,
+  getVolunteerHistory
+);
+
 /**
  * GET /api/v1/donations/:id
  * Get donation details by ID.
@@ -63,8 +86,9 @@ router.get('/', protect, browseDonations);
  */
 router.get('/:id', protect, loadDonation, getDonationDetails);
 
-// --- Donor history (static paths — must be registered before any future
-// GET '/:id' route is added, so they're never shadowed by a param route) ---
+// --- Donor history — left disabled, unrelated to this change. Same
+// route-ordering issue applies if these are ever re-enabled: they must
+// also be moved above '/:id'. ---
 // router.get(
 //   '/my-history/summary',
 //   protect,
@@ -78,24 +102,6 @@ router.get('/:id', protect, loadDonation, getDonationDetails);
 //   historyQueryValidationRules,
 //   validateRequest,
 //   getDonorHistory
-// );
-
-// --- Volunteer history ---
-// router.get(
-//   '/assigned-history/summary',
-//   protect,
-//   authorize('volunteer'),
-//   validateRequest,
-//   getVolunteerHistorySummary
-// );
-
-// router.get(
-//   '/assigned-history',
-//   protect,
-//   authorize('volunteer'),
-//   historyQueryValidationRules,
-//   validateRequest,
-//   getVolunteerHistory
 // );
 
 // Only donors can create/edit/cancel donation requests.
