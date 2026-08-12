@@ -82,6 +82,15 @@ export function getNotificationRoute(notification) {
   if (notification.related_id && DONATION_ROUTE_TYPES.has(notification.type)) {
     return `/donations/${notification.related_id}`;
   }
+  // PHASE 4: team_announcement is the only team_* type the backend
+  // actually creates today (checked directly in notification.service.js —
+  // the other team_* types listed in TYPE_META above are defined but never
+  // triggered anywhere yet), and its related_id is confirmed to be a
+  // teamId (see sendTeamAnnouncement). Routes to the new /volunteer/team
+  // page added this phase.
+  if (notification.related_id && notification.type === 'team_announcement') {
+    return '/volunteer/team';
+  }
   return null;
 }
 

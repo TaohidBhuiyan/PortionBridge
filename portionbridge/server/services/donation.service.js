@@ -1023,12 +1023,27 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
 }
 
 /**
- * Gets donations assigned to a team.
+ * Gets donations assigned to a specific team.
+ *
+ * PHASE 4 FIX: previously took no `userId` and performed no membership
+ * check at all — any authenticated volunteer could read any other team's
+ * donations (including pickup locations and donor contact info) just by
+ * guessing/iterating team IDs in the URL. This mirrors the exact same
+ * membership check already used by team.service.js#getTeam (same model
+ * call, same error message/status), so a non-member gets a 403 instead of
+ * silently getting another team's data. No new architecture, no schema
+ * change — just closing a pre-existing gap directly in the code path this
+ * phase's Team Activity feature depends on.
  * @param {number} teamId - Team ID
+ * @param {number} userId - Requesting user's ID (must be a team member)
  * @param {string} [status] - Optional status filter
  * @returns {Promise<Array>} Array of donation objects
  */
-async function getTeamDonations(teamId, status = null) {
+async function getTeamDonations(teamId, userId, status = null) {
+  const membership = await teamMemberModel.findByTeamAndUser(teamId, userId);
+  if (!membership) {
+    throw new AppError('You are not a member of this team.', HTTP_STATUS.FORBIDDEN);
+  }
   return await donationModel.findByTeamId(teamId, status);
 }
 
@@ -1044,10 +1059,18 @@ async function getMemberAssignments(memberId, status = null) {
 
 /**
  * Gets all team assignments with details.
+ *
+ * PHASE 4 FIX: same missing-membership-check issue as getTeamDonations
+ * above, fixed the same way.
  * @param {number} teamId - Team ID
+ * @param {number} userId - Requesting user's ID (must be a team member)
  * @returns {Promise<Array>} Array of assignment objects
  */
-async function getTeamAssignments(teamId) {
+async function getTeamAssignments(teamId, userId) {
+  const membership = await teamMemberModel.findByTeamAndUser(teamId, userId);
+  if (!membership) {
+    throw new AppError('You are not a member of this team.', HTTP_STATUS.FORBIDDEN);
+  }
   return await donationModel.findTeamAssignments(teamId);
 }
 

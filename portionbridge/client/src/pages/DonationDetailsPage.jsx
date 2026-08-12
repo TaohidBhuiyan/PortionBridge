@@ -11,8 +11,13 @@ import {
   Utensils,
   Shirt,
   Loader2,
-  Star
+  Star,
+  HandHeart,
+  CalendarClock,
+  Truck,
+  PackageCheck
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { donationApi } from '../services/donationApi';
 import { StatusBadge } from '../components/donation/StatusBadge';
 import { StatusTimeline } from '../components/donation/StatusTimeline';
@@ -22,6 +27,7 @@ import { ActivityTimeline } from '../components/donation/ActivityTimeline';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { LoadingSkeleton } from '../components/dashboard/skeletons/LoadingSkeleton';
 import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
+import { SchedulePickupModal } from '../components/donation/SchedulePickupModal';
 import { TrackingPanel } from '../components/donation/TrackingPanel';
 import { ChatWindow } from '../components/donation/ChatWindow';
 import { RatingSubmission } from '../components/donation/RatingSubmission';
@@ -43,6 +49,13 @@ export function DonationDetailsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [volunteerLocation, setVolunteerLocation] = useState(null);
   const [existingRating, setExistingRating] = useState(null);
+
+  // PHASE 3 — volunteer mission-action state. A single `actionInProgress`
+  // flag (rather than one per action) is enough since only one of these
+  // buttons is ever visible at a time for a given donation status, and it
+  // doubles as the double-click guard the audit brief calls for.
+  const [actionInProgress, setActionInProgress] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const loadDonationDetails = async () => {
     setLoading(true);
@@ -103,12 +116,17 @@ export function DonationDetailsPage() {
       const result = await donationApi.cancelDonation(id);
 
       if (result.success) {
+        toast.success('Donation cancelled.');
         loadDonationDetails();
       } else {
-        alert(result.error || 'Failed to cancel donation');
+        // Incidental fix while touching this file for Phase 3: replaced the
+        // pre-existing alert() here with the same toast pattern used by the
+        // new volunteer actions below, so no alert() remains anywhere on
+        // this page's action flows.
+        toast.error(result.error || 'Failed to cancel donation');
       }
     } catch {
-      alert('Failed to cancel donation. Please try again.');
+      toast.error('Failed to cancel donation. Please try again.');
     } finally {
       setCancelling(false);
     }
@@ -116,6 +134,100 @@ export function DonationDetailsPage() {
 
   const handleEdit = () => {
     navigate(`/donation/create?edit=${id}`);
+  };
+
+  // ==========================================================================
+  // PHASE 3 — Volunteer mission actions.
+  // Each calls the existing backend endpoint audited in Phase 3 (accept,
+  // schedule, on-the-way, picked-up — see donationApi.js). There is
+  // deliberately no "Complete" handler: the backend authorizes /complete to
+  // the donor only (restrictToDonationOwner), so no volunteer-facing
+  // Complete button exists anywhere on this page.
+  // ==========================================================================
+
+  const handleAccept = async () => {
+    if (actionInProgress) return; // guards against double-click / double-submit
+    setActionInProgress(true);
+
+    const result = await donationApi.acceptDonation(id);
+
+    if (result.success) {
+      toast.success('Donation accepted! This is now your active mission.');
+      loadDonationDetails();
+    } else if (result.status === 409) {
+      // Someone else accepted it first — required "already accepted" case.
+      toast.error('This donation is no longer available.');
+      loadDonationDetails();
+    } else if (result.status === 401) {
+      toast.error('Your session has expired. Please log in again.');
+    } else if (result.status === 403) {
+      toast.error("You don't have permission to accept this donation.");
+    } else {
+      toast.error(result.error || 'Failed to accept donation. Please try again.');
+    }
+
+    setActionInProgress(false);
+  };
+
+  const handleScheduleConfirm = async (scheduledAtIso) => {
+    if (actionInProgress) return;
+    setActionInProgress(true);
+
+    const result = await donationApi.schedulePickup(id, scheduledAtIso);
+
+    if (result.success) {
+      toast.success('Pickup scheduled.');
+      setShowScheduleModal(false);
+      loadDonationDetails();
+    } else if (result.status === 409) {
+      toast.error(result.error || 'This donation can no longer be scheduled.');
+      setShowScheduleModal(false);
+      loadDonationDetails();
+    } else {
+      // Keep the modal open on validation/network errors so the volunteer
+      // can correct the date without re-opening it.
+      toast.error(result.error || 'Failed to schedule pickup. Please try again.');
+    }
+
+    setActionInProgress(false);
+  };
+
+  const handleMarkOnTheWay = async () => {
+    if (actionInProgress) return;
+    setActionInProgress(true);
+
+    const result = await donationApi.markOnTheWay(id);
+
+    if (result.success) {
+      toast.success('Marked as on the way.');
+      loadDonationDetails();
+    } else if (result.status === 409) {
+      toast.error(result.error || 'This donation can no longer be updated.');
+      loadDonationDetails();
+    } else {
+      toast.error(result.error || 'Failed to update status. Please try again.');
+    }
+
+    setActionInProgress(false);
+  };
+
+  const handleMarkPickedUp = async () => {
+    if (actionInProgress) return;
+    setActionInProgress(true);
+
+    const result = await donationApi.markPickedUp(id);
+
+    if (result.success) {
+      toast.success('Marked as picked up.');
+      loadDonationDetails();
+    } else if (result.status === 409) {
+      toast.error(result.error || 'This donation can no longer be updated.');
+      loadDonationDetails();
+    } else {
+      toast.error(result.error || 'Failed to update status. Please try again.');
+    }
+
+    setActionInProgress(false);
   };
 
   const handleRatingSubmitted = (rating) => {
@@ -222,6 +334,21 @@ export function DonationDetailsPage() {
   // always reject with a 409.
   const canCancel = status === 'pending';
 
+  // PHASE 3 — volunteer mission-action visibility. Each flag mirrors the
+  // exact backend authorization/status precondition for that transition
+  // (see donationService.assertAssignedVolunteer / assertAcceptedStatus /
+  // assertScheduledStatus / assertOnTheWayStatus in donation.service.js),
+  // so the UI never offers an action the backend would reject. There is no
+  // canComplete flag — /complete is donor-only server-side, so no
+  // "Complete" button is ever shown to a volunteer, matching the audit's
+  // explicit requirement not to expose a step the backend doesn't allow.
+  const isVolunteer = currentUser?.role === 'volunteer';
+  const isAssignedVolunteer = isVolunteer && volunteer_id === currentUser?.id;
+  const canAccept = isVolunteer && status === 'pending';
+  const canSchedule = isAssignedVolunteer && status === 'accepted';
+  const canMarkOnTheWay = isAssignedVolunteer && status === 'scheduled';
+  const canMarkPickedUp = isAssignedVolunteer && status === 'on_the_way';
+
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
@@ -263,6 +390,50 @@ export function DonationDetailsPage() {
               >
                 {cancelling ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
                 Cancel
+              </button>
+            )}
+
+            {/* PHASE 3 — volunteer mission actions. Exactly one of these is
+                visible at a time, matching the donation's current status and
+                the backend's authorization rules (see the can* flags above). */}
+            {canAccept && (
+              <button
+                onClick={handleAccept}
+                disabled={actionInProgress}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+              >
+                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <HandHeart size={15} />}
+                {actionInProgress ? 'Accepting...' : 'Accept Mission'}
+              </button>
+            )}
+            {canSchedule && (
+              <button
+                onClick={() => setShowScheduleModal(true)}
+                disabled={actionInProgress}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+              >
+                <CalendarClock size={15} />
+                Schedule Pickup
+              </button>
+            )}
+            {canMarkOnTheWay && (
+              <button
+                onClick={handleMarkOnTheWay}
+                disabled={actionInProgress}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+              >
+                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <Truck size={15} />}
+                {actionInProgress ? 'Updating...' : 'Mark On The Way'}
+              </button>
+            )}
+            {canMarkPickedUp && (
+              <button
+                onClick={handleMarkPickedUp}
+                disabled={actionInProgress}
+                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+              >
+                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
+                {actionInProgress ? 'Updating...' : 'Mark Picked Up'}
               </button>
             )}
           </div>
@@ -543,6 +714,15 @@ export function DonationDetailsPage() {
         onConfirm={confirmCancel}
         donationTitle={title}
         isLoading={cancelling}
+      />
+
+      {/* PHASE 3 — Schedule Pickup Modal */}
+      <SchedulePickupModal
+        isOpen={showScheduleModal}
+        onClose={() => setShowScheduleModal(false)}
+        onConfirm={handleScheduleConfirm}
+        donationTitle={title}
+        isLoading={actionInProgress}
       />
     </div>
   );

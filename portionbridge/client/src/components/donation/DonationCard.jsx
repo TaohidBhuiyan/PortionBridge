@@ -1,12 +1,18 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Loader2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
 /**
- * DonationCard component for displaying donation in card view
+ * DonationCard component for displaying donation in card view.
+ *
+ * PHASE 3: extended (not replaced) with an optional `onAccept` prop so this
+ * one card can serve both the donor's "My Donations" list (Edit/Cancel, as
+ * before — unaffected, since `onAccept` is undefined there) and the new
+ * volunteer Opportunities grid (Accept, shown only when `onAccept` is
+ * passed). `pickup_location` and `accepting` are additive/optional too, so
+ * every existing caller keeps working unchanged.
  */
-export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
+export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAccept, accepting = false }) {
   const navigate = useNavigate();
 
   const {
@@ -14,12 +20,13 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
     title,
     category,
     status,
-    created_at,
     pickup_date,
+    pickup_location,
     volunteer_name,
     description,
     quantity,
     quantity_unit,
+    number_of_servings,
     photo,
     images,
   } = donation;
@@ -61,8 +68,19 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
     }
   };
 
-  const canEdit = status === 'pending';
-  const canCancel = status === 'pending' || status === 'accepted';
+  const handleAccept = (e) => {
+    e.stopPropagation();
+    if (onAccept) {
+      onAccept(id);
+    }
+  };
+
+  // When onAccept is passed (volunteer Opportunities context), this card
+  // shows Accept instead of the donor's Edit/Cancel actions — donor usage
+  // never passes onAccept, so canEdit/canCancel behave exactly as before there.
+  const canEdit = status === 'pending' && !onAccept;
+  const canCancel = (status === 'pending' || status === 'accepted') && !onAccept;
+  const canAccept = Boolean(onAccept) && status === 'pending';
 
   return (
     <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -120,6 +138,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
             <Package size={16} className="text-text-secondary" />
             <span className="text-text-primary">
               {quantity} {quantity_unit}
+              {category === 'food' && number_of_servings ? ` · ${number_of_servings} servings` : ''}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
@@ -128,6 +147,17 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
               {formatDate(pickup_date)}
             </span>
           </div>
+          {/* pickup_location — real backend field, no fabricated distance.
+              Shown whenever present, most relevant for volunteers deciding
+              whether to accept, but harmless/useful for donor view too. */}
+          {pickup_location && (
+            <div className="flex items-center gap-2 text-sm col-span-2">
+              <MapPin size={16} className="text-text-secondary shrink-0" />
+              <span className="text-text-primary truncate">
+                {pickup_location}
+              </span>
+            </div>
+          )}
           {volunteer_name && (
             <div className="flex items-center gap-2 text-sm col-span-2">
               <User size={16} className="text-text-secondary" />
@@ -163,6 +193,16 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel }) {
             >
               <Trash2 size={16} />
               Cancel
+            </button>
+          )}
+          {canAccept && (
+            <button
+              onClick={handleAccept}
+              disabled={accepting}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {accepting ? <Loader2 size={16} className="animate-spin" /> : <HandHeart size={16} />}
+              {accepting ? 'Accepting...' : 'Accept'}
             </button>
           )}
         </div>

@@ -31,6 +31,12 @@ const CATEGORY_ICON = {
  * ASSIGNMENT_STATUSES is a small, defensible backend follow-up, but Phase
  * 2 is display-only and the brief calls for zero backend changes unless
  * unavoidable, so this is left as-is and called out in the phase report.
+ *
+ * PHASE 3 UPDATE: the empty state below now links to
+ * /volunteer/opportunities (added in Phase 3), which didn't exist when
+ * this component was first built — the rest of the component (data
+ * fetching, loading/error states, mission card layout) is unchanged from
+ * Phase 2.
  */
 export function ActiveMissionCard() {
   const navigate = useNavigate();
@@ -108,7 +114,8 @@ export function ActiveMissionCard() {
           icon={Package}
           title="No active mission"
           description="You don't have an active mission right now. New assignments will appear here once you accept a donation."
-          showAction={false}
+          actionLabel="Find Opportunities"
+          onAction={() => navigate('/volunteer/opportunities')}
           size="small"
         />
       </div>

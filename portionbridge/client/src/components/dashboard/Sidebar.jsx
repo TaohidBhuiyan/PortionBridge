@@ -14,6 +14,8 @@ import {
   Menu,
   X,
   BarChart3,
+  Compass,
+  Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -87,6 +89,15 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
       { title: 'My Donations', icon: Package, path: '/donor/my-donations' },
       { title: 'Track Donation', icon: MapPin, path: '/donor/my-donations' },
       { title: 'Discover Volunteers', icon: MapPin, path: '/donor/discover-volunteers' }
+    );
+  } else if (userRole === 'volunteer') {
+    // PHASE 3/4: Opportunities (/volunteer/opportunities) and My Team
+    // (/volunteer/team) are the two volunteer-specific nav items so far.
+    // Mission History and Messages will get their own entries in later
+    // phases once those pages exist; not added preemptively.
+    mainItems.push(
+      { title: 'Find Opportunities', icon: Compass, path: '/volunteer/opportunities' },
+      { title: 'My Team', icon: Users, path: '/volunteer/team' }
     );
   }
 

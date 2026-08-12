@@ -389,7 +389,7 @@ const assignTeamMember = asyncHandler(async (req, res) => {
  */
 const getTeamDonations = asyncHandler(async (req, res) => {
   const { status } = req.query;
-  const donations = await donationService.getTeamDonations(req.params.teamId, status);
+  const donations = await donationService.getTeamDonations(req.params.teamId, req.user.id, status);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
@@ -418,7 +418,7 @@ const getMyAssignments = asyncHandler(async (req, res) => {
  * Get all team assignments with details (team leader only)
  */
 const getTeamAssignments = asyncHandler(async (req, res) => {
-  const assignments = await donationService.getTeamAssignments(req.params.teamId);
+  const assignments = await donationService.getTeamAssignments(req.params.teamId, req.user.id);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,

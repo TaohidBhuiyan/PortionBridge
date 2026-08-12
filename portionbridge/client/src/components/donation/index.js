@@ -16,3 +16,4 @@ export { StatusTimeline } from './StatusTimeline';
 export { ImageGallery } from './ImageGallery';
 export { VolunteerCard } from './VolunteerCard';
 export { ActivityTimeline } from './ActivityTimeline';
+export { SchedulePickupModal } from './SchedulePickupModal';
