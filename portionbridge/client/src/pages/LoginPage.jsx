@@ -38,7 +38,7 @@ export function LoginPage() {
         if (res.data && res.data.success) {
           setStats(res.data.data);
         }
-      } catch (error) {
+      } catch {
         // Failed to fetch stats
       }
     };
@@ -84,7 +84,6 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      // Use sequential role login implemented in context
       const result = await login(email.trim(), password);
 
       if (!result.success) {

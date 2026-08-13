@@ -120,14 +120,13 @@ const resendVerification = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/login
  */
 const login = asyncHandler(async (req, res) => {
-  const { email, password, role } = req.body;
+  const { email, password } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = getUserAgent(req);
 
   const { user, accessToken, rawRefreshToken } = await authService.login({
     email,
     password,
-    role,
     ipAddress,
     userAgent,
   });
@@ -148,13 +147,12 @@ const login = asyncHandler(async (req, res) => {
  * POST /api/v1/auth/google-login
  */
 const googleLogin = asyncHandler(async (req, res) => {
-  const { idToken, role } = req.body;
+  const { idToken } = req.body;
   const ipAddress = getClientIp(req);
   const userAgent = getUserAgent(req);
 
   const { user, accessToken, rawRefreshToken } = await authService.loginWithGoogle({
     idToken,
-    role,
     ipAddress,
     userAgent,
   });

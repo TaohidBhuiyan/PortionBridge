@@ -102,12 +102,12 @@ async function register({ name, email, password, role, phone, address, profilePh
 /**
  * Verifies a user's email using the raw token from the verification link.
  */
-async function loginWithGoogle({ idToken, role, ipAddress, userAgent }) {
+async function loginWithGoogle({ idToken, ipAddress, userAgent }) {
   const googlePayload = await verifyGoogleToken(idToken);
   const email = googlePayload.email.toLowerCase();
   const googleId = googlePayload.sub;
   const profilePicture = googlePayload.picture || null;
-  const assignedRole = role || USER_ROLES.DONOR;
+  const assignedRole = USER_ROLES.DONOR;
 
   let user = await userModel.findByEmail(email);
 
@@ -236,7 +236,7 @@ async function resendVerification(email, { ipAddress, userAgent } = {}) {
  * session. Enforces email verification, ban status, account lockout, and
  * role matching before checking the password.
  */
-async function login({ email, password, role, ipAddress, userAgent }) {
+async function login({ email, password, ipAddress, userAgent }) {
   const user = await userModel.findByEmail(email);
 
   if (!user) {
@@ -244,17 +244,7 @@ async function login({ email, password, role, ipAddress, userAgent }) {
       action: AUDIT_ACTIONS.LOGIN_FAILED,
       ipAddress,
       userAgent,
-      metadata: { email, role, reason: 'no_such_account' },
-    });
-    throw new AppError('Invalid email or password.', HTTP_STATUS.UNAUTHORIZED);
-  }
-
-  if (user.role !== role) {
-    await auditService.record({
-      action: AUDIT_ACTIONS.LOGIN_FAILED,
-      ipAddress,
-      userAgent,
-      metadata: { email, providedRole: role, actualRole: user.role, reason: 'role_mismatch' },
+      metadata: { email, reason: 'no_such_account' },
     });
     throw new AppError('Invalid email or password.', HTTP_STATUS.UNAUTHORIZED);
   }

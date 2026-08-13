@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Upload, User, Mail, Phone, Lock, Eye, EyeOff, HandHeart, Users, ArrowRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
@@ -156,7 +156,7 @@ export function RegisterPage() {
     setFieldErrors({});
     setLoading(true);
     try {
-      const result = await googleLogin(credential, role);
+      const result = await googleLogin(credential);
       if (!result.success) {
         setError(result.error || "Google signup failed.");
         return;

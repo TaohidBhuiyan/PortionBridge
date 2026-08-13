@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
 
 // Enable sending and receiving cookies in cross-origin requests
@@ -61,12 +61,13 @@ export function AuthProvider({ children }) {
 
   // Check for existing token on mount
   useEffect(() => {
+    let userData = null;
     const token = localStorage.getItem('accessToken');
     const storedUser = localStorage.getItem('user');
 
     if (token && storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        userData = JSON.parse(storedUser);
       } catch (error) {
         console.error('Failed to parse stored user:', error);
         localStorage.removeItem('accessToken');
@@ -77,59 +78,38 @@ export function AuthProvider({ children }) {
     if (!token && !storedUser && import.meta.env.MODE === 'development') {
       localStorage.setItem('accessToken', 'dev-bypass-token');
       localStorage.setItem('user', JSON.stringify(DEV_DONOR_USER));
-      setUser(DEV_DONOR_USER);
+      userData = DEV_DONOR_USER;
     }
 
+    setUser(userData);
     setLoading(false);
   }, []);
 
   /**
-   * Login using existing backend API, trying roles sequentially if needed
+   * Login using existing backend API
    * @param {string} email - User email
    * @param {string} password - User password
-   * @param {string} initialRole - Preferred login role
    */
-  const login = async (email, password, initialRole) => {
-    const rolesToTry = initialRole ? [initialRole] : [];
-    const allRoles = ['volunteer', 'donor', 'admin'];
-    
-    allRoles.forEach(r => {
-      if (!rolesToTry.includes(r)) {
-        rolesToTry.push(r);
-      }
-    });
+  const login = async (email, password) => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/login`, {
+        email,
+        password,
+      });
 
-    let lastError = "Login failed. Please try again.";
-    let lastErrorsArray = null;
-
-    for (const r of rolesToTry) {
-      try {
-        const res = await axios.post(`${API_BASE}/auth/login`, {
-          email,
-          password,
-          role: r,
-        });
-
-        const { accessToken, user: userData } = res.data.data;
-        
-        // Store token and user data
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        
-        setUser(userData);
-        return { success: true, user: userData };
-      } catch (error) {
-        lastError = error.response?.data?.message || "Login failed. Please try again.";
-        lastErrorsArray = error.response?.data?.errors || null;
-
-        // Terminate early for validation errors (422) or lockouts/banned/unverified (403)
-        if (error.response?.status === 422 || error.response?.status === 403) {
-          return { success: false, error: lastError, errors: lastErrorsArray };
-        }
-      }
+      const { accessToken, user: userData } = res.data.data;
+      
+      // Store token and user data
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      setUser(userData);
+      return { success: true, user: userData };
+    } catch (error) {
+      const message = error.response?.data?.message || "Login failed. Please try again.";
+      const errors = error.response?.data?.errors || null;
+      return { success: false, error: message, errors };
     }
-
-    return { success: false, error: lastError, errors: lastErrorsArray };
   };
 
   /**
@@ -172,11 +152,10 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const googleLogin = async (idToken, initialRole) => {
+  const googleLogin = async (idToken) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/google-login`, {
         idToken,
-        role: initialRole,
       });
       const { accessToken, user: userData } = res.data.data;
       localStorage.setItem('accessToken', accessToken);

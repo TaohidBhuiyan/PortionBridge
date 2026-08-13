@@ -12,6 +12,11 @@ import {
   Utensils,
   Shirt,
   Package,
+  UserPlus,
+  LogOut,
+  MoreVertical,
+  Trash2,
+  Crown as CrownIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuthSocket } from '../context/SocketContext';
@@ -23,6 +28,8 @@ import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { SkeletonCard } from '../components/dashboard/skeletons';
 import { AnnouncementComposer } from '../components/team/AnnouncementComposer';
+import { InviteMemberModal } from '../components/team/InviteMemberModal';
+import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 
 // Buckets purely for display grouping — no invented metrics, just a
 // client-side partition of the real donation.status values already
@@ -30,9 +37,11 @@ import { AnnouncementComposer } from '../components/team/AnnouncementComposer';
 const ACTIVE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_up']);
 
 /**
- * VolunteerTeam — PHASE 4. "My Team" page: overview, members, leader
+ * VolunteerTeam — PHASE 4/5. "My Team" page: overview, members, leader
  * identification, pending invitations, team missions/activity, and (for
- * the team leader) an announcement composer.
+ * the team leader) an announcement composer. Phase 5 adds leader-only
+ * team management actions (invite, remove, transfer leadership) and a
+ * leave-team action for non-leader members.
  *
  * Data sources — all existing endpoints, reached via teamApi.js /
  * donationApi's team route:
@@ -43,6 +52,10 @@ const ACTIVE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_
  *                                 into active/completed for the Activity
  *                                 section (Phase 4 also fixed a missing
  *                                 membership check on this endpoint)
+ *   - POST /teams/:id/invite   → invite member by email (Phase 5)
+ *   - DELETE /teams/:id/members/:memberId → remove member (Phase 5)
+ *   - PATCH /teams/:id/members/:memberId/transfer → transfer leadership (Phase 5)
+ *   - DELETE /teams/my/leave   → leave team (Phase 5)
  */
 export function VolunteerTeam() {
   const navigate = useNavigate();
@@ -57,6 +70,12 @@ export function VolunteerTeam() {
   const [acceptingId, setAcceptingId] = useState(null);
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
   const [sendingAnnouncement, setSendingAnnouncement] = useState(false);
+
+  // PHASE 5: team management modals and action states
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviting, setInviting] = useState(false);
+  const [confirmModal, setConfirmModal] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Refresh trigger for post-action reloads (accept invitation, send announcement)
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -150,6 +169,62 @@ export function VolunteerTeam() {
       }
       setSendingAnnouncement(false);
     });
+  };
+
+  // PHASE 5: Invite member
+  const handleInviteMember = async (email) => {
+    setInviting(true);
+    const result = await teamApi.inviteMember(team.id, email);
+    if (result.success) {
+      toast.success('Invitation sent successfully.');
+      setShowInviteModal(false);
+      setRefreshTrigger(t => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to send invitation.');
+    }
+    setInviting(false);
+  };
+
+  // PHASE 5: Remove member
+  const handleRemoveMember = async (memberUserId, memberName) => {
+    setActionLoading(true);
+    const result = await teamApi.removeMember(team.id, memberUserId);
+    if (result.success) {
+      toast.success(`${memberName} removed from the team.`);
+      setConfirmModal(null);
+      setRefreshTrigger(t => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to remove member.');
+    }
+    setActionLoading(false);
+  };
+
+  // PHASE 5: Transfer leadership
+  const handleTransferLeadership = async (memberUserId, memberName) => {
+    setActionLoading(true);
+    const result = await teamApi.transferLeadership(team.id, memberUserId);
+    if (result.success) {
+      toast.success(`Leadership transferred to ${memberName}.`);
+      setConfirmModal(null);
+      setRefreshTrigger(t => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to transfer leadership.');
+    }
+    setActionLoading(false);
+  };
+
+  // PHASE 5: Leave team
+  const handleLeaveTeam = async () => {
+    setActionLoading(true);
+    const result = await teamApi.leaveTeam();
+    if (result.success) {
+      toast.success('You have left the team.');
+      setConfirmModal(null);
+      setRefreshTrigger(t => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to leave team.');
+    }
+    setActionLoading(false);
   };
 
   // Real-time team room — join when on a team, leave when not
@@ -363,22 +438,53 @@ export function VolunteerTeam() {
 
           {/* Team Members */}
           <div className="bg-surface rounded-lg border border-border p-5">
-            <h2 className="text-sm font-semibold text-text-primary mb-4">Team Members</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-text-primary">Team Members</h2>
+              {isLeader && (
+                <button
+                  onClick={() => setShowInviteModal(true)}
+                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-dash-primary-soft text-dash-primary text-xs font-medium hover:bg-dash-primary-soft/80 transition-colors"
+                >
+                  <UserPlus size={12} />
+                  Invite
+                </button>
+              )}
+            </div>
             <div className="space-y-3">
-              {team.members?.map((member) => (
-                <div key={member.id} className="flex items-center gap-3">
-                  <Avatar item={member} tone="dash" className="w-8 h-8" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{member.name}</p>
-                    <p className="text-xs text-text-secondary">
-                      {member.id === team.leader_id ? 'Team Leader' : 'Member'}
-                    </p>
+              {team.members?.map((member) => {
+                const isThisMemberLeader = member.id === team.leader_id;
+                const isThisMemberCurrentUser = member.id === user?.id;
+                const canManageThisMember = isLeader && !isThisMemberLeader && !isThisMemberCurrentUser;
+                return (
+                  <div key={member.id} className="flex items-center gap-3">
+                    <Avatar item={member} tone="dash" className="w-8 h-8" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-text-primary truncate">{member.name}</p>
+                      <p className="text-xs text-text-secondary">
+                        {isThisMemberLeader ? 'Team Leader' : 'Member'}
+                      </p>
+                    </div>
+                    {isThisMemberLeader && (
+                      <Crown size={14} className="text-dash-primary" />
+                    )}
+                    {canManageThisMember && (
+                      <div className="relative">
+                        <button
+                          onClick={() => setConfirmModal({
+                            type: 'remove',
+                            memberUserId: member.id,
+                            memberName: member.name,
+                          })}
+                          className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary hover:text-danger transition-colors"
+                          aria-label="Manage member"
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  {member.id === team.leader_id && (
-                    <Crown size={14} className="text-dash-primary" />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -419,6 +525,17 @@ export function VolunteerTeam() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* PHASE 5: Leave Team button (non-leader only) */}
+          {!isLeader && (
+            <button
+              onClick={() => setConfirmModal({ type: 'leave' })}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-danger text-danger text-sm font-medium hover:bg-danger-soft transition-colors"
+            >
+              <LogOut size={14} />
+              Leave Team
+            </button>
           )}
         </div>
 
@@ -519,6 +636,54 @@ export function VolunteerTeam() {
         onSend={handleSendAnnouncement}
         sending={sendingAnnouncement}
       />
+
+      {/* PHASE 5: Invite Member Modal */}
+      <InviteMemberModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onInvite={handleInviteMember}
+        sending={inviting}
+      />
+
+      {/* PHASE 5: Confirm Action Modal (remove/transfer/leave) */}
+      {confirmModal && (
+        <ConfirmActionModal
+          isOpen={!!confirmModal}
+          onClose={() => setConfirmModal(null)}
+          onConfirm={() => {
+            if (confirmModal.type === 'remove') {
+              handleRemoveMember(confirmModal.memberUserId, confirmModal.memberName);
+            } else if (confirmModal.type === 'transfer') {
+              handleTransferLeadership(confirmModal.memberUserId, confirmModal.memberName);
+            } else if (confirmModal.type === 'leave') {
+              handleLeaveTeam();
+            }
+          }}
+          title={
+            confirmModal.type === 'remove'
+              ? 'Remove Team Member'
+              : confirmModal.type === 'transfer'
+              ? 'Transfer Leadership'
+              : 'Leave Team'
+          }
+          message={
+            confirmModal.type === 'remove'
+              ? `Are you sure you want to remove ${confirmModal.memberName} from the team? They will lose access to all team activities.`
+              : confirmModal.type === 'transfer'
+              ? `Are you sure you want to transfer leadership to ${confirmModal.memberName}? You will become a regular member.`
+              : 'Are you sure you want to leave this team? You will lose access to all team activities and missions.'
+          }
+          confirmLabel={
+            confirmModal.type === 'remove'
+              ? 'Remove Member'
+              : confirmModal.type === 'transfer'
+              ? 'Transfer Leadership'
+              : 'Leave Team'
+          }
+          isLoading={actionLoading}
+          tone={confirmModal.type === 'transfer' ? 'primary' : 'danger'}
+        />
+      )}
     </div>
   );
 }

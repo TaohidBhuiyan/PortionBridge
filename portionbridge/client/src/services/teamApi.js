@@ -138,4 +138,96 @@ export const teamApi = {
       return { success: false, error: message, status: status2 };
     }
   },
+
+  // ==========================================================================
+  // PHASE 5 — Team management actions (leader-only, backend-enforced).
+  // All hit existing /teams/:id/* endpoints from team.routes.js — no new
+  // backend routes. promoteMember and transferLeadership are two separate
+  // existing endpoints that turned out, on inspection, to do the exact
+  // same thing server-side (both fully swap leader<->member roles) — this
+  // service only exposes one (transferLeadership) rather than two
+  // functionally-identical UI actions; see the Phase 5 report for details.
+  // ==========================================================================
+
+  /**
+   * Invite a volunteer to the team by email.
+   * POST /teams/:id/invite, body: { invitedEmail }
+   */
+  inviteMember: async (teamId, invitedEmail) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/teams/${teamId}/invite`,
+        { invitedEmail },
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken, 'Content-Type': 'application/json' } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to send invitation';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Remove a member from the team (leader only).
+   * DELETE /teams/:id/members/:memberId — :memberId here is the target
+   * user's ID (confirmed by reading team.service.js#removeMember, which
+   * looks the row up via findByTeamAndUser(teamId, memberId)), not a
+   * team_members table row ID.
+   */
+  removeMember: async (teamId, memberUserId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(
+        `${API_BASE}/teams/${teamId}/members/${memberUserId}`,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to remove member';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Transfer team leadership to another member (leader only).
+   * PATCH /teams/:id/members/:memberId/transfer
+   */
+  transferLeadership: async (teamId, memberUserId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.patch(
+        `${API_BASE}/teams/${teamId}/members/${memberUserId}/transfer`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to transfer leadership';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Leave the current team (non-leader members only — the backend
+   * rejects this for a leader with a clear "transfer leadership first"
+   * message, which is surfaced as-is).
+   * DELETE /teams/my/leave
+   */
+  leaveTeam: async () => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(`${API_BASE}/teams/my/leave`, {
+        headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to leave team';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
 };

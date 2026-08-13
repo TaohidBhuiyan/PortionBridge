@@ -201,11 +201,19 @@ async function getVolunteerStats(volunteerId) {
   const donationModel = require('../models/donation.model');
   const summary = await donationModel.getVolunteerSummary(volunteerId);
 
+  // PHASE 5 FIX: Use live ratings data from the ratings table instead of the
+  // stale cached rating in volunteer_profiles.rating. The cached value was
+  // only updated on profile edits, not when new ratings came in, so it
+  // drifted out of sync. The ratings table is the source of truth and is
+  // always up-to-date.
+  const ratingsModel = require('../models/rating.model');
+  const liveRating = await ratingsModel.getAverageRating(volunteerId);
+
   return {
     totalPickups: profile.total_pickups || 0,
     activePickups: Number(summary.accepted) + Number(summary.scheduled),
     completedPickups: Number(summary.completed),
-    rating: profile.rating || null,
+    rating: liveRating || null,
     isOnline: profile.is_online || false,
     lastLocationUpdate: profile.last_location_update || null,
   };

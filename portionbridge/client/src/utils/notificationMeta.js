@@ -82,13 +82,26 @@ export function getNotificationRoute(notification) {
   if (notification.related_id && DONATION_ROUTE_TYPES.has(notification.type)) {
     return `/donations/${notification.related_id}`;
   }
-  // PHASE 4: team_announcement is the only team_* type the backend
-  // actually creates today (checked directly in notification.service.js —
-  // the other team_* types listed in TYPE_META above are defined but never
-  // triggered anywhere yet), and its related_id is confirmed to be a
-  // teamId (see sendTeamAnnouncement). Routes to the new /volunteer/team
-  // page added this phase.
-  if (notification.related_id && notification.type === 'team_announcement') {
+  // PHASE 4/5: all of these team_* types are confirmed (by reading
+  // team.service.js directly) to actually fire today. The destination
+  // page (/volunteer/team) doesn't need the ID to render — it fetches the
+  // current user's team and pending invitations directly — so this route
+  // is safe even for team_invitation_received, whose related_id is an
+  // invitationId rather than a teamId (unlike the others below, which are
+  // all teamId). Only team_member_joined was found to be unused
+  // (team.service.js notifies the leader via team_invitation_accepted
+  // instead when someone joins, which is already covered here), so it's
+  // deliberately left out rather than added speculatively.
+  const TEAM_ROUTE_TYPES = new Set([
+    'team_announcement',
+    'team_invitation_received',
+    'team_invitation_accepted',
+    'team_member_removed',
+    'team_member_promoted',
+    'team_leadership_transferred',
+    'team_member_left',
+  ]);
+  if (notification.related_id && TEAM_ROUTE_TYPES.has(notification.type)) {
     return '/volunteer/team';
   }
   return null;

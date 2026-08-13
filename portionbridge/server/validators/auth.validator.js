@@ -68,24 +68,12 @@ const loginValidationRules = [
 
   body('password')
     .notEmpty().withMessage('Password is required.'),
-
-  body('role')
-    .trim()
-    .notEmpty().withMessage('Role is required.')
-    .isIn([USER_ROLES.DONOR, USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN])
-    .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
 ];
 
 const googleLoginValidationRules = [
   body('idToken')
     .trim()
     .notEmpty().withMessage('Google credential is required.'),
-
-  body('role')
-    .optional({ checkFalsy: true })
-    .trim()
-    .isIn([USER_ROLES.DONOR, USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN])
-    .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
 ];
 
 const forgotPasswordValidationRules = [

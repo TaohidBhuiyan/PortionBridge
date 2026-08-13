@@ -456,6 +456,53 @@ export const donationApi = {
       return { success: false, error: message, status };
     }
   },
+
+  /**
+   * PHASE 5 — Volunteer Mission History. Uses the same endpoints Phase 1
+   * re-enabled (GET /donations/assigned-history[/summary]), already
+   * volunteer-role-protected and paginated server-side — no new backend
+   * routes for this.
+   * @param {Object} filters - status, category, search, sortBy, sortOrder, page, limit
+   */
+  getVolunteerHistory: async (filters = {}) => {
+    try {
+      const token = getAuthToken();
+      const params = new URLSearchParams();
+      if (filters.status) params.append('status', filters.status);
+      if (filters.category) params.append('category', filters.category);
+      if (filters.search) params.append('search', filters.search);
+      if (filters.sortBy) params.append('sortBy', filters.sortBy);
+      if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
+      if (filters.page) params.append('page', filters.page);
+      if (filters.limit) params.append('limit', filters.limit);
+
+      const response = await axios.get(
+        `${API_BASE}/donations/assigned-history${params.toString() ? '?' + params.toString() : ''}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      return { success: true, data: response.data.data, meta: response.data.meta };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch mission history';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * PHASE 5 — Mission History summary counts (total/accepted/scheduled/completed).
+   */
+  getVolunteerHistorySummary: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/donations/assigned-history/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch mission history summary';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
 };
 
 /**

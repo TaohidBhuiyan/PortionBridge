@@ -5,6 +5,7 @@ import {
   VolunteerStatisticsCards,
   ActiveMissionCard,
   UpcomingMissions,
+  VolunteerQuickLinks,
 } from '../components/dashboard/volunteer';
 
 /**
@@ -16,10 +17,10 @@ import {
  * loading/error/empty state, so one failing widget never takes down the
  * rest of the page.
  *
- * Phase 2 scope only: Overview, Statistics, Active Mission, Upcoming
- * Missions. Nearby Opportunities, mission actions, Team, Announcements,
- * Mission History, and Messages are later phases and are intentionally
- * not present here yet.
+ * Phase 2: Overview, Statistics, Active Mission, Upcoming Missions.
+ * Phase 5 adds a lightweight, static quick-links row (Team/History/
+ * Notifications) at the bottom — additive only, none of the Phase 2/3
+ * sections above were changed.
  */
 export function VolunteerDashboard() {
   const { user } = useAuth();
@@ -38,6 +39,9 @@ export function VolunteerDashboard() {
 
         {/* Upcoming Missions */}
         <UpcomingMissions />
+
+        {/* PHASE 5: lightweight links to Team / History / Notifications */}
+        <VolunteerQuickLinks />
       </div>
     </DashboardLayout>
   );

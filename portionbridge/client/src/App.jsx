@@ -29,6 +29,8 @@ const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage").t
 const VolunteerOpportunities = lazy(() => import("./pages/VolunteerOpportunities").then(m => ({ default: m.VolunteerOpportunities })));
 // PHASE 4: My Team + announcements
 const VolunteerTeam = lazy(() => import("./pages/VolunteerTeam").then(m => ({ default: m.VolunteerTeam })));
+// PHASE 5: Mission History
+const VolunteerHistory = lazy(() => import("./pages/VolunteerHistory").then(m => ({ default: m.VolunteerHistory })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -128,6 +130,16 @@ function App() {
                   <ProtectedRoute requiredRole="volunteer">
                     <AuthSocketProvider>
                       <VolunteerTeam />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/volunteer/history" 
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerHistory />
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 } 

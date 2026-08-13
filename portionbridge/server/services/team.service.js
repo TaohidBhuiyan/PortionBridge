@@ -445,6 +445,15 @@ async function removeMember(teamId, memberId, userId) {
     relatedId: teamId,
   });
 
+  // PHASE 5: Broadcast team activity for real-time updates
+  const io = getIO();
+  if (io) {
+    broadcastTeamActivity(io, teamId, 'member_removed', {
+      userId: memberId,
+      userName: (await userModel.findById(memberId)).name,
+    });
+  }
+
   // Log audit
   await auditService.logAudit(userId, 'team_member_removed', { teamId, removedUserId: memberId });
 }
