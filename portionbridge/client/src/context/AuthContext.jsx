@@ -6,31 +6,9 @@ axios.defaults.withCredentials = true;
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
-const DEV_DONOR_USER = {
-  id: 2,
-  name: 'Rahim Uddin',
-  email: 'rahim.donor@example.com',
-  role: 'donor',
-  phone: '01700000002',
-  address: 'Gulshan, Dhaka',
-  profile_photo: null,
-  provider: null,
-  google_id: null,
-  profile_picture: null,
-  is_banned: 0,
-  is_deleted: 0,
-  email_verified: 1,
-  phone_verified: 1,
-  failed_login_attempts: 0,
-  lock_until: null,
-  last_login_at: null,
-  last_login_ip: null,
-  last_user_agent: null,
-  date_of_birth: null,
-  gender: null,
-  created_at: null,
-  updated_at: null,
-};
+// Development-only helper for quick dashboard access during local development
+// This does NOT authenticate with the backend - it just allows UI development
+const DEV_MODE_DASHBOARD_ACCESS = import.meta.env.DEV;
 
 const AuthContext = createContext(null);
 
@@ -61,48 +39,147 @@ export function AuthProvider({ children }) {
 
   // Check for existing token on mount
   useEffect(() => {
-    let userData = null;
-    const token = localStorage.getItem('accessToken');
-    const storedUser = localStorage.getItem('user');
+    let mounted = true;
+    
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem('user');
 
-    if (token && storedUser) {
-      try {
-        userData = JSON.parse(storedUser);
-      } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('user');
+      if (token && storedUser && mounted) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        } catch (error) {
+          console.error('Failed to parse stored user:', error);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+        }
       }
-    }
 
-    if (!token && !storedUser && import.meta.env.MODE === 'development') {
-      localStorage.setItem('accessToken', 'dev-bypass-token');
-      localStorage.setItem('user', JSON.stringify(DEV_DONOR_USER));
-      userData = DEV_DONOR_USER;
-    }
+      // PRODUCTION AUDIT FIX: this used to auto-"log in" as a hardcoded fake
+      // donor (DEV_DONOR_USER) with a literal fake accessToken
+      // ('dev-bypass-token') whenever no real session existed in
+      // development mode. The backend has no matching special case for that
+      // token at all (grepped the whole server — nothing references it), so
+      // every real API call made under this "session" would fail with a
+      // genuine 401 from the actual backend; it only ever faked the client
+      // being logged in, not any real authentication. Removed entirely —
+      // this is exactly the "fake login response / mock dashboard redirect"
+      // pattern this audit is meant to catch. Real login/registration are
+      // unaffected; a fresh session with no token now correctly stays
+      // unauthenticated until the person actually logs in.
 
-    setUser(userData);
-    setLoading(false);
+      if (mounted) {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // PRODUCTION AUDIT FIX: access tokens expire after 15 minutes
+  // (JWT_ACCESS_EXPIRES_IN=15m) and the backend already has a working
+  // POST /auth/refresh-token endpoint (httpOnly refresh cookie + CSRF),
+  // but nothing on the frontend ever called it — grepped the whole
+  // client for any interceptor or refresh-token usage and found none.
+  // In practice this meant every session silently started failing all
+  // API calls with 401s after 15 minutes, with no recovery short of a
+  // full manual re-login. This registers a single global axios response
+  // interceptor that transparently refreshes once on a 401 and retries
+  // the original request; if the refresh itself fails (refresh cookie
+  // also expired/invalid), it logs out and sends the person to /login,
+  // same as an explicit logout would.
+  useEffect(() => {
+    let refreshInFlight = null;
+
+    const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh-token', '/auth/google-login'];
+
+    const performRefresh = async () => {
+      if (!refreshInFlight) {
+        refreshInFlight = axios
+          .post(`${API_BASE}/auth/refresh-token`, {}, {
+            headers: { 'x-csrf-token': getCsrfToken() },
+          })
+          .then((res) => {
+            const { accessToken, user: refreshedUser } = res.data.data;
+            localStorage.setItem('accessToken', accessToken);
+            localStorage.setItem('user', JSON.stringify(refreshedUser));
+            setUser(refreshedUser);
+            return accessToken;
+          })
+          .finally(() => {
+            refreshInFlight = null;
+          });
+      }
+      return refreshInFlight;
+    };
+
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        const isAuthEndpoint = originalRequest?.url && NO_REFRESH_PATHS.some((p) => originalRequest.url.includes(p));
+
+        if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._retried) {
+          originalRequest._retried = true;
+          try {
+            const newAccessToken = await performRefresh();
+            originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            return axios(originalRequest);
+          } catch {
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            setUser(null);
+            if (window.location.pathname !== '/login') {
+              window.location.href = '/login';
+            }
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptorId);
+    };
   }, []);
 
   /**
-   * Login using existing backend API
+   * Login using the existing backend API.
+   *
+   * PRODUCTION AUDIT FIX: this previously tried up to 3 separate login
+   * requests in sequence (volunteer, then donor, then admin) to work
+   * around the backend requiring a `role` field — a pattern that made
+   * every legitimate login by a donor or admin count as 2-3 requests
+   * against the login rate limiter (which was also found disabled and
+   * re-enabled as part of this audit), and generally isn't necessary:
+   * email is globally unique per user account, so the backend can now
+   * determine the role itself. `role` is optional here and, if provided,
+   * is still enforced as a sanity check server-side (see
+   * auth.service.js#login) — but the normal login flow no longer guesses.
    * @param {string} email - User email
    * @param {string} password - User password
+   * @param {string} [role] - Optional role to assert (rarely needed)
    */
-  const login = async (email, password) => {
+  const login = async (email, password, role) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/login`, {
         email,
         password,
+        ...(role ? { role } : {}),
       });
 
       const { accessToken, user: userData } = res.data.data;
-      
+
       // Store token and user data
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
-      
+
       setUser(userData);
       return { success: true, user: userData };
     } catch (error) {
@@ -152,10 +229,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const googleLogin = async (idToken) => {
+  const googleLogin = async (idToken, initialRole) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/google-login`, {
         idToken,
+        role: initialRole,
       });
       const { accessToken, user: userData } = res.data.data;
       localStorage.setItem('accessToken', accessToken);
@@ -192,6 +270,10 @@ export function AuthProvider({ children }) {
     verifyEmail,
     isAuthenticated: !!user,
     userRole: user?.role,
+    // Development-only: allow dashboard access for UI development
+    // This does NOT bypass backend authentication - API calls will still fail
+    // unless properly authenticated. Use only for UI layout/UX development.
+    devModeDashboardAccess: DEV_MODE_DASHBOARD_ACCESS,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

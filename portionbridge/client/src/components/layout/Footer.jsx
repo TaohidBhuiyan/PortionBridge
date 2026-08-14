@@ -35,9 +35,8 @@ function FooterMarquee({ text }) {
 
 /**
  * Footer component - Main footer with navigation and branding
- * @param {Function} onGoToRole - Callback when role button is clicked
  */
-export function Footer({ onGoToRole }) {
+export function Footer() {
   return (
     <footer style={{ background: PRIMARY_DEEPER }} className="text-white">
       <FooterMarquee text="Connecting donors and volunteers so spare food and clothes reach the right zone, every time." />
@@ -71,21 +70,21 @@ export function Footer({ onGoToRole }) {
 
         <div className="border-t border-dashed border-white/15 pt-6 flex flex-wrap items-center justify-between gap-5">
           <div className="flex items-center gap-6 text-sm">
-            <button onClick={() => onGoToRole("donor")} className="relative text-white font-semibold transition-colors duration-200 hover:text-primary-tint cursor-pointer">
+            <Link to="/#roles" className="relative text-white font-semibold transition-colors duration-200 hover:text-primary-tint cursor-pointer">
               Donors
               <span className="absolute -bottom-2 left-0 w-1 h-1 rounded-full" style={{ background: PRIMARY }} />
-            </button>
-            <button onClick={() => onGoToRole("volunteer")} className="text-white/60 hover:text-primary-tint font-medium transition-all duration-200 cursor-pointer">
+            </Link>
+            <Link to="/#roles" className="text-white/60 hover:text-primary-tint font-medium transition-all duration-200 cursor-pointer">
               Volunteers
-            </button>
+            </Link>
           </div>
-          <button
-            onClick={() => onGoToRole("donor")}
+          <Link
+            to="/register"
             className="inline-flex items-center gap-2 bg-white text-sm font-semibold px-6 py-2.5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 shadow-sm cursor-pointer"
             style={{ color: PRIMARY_DEEP }}
           >
             Donate
-          </button>
+          </Link>
         </div>
 
         <div className="mt-8 pt-6 border-t border-white/10 flex flex-col sm:flex-row justify-between gap-3 text-xs text-white/35">

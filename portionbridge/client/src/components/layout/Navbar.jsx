@@ -1,19 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Logo } from "../common/Logo";
 import { Avatar } from "../common/Avatar";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
 
 /**
  * Navbar component - Main navigation header
- * @param {Function} onGoToRole - Callback when role button is clicked
  */
-export function Navbar({ onGoToRole }) {
+export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     await logout();
@@ -22,10 +20,12 @@ export function Navbar({ onGoToRole }) {
 
   const getDashboardPath = () => {
     if (!user) return '/';
+    // AUDIT FIX: removed a dead 'leader' case — users.role is only ever
+    // donor/volunteer/admin (see schema); team leadership is a per-team
+    // attribute (team_members.role), not a top-level account role.
     switch (user.role) {
       case 'donor': return '/donor/dashboard';
       case 'volunteer': return '/volunteer/dashboard';
-      case 'leader': return '/leader/dashboard';
       case 'admin': return '/admin/dashboard';
       default: return '/';
     }

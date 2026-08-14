@@ -68,12 +68,36 @@ const loginValidationRules = [
 
   body('password')
     .notEmpty().withMessage('Password is required.'),
+
+  // PRODUCTION AUDIT FIX: `role` used to be required, forcing the
+  // frontend to guess-and-check by sending up to 3 separate login
+  // requests per submission (see AuthContext.jsx's old sequential-role
+  // login). Since email is globally unique in the users table
+  // (UNIQUE KEY uq_users_email) and a user has exactly one role, this was
+  // never actually necessary. Made optional here and in
+  // auth.service.js#login (which now only enforces a role match when the
+  // caller explicitly provides one) rather than removed outright, so a
+  // future caller that does want to assert a specific role still can.
+  // This also matters now that login rate limiting is re-enabled: 3
+  // requests per legitimate login attempt was quietly burning through
+  // that budget for real users.
+  body('role')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isIn([USER_ROLES.DONOR, USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN])
+    .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
 ];
 
 const googleLoginValidationRules = [
   body('idToken')
     .trim()
     .notEmpty().withMessage('Google credential is required.'),
+
+  body('role')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isIn([USER_ROLES.DONOR, USER_ROLES.VOLUNTEER, USER_ROLES.ADMIN])
+    .withMessage(`Role must be one of: ${USER_ROLES.DONOR}, ${USER_ROLES.VOLUNTEER}, ${USER_ROLES.ADMIN}.`),
 ];
 
 const forgotPasswordValidationRules = [

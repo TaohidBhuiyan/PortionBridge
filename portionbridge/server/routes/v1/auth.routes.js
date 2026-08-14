@@ -36,7 +36,7 @@ const { loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../../
 router.post('/register', registerLimiter, uploadProfilePhotoMiddleware, registerValidationRules, validateRequest, register);
 router.post('/verify-email', verifyEmailValidationRules, validateRequest, verifyEmail);
 router.post('/resend-verification', resendVerificationValidationRules, validateRequest, resendVerification);
-router.post('/login', /* loginLimiter, */ loginValidationRules, validateRequest, login);
+router.post('/login', loginLimiter, loginValidationRules, validateRequest, login);
 router.post('/google-login', googleLoginValidationRules, validateRequest, googleLogin);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidationRules, validateRequest, forgotPassword);
 router.post('/reset-password', resetPasswordValidationRules, validateRequest, resetPassword);

@@ -102,12 +102,12 @@ async function register({ name, email, password, role, phone, address, profilePh
 /**
  * Verifies a user's email using the raw token from the verification link.
  */
-async function loginWithGoogle({ idToken, ipAddress, userAgent }) {
+async function loginWithGoogle({ idToken, role, ipAddress, userAgent }) {
   const googlePayload = await verifyGoogleToken(idToken);
   const email = googlePayload.email.toLowerCase();
   const googleId = googlePayload.sub;
   const profilePicture = googlePayload.picture || null;
-  const assignedRole = USER_ROLES.DONOR;
+  const assignedRole = role || USER_ROLES.DONOR;
 
   let user = await userModel.findByEmail(email);
 
@@ -236,7 +236,7 @@ async function resendVerification(email, { ipAddress, userAgent } = {}) {
  * session. Enforces email verification, ban status, account lockout, and
  * role matching before checking the password.
  */
-async function login({ email, password, ipAddress, userAgent }) {
+async function login({ email, password, role, ipAddress, userAgent }) {
   const user = await userModel.findByEmail(email);
 
   if (!user) {
@@ -244,7 +244,17 @@ async function login({ email, password, ipAddress, userAgent }) {
       action: AUDIT_ACTIONS.LOGIN_FAILED,
       ipAddress,
       userAgent,
-      metadata: { email, reason: 'no_such_account' },
+      metadata: { email, role, reason: 'no_such_account' },
+    });
+    throw new AppError('Invalid email or password.', HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  if (role && user.role !== role) {
+    await auditService.record({
+      action: AUDIT_ACTIONS.LOGIN_FAILED,
+      ipAddress,
+      userAgent,
+      metadata: { email, providedRole: role, actualRole: user.role, reason: 'role_mismatch' },
     });
     throw new AppError('Invalid email or password.', HTTP_STATUS.UNAUTHORIZED);
   }
@@ -260,53 +270,58 @@ async function login({ email, password, ipAddress, userAgent }) {
     throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN);
   }
 
-  // Account lockout is disabled for local testing / developer convenience.
-  // if (user.lock_until && new Date(user.lock_until).getTime() > Date.now()) {
-  //   const minutesLeft = Math.ceil((new Date(user.lock_until).getTime() - Date.now()) / 60000);
-  //   await auditService.record({
-  //     userId: user.id,
-  //     action: AUDIT_ACTIONS.LOGIN_FAILED,
-  //     ipAddress,
-  //     userAgent,
-  //     metadata: { reason: 'account_locked' },
-  //   });
-  //   throw new AppError(
-  //     `Account temporarily locked due to repeated failed login attempts. Try again in ${minutesLeft} minute(s).`,
-  //     HTTP_STATUS.FORBIDDEN
-  //   );
-  // }
+  // PRODUCTION AUDIT: account lockout was previously commented out
+  // ("disabled for local testing / developer convenience"), even though
+  // registerFailedLoginAttempt/clearFailedLoginAttempts and the
+  // account-locked email were all fully implemented and wired below.
+  // Re-enabled as originally written — no logic changes, just turning
+  // back on protection that already existed and was tested.
+  if (user.lock_until && new Date(user.lock_until).getTime() > Date.now()) {
+    const minutesLeft = Math.ceil((new Date(user.lock_until).getTime() - Date.now()) / 60000);
+    await auditService.record({
+      userId: user.id,
+      action: AUDIT_ACTIONS.LOGIN_FAILED,
+      ipAddress,
+      userAgent,
+      metadata: { reason: 'account_locked' },
+    });
+    throw new AppError(
+      `Account temporarily locked due to repeated failed login attempts. Try again in ${minutesLeft} minute(s).`,
+      HTTP_STATUS.FORBIDDEN
+    );
+  }
 
   const passwordMatches = await comparePassword(password, user.password);
 
   if (!passwordMatches) {
-    // const { attempts, justLocked } = await userModel.registerFailedLoginAttempt(
-    //   user.id,
-    //   AUTH.ACCOUNT_LOCK_MAX_ATTEMPTS,
-    //   AUTH.ACCOUNT_LOCK_DURATION_MINUTES
-    // );
+    const { attempts, justLocked } = await userModel.registerFailedLoginAttempt(
+      user.id,
+      AUTH.ACCOUNT_LOCK_MAX_ATTEMPTS,
+      AUTH.ACCOUNT_LOCK_DURATION_MINUTES
+    );
 
-    // await auditService.record({
-    //   userId: user.id,
-    //   action: AUDIT_ACTIONS.LOGIN_FAILED,
-    //   ipAddress,
-    //   userAgent,
-    //   metadata: { reason: 'bad_password', attempts },
-    // });
+    await auditService.record({
+      userId: user.id,
+      action: AUDIT_ACTIONS.LOGIN_FAILED,
+      ipAddress,
+      userAgent,
+      metadata: { reason: 'bad_password', attempts },
+    });
 
-    // if (justLocked) {
-    //   await auditService.record({
-    //     userId: user.id,
-    //     action: AUDIT_ACTIONS.ACCOUNT_LOCKED,
-    //     ipAddress,
-    //     userAgent,
-    //     metadata: { attempts },
-    //   });
-    //   await emailService.sendAccountLockedEmail(user.email, AUTH.ACCOUNT_LOCK_DURATION_MINUTES);
-    //   throw new AppError(
-    //     `Too many failed login attempts. Your account has been locked for ${AUTH.ACCOUNT_LOCK_DURATION_MINUTES} minutes.`,
-    //     HTTP_STATUS.FORBIDDEN
-    //   );
-    // }
+    if (justLocked) {
+      await auditService.record({
+        userId: user.id,
+        action: AUDIT_ACTIONS.ACCOUNT_LOCKED,
+        ipAddress,
+        userAgent,
+        metadata: { attempts },
+      });
+      await emailService.sendAccountLockedEmail(user.email, AUTH.ACCOUNT_LOCK_DURATION_MINUTES);
+      throw new AppError(
+        `Too many failed login attempts. Your account has been locked for ${AUTH.ACCOUNT_LOCK_DURATION_MINUTES} minutes.`,
+        HTTP_STATUS.FORBIDDEN
+      );
+    }
 
     throw new AppError('Invalid email or password.', HTTP_STATUS.UNAUTHORIZED);
   }

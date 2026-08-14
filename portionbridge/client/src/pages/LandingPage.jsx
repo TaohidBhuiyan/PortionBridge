@@ -19,17 +19,11 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * Combines all landing page sections with navigation and real-time updates
  */
 export function LandingPage() {
-  const [activeRole, setActiveRole] = useState("donor");
   const [statsRef, statsVisible] = useReveal();
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
   const { socket, connected } = useSocket();
-
-  const goToRole = (role) => {
-    setActiveRole(role);
-    document.getElementById("roles")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   // Initial stats fetch via API
   useEffect(() => {
@@ -68,9 +62,9 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen w-full bg-white text-[#1A1523] selection:bg-primary/20" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <Navbar onGoToRole={goToRole} />
+      <Navbar />
 
-      <HeroSection onGoToRole={goToRole} stats={stats} loading={statsLoading} />
+      <HeroSection stats={stats} loading={statsLoading} />
 
       <ActivityTicker />
 
@@ -78,7 +72,7 @@ export function LandingPage() {
         <StatsSection visible={statsVisible} stats={stats} loading={statsLoading} />
       </div>
 
-      <RoleSection activeRole={activeRole} onSetActiveRole={setActiveRole} />
+      <RoleSection />
 
       <ZoneSection />
 
@@ -95,7 +89,7 @@ export function LandingPage() {
 
       <ReviewSection />
 
-      <Footer onGoToRole={goToRole} />
+      <Footer />
     </div>
   );
 }

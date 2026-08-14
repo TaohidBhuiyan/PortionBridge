@@ -1,49 +1,32 @@
-import React from "react";
-import { Logo } from "../common/Logo";
-import { Icon } from "../common/Icon";
 import { Reveal } from "../common/Reveal";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
-const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 const PRIMARY_DEEPER = "var(--color-primary-deeper, oklch(22% 0.12 292.717))";
-
-const ROLES = [
-  {
-    key: "donor",
-    icon: "donor",
-    title: "Donor",
-    tag: "GIVE WHAT YOU CAN SPARE",
-    body: "List spare food or clothes in under a minute. Choose cash, kind, or both — track exactly which zone and volunteer picked it up.",
-    points: ["Schedule a pickup from your address", "See your total impact on the leaderboard", "Get a receipt for every handover"],
-  },
-  {
-    key: "volunteer",
-    icon: "volunteer",
-    title: "Volunteer",
-    tag: "COLLECT, AREA BY AREA",
-    body: "Claim a zone, see nearby pending pickups on a map, and mark each collection complete — food and clothes tracked separately.",
-    points: ["Zone-based task queue, no overlap", "Photo confirmation on handover", "Climb the volunteer leaderboard"],
-  },
-];
 
 /**
  * HeroSection component - Main landing page hero with CTA buttons
- * @param {Function} onGoToRole - Callback when role button is clicked
  * @param {Object} stats - Statistics object with volunteer count
  * @param {boolean} loading - Whether stats are loading
  */
-export function HeroSection({ onGoToRole, stats, loading }) {
+export function HeroSection({ stats, loading }) {
   const { isAuthenticated, user } = useAuth();
-  const volunteerCount = stats?.verifiedVolunteers || (loading ? 0 : 312);
+  // AUDIT FIX: this previously fell back to a hardcoded "312" whenever the
+  // real /public/stats value was falsy (including a legitimate 0, or a
+  // failed fetch) — fabricating a live "active right now" count. Now only
+  // ever shows a real number from the API; if there isn't one yet, the
+  // badge falls back to generic copy with no invented number at all.
+  const volunteerCount = stats?.verifiedVolunteers;
+  const hasVolunteerCount = !loading && typeof volunteerCount === 'number' && volunteerCount > 0;
 
   const getDonatePath = () => {
     if (isAuthenticated) {
+      // AUDIT FIX: removed a dead 'leader' case — users.role is only ever
+      // donor/volunteer/admin (see schema).
       switch (user?.role) {
         case 'donor': return '/donor/dashboard';
         case 'volunteer': return '/volunteer/dashboard';
-        case 'leader': return '/leader/dashboard';
         case 'admin': return '/admin/dashboard';
         default: return '/login';
       }
@@ -56,7 +39,6 @@ export function HeroSection({ onGoToRole, stats, loading }) {
       switch (user?.role) {
         case 'volunteer': return '/volunteer/dashboard';
         case 'donor': return '/#roles';
-        case 'leader': return '/leader/dashboard';
         case 'admin': return '/admin/dashboard';
         default: return '/#roles';
       }
@@ -82,7 +64,7 @@ export function HeroSection({ onGoToRole, stats, loading }) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
             </span>
-            {volunteerCount} volunteers active right now
+            {hasVolunteerCount ? `${volunteerCount} volunteers active right now` : 'Volunteers ready to help right now'}
           </div>
         </Reveal>
         <Reveal delay={80}>

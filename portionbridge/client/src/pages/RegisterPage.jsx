@@ -156,16 +156,17 @@ export function RegisterPage() {
     setFieldErrors({});
     setLoading(true);
     try {
-      const result = await googleLogin(credential);
+      const result = await googleLogin(credential, role);
       if (!result.success) {
         setError(result.error || "Google signup failed.");
         return;
       }
       if (result.user) {
+        // AUDIT FIX: removed a dead 'leader' case — see the same fix in
+        // LoginPage.jsx for why (users.role is only ever donor/volunteer/admin).
         switch (result.user.role) {
           case 'donor': navigate('/donor/dashboard'); break;
           case 'volunteer': navigate('/volunteer/dashboard'); break;
-          case 'leader': navigate('/leader/dashboard'); break;
           case 'admin': navigate('/admin/dashboard'); break;
           default: navigate('/');
         }
@@ -178,16 +179,21 @@ export function RegisterPage() {
   };
 
   useEffect(() => {
-    if (!profilePhoto) {
-      setProfilePhotoPreview(null);
-      return;
+    let objectUrl;
+    
+    if (profilePhoto) {
+      objectUrl = URL.createObjectURL(profilePhoto);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setTimeout(() => setProfilePhotoPreview(objectUrl), 0);
+    } else {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      setTimeout(() => setProfilePhotoPreview(null), 0);
     }
 
-    const objectUrl = URL.createObjectURL(profilePhoto);
-    setProfilePhotoPreview(objectUrl);
-
     return () => {
-      URL.revokeObjectURL(objectUrl);
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
     };
   }, [profilePhoto]);
 

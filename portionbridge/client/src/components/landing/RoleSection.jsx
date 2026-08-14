@@ -1,4 +1,4 @@
-import React from "react";
+import { useState } from "react";
 import { Icon } from "../common/Icon";
 import { Reveal } from "../common/Reveal";
 
@@ -27,10 +27,9 @@ const ROLES = [
 
 /**
  * RoleSection component - Displays donor and volunteer role information
- * @param {string} activeRole - Currently selected role
- * @param {Function} onSetActiveRole - Callback to change active role
  */
-export function RoleSection({ activeRole, onSetActiveRole }) {
+export function RoleSection() {
+  const [activeRole, setActiveRole] = useState("donor");
   const activeRoleData = ROLES.find((r) => r.key === activeRole);
 
   return (
@@ -46,7 +45,7 @@ export function RoleSection({ activeRole, onSetActiveRole }) {
             {ROLES.map((r) => (
               <button
                 key={r.key}
-                onClick={() => onSetActiveRole(r.key)}
+                onClick={() => setActiveRole(r.key)}
                 className={`flex items-center gap-2 px-5.5 py-2.5 rounded-full text-sm font-semibold border transition-all duration-300 cursor-pointer active:scale-95 ${
                   activeRole === r.key ? "text-white border-transparent shadow-md shadow-primary/15 scale-105" : "border-black/10 text-black/60 hover:border-black/20 hover:text-black hover:bg-slate-50"
                 }`}

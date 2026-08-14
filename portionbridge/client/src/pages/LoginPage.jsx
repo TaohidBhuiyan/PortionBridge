@@ -84,6 +84,7 @@ export function LoginPage() {
     setLoading(true);
 
     try {
+      // Use sequential role login implemented in context
       const result = await login(email.trim(), password);
 
       if (!result.success) {
@@ -100,12 +101,17 @@ export function LoginPage() {
         return;
       }
 
-      // Successful redirect based on user role
+      // Successful redirect based on user role.
+      // AUDIT FIX: removed a dead 'leader' case — the users.role column
+      // (see schema) only ever contains 'donor' | 'volunteer' | 'admin'.
+      // A team leader is still a 'volunteer' at the account level (team
+      // leadership is per-team, tracked in team_members.role, not on the
+      // user account), so that branch could never actually be reached and
+      // was misleading dead code.
       if (result.user) {
         switch (result.user.role) {
           case 'donor': navigate('/donor/dashboard'); break;
           case 'volunteer': navigate('/volunteer/dashboard'); break;
-          case 'leader': navigate('/leader/dashboard'); break;
           case 'admin': navigate('/admin/dashboard'); break;
           default: navigate('/');
         }
@@ -139,7 +145,6 @@ export function LoginPage() {
         switch (result.user.role) {
           case 'donor': navigate('/donor/dashboard'); break;
           case 'volunteer': navigate('/volunteer/dashboard'); break;
-          case 'leader': navigate('/leader/dashboard'); break;
           case 'admin': navigate('/admin/dashboard'); break;
           default: navigate('/');
         }
