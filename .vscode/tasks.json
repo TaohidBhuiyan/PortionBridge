@@ -1,0 +1,96 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Check MySQL Service",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "Write-Host 'Checking MySQL service on port 3306...'; try { $tcp = New-Object System.Net.Sockets.TcpClient; $tcp.Connect('localhost', 3306); $tcp.Close(); Write-Host 'MySQL is running on port 3306' -ForegroundColor Green } catch { Write-Host 'MySQL is not running on port 3306 - Please start MySQL (XAMPP/Docker)' -ForegroundColor Red }"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Start Backend",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/portionbridge/server"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "backend"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+)\\s+-\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*PortionBridge API running.*",
+          "endsPattern": ".*"
+        }
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Start Frontend",
+      "type": "shell",
+      "command": "npm",
+      "args": [
+        "run",
+        "dev"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/portionbridge/client"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "frontend"
+      },
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^(.*):(\\d+):(\\d+)\\s+-\\s+(.*)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "message": 4
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*Local:.*",
+          "endsPattern": ".*"
+        }
+      },
+      "isBackground": true
+    },
+    {
+      "label": "Start PortionBridge (All Services)",
+      "dependsOn": [
+        "Check MySQL Service",
+        "Start Backend",
+        "Start Frontend"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

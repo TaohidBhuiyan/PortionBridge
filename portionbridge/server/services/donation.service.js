@@ -7,8 +7,7 @@ const notificationService = require('./notification.service');
 const auditService = require('./audit.service');
 const achievementService = require('./achievement.service');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
-const { getIO } = require('../sockets/ioInstance');
-const { broadcastTeamActivity } = require('../sockets/handlers/team.handler');
+const { getIO, broadcastTeamActivity } = require('../sockets/ioInstance');
 const teamMemberModel = require('../models/teamMember.model');
 
 /**

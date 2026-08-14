@@ -6,8 +6,7 @@ const teamInvitationModel = require('../models/teamInvitation.model');
 const userModel = require('../models/user.model');
 const auditService = require('./audit.service');
 const notificationService = require('./notification.service');
-const { getIO } = require('../sockets/ioInstance');
-const { broadcastTeamActivity } = require('../sockets/handlers/team.handler');
+const { broadcastTeamActivity } = require('../sockets/ioInstance');
 
 /**
  * Creates a new team.

@@ -135,22 +135,4 @@ function registerTeamHandlers(io, socket) {
   });
 }
 
-/**
- * Broadcasts team activity to all team members in real-time.
- * Called from service layer when team events occur.
- * @param {Object} io - Shared Socket.io server instance
- * @param {number} teamId - Team ID
- * @param {string} eventType - Type of event (member_joined, member_left, leader_changed, etc.)
- * @param {Object} data - Event data
- */
-function broadcastTeamActivity(io, teamId, eventType, data) {
-  const roomName = `team_${teamId}`;
-  io.to(roomName).emit('team_activity', {
-    teamId,
-    eventType,
-    data,
-    timestamp: new Date().toISOString(),
-  });
-}
-
-module.exports = { registerTeamHandlers, broadcastTeamActivity };
+module.exports = { registerTeamHandlers };

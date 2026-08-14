@@ -26,4 +26,24 @@ function getIO() {
   return ioInstance;
 }
 
-module.exports = { setIO, getIO };
+/**
+ * Broadcasts team activity to all team members in real-time.
+ * Called from service layer when team events occur.
+ * @param {number} teamId - Team ID
+ * @param {string} eventType - Type of event (member_joined, member_left, leader_changed, etc.)
+ * @param {Object} data - Event data
+ */
+function broadcastTeamActivity(teamId, eventType, data) {
+  const io = getIO();
+  if (io) {
+    const roomName = `team_${teamId}`;
+    io.to(roomName).emit('team_activity', {
+      teamId,
+      eventType,
+      data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+}
+
+module.exports = { setIO, getIO, broadcastTeamActivity };

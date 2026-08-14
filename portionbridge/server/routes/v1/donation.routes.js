@@ -44,7 +44,6 @@ const {
   pickedUpValidationRules,
   completeDonationValidationRules,
   historyQueryValidationRules,
-  historySummaryValidationRules,
 } = require('../../validators/donation.validator');
 
 
@@ -65,8 +64,6 @@ router.get(
   '/assigned-history/summary',
   protect,
   authorize('volunteer'),
-  historySummaryValidationRules,
-  validateRequest,
   getVolunteerHistorySummary
 );
 
@@ -74,8 +71,6 @@ router.get(
   '/assigned-history',
   protect,
   authorize('volunteer'),
-  historyQueryValidationRules,
-  validateRequest,
   getVolunteerHistory
 );
 
