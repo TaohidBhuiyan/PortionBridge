@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useReveal } from "../components/hooks/useReveal";
 import { useSocket } from "../context/SocketContext";
@@ -19,11 +19,17 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
  * Combines all landing page sections with navigation and real-time updates
  */
 export function LandingPage() {
+  const [activeRole, setActiveRole] = useState("donor");
   const [statsRef, statsVisible] = useReveal();
   const [stats, setStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
   const { socket, connected } = useSocket();
+
+  const goToRole = (role) => {
+    setActiveRole(role);
+    document.getElementById("roles")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // Initial stats fetch via API
   useEffect(() => {
@@ -62,17 +68,17 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen w-full bg-white text-[#1A1523] selection:bg-primary/20" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <Navbar />
+      <Navbar onGoToRole={goToRole} />
 
-      <HeroSection stats={stats} loading={statsLoading} />
+      <HeroSection onGoToRole={goToRole} stats={stats} loading={statsLoading} />
 
       <ActivityTicker />
 
       <div ref={statsRef}>
-        <StatsSection visible={statsVisible} stats={stats} loading={statsLoading} />
+        <StatsSection visible={statsVisible} stats={stats} loading={statsLoading} error={statsError} />
       </div>
 
-      <RoleSection />
+      <RoleSection activeRole={activeRole} onSetActiveRole={setActiveRole} />
 
       <ZoneSection />
 
@@ -89,7 +95,7 @@ export function LandingPage() {
 
       <ReviewSection />
 
-      <Footer />
+      <Footer onGoToRole={goToRole} />
     </div>
   );
 }

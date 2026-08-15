@@ -1,4 +1,3 @@
-import React, { useEffect, useRef } from "react";
 import { useReveal } from "../hooks/useReveal";
 
 /**
@@ -9,7 +8,18 @@ import { useReveal } from "../hooks/useReveal";
  */
 export function Reveal({ children, className = "", delay = 0 }) {
   const [ref, visible] = useReveal();
-  
+  // Respect prefers-reduced-motion: skip the slide/fade and just show
+  // content in place, rather than forcing a motion animation on people
+  // who've asked their OS not to.
+  const prefersReducedMotion =
+    typeof window !== "undefined" && window.matchMedia
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false;
+
+  if (prefersReducedMotion) {
+    return <div ref={ref} className={className}>{children}</div>;
+  }
+
   return (
     <div
       ref={ref}

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { Avatar } from "../common/Avatar";
 import { Icon } from "../common/Icon";
-import { Reveal } from "../common/Reveal";
 import { useReveal } from "../hooks/useReveal";
 import { useSocket } from "../../context/SocketContext";
 
@@ -11,22 +10,6 @@ const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 const PRIMARY_TINT = "var(--color-primary-tint, oklch(94% 0.03 292.717))";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
-
-const FALLBACK_DONORS = [
-  { name: "Rafiul Islam", area: "Various areas", donations: 128, kind: "Mixed donations", items: 34, photo: null },
-  { name: "Nusrat Jahan", area: "Various areas", donations: 96, kind: "Mixed donations", items: 28, photo: null },
-  { name: "Karim Uddin", area: "Various areas", donations: 84, kind: "Mixed donations", items: 45, photo: null },
-  { name: "Fatima Begum", area: "Various areas", donations: 72, kind: "Mixed donations", items: 31, photo: null },
-  { name: "Ahmed Ali", area: "Various areas", donations: 64, kind: "Mixed donations", items: 22, photo: null },
-];
-
-const FALLBACK_VOLUNTEERS = [
-  { name: "Team Nurul", area: "Various zones", pickups: 312, kind: "Mixed pickups", photo: null },
-  { name: "Team Rahim", area: "Various zones", pickups: 284, kind: "Mixed pickups", photo: null },
-  { name: "Karim Ahmed", area: "Various zones", pickups: 256, kind: "Mixed pickups", photo: null },
-  { name: "Fatima Group", area: "Various zones", pickups: 198, kind: "Mixed pickups", photo: null },
-  { name: "Ali Squad", area: "Various zones", pickups: 172, kind: "Mixed pickups", photo: null },
-];
 
 const PODIUM_STYLES = [
   { order: "order-2", height: "h-28", ring: "#FBBF24", medal: "linear-gradient(180deg, #FDE68A, #F59E0B)", medalFg: "#78350F", avatarSize: "w-16 h-16 text-base", crown: true, glow: "rgba(245,158,11,0.35)" },
@@ -189,7 +172,7 @@ function ListRow({ item, rank, value, max, valueLabel, unit, subLabel, flash, de
   );
 }
 
-function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabelFn, loading, connected, flashIdx, delta }) {
+function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabelFn, loading, error, connected, flashIdx, delta }) {
   const top3 = items.slice(0, 3);
   const rest = items.slice(3);
   const max = items.length > 0 ? Math.max(...items.map((i) => i[valueKey])) : 0;
@@ -220,6 +203,33 @@ function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabe
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  }
+
+  // AUDIT ADDITION: error and empty states were previously unhandled —
+  // an API failure silently fell back to fake data (removed above in
+  // LeaderboardSection), and zero real entries just rendered a blank
+  // podium/list with no explanation. Both now show a clear, honest
+  // message instead.
+  if (error && items.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl border border-black/5 shadow-sm p-6 md:p-7">
+        <h3 className="font-serif text-xl mb-6">{title}</h3>
+        <div className="text-center py-10">
+          <p className="text-slate-500 text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!loading && items.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl border border-black/5 shadow-sm p-6 md:p-7">
+        <h3 className="font-serif text-xl mb-6">{title}</h3>
+        <div className="text-center py-10">
+          <p className="text-slate-500 text-sm">No entries yet. Check back soon!</p>
         </div>
       </div>
     );
@@ -336,10 +346,14 @@ export function LeaderboardSection() {
         setVolunteers(volunteersRes.data.data.volunteers || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
-        setError('Failed to load leaderboard');
-        // Use fallback data on error
-        setDonors(FALLBACK_DONORS);
-        setVolunteers(FALLBACK_VOLUNTEERS);
+        // AUDIT FIX: previously fell back to hardcoded fake donor/volunteer
+        // names and counts here (and unconditionally during every loading
+        // phase too — see the old FALLBACK_DONORS/FALLBACK_VOLUNTEERS
+        // constants). Now just surfaces a real error state instead of
+        // inventing leaderboard entries; the `error` value is passed down
+        // to LeaderPanel below so it's actually visible to the person
+        // instead of being silently swallowed.
+        setError('Leaderboard is temporarily unavailable.');
       } finally {
         setLoading(false);
       }
@@ -419,8 +433,8 @@ export function LeaderboardSection() {
     return () => clearTimeout(t);
   }, [deltaV]);
 
-  const displayDonors = loading ? FALLBACK_DONORS : donors;
-  const displayVolunteers = loading ? FALLBACK_VOLUNTEERS : volunteers;
+  const displayDonors = donors;
+  const displayVolunteers = volunteers;
 
   return (
     <div ref={ref} className="grid md:grid-cols-2 gap-6">
@@ -432,6 +446,7 @@ export function LeaderboardSection() {
         valueLabelFn={(d) => `${d.donations}`}
         unit="Donations"
         loading={loading}
+        error={error}
         connected={connected}
         flashIdx={flashIdx.d}
         delta={deltaD}
@@ -444,6 +459,7 @@ export function LeaderboardSection() {
         valueLabelFn={(v) => `${v.pickups}`}
         unit="Pickups"
         loading={loading}
+        error={error}
         connected={connected}
         flashIdx={flashIdx.v}
         delta={deltaV}

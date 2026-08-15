@@ -164,11 +164,16 @@ const getPublicReviews = asyncHandler(async (req, res) => {
 
   const meta = buildPaginationMeta({ page, limit, totalItems });
 
-  // Format reviews for landing page
+  // Format reviews for landing page.
+  // AUDIT ADDITION: now also includes createdAt — r.created_at was already
+  // being selected in the query above but dropped here before reaching the
+  // response, which meant the Landing Page had no way to show a real date
+  // even though the data existed. No new query, no schema change.
   const formattedReviews = reviews.map(r => ({
     name: r.rated_user_name,
     rating: r.rating,
     text: r.text,
+    createdAt: r.created_at,
   }));
 
   return success(res, {

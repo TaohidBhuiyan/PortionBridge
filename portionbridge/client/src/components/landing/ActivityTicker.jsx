@@ -1,20 +1,9 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Icon } from "../common/Icon";
 import { useSocket } from "../../context/SocketContext";
 
-const PRIMARY = "var(--color-primary, oklch(60.6% 0.25 292.717))";
-const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
-const PRIMARY_TINT = "var(--color-primary-tint, oklch(94% 0.03 292.717))";
-
-const FALLBACK_TICKER_DATA = [
-  { text: "Rafiul from Agrabad just donated 10kg rice", icon: "food" },
-  { text: "Team Nurul picked up 8 cloths from Halishahar", icon: "shirt" },
-  { text: "Nusrat from GEC Circle donated leftover iftar rice", icon: "food" },
-  { text: "Volunteer Karim is on the way to Khulshi", icon: "pin" },
-  { text: "New volunteer registration: Rahim from Bayezid", icon: "bolt" },
-  { text: "5 meal trays collected from Nasirabad", icon: "food" },
-  { text: "12 shirts donated from Kotwali area", icon: "shirt" },
-];
+const PRIMARY_DEEP = "var(--color-primary-deep)";
+const PRIMARY_TINT = "var(--color-primary-tint)";
 
 const ICON_MAP = {
   donation_created: "food",
@@ -28,27 +17,37 @@ const ICON_MAP = {
 };
 
 /**
- * ActivityTicker component - Scrolling horizontal marquee showing recent activities
+ * ActivityTicker component - Scrolling horizontal marquee showing recent
+ * real activity from the platform (donations, pickups, new volunteers).
+ *
+ * AUDIT FIX: previously shipped a hardcoded list of fabricated activity
+ * events (fictional names like "Rafiul from Agrabad", specific fake
+ * donation amounts) shown by default on every load and used again as a
+ * fallback whenever the real socket feed came back empty. Removed
+ * entirely — the ticker now only renders once real activity arrives from
+ * the backend's get_activity_feed handler (a real audit_logs query), and
+ * simply doesn't render at all if there's no real activity yet, rather
+ * than inventing any.
  */
 export function ActivityTicker() {
   const { socket, connected } = useSocket();
-  const [activities, setActivities] = useState(FALLBACK_TICKER_DATA);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
     if (!socket || !connected) return;
 
     // Request initial activity feed
     socket.emit('get_activity_feed', {}, (response) => {
-      if (response.success && response.data?.activities) {
+      if (response?.success && response.data?.activities?.length > 0) {
         const formattedActivities = response.data.activities.map(a => ({
           text: a.text,
           icon: ICON_MAP[a.type] || "bolt",
         }));
-        setActivities(formattedActivities.length > 0 ? formattedActivities : FALLBACK_TICKER_DATA);
+        setActivities(formattedActivities);
       }
     });
 
-    // Listen for new activities (backend would emit this when events occur)
+    // Listen for new activities as they happen
     const handleNewActivity = (activity) => {
       setActivities(prev => {
         const icon = ICON_MAP[activity.type] || "bolt";
@@ -67,9 +66,9 @@ export function ActivityTicker() {
     };
   }, [socket, connected]);
 
-  const items = activities.length > 0 ? [...activities, ...activities] : FALLBACK_TICKER_DATA;
-  
-  if (items.length === 0) return null;
+  if (activities.length === 0) return null;
+
+  const items = [...activities, ...activities];
 
   return (
     <div className="relative overflow-hidden border-y" style={{ borderColor: PRIMARY_TINT, background: PRIMARY_TINT }}>
