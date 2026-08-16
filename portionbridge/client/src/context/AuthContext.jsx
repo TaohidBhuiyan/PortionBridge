@@ -274,6 +274,16 @@ export function AuthProvider({ children }) {
     // This does NOT bypass backend authentication - API calls will still fail
     // unless properly authenticated. Use only for UI layout/UX development.
     devModeDashboardAccess: DEV_MODE_DASHBOARD_ACCESS,
+    // Helper function to set mock user for development
+    setDevUser: (role) => {
+      const mockUser = {
+        id: 'dev-user-id',
+        name: role === 'volunteer' ? 'Volunteer User' : (role === 'admin' ? 'Admin User' : 'Donor User'),
+        email: `dev-${role}@example.com`,
+        role: role,
+      };
+      setUser(mockUser);
+    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

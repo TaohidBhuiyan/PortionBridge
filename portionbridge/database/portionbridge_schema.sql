@@ -62,6 +62,9 @@ CREATE TABLE users (
   profile_photo     VARCHAR(255) DEFAULT NULL,
   date_of_birth     DATE         DEFAULT NULL,
   gender            ENUM('male', 'female', 'other', 'prefer_not_to_say') DEFAULT NULL,
+  provider          VARCHAR(20)  DEFAULT NULL,             -- NULL for password accounts, 'google' for OAuth-linked accounts
+  google_id         VARCHAR(64)  DEFAULT NULL,             -- Google 'sub' claim, unique per Google account
+  profile_picture   VARCHAR(500) DEFAULT NULL,             -- Profile picture URL from Google OAuth
   is_banned         TINYINT(1)   NOT NULL DEFAULT 0,
   failed_login_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   lock_until        DATETIME     DEFAULT NULL,
@@ -76,6 +79,7 @@ CREATE TABLE users (
 
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_email (email),
+  UNIQUE KEY uq_users_google_id (google_id),
 
   KEY idx_users_role (role),
   KEY idx_users_is_deleted (is_deleted),
@@ -282,7 +286,7 @@ CREATE TABLE volunteer_profiles (
   bio               TEXT DEFAULT NULL,
   skills            JSON DEFAULT NULL,
   availability      VARCHAR(255) DEFAULT NULL,
-  service_area      VARCHAR(255) DEFAULT NULL,
+  service_areas     VARCHAR(255) DEFAULT NULL,
   vehicle_type      ENUM('none', 'bicycle', 'motorcycle', 'car', 'van', 'truck') DEFAULT NULL,
   total_pickups     INT UNSIGNED NOT NULL DEFAULT 0,
   rating            DECIMAL(3, 2) DEFAULT NULL,

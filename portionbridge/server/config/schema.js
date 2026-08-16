@@ -25,6 +25,29 @@ const REQUIRED_INDEXES = {
 };
 
 /**
+ * MySQL's information_schema always returns result columns as TABLE_NAME /
+ * COLUMN_NAME / INDEX_NAME (uppercase) regardless of the case used for the
+ * alias in the query — this is server behavior, not a driver quirk, and it
+ * does not follow the lower_case_table_names setting used for ordinary
+ * tables. Reading row.table_name (lowercase) against that result silently
+ * returns undefined for every row, which previously made every table/
+ * column/index look "missing" on every real MySQL 8.0 server and made
+ * validateDatabaseSchema() fail startup unconditionally. Normalizing keys
+ * to lowercase here makes the lookup resilient to that casing regardless
+ * of server/driver version.
+ * @param {Object} row - A row from an information_schema query
+ * @param {string} key - Column name to read, in any case
+ * @returns {*} The value for that column
+ */
+function readCaseInsensitive(row, key) {
+  if (key in row) return row[key];
+  const upper = key.toUpperCase();
+  if (upper in row) return row[upper];
+  const lower = key.toLowerCase();
+  return row[lower];
+}
+
+/**
  * Fails startup before HTTP begins serving when the selected database is not
  * at the schema level required by the running application.
  */
@@ -35,7 +58,7 @@ async function validateDatabaseSchema() {
      WHERE table_schema = :database`,
     { database }
   );
-  const foundTables = new Set(tables.map((row) => row.table_name));
+  const foundTables = new Set(tables.map((row) => readCaseInsensitive(row, 'table_name')));
   const missingTables = REQUIRED_TABLES.filter((table) => !foundTables.has(table));
 
   const [columns] = await pool.query(
@@ -43,7 +66,9 @@ async function validateDatabaseSchema() {
      WHERE table_schema = :database`,
     { database }
   );
-  const foundColumns = new Set(columns.map((row) => `${row.table_name}.${row.column_name}`));
+  const foundColumns = new Set(
+    columns.map((row) => `${readCaseInsensitive(row, 'table_name')}.${readCaseInsensitive(row, 'column_name')}`)
+  );
   const missingColumns = Object.entries(REQUIRED_COLUMNS).flatMap(([table, names]) =>
     names.filter((name) => !foundColumns.has(`${table}.${name}`)).map((name) => `${table}.${name}`)
   );
@@ -53,7 +78,9 @@ async function validateDatabaseSchema() {
      WHERE table_schema = :database`,
     { database }
   );
-  const foundIndexes = new Set(indexes.map((row) => `${row.table_name}.${row.index_name}`));
+  const foundIndexes = new Set(
+    indexes.map((row) => `${readCaseInsensitive(row, 'table_name')}.${readCaseInsensitive(row, 'index_name')}`)
+  );
   const missingIndexes = Object.entries(REQUIRED_INDEXES).flatMap(([table, names]) =>
     names.filter((name) => !foundIndexes.has(`${table}.${name}`)).map((name) => `${table}.${name}`)
   );

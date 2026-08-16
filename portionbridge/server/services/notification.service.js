@@ -1,5 +1,6 @@
 const { HTTP_STATUS } = require('../constants');
 const AppError = require('../utils/AppError');
+const { pool } = require('../config/db');
 const notificationModel = require('../models/notification.model');
 const teamMemberModel = require('../models/teamMember.model');
 const { getIO } = require('../sockets/ioInstance');
@@ -196,7 +197,7 @@ async function broadcastToTeam(teamId, notificationData, excludeUserId = null) {
  * @returns {Promise<number>} Notification ID
  */
 async function createNotification(userId, { type, title, message, relatedId }) {
-  const notificationId = await notificationModel.create({
+  const notificationId = await notificationModel.create(pool, {
     userId,
     type,
     title,

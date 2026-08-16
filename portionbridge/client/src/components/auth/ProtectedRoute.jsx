@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 /**
@@ -11,7 +12,16 @@ import { useAuth } from '../../context/AuthContext';
  * UI/UX development convenience.
  */
 export function ProtectedRoute({ children, requiredRole = null }) {
-  const { user, isAuthenticated, loading, devModeDashboardAccess } = useAuth();
+  const { user, isAuthenticated, loading, devModeDashboardAccess, setDevUser } = useAuth();
+
+  // Set mock user in development mode when accessing a dashboard
+  useEffect(() => {
+    if (devModeDashboardAccess && import.meta.env.DEV && requiredRole) {
+      if (!user || user.role !== requiredRole) {
+        setDevUser(requiredRole);
+      }
+    }
+  }, [devModeDashboardAccess, requiredRole, user, setDevUser]);
 
   // Show loading state while checking authentication
   if (loading) {
@@ -24,7 +34,7 @@ export function ProtectedRoute({ children, requiredRole = null }) {
 
   // DEVELOPMENT MODE: Allow dashboard access for UI development
   // This does NOT authenticate with backend - API calls will still require real auth
-  if (devModeDashboardAccess && import.meta.env.DEV && requiredRole === 'donor') {
+  if (devModeDashboardAccess && import.meta.env.DEV && requiredRole) {
     // In development mode, show a warning banner but allow access for UI work
     return (
       <>

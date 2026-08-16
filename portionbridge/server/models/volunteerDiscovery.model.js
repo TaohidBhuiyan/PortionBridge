@@ -113,7 +113,7 @@ async function findNearbyVolunteers({
       vp.vehicle_type,
       vp.availability,
       vp.skills,
-      vp.service_area,
+      vp.service_areas,
       vp.coverage_radius,
       vp.is_online,
       vp.total_pickups,
@@ -136,7 +136,7 @@ async function findNearbyVolunteers({
   return rows.map(row => {
     if (row.availability) row.availability = JSON.parse(row.availability);
     if (row.skills) row.skills = JSON.parse(row.skills);
-    if (row.service_area) row.service_area = JSON.parse(row.service_area);
+    if (row.service_areas) row.service_areas = JSON.parse(row.service_areas);
     row.distance = Number(row.distance).toFixed(2);
     return row;
   });

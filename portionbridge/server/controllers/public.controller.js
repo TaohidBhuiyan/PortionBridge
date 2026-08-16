@@ -396,7 +396,7 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
        vp.bio,
        vp.skills,
        vp.availability,
-       vp.service_area,
+       vp.service_areas,
        vp.vehicle_type,
        vp.total_pickups,
        vp.rating,
@@ -424,7 +424,7 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
   // Parse JSON fields
   if (volunteer.skills) volunteer.skills = JSON.parse(volunteer.skills);
   if (volunteer.availability) volunteer.availability = JSON.parse(volunteer.availability);
-  if (volunteer.service_area) volunteer.service_area = JSON.parse(volunteer.service_area);
+  if (volunteer.service_areas) volunteer.service_areas = JSON.parse(volunteer.service_areas);
 
   // Get team information if volunteer belongs to a team
   const [teamData] = await pool.query(

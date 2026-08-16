@@ -6,7 +6,7 @@ const teamInvitationModel = require('../models/teamInvitation.model');
 const userModel = require('../models/user.model');
 const auditService = require('./audit.service');
 const notificationService = require('./notification.service');
-const { broadcastTeamActivity } = require('../sockets/ioInstance');
+const { broadcastTeamActivity, getIO } = require('../sockets/ioInstance');
 
 /**
  * Creates a new team.
@@ -51,7 +51,7 @@ async function createTeam(userId, { name, description }) {
     await connection.commit();
 
     // Log audit
-    await auditService.logAudit(userId, 'team_created', { teamId, name });
+    await auditService.record({ userId, action: 'team_created', metadata: { teamId, name } });
 
     return await teamModel.findById(teamId);
   } catch (error) {
@@ -110,7 +110,7 @@ async function updateTeam(teamId, userId, data) {
   await teamModel.update(teamId, data);
 
   // Log audit
-  await auditService.logAudit(userId, 'team_updated', { teamId, ...data });
+  await auditService.record({ userId, action: 'team_updated', metadata: { teamId, ...data } });
 
   return await teamModel.findById(teamId);
 }
@@ -135,7 +135,7 @@ async function deleteTeam(teamId, userId) {
   await teamModel.deleteById(teamId);
 
   // Log audit
-  await auditService.logAudit(userId, 'team_deleted', { teamId });
+  await auditService.record({ userId, action: 'team_deleted', metadata: { teamId } });
 }
 
 /**
@@ -216,7 +216,7 @@ async function inviteMember(teamId, userId, { invitedUserId, invitedEmail }) {
   });
 
   // Log audit
-  await auditService.logAudit(userId, 'team_invitation_sent', { teamId, invitedUserId: targetUserId });
+  await auditService.record({ userId, action: 'team_invitation_sent', metadata: { teamId, invitedUserId: targetUserId } });
 
   return await teamInvitationModel.findById(invitationId);
 }
@@ -271,7 +271,7 @@ async function cancelInvitation(teamId, invitationId, userId) {
   await teamInvitationModel.deleteById(invitationId);
 
   // Log audit
-  await auditService.logAudit(userId, 'team_invitation_cancelled', { teamId, invitationId });
+  await auditService.record({ userId, action: 'team_invitation_cancelled', metadata: { teamId, invitationId } });
 }
 
 /**
@@ -334,14 +334,14 @@ async function acceptInvitation(invitationId, userId) {
     // Broadcast team activity
     const io = getIO();
     if (io) {
-      broadcastTeamActivity(io, invitation.team_id, 'member_joined', {
+      broadcastTeamActivity(invitation.team_id, 'member_joined', {
         userId,
         userName: (await userModel.findById(userId)).name,
       });
     }
 
     // Log audit
-    await auditService.logAudit(userId, 'team_invitation_accepted', { teamId: invitation.team_id, invitationId });
+    await auditService.record({ userId, action: 'team_invitation_accepted', metadata: { teamId: invitation.team_id, invitationId } });
 
     return await getTeam(invitation.team_id, userId);
   } catch (error) {
@@ -376,7 +376,7 @@ async function declineInvitation(invitationId, userId) {
   await teamInvitationModel.updateStatus(invitationId, TEAM_INVITATION_STATUS.DECLINED, new Date());
 
   // Log audit
-  await auditService.logAudit(userId, 'team_invitation_declined', { teamId: invitation.team_id, invitationId });
+  await auditService.record({ userId, action: 'team_invitation_declined', metadata: { teamId: invitation.team_id, invitationId } });
 }
 
 /**
@@ -447,14 +447,14 @@ async function removeMember(teamId, memberId, userId) {
   // PHASE 5: Broadcast team activity for real-time updates
   const io = getIO();
   if (io) {
-    broadcastTeamActivity(io, teamId, 'member_removed', {
+    broadcastTeamActivity(teamId, 'member_removed', {
       userId: memberId,
       userName: (await userModel.findById(memberId)).name,
     });
   }
 
   // Log audit
-  await auditService.logAudit(userId, 'team_member_removed', { teamId, removedUserId: memberId });
+  await auditService.record({ userId, action: 'team_member_removed', metadata: { teamId, removedUserId: memberId } });
 }
 
 /**
@@ -511,7 +511,7 @@ async function promoteMember(teamId, memberId, userId) {
     // Broadcast team activity
     const io = getIO();
     if (io) {
-      broadcastTeamActivity(io, teamId, 'leader_changed', {
+      broadcastTeamActivity(teamId, 'leader_changed', {
         oldLeaderId: userId,
         newLeaderId: memberId,
         newLeaderName: (await userModel.findById(memberId)).name,
@@ -519,7 +519,7 @@ async function promoteMember(teamId, memberId, userId) {
     }
 
     // Log audit
-    await auditService.logAudit(userId, 'team_leadership_transferred', { teamId, newLeaderId: memberId });
+    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
 
   } catch (error) {
     await connection.rollback();
@@ -583,7 +583,7 @@ async function transferLeadership(teamId, memberId, userId) {
     // Broadcast team activity
     const io = getIO();
     if (io) {
-      broadcastTeamActivity(io, teamId, 'leader_changed', {
+      broadcastTeamActivity(teamId, 'leader_changed', {
         oldLeaderId: userId,
         newLeaderId: memberId,
         newLeaderName: (await userModel.findById(memberId)).name,
@@ -591,7 +591,7 @@ async function transferLeadership(teamId, memberId, userId) {
     }
 
     // Log audit
-    await auditService.logAudit(userId, 'team_leadership_transferred', { teamId, newLeaderId: memberId });
+    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
 
   } catch (error) {
     await connection.rollback();
@@ -632,14 +632,14 @@ async function leaveTeam(userId) {
   // Broadcast team activity
   const io = getIO();
   if (io) {
-    broadcastTeamActivity(io, team.id, 'member_left', {
+    broadcastTeamActivity(team.id, 'member_left', {
       userId,
       userName: (await userModel.findById(userId)).name,
     });
   }
 
   // Log audit
-  await auditService.logAudit(userId, 'team_left', { teamId: team.id });
+  await auditService.record({ userId, action: 'team_left', metadata: { teamId: team.id } });
 }
 
 module.exports = {

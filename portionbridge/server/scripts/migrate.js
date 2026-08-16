@@ -57,7 +57,16 @@ async function checkRequirement(connection, [type, table, value, extra]) {
        WHERE table_schema = ? AND table_name = ? AND column_name = ? LIMIT 1`,
       [database, table, value]
     );
-    return type === 'column' ? rows.length > 0 : rows[0]?.column_type.includes(`'${extra || 'scheduled'}'`);
+    if (type === 'column') return rows.length > 0;
+    // MySQL's information_schema always returns result columns as
+    // COLUMN_TYPE (uppercase), regardless of the lowercase alias used
+    // above — reading rows[0].column_type is undefined on a real MySQL
+    // 8.0 server, which crashed every enumValue check. Read case-
+    // insensitively so this works regardless of server/driver casing.
+    const row = rows[0];
+    if (!row) return false;
+    const columnType = row.column_type ?? row.COLUMN_TYPE;
+    return Boolean(columnType && columnType.includes(`'${extra || 'scheduled'}'`));
   }
 
   const [rows] = await connection.query(

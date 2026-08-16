@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { HTTP_STATUS, DONATION_STATUS, NOTIFICATION_TYPES, AUDIT_ACTIONS } = require('../constants');
+const { HTTP_STATUS, DONATION_STATUS, DONATION_CATEGORY, NOTIFICATION_TYPES, AUDIT_ACTIONS } = require('../constants');
 const AppError = require('../utils/AppError');
 const donationModel = require('../models/donation.model');
 const notificationModel = require('../models/notification.model');
@@ -88,6 +88,13 @@ function mapToSnakeCase(updates) {
       // Handle JSON fields
       if (['allergens', 'images', 'pickup_address_details'].includes(snakeKey) && updates[camelKey]) {
         fields[snakeKey] = JSON.stringify(updates[camelKey]);
+      } else if (['pickup_time', 'expiry_date'].includes(snakeKey) && updates[camelKey]) {
+        // These are DATETIME columns; an ISO 8601 string (with 'T'/'Z',
+        // as produced by any standard JS Date.toISOString() on the
+        // frontend) is not directly accepted by MySQL, so convert to a
+        // Date object here — mysql2 serializes Date objects to the
+        // correct DATETIME format automatically.
+        fields[snakeKey] = new Date(updates[camelKey]);
       } else {
         fields[snakeKey] = updates[camelKey];
       }
@@ -789,7 +796,7 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     if (updatedDonation.assignment_mode === 'team' && updatedDonation.team_id) {
       const io = getIO();
       if (io) {
-        broadcastTeamActivity(io, updatedDonation.team_id, 'donation_completed', {
+        broadcastTeamActivity(updatedDonation.team_id, 'donation_completed', {
           donationId: updatedDonation.id,
           completedBy: donorId,
         });
@@ -839,6 +846,28 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     }
     if (updatedDonation.volunteer_id) {
       await notificationService.deliverLatestForRelated(updatedDonation.volunteer_id, updatedDonation.id);
+    }
+
+    // trg_donation_status_update only knows about donor_id/volunteer_id —
+    // for team donations, volunteer_id holds the TEAM LEADER, while the
+    // person who actually picked up the donation is assigned_member_id.
+    // The trigger never inserts a row for assigned_member_id, so if the
+    // assigned member is a different person than the leader, create their
+    // completion notification explicitly here. If the leader picked up
+    // the donation themselves (assigned_member_id === volunteer_id), skip
+    // this to avoid delivering a second "pickup completed" notification
+    // to the same person.
+    if (
+      updatedDonation.assignment_mode === 'team' &&
+      updatedDonation.assigned_member_id &&
+      updatedDonation.assigned_member_id !== updatedDonation.volunteer_id
+    ) {
+      await notificationService.createNotification(updatedDonation.assigned_member_id, {
+        type: NOTIFICATION_TYPES.STATUS_UPDATED,
+        title: 'Pickup completed',
+        message: `Pickup for donation request #${updatedDonation.id} has been marked completed.`,
+        relatedId: updatedDonation.id,
+      });
     }
   } catch (err) {
     await connection.rollback();
@@ -958,16 +987,13 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
 
     await connection.commit();
 
-    // Notify donor
-    await notificationService.createNotification(donation.donor_id, {
-      type: NOTIFICATION_TYPES.DONATION_ACCEPTED,
-      title: 'Donation Accepted',
-      message: 'Your donation has been accepted by a team.',
-      relatedId: donation.id,
-    });
+    // trg_donation_status_update already inserted a 'donation_accepted'
+    // notification for the donor as part of this same transaction —
+    // fetch and deliver it now rather than inserting a duplicate.
+    await notificationService.deliverLatestForRelated(donation.donor_id, donation.id);
 
     // Log audit
-    await auditService.logAudit(leaderId, 'team_donation_accepted', { donationId, teamId });
+    await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
 
     return donation;
   } catch (err) {
