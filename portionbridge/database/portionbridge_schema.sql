@@ -286,7 +286,7 @@ CREATE TABLE volunteer_profiles (
   bio               TEXT DEFAULT NULL,
   skills            JSON DEFAULT NULL,
   availability      VARCHAR(255) DEFAULT NULL,
-  service_areas     VARCHAR(255) DEFAULT NULL,
+  service_area      VARCHAR(255) DEFAULT NULL,
   vehicle_type      ENUM('none', 'bicycle', 'motorcycle', 'car', 'van', 'truck') DEFAULT NULL,
   total_pickups     INT UNSIGNED NOT NULL DEFAULT 0,
   rating            DECIMAL(3, 2) DEFAULT NULL,

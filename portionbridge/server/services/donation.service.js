@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { HTTP_STATUS, DONATION_STATUS, DONATION_CATEGORY, NOTIFICATION_TYPES, AUDIT_ACTIONS } = require('../constants');
+const { HTTP_STATUS, DONATION_STATUS, DONATION_CATEGORY, NOTIFICATION_TYPES, AUDIT_ACTIONS, TEAM_MEMBER_ROLE } = require('../constants');
 const AppError = require('../utils/AppError');
 const donationModel = require('../models/donation.model');
 const notificationModel = require('../models/notification.model');
@@ -971,6 +971,11 @@ async function getVolunteerHistorySummary(volunteerId) {
  * @throws {AppError} If donation is no longer available to accept
  */
 async function acceptDonationForTeam(donationId, teamId, leaderId) {
+  const membership = await teamMemberModel.findByTeamAndUser(teamId, leaderId);
+  if (!membership || membership.role !== TEAM_MEMBER_ROLE.LEADER) {
+    throw new AppError('Only the team leader can accept a donation on behalf of the team.', HTTP_STATUS.FORBIDDEN);
+  }
+
   const connection = await pool.getConnection();
 
   try {
@@ -1006,6 +1011,10 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
 
 /**
  * Assigns a team member to a team-assigned donation.
+ * Previously accepted any volunteer assigning any member to a teamId,
+ * with no verification that assignedBy was that team's leader, or that
+ * memberId was even a member of the team at all — any volunteer could
+ * assign an arbitrary user to someone else's team donation. Now verifies both.
  * @param {number} donationId - Donation ID
  * @param {number} teamId - Team ID
  * @param {number} memberId - Member ID to assign
@@ -1013,6 +1022,16 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
  * @returns {Promise<void>}
  */
 async function assignTeamMemberToDonation(donationId, teamId, memberId, assignedBy) {
+  const leaderMembership = await teamMemberModel.findByTeamAndUser(teamId, assignedBy);
+  if (!leaderMembership || leaderMembership.role !== TEAM_MEMBER_ROLE.LEADER) {
+    throw new AppError('Only the team leader can assign a member to a donation.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  const memberMembership = await teamMemberModel.findByTeamAndUser(teamId, memberId);
+  if (!memberMembership) {
+    throw new AppError('The selected user is not a member of this team.', HTTP_STATUS.BAD_REQUEST);
+  }
+
   const donation = await donationModel.findById(donationId);
 
   if (!donation) {

@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "test": "node --test --test-force-exit \"tests/unit/**/*.test.js\" \"tests/integration/**/*.test.js\"",
+    "test:unit": "node --test --test-force-exit \"tests/unit/**/*.test.js\"",
+    "test:integration": "node --test --test-force-exit \"tests/integration/**/*.test.js\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
