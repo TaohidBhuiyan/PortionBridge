@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Bell, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Bell, MessageSquare, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
 import { ProfileDropdown } from './ProfileDropdown';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -20,6 +20,7 @@ const PAGE_TITLES = {
   '/donor/profile': 'Profile',
   '/donor/settings': 'Settings',
   '/notifications': 'Notifications',
+  '/messages': 'Messages',
 };
 
 function getPageTitle(pathname) {
@@ -35,11 +36,14 @@ function getPageTitle(pathname) {
  */
 export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, user, onLogout }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
-  const { unreadCount } = useAuthSocket();
+  const { unreadCount, unreadMessageCount } = useAuthSocket();
 
   const pageTitle = getPageTitle(location.pathname);
+  const isMessagesActive = location.pathname === '/messages' || location.pathname.startsWith('/messages/');
+  const messagesBadge = unreadMessageCount > 99 ? '99+' : unreadMessageCount;
 
   return (
     <header className="sticky top-0 z-20 h-14 bg-surface border-b border-border/50">
@@ -60,6 +64,28 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
 
         {/* Right Section - Notifications, Dark Mode, Profile */}
         <div className="flex items-center gap-1 ml-auto">
+          {/* Messages */}
+          <div className="relative">
+            <button
+              onClick={() => navigate('/messages')}
+              aria-label={unreadMessageCount > 0 ? `Messages, ${unreadMessageCount} unread` : 'Messages'}
+              title="Messages"
+              aria-current={isMessagesActive ? 'page' : undefined}
+              className={`relative p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
+                isMessagesActive
+                  ? 'bg-dash-primary-soft text-dash-primary'
+                  : 'text-text-secondary hover:bg-surface-hover'
+              }`}
+            >
+              <MessageSquare size={16} />
+              {unreadMessageCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 flex items-center justify-center bg-danger text-white text-[9px] leading-none rounded-full">
+                  {messagesBadge}
+                </span>
+              )}
+            </button>
+          </div>
+
           {/* Notification Bell */}
           <div className="relative">
             <button

@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+function getAuthToken() {
+  return localStorage.getItem('accessToken');
+}
+
 /**
  * Chat API service for donor-volunteer messaging
  */
@@ -16,6 +20,7 @@ export const chatApi = {
   async getMessages(donationId, params = {}) {
     const response = await axios.get(`${API_BASE_URL}/chat/${donationId}/messages`, {
       params,
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
       withCredentials: true,
     });
     return response.data;
@@ -27,6 +32,7 @@ export const chatApi = {
    */
   async getLatestMessage(donationId) {
     const response = await axios.get(`${API_BASE_URL}/chat/${donationId}/latest`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
       withCredentials: true,
     });
     return response.data;
@@ -38,6 +44,7 @@ export const chatApi = {
    */
   async getUnreadCount(donationId) {
     const response = await axios.get(`${API_BASE_URL}/chat/${donationId}/unread-count`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
       withCredentials: true,
     });
     return response.data;
@@ -48,6 +55,7 @@ export const chatApi = {
    */
   async getUnreadCountForUser() {
     const response = await axios.get(`${API_BASE_URL}/chat/unread-count`, {
+      headers: { Authorization: `Bearer ${getAuthToken()}` },
       withCredentials: true,
     });
     return response.data;

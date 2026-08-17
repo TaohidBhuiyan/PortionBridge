@@ -20,6 +20,7 @@ const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => (
 const DonationDetailsPage = lazy(() => import("./pages/DonationDetailsPage").then(m => ({ default: m.DonationDetailsPage })));
 const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage").then(m => ({ default: m.VolunteerDiscoveryPage })));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
+const MessagesPage = lazy(() => import("./pages/MessagesPage").then(m => ({ default: m.MessagesPage })));
 
 // Lazy load volunteer and admin dashboards (not part of donor module review)
 const VolunteerDashboard = lazy(() => import("./pages/VolunteerDashboard").then(m => ({ default: m.VolunteerDashboard })));
@@ -206,6 +207,16 @@ function App() {
                   <ProtectedRoute>
                     <AuthSocketProvider>
                       <NotificationsPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/messages" 
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <MessagesPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 } 

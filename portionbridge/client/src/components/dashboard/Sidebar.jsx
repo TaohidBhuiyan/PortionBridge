@@ -7,6 +7,7 @@ import {
   MapPin,
   Trophy,
   Bell,
+  MessageSquare,
   User,
   Settings,
   HelpCircle,
@@ -70,7 +71,7 @@ function GroupLabel({ children, collapsed }) {
  */
 export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, currentPath, onLogout }) {
   const { user } = useAuth();
-  const { unreadCount } = useAuthSocket();
+  const { unreadCount, unreadMessageCount } = useAuthSocket();
 
   // Menu configuration based on role, organized into visual groups.
   // Routes/badges are unchanged from the previous implementation — only the
@@ -93,10 +94,8 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     );
   } else if (userRole === 'volunteer') {
     // PHASE 3/4/5: Opportunities, My Team, and Mission History are the
-    // volunteer-specific nav items. Notifications is already covered by
-    // supportItems below for every role. Messages has no standalone page
-    // yet (chat is embedded per-donation only) so no nav entry is added
-    // for it — see the Phase 5 report.
+    // volunteer-specific nav items. Notifications and Messages are
+    // already covered by supportItems below for every role.
     mainItems.push(
       { title: 'Find Opportunities', icon: Compass, path: '/volunteer/opportunities' },
       { title: 'My Team', icon: Users, path: '/volunteer/team' },
@@ -114,6 +113,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
   }
 
   const supportItems = [
+    { title: 'Messages', icon: MessageSquare, path: '/messages', badge: unreadMessageCount > 0 ? (unreadMessageCount > 99 ? '99+' : unreadMessageCount) : null },
     { title: 'Notifications', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
     { title: 'Help', icon: HelpCircle, path: '/#roles' },
   ];
