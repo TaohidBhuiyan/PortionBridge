@@ -141,12 +141,39 @@ const listVolunteers = asyncHandler(async (req, res) => {
  * GET /api/v1/admin/volunteers/:id
  */
 const getVolunteer = asyncHandler(async (req, res) => {
-  const { volunteer, stats, currentAssignments } = await adminService.getVolunteerDetail(req.params.id);
+  const { volunteer, stats, availability, team, currentAssignments } = await adminService.getVolunteerDetail(req.params.id);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
     message: 'Volunteer retrieved successfully.',
-    data: { volunteer, stats, currentAssignments },
+    data: { volunteer, stats, availability, team, currentAssignments },
+  });
+});
+
+/**
+ * GET /api/v1/admin/teams
+ */
+const listTeams = asyncHandler(async (req, res) => {
+  const { teams, meta } = await adminService.listTeams(req.query);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Teams retrieved successfully.',
+    data: { teams },
+    meta,
+  });
+});
+
+/**
+ * GET /api/v1/admin/teams/:id
+ */
+const getTeam = asyncHandler(async (req, res) => {
+  const { team, members, activeMissions, completedMissions, activity } = await adminService.getTeamDetail(req.params.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Team retrieved successfully.',
+    data: { team, members, activeMissions, completedMissions, activity },
   });
 });
 
@@ -162,4 +189,6 @@ module.exports = {
   getDonationHistory,
   listVolunteers,
   getVolunteer,
+  listTeams,
+  getTeam,
 };

@@ -13,6 +13,8 @@ const {
   getDonationHistory,
   listVolunteers,
   getVolunteer,
+  listTeams,
+  getTeam,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -27,6 +29,8 @@ const {
   getDonationHistoryValidationRules,
   listVolunteersValidationRules,
   getVolunteerValidationRules,
+  listTeamsValidationRules,
+  getTeamValidationRules,
 } = require('../../validators/admin.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -136,6 +140,25 @@ router.get(
   getVolunteerValidationRules,
   validateRequest,
   getVolunteer
+);
+
+// --- Team monitoring (Phase 4) ---
+router.get(
+  '/teams',
+  protect,
+  authorize('admin'),
+  listTeamsValidationRules,
+  validateRequest,
+  listTeams
+);
+
+router.get(
+  '/teams/:id',
+  protect,
+  authorize('admin'),
+  getTeamValidationRules,
+  validateRequest,
+  getTeam
 );
 
 module.exports = router;

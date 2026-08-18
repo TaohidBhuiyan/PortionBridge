@@ -32,6 +32,17 @@ const VolunteerOpportunities = lazy(() => import("./pages/VolunteerOpportunities
 const VolunteerTeam = lazy(() => import("./pages/VolunteerTeam").then(m => ({ default: m.VolunteerTeam })));
 // PHASE 5: Mission History
 const VolunteerHistory = lazy(() => import("./pages/VolunteerHistory").then(m => ({ default: m.VolunteerHistory })));
+const VolunteerMission = lazy(() => import("./pages/VolunteerMission").then(m => ({ default: m.VolunteerMission })));
+const VolunteerActiveMissions = lazy(() => import("./pages/VolunteerActiveMissions").then(m => ({ default: m.VolunteerActiveMissions })));
+const VolunteerLiveMap = lazy(() => import("./pages/VolunteerLiveMap").then(m => ({ default: m.VolunteerLiveMap })));
+const AdminSectionPage = lazy(() => import("./pages/AdminSectionPage").then(m => ({ default: m.AdminSectionPage })));
+const AdminUsers = lazy(() => import("./pages/AdminUsers").then(m => ({ default: m.AdminUsers })));
+const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail").then(m => ({ default: m.AdminUserDetail })));
+const AdminDonations = lazy(() => import("./pages/AdminDonations").then(m => ({ default: m.AdminDonations })));
+const AdminDonationDetail = lazy(() => import("./pages/AdminDonationDetail").then(m => ({ default: m.AdminDonationDetail })));
+const AdminVolunteersTeams = lazy(() => import("./pages/AdminVolunteersTeams").then(m => ({ default: m.AdminVolunteersTeams })));
+const AdminVolunteerDetail = lazy(() => import("./pages/AdminVolunteerDetail").then(m => ({ default: m.AdminVolunteerDetail })));
+const AdminTeamDetail = lazy(() => import("./pages/AdminTeamDetail").then(m => ({ default: m.AdminTeamDetail })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -100,14 +111,6 @@ function App() {
               <Route 
                 path="/volunteer/dashboard" 
                 element={
-                  // PHASE 3: this route previously had no role guard at all
-                  // (every other dashboard route already does — see
-                  // /donor/dashboard etc. above). Added while touching this
-                  // file for the new Opportunities route, since the audit
-                  // brief repeatedly calls for donor/admin to never reach
-                  // volunteer-only actions. The backend already enforced
-                  // this independently on every volunteer/donation endpoint,
-                  // so this closes a frontend UX gap, not a security hole.
                   <ProtectedRoute requiredRole="volunteer">
                     <AuthSocketProvider>
                       <VolunteerDashboard />
@@ -146,11 +149,123 @@ function App() {
                 } 
               />
               <Route 
+                path="/volunteer/mission" 
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerMission />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/volunteer/active-missions" 
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerActiveMissions />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/volunteer/live-map" 
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerLiveMap />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/admin/dashboard" 
                 element={
-                  <AuthSocketProvider>
-                    <AdminDashboard />
-                  </AuthSocketProvider>
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminDashboard />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminUsers />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/users/:id" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminUserDetail />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/donations" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminDonations />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/donations/:id" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminDonationDetail />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/volunteers-teams" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminVolunteersTeams />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/volunteers/:id" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminVolunteerDetail />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/teams/:id" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminTeamDetail />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/:section" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminSectionPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
                 } 
               />
               <Route 

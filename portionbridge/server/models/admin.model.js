@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { USER_ROLES, DONATION_STATUS } = require('../constants');
+const { USER_ROLES, DONATION_STATUS, DONATION_CATEGORY } = require('../constants');
 
 /**
  * Raw SQL data-access layer for admin dashboard, user management, donation
@@ -20,6 +20,31 @@ const DONATION_COLUMNS = `
   id, donor_id, volunteer_id, category, quantity, description, photo,
   pickup_location, pickup_time, scheduled_at, accepted_at, completed_at, status,
   is_deleted, deleted_at, created_at, updated_at
+`;
+
+// Same donation_requests columns as the donor-facing model would use,
+// plus the donor's, volunteer's, and (for team-mode donations) assigned member's name/email —
+// resolved via LEFT JOIN rather than a second round trip per donation.
+// Used by the Phase 3 admin donation list/detail so "Donor → Volunteer"
+// can actually show names, not just raw IDs. NULL volunteer_name/
+// assigned_member_name is expected and meaningful (nobody's picked it up
+// yet / not a team assignment) — the frontend renders that as "Not yet
+// assigned", not as missing data.
+const ADMIN_DONATION_COLUMNS_WITH_NAMES = `
+  dr.id, dr.title, dr.donor_id, dr.volunteer_id, dr.assignment_mode, dr.team_id, dr.assigned_member_id,
+  dr.category, dr.quantity, dr.quantity_unit, dr.number_of_servings, dr.description, dr.photo,
+  dr.pickup_location, dr.pickup_time, dr.scheduled_at, dr.accepted_at, dr.completed_at, dr.status,
+  dr.is_deleted, dr.deleted_at, dr.created_at, dr.updated_at,
+  donor.name AS donor_name, donor.email AS donor_email, donor.phone AS donor_phone,
+  volunteer.name AS volunteer_name, volunteer.email AS volunteer_email, volunteer.phone AS volunteer_phone,
+  member.name AS assigned_member_name
+`;
+
+const ADMIN_DONATION_JOINS = `
+  FROM donation_requests dr
+  LEFT JOIN users donor ON donor.id = dr.donor_id
+  LEFT JOIN users volunteer ON volunteer.id = dr.volunteer_id
+  LEFT JOIN users member ON member.id = dr.assigned_member_id
 `;
 
 const ALLOWED_USER_SORT_COLUMNS = ['created_at', 'name', 'email'];
@@ -51,7 +76,9 @@ async function getUserCounts() {
  * Single aggregate query for donation counts by status, plus the
  * soft-deleted ("cancelled") count. totalDonationRequests intentionally
  * includes cancelled donations — it's the all-time total, broken down
- * by the buckets below.
+ * by the buckets below. `active` is every non-terminal, non-cancelled
+ * status (accepted through picked_up) — added for the Phase 2 Overview
+ * "Active Donations" KPI.
  * @returns {Promise<Object>} Status-bucketed donation counts
  */
 async function getDonationCounts() {
@@ -61,6 +88,7 @@ async function getDonationCounts() {
        SUM(status = :pending AND is_deleted = 0) AS pending,
        SUM(status = :accepted AND is_deleted = 0) AS accepted,
        SUM(status = :scheduled AND is_deleted = 0) AS scheduled,
+       SUM(status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND is_deleted = 0) AS active,
        SUM(status = :completed AND is_deleted = 0) AS completed,
        SUM(is_deleted = 1) AS cancelled
      FROM donation_requests`,
@@ -68,10 +96,142 @@ async function getDonationCounts() {
       pending: DONATION_STATUS.PENDING,
       accepted: DONATION_STATUS.ACCEPTED,
       scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
       completed: DONATION_STATUS.COMPLETED,
     }
   );
   return rows[0];
+}
+
+/**
+ * Count of distinct volunteers currently holding at least one non-terminal
+ * assignment (accepted/scheduled/on_the_way/picked_up, not soft-deleted).
+ * Backs the Phase 2 Overview "Active Volunteers" KPI.
+ * @returns {Promise<number>} Count of active volunteers
+ */
+async function getActiveVolunteersCount() {
+  const [rows] = await pool.query(
+    `SELECT COUNT(DISTINCT volunteer_id) AS activeVolunteers
+     FROM donation_requests
+     WHERE volunteer_id IS NOT NULL AND is_deleted = 0
+       AND status IN (:accepted, :scheduled, :onTheWay, :pickedUp)`,
+    {
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+    }
+  );
+  return rows[0].activeVolunteers;
+}
+
+/**
+ * Platform-wide impact aggregate for completed donations only. Mirrors the
+ * per-donor formula in profile.service.js#getDonationStatistics (mealsShared
+ * from number_of_servings, clothesDonated from quantity) so the same
+ * "impact" language means the same thing whether it's one donor's profile
+ * or the admin-wide Overview.
+ * @returns {Promise<Object>} Raw impact aggregate row
+ */
+async function getImpactStats() {
+  const [rows] = await pool.query(
+    `SELECT
+       SUM(status = :completed AND is_deleted = 0) AS successfulDonations,
+       SUM(
+         CASE WHEN category = :food AND status = :completed AND is_deleted = 0
+           THEN COALESCE(number_of_servings, 0) ELSE 0 END
+       ) AS mealsShared,
+       SUM(
+         CASE WHEN category = :clothes AND status = :completed AND is_deleted = 0
+           THEN COALESCE(quantity, 0) ELSE 0 END
+       ) AS clothesDonated
+     FROM donation_requests`,
+    {
+      completed: DONATION_STATUS.COMPLETED,
+      food: DONATION_CATEGORY.FOOD,
+      clothes: DONATION_CATEGORY.CLOTHES,
+    }
+  );
+  return rows[0];
+}
+
+/**
+ * Donation count per category (food/clothes), excluding soft-deleted rows.
+ * Backs the Phase 2 Overview category distribution chart.
+ * @returns {Promise<Array>} Array of { category, count } rows
+ */
+async function getCategoryDistribution() {
+  const [rows] = await pool.query(
+    `SELECT category, COUNT(*) AS count
+     FROM donation_requests
+     WHERE is_deleted = 0
+     GROUP BY category`
+  );
+  return rows;
+}
+
+/**
+ * Monthly donation volume + completions since `since`, grouped by
+ * created_at. Gaps (months with zero donations) are NOT filled here —
+ * that's the service layer's job (see admin.service.js#fillMonthlyGaps),
+ * matching how profile.service.js separates raw SQL from month-skeleton
+ * filling.
+ * @param {string} since - ISO date string; only rows on/after this are counted
+ * @returns {Promise<Array>} Array of { month, count, completed } rows
+ */
+async function getDonationTrend(since) {
+  const [rows] = await pool.query(
+    `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
+       COUNT(*) AS count,
+       SUM(status = :completed) AS completed
+     FROM donation_requests
+     WHERE created_at >= :since AND is_deleted = 0
+     GROUP BY month
+     ORDER BY month ASC`,
+    { since, completed: DONATION_STATUS.COMPLETED }
+  );
+  return rows;
+}
+
+/**
+ * Monthly new-user counts since `since`, split by role.
+ * @param {string} since - ISO date string; only rows on/after this are counted
+ * @returns {Promise<Array>} Array of { month, donors, volunteers } rows
+ */
+async function getUserGrowth(since) {
+  const [rows] = await pool.query(
+    `SELECT DATE_FORMAT(created_at, '%Y-%m') AS month,
+       SUM(role = :donorRole) AS donors,
+       SUM(role = :volunteerRole) AS volunteers
+     FROM users
+     WHERE created_at >= :since AND is_deleted = 0
+     GROUP BY month
+     ORDER BY month ASC`,
+    { since, donorRole: USER_ROLES.DONOR, volunteerRole: USER_ROLES.VOLUNTEER }
+  );
+  return rows;
+}
+
+/**
+ * Monthly completed-pickup volume and distinct active-volunteer count
+ * since `since`, keyed by completed_at (when the pickup actually finished,
+ * not when it was created).
+ * @param {string} since - ISO date string; only rows on/after this are counted
+ * @returns {Promise<Array>} Array of { month, completedPickups, activeVolunteers } rows
+ */
+async function getVolunteerActivityTrend(since) {
+  const [rows] = await pool.query(
+    `SELECT DATE_FORMAT(completed_at, '%Y-%m') AS month,
+       COUNT(*) AS completedPickups,
+       COUNT(DISTINCT volunteer_id) AS activeVolunteers
+     FROM donation_requests
+     WHERE status = :completed AND completed_at >= :since AND is_deleted = 0
+     GROUP BY month
+     ORDER BY month ASC`,
+    { since, completed: DONATION_STATUS.COMPLETED }
+  );
+  return rows;
 }
 
 /**
@@ -84,7 +244,25 @@ async function getDonationCounts() {
  */
 async function getRecentDonations(limit) {
   const [rows] = await pool.query(
-    `SELECT ${DONATION_COLUMNS} FROM donation_requests
+    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
+     ${ADMIN_DONATION_JOINS}
+     ORDER BY dr.created_at DESC
+     LIMIT :limit`,
+    { limit }
+  );
+  return rows;
+}
+
+/**
+ * Latest N registered users for the dashboard activity feed.
+ * @param {number} limit - Number of recent users to return
+ * @returns {Promise<Array>} Array of { id, name, email, role, created_at } rows
+ */
+async function getRecentUsers(limit) {
+  const [rows] = await pool.query(
+    `SELECT id, name, email, role, created_at
+     FROM users
+     WHERE is_deleted = 0
      ORDER BY created_at DESC
      LIMIT :limit`,
     { limit }
@@ -206,41 +384,48 @@ async function setUserBanned(id, isBanned) {
  * Builds the shared WHERE clause + params for the admin donation list.
  * `deleted` is left unfiltered (shows both) unless explicitly passed as
  * a boolean — this endpoint intentionally has broader visibility than
- * the donor/volunteer-facing donation lists.
+ * the donor/volunteer-facing donation lists. `reported` filters to
+ * donations with (true) or without (false) at least one row in `reports`
+ * — reuses the existing reports table via EXISTS rather than a JOIN, so
+ * a donation with multiple reports isn't duplicated in the result set.
  * @param {Object} filters - Filter options
  * @returns {Object} Object containing whereClause string and params object
  */
-function buildAdminDonationFilter({ status, category, donorId, volunteerId, dateFrom, dateTo, deleted }) {
+function buildAdminDonationFilter({ status, category, donorId, volunteerId, dateFrom, dateTo, deleted, reported }) {
   const conditions = [];
   const params = {};
 
   if (typeof deleted === 'boolean') {
-    conditions.push('is_deleted = :deleted');
+    conditions.push('dr.is_deleted = :deleted');
     params.deleted = deleted ? 1 : 0;
   }
   if (status) {
-    conditions.push('status = :status');
+    conditions.push('dr.status = :status');
     params.status = status;
   }
   if (category) {
-    conditions.push('category = :category');
+    conditions.push('dr.category = :category');
     params.category = category;
   }
   if (donorId) {
-    conditions.push('donor_id = :donorId');
+    conditions.push('dr.donor_id = :donorId');
     params.donorId = donorId;
   }
   if (volunteerId) {
-    conditions.push('volunteer_id = :volunteerId');
+    conditions.push('dr.volunteer_id = :volunteerId');
     params.volunteerId = volunteerId;
   }
   if (dateFrom) {
-    conditions.push('created_at >= :dateFrom');
+    conditions.push('dr.created_at >= :dateFrom');
     params.dateFrom = dateFrom;
   }
   if (dateTo) {
-    conditions.push('created_at <= :dateTo');
+    conditions.push('dr.created_at <= :dateTo');
     params.dateTo = dateTo;
+  }
+  if (typeof reported === 'boolean') {
+    const existsClause = 'EXISTS (SELECT 1 FROM reports r WHERE r.reported_donation_id = dr.id)';
+    conditions.push(reported ? existsClause : `NOT ${existsClause}`);
   }
 
   return { whereClause: conditions.length ? conditions.join(' AND ') : '1 = 1', params };
@@ -248,17 +433,21 @@ function buildAdminDonationFilter({ status, category, donorId, volunteerId, date
 
 /**
  * Lists donations with full admin filtering, whitelisted sort, and pagination.
+ * Donor/volunteer/assigned-member names are resolved via LEFT JOIN (see
+ * ADMIN_DONATION_COLUMNS_WITH_NAMES) so the admin UI can show names
+ * directly instead of raw IDs.
  * @param {Object} options - Query + pagination options
  * @returns {Promise<Array>} Array of donation objects
  */
 async function findDonations(options) {
   const { whereClause, params } = buildAdminDonationFilter(options);
   const { sortBy, sortOrder, limit, offset } = options;
-  const orderColumn = ALLOWED_ADMIN_DONATION_SORT_COLUMNS.includes(sortBy) ? sortBy : 'created_at';
+  const orderColumn = ALLOWED_ADMIN_DONATION_SORT_COLUMNS.includes(sortBy) ? `dr.${sortBy}` : 'dr.created_at';
   const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
 
   const [rows] = await pool.query(
-    `SELECT ${DONATION_COLUMNS} FROM donation_requests
+    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
+     ${ADMIN_DONATION_JOINS}
      WHERE ${whereClause}
      ORDER BY ${orderColumn} ${orderDirection}
      LIMIT :limit OFFSET :offset`,
@@ -269,25 +458,33 @@ async function findDonations(options) {
 
 /**
  * Total count matching the same filters as findDonations. Powers pagination meta.
+ * No JOIN needed here (counting doesn't need names), but `reported`'s
+ * EXISTS subquery still references the `dr` alias, so the FROM clause
+ * keeps it for consistency with buildAdminDonationFilter's conditions.
  * @param {Object} filters - Filter options (same as buildAdminDonationFilter)
  * @returns {Promise<number>} Total count of matching donations
  */
 async function countDonations(filters) {
   const { whereClause, params } = buildAdminDonationFilter(filters);
-  const [rows] = await pool.query(`SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`, params);
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM donation_requests dr WHERE ${whereClause}`,
+    params
+  );
   return rows[0].total;
 }
 
 /**
  * Finds a donation by ID for admin purposes — UNLIKE donation.model.js#findById,
  * this does NOT exclude soft-deleted rows, since admins need to view
- * cancelled donations too.
+ * cancelled donations too. Includes donor/volunteer/assigned-member names.
  * @param {number} id - Donation ID
  * @returns {Promise<Object|null>} Donation object or null if not found
  */
 async function findDonationById(id) {
   const [rows] = await pool.query(
-    `SELECT ${DONATION_COLUMNS} FROM donation_requests WHERE id = :id LIMIT 1`,
+    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
+     ${ADMIN_DONATION_JOINS}
+     WHERE dr.id = :id LIMIT 1`,
     { id }
   );
   return rows[0] || null;
@@ -339,8 +536,13 @@ function buildVolunteerFilter({ search }) {
 /**
  * Lists volunteers with per-volunteer assignment stats computed in a single
  * aggregate query (LEFT JOIN + GROUP BY) — avoids one query per volunteer.
+ * `activeAssignments` uses the same 4-status definition (accepted through
+ * picked_up) as Phase 2's getActiveVolunteersCount, so "how many active
+ * volunteers" means the same thing on the Overview KPI and here.
+ * `cancelledPickups`/`totalAssigned` (Phase 4) back the completion/
+ * cancellation rate shown on the volunteer list and detail pages.
  * @param {Object} options - Query options
- * @returns {Promise<Array>} Array of volunteer rows with activeAssignments/completedPickups
+ * @returns {Promise<Array>} Array of volunteer rows with stats
  */
 async function findVolunteersWithStats({ search, limit, offset }) {
   const { whereClause, params } = buildVolunteerFilter({ search });
@@ -348,8 +550,10 @@ async function findVolunteersWithStats({ search, limit, offset }) {
   const [rows] = await pool.query(
     `SELECT
        u.id, u.name, u.email, u.phone, u.is_banned, u.created_at,
-       SUM((dr.status = :accepted OR dr.status = :scheduled) AND dr.is_deleted = 0) AS activeAssignments,
-       SUM(dr.status = :completed AND dr.is_deleted = 0) AS completedPickups
+       SUM(dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND dr.is_deleted = 0) AS activeAssignments,
+       SUM(dr.status = :completed AND dr.is_deleted = 0) AS completedPickups,
+       SUM(dr.is_deleted = 1) AS cancelledPickups,
+       COUNT(dr.id) AS totalAssigned
      FROM users u
      LEFT JOIN donation_requests dr ON dr.volunteer_id = u.id
      WHERE ${whereClause}
@@ -360,6 +564,8 @@ async function findVolunteersWithStats({ search, limit, offset }) {
       ...params,
       accepted: DONATION_STATUS.ACCEPTED,
       scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
       completed: DONATION_STATUS.COMPLETED,
       limit,
       offset,
@@ -378,6 +584,182 @@ async function countVolunteers({ search }) {
   const { whereClause, params } = buildVolunteerFilter({ search });
   const [rows] = await pool.query(`SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`, params);
   return rows[0].total;
+}
+
+/**
+ * Cancelled-pickup count for a single volunteer (donations that were
+ * assigned to them and later soft-deleted). Used by getVolunteerDetail
+ * for the Phase 4 completion/cancellation rate — kept separate from
+ * donationModel.getVolunteerSummary (shared across the app) rather than
+ * modifying that shared query's bucket list.
+ * @param {number} volunteerId - Volunteer's user ID
+ * @returns {Promise<number>} Count of cancelled donations ever assigned to them
+ */
+async function getVolunteerCancelledCount(volunteerId) {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS cancelledPickups
+     FROM donation_requests
+     WHERE volunteer_id = :volunteerId AND is_deleted = 1`,
+    { volunteerId }
+  );
+  return rows[0].cancelledPickups;
+}
+
+/* ============================================================
+ * Team monitoring (Phase 4)
+ * ============================================================ */
+
+/**
+ * Builds the shared WHERE clause + params for the team list.
+ * @param {Object} filters
+ * @param {string} [filters.search] - Search across team name
+ * @returns {Object} Object containing whereClause string and params object
+ */
+function buildTeamFilter({ search }) {
+  const conditions = ['1 = 1'];
+  const params = {};
+
+  if (search) {
+    conditions.push('t.name LIKE :search');
+    params.search = `%${search}%`;
+  }
+
+  return { whereClause: conditions.join(' AND '), params };
+}
+
+/**
+ * Lists all teams with leader name, member count, and mission counts.
+ * Member count and mission counts are correlated subqueries rather than
+ * LEFT JOINs — joining team_members and donation_requests directly would
+ * fan out (member_count × donation_count rows per team) and inflate both
+ * aggregates.
+ * @param {Object} options - Query options
+ * @returns {Promise<Array>} Array of team rows with stats
+ */
+async function findTeams({ search, limit, offset }) {
+  const { whereClause, params } = buildTeamFilter({ search });
+
+  const [rows] = await pool.query(
+    `SELECT
+       t.id, t.name, t.description, t.leader_id, t.created_at,
+       leader.name AS leader_name, leader.email AS leader_email,
+       (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) AS memberCount,
+       (SELECT COUNT(*) FROM donation_requests dr
+          WHERE dr.team_id = t.id AND dr.is_deleted = 0
+            AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)) AS activeMissions,
+       (SELECT COUNT(*) FROM donation_requests dr
+          WHERE dr.team_id = t.id AND dr.is_deleted = 0 AND dr.status = :completed) AS completedMissions
+     FROM teams t
+     LEFT JOIN users leader ON leader.id = t.leader_id
+     WHERE ${whereClause}
+     ORDER BY t.created_at DESC
+     LIMIT :limit OFFSET :offset`,
+    {
+      ...params,
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+      completed: DONATION_STATUS.COMPLETED,
+      limit,
+      offset,
+    }
+  );
+  return rows;
+}
+
+/**
+ * Total count of teams matching the same filter as findTeams.
+ * @param {Object} filters - Filter options (same as buildTeamFilter)
+ * @returns {Promise<number>} Total count of matching teams
+ */
+async function countTeams({ search }) {
+  const { whereClause, params } = buildTeamFilter({ search });
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM teams t WHERE ${whereClause}`,
+    params
+  );
+  return rows[0].total;
+}
+
+/**
+ * Single team with leader name/email — admin-facing equivalent of
+ * team.service.js#getTeam, but WITHOUT that function's "requester must be
+ * a member" check (admins aren't team members). Deliberately queries
+ * teams/users directly rather than calling the team service, to avoid
+ * that membership authorization getting in the way.
+ * @param {number} teamId - Team ID
+ * @returns {Promise<Object|null>} Team object with leader_name/leader_email, or null
+ */
+async function findTeamById(teamId) {
+  const [rows] = await pool.query(
+    `SELECT t.id, t.name, t.description, t.leader_id, t.created_at, t.updated_at,
+            leader.name AS leader_name, leader.email AS leader_email, leader.phone AS leader_phone
+     FROM teams t
+     LEFT JOIN users leader ON leader.id = t.leader_id
+     WHERE t.id = :teamId LIMIT 1`,
+    { teamId }
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Recent membership-change activity for one team (member removed,
+ * leadership transferred, invitation accepted) — reuses the SAME
+ * audit_logs rows team.service.js already writes via auditService.record,
+ * no new tracking added. `metadata.teamId` is filtered in JS after a
+ * capped fetch rather than with a JSON_EXTRACT SQL predicate, since
+ * nothing else in this codebase uses MySQL JSON functions yet and audit_logs
+ * is small enough at this project's scale for this to be fine.
+ * @param {number} teamId - Team ID
+ * @param {number} limit - Max activity entries to return
+ * @returns {Promise<Array>} Array of audit log rows for this team
+ */
+async function findTeamAuditActivity(teamId, limit) {
+  const [rows] = await pool.query(
+    `SELECT a.id, a.action, a.metadata, a.created_at,
+            u.name AS actor_name, u.role AS actor_role
+     FROM audit_logs a
+     LEFT JOIN users u ON u.id = a.user_id
+     WHERE a.action IN ('team_member_removed', 'team_leadership_transferred', 'team_invitation_accepted')
+     ORDER BY a.created_at DESC
+     LIMIT 200`
+  );
+
+  return rows
+    .filter((row) => {
+      try {
+        const meta = JSON.parse(row.metadata || '{}');
+        return Number(meta.teamId) === Number(teamId);
+      } catch {
+        return false;
+      }
+    })
+    .slice(0, limit);
+}
+
+/**
+ * Recent announcements sent to a team — reuses the existing
+ * `team_announcement` notifications already written by
+ * notificationService#sendTeamAnnouncement (one row per recipient member),
+ * deduped by message+timestamp since a single announcement fans out to N
+ * rows. This is the "reuse existing team announcement infrastructure"
+ * requirement — no new announcement storage was added.
+ * @param {number} teamId - Team ID
+ * @param {number} limit - Max announcements to return
+ * @returns {Promise<Array>} Array of { id, message, created_at } rows
+ */
+async function findTeamAnnouncements(teamId, limit) {
+  const [rows] = await pool.query(
+    `SELECT MIN(id) AS id, message, created_at
+     FROM notifications
+     WHERE type = 'team_announcement' AND related_id = :teamId
+     GROUP BY message, created_at
+     ORDER BY created_at DESC
+     LIMIT :limit`,
+    { teamId, limit }
+  );
+  return rows;
 }
 
 /* ============================================================
@@ -432,10 +814,42 @@ async function getUserActivityActionSummary(userId) {
   return rows;
 }
 
+/* ============================================================
+ * Audit support — platform-wide recent activity
+ * ============================================================ */
+
+/**
+ * Latest N audit log entries across ALL users, joined with the actor's
+ * name/role. Backs the Phase 2 Overview "Recent Activity" feed — distinct
+ * from findUserActivity above, which is scoped to a single user's audit
+ * trail for the (later-phase) Audit Logs page.
+ * @param {number} limit - Number of recent activity entries to return
+ * @returns {Promise<Array>} Array of audit log rows with actor name/role
+ */
+async function findRecentActivity(limit) {
+  const [rows] = await pool.query(
+    `SELECT a.id, a.user_id, a.action, a.metadata, a.created_at,
+            u.name AS user_name, u.role AS user_role
+     FROM audit_logs a
+     LEFT JOIN users u ON u.id = a.user_id
+     ORDER BY a.created_at DESC
+     LIMIT :limit`,
+    { limit }
+  );
+  return rows;
+}
+
 module.exports = {
   getUserCounts,
   getDonationCounts,
+  getActiveVolunteersCount,
+  getImpactStats,
+  getCategoryDistribution,
+  getDonationTrend,
+  getUserGrowth,
+  getVolunteerActivityTrend,
   getRecentDonations,
+  getRecentUsers,
   findUsers,
   countUsers,
   findUserById,
@@ -446,7 +860,14 @@ module.exports = {
   findDonationStatusHistory,
   findVolunteersWithStats,
   countVolunteers,
+  getVolunteerCancelledCount,
+  findTeams,
+  countTeams,
+  findTeamById,
+  findTeamAuditActivity,
+  findTeamAnnouncements,
   findUserActivity,
   countUserActivity,
   getUserActivityActionSummary,
+  findRecentActivity,
 };

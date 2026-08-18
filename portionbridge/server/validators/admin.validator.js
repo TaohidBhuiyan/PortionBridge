@@ -103,6 +103,11 @@ const listDonationsValidationRules = [
     .isBoolean().withMessage('deleted must be a boolean (true/false).')
     .toBoolean(),
 
+  query('reported')
+    .optional()
+    .isBoolean().withMessage('reported must be a boolean (true/false).')
+    .toBoolean(),
+
   query('dateFrom')
     .optional()
     .isISO8601().withMessage('dateFrom must be a valid date (ISO 8601).'),
@@ -146,6 +151,19 @@ const getVolunteerValidationRules = [
   param('id').isInt({ min: 1 }).withMessage('A valid volunteer id is required.'),
 ];
 
+const listTeamsValidationRules = [
+  ...paginationValidationRules,
+
+  query('search')
+    .optional()
+    .trim()
+    .isLength({ max: 255 }).withMessage('Search keyword must not exceed 255 characters.'),
+];
+
+const getTeamValidationRules = [
+  param('id').isInt({ min: 1 }).withMessage('A valid team id is required.'),
+];
+
 module.exports = {
   dashboardValidationRules,
   listUsersValidationRules,
@@ -158,4 +176,6 @@ module.exports = {
   getDonationHistoryValidationRules,
   listVolunteersValidationRules,
   getVolunteerValidationRules,
+  listTeamsValidationRules,
+  getTeamValidationRules,
 };

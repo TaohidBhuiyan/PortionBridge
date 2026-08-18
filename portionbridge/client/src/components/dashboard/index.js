@@ -5,5 +5,7 @@ export { ProfileDropdown } from './ProfileDropdown';
 export { NotificationDropdown } from './NotificationDropdown';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
+export { ComingSoon } from './ComingSoon';
 export * from './skeletons';
 export * from './volunteer';
+export * from './admin';
