@@ -1,0 +1,7 @@
+# IDE / Editor configuration
+.vscode/
+.idea/
+
+# OS metadata
+.DS_Store
+Thumbs.db
