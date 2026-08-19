@@ -5,9 +5,18 @@ const ALLOWED_ASSIGNMENT_SORT_FIELDS = ['created_at', 'pickup_time', 'scheduled_
 
 /**
  * /assignments only ever means "active work" — narrowing status further
- * is restricted to the two statuses this endpoint already covers.
+ * is restricted to the four non-terminal statuses this endpoint covers
+ * (Phase 5: widened from ACCEPTED/SCHEDULED-only to include ON_THE_WAY
+ * and PICKED_UP, since the volunteer's "My Mission" view needs to keep
+ * surfacing the donation through those statuses too — that's exactly when
+ * live location tracking matters most).
  */
-const ASSIGNMENT_STATUSES = [DONATION_STATUS.ACCEPTED, DONATION_STATUS.SCHEDULED];
+const ASSIGNMENT_STATUSES = [
+  DONATION_STATUS.ACCEPTED,
+  DONATION_STATUS.SCHEDULED,
+  DONATION_STATUS.ON_THE_WAY,
+  DONATION_STATUS.PICKED_UP,
+];
 
 const paginationValidationRules = [
   query('page')

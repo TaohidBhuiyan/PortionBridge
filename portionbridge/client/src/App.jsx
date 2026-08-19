@@ -111,6 +111,14 @@ function App() {
               <Route 
                 path="/volunteer/dashboard" 
                 element={
+                  // PHASE 3: this route previously had no role guard at all
+                  // (every other dashboard route already does — see
+                  // /donor/dashboard etc. above). Added while touching this
+                  // file for the new Opportunities route, since the audit
+                  // brief repeatedly calls for donor/admin to never reach
+                  // volunteer-only actions. The backend already enforced
+                  // this independently on every volunteer/donation endpoint,
+                  // so this closes a frontend UX gap, not a security hole.
                   <ProtectedRoute requiredRole="volunteer">
                     <AuthSocketProvider>
                       <VolunteerDashboard />
@@ -181,6 +189,13 @@ function App() {
               <Route 
                 path="/admin/dashboard" 
                 element={
+                  // PHASE 1 (Dashboard Foundation) FIX: this route had no
+                  // ProtectedRoute at all — any logged-in donor/volunteer
+                  // (or logged-out user hitting the URL) could load the
+                  // admin shell. Every /admin/* API call was still
+                  // enforced server-side, but the frontend route itself
+                  // was unguarded. Now matches the same pattern used for
+                  // donor/volunteer routes above.
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminDashboard />

@@ -6,10 +6,6 @@ axios.defaults.withCredentials = true;
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
-// Development-only helper for quick dashboard access during local development
-// This does NOT authenticate with the backend - it just allows UI development
-const DEV_MODE_DASHBOARD_ACCESS = import.meta.env.DEV;
-
 const AuthContext = createContext(null);
 
 // Helper to retrieve the CSRF token from document.cookie
@@ -55,19 +51,6 @@ export function AuthProvider({ children }) {
           localStorage.removeItem('user');
         }
       }
-
-      // PRODUCTION AUDIT FIX: this used to auto-"log in" as a hardcoded fake
-      // donor (DEV_DONOR_USER) with a literal fake accessToken
-      // ('dev-bypass-token') whenever no real session existed in
-      // development mode. The backend has no matching special case for that
-      // token at all (grepped the whole server — nothing references it), so
-      // every real API call made under this "session" would fail with a
-      // genuine 401 from the actual backend; it only ever faked the client
-      // being logged in, not any real authentication. Removed entirely —
-      // this is exactly the "fake login response / mock dashboard redirect"
-      // pattern this audit is meant to catch. Real login/registration are
-      // unaffected; a fresh session with no token now correctly stays
-      // unauthenticated until the person actually logs in.
 
       if (mounted) {
         setLoading(false);
@@ -270,20 +253,6 @@ export function AuthProvider({ children }) {
     verifyEmail,
     isAuthenticated: !!user,
     userRole: user?.role,
-    // Development-only: allow dashboard access for UI development
-    // This does NOT bypass backend authentication - API calls will still fail
-    // unless properly authenticated. Use only for UI layout/UX development.
-    devModeDashboardAccess: DEV_MODE_DASHBOARD_ACCESS,
-    // Helper function to set mock user for development
-    setDevUser: (role) => {
-      const mockUser = {
-        id: 'dev-user-id',
-        name: role === 'volunteer' ? 'Volunteer User' : (role === 'admin' ? 'Admin User' : 'Donor User'),
-        email: `dev-${role}@example.com`,
-        role: role,
-      };
-      setUser(mockUser);
-    },
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -26,8 +26,12 @@ const ALLOWED_ASSIGNMENT_SORT_COLUMNS = ['created_at', 'pickup_time', 'scheduled
  * donation.model.js#buildBrowseFilter.
  *
  * If `status` is provided it must already be validated as one of
- * ACCEPTED/SCHEDULED (see volunteer.validator.js) and narrows to that exact
- * status. Otherwise both active statuses are included.
+ * ACCEPTED/SCHEDULED/ON_THE_WAY/PICKED_UP (see volunteer.validator.js)
+ * and narrows to that exact status. Otherwise all four non-terminal
+ * statuses are included — widened from the original ACCEPTED/SCHEDULED-only
+ * default (Phase 5: the volunteer's "My Mission" view needs to keep
+ * surfacing the donation through on_the_way/picked_up too, since that's
+ * exactly when live location tracking matters most).
  * @param {Object} filters - Filter options
  * @param {number} filters.volunteerId - ID of the volunteer
  * @param {string} [filters.status] - Narrow to 'accepted' or 'scheduled'
@@ -43,9 +47,11 @@ function buildAssignmentFilter({ volunteerId, status, category, search }) {
     conditions.push('status = :status');
     params.status = status;
   } else {
-    conditions.push('(status = :activeStatus1 OR status = :activeStatus2)');
+    conditions.push('status IN (:activeStatus1, :activeStatus2, :activeStatus3, :activeStatus4)');
     params.activeStatus1 = DONATION_STATUS.ACCEPTED;
     params.activeStatus2 = DONATION_STATUS.SCHEDULED;
+    params.activeStatus3 = DONATION_STATUS.ON_THE_WAY;
+    params.activeStatus4 = DONATION_STATUS.PICKED_UP;
   }
 
   if (category) {
@@ -201,10 +207,52 @@ async function getUpcomingCounts(volunteerId) {
   return rows[0];
 }
 
+/**
+ * Single donation enriched with everything the Phase 5 mission map needs
+ * that plain donationModel.findById doesn't provide: donor name/phone, and
+ * — when the donor used a saved address for pickup — real geocoded
+ * pickup coordinates.
+ *
+ * pickup_latitude/pickup_longitude will be NULL whenever the donor typed a
+ * one-off pickup location instead of picking a saved address (saved_address_id
+ * IS NULL), or picked a saved address that itself has no lat/lng set (both
+ * columns are nullable — see saved_addresses schema). The frontend must
+ * treat NULL honestly ("pickup location not precise enough to map") rather
+ * than guessing or geocoding client-side — this mirrors the exact
+ * limitation TrackingPanel.jsx already documents for the donor-facing
+ * tracking view.
+ *
+ * There is no receiver/beneficiary/drop-off entity anywhere in this schema
+ * (checked: donation_requests, saved_addresses, and every other table) —
+ * so there is deliberately no "receiver" coordinate here to fabricate.
+ * @param {number} donationId - Donation ID
+ * @returns {Promise<Object|null>} Enriched donation object, or null if not found
+ */
+async function getAssignmentMapContext(donationId) {
+  const [rows] = await pool.query(
+    `SELECT
+       dr.id, dr.donor_id, dr.volunteer_id, dr.assignment_mode, dr.team_id, dr.assigned_member_id,
+       dr.title, dr.category, dr.quantity, dr.quantity_unit, dr.description,
+       dr.pickup_location, dr.pickup_time, dr.scheduled_at, dr.accepted_at, dr.completed_at,
+       dr.status, dr.saved_address_id, dr.created_at, dr.updated_at,
+       donor.name AS donor_name, donor.phone AS donor_phone,
+       sa.latitude AS pickup_latitude, sa.longitude AS pickup_longitude,
+       sa.full_address AS pickup_full_address
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     LEFT JOIN saved_addresses sa ON sa.id = dr.saved_address_id
+     WHERE dr.id = :donationId AND dr.is_deleted = 0
+     LIMIT 1`,
+    { donationId }
+  );
+  return rows[0] || null;
+}
+
 module.exports = {
   findAssignments,
   countAssignments,
   findUpcoming,
   countUpcoming,
   getUpcomingCounts,
+  getAssignmentMapContext,
 };

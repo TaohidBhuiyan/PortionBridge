@@ -1,34 +1,16 @@
-import { Map } from 'lucide-react';
-import { DashboardLayout, ComingSoon } from '../components/dashboard';
+import { Navigate } from 'react-router-dom';
 
 /**
- * VolunteerLiveMap — "Live Map" (Phase 1: Dashboard Foundation).
+ * VolunteerLiveMap — "Live Map" (Phase 1 placeholder; Phase 5 implements
+ * the real live mission map).
  *
- * Structural placeholder only. Live volunteer location tracking needs new
- * backend work (a location-update socket event + DB support, gated to
- * only broadcast while a mission is active, per the security rule on
- * exposing volunteer location) — none of that exists yet, so this page
- * intentionally shows no map and no data rather than fake coordinates.
- * The existing donor-side VolunteerMap (Leaflet loaded via CDN) is the
- * pattern to reuse once the backend support lands.
+ * Rather than duplicate the active-mission fetch + MissionMap rendering
+ * that now lives on "My Mission" (VolunteerMission.jsx), this route
+ * redirects there — the two sidebar destinations describe the same real
+ * feature (this donation's live location tracking), and a volunteer only
+ * ever has one active mission at a time, so there's nothing distinct for
+ * a separate "Live Map" page to show.
  */
 export function VolunteerLiveMap() {
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">Live Map</h1>
-          <p className="text-text-secondary text-sm">
-            Track your active mission's pickup and drop-off locations in real time.
-          </p>
-        </div>
-
-        <ComingSoon
-          icon={Map}
-          title="Live tracking is coming soon"
-          description="Real-time mission location tracking is being built. Check back soon."
-        />
-      </div>
-    </DashboardLayout>
-  );
+  return <Navigate to="/volunteer/mission" replace />;
 }

@@ -2,6 +2,8 @@ const { HTTP_STATUS } = require('../constants');
 const AppError = require('../utils/AppError');
 const volunteerModel = require('../models/volunteer.model');
 const donationModel = require('../models/donation.model');
+const teamMemberModel = require('../models/teamMember.model');
+const socketRegistry = require('../sockets/socketRegistry');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 
 /**
@@ -96,28 +98,52 @@ async function getUpcoming(volunteerId, query) {
 }
 
 /**
- * Gets full details for a single assignment, verifying the requesting
- * volunteer owns it. Reuses donationModel.findById — no new SQL — and
- * layers the ownership check in the service so a 404 (doesn't exist /
- * soft-deleted) is always distinguishable from a 403 (exists, but isn't
- * this volunteer's assignment).
+ * Gets full assignment detail for the Phase 5 mission map: donor
+ * name/phone, real pickup coordinates when available (via saved_addresses),
+ * and — for team-mode donations — the team roster with a live online/
+ * offline snapshot from the in-memory socket registry (see
+ * sockets/socketRegistry.js#isOnline; this is a snapshot at request time,
+ * not a push subscription).
+ *
+ * Authorization now checks assigned_member_id as well as volunteer_id
+ * (same two-way check as donation.service.js#assertAssignedVolunteer) —
+ * the previous version only checked volunteer_id, which would incorrectly
+ * 403 the actual assigned team member on a team-mode donation (they're
+ * not volunteer_id, the team leader is).
  * @param {number} volunteerId - ID of the requesting volunteer
- * @param {number} donationId - Donation ID to look up
- * @returns {Promise<Object>} The donation object
- * @throws {AppError} 404 if not found, 403 if not owned by this volunteer
+ * @param {number} donationId - Donation ID
+ * @returns {Promise<Object>} The donation object enriched with donor/pickup/team info
+ * @throws {AppError} 404 if not found, 403 if not the assigned volunteer/member
  */
 async function getAssignmentDetail(volunteerId, donationId) {
-  const donation = await donationModel.findById(donationId);
+  const donation = await volunteerModel.getAssignmentMapContext(donationId);
 
   if (!donation) {
     throw new AppError('Donation assignment not found.', HTTP_STATUS.NOT_FOUND);
   }
 
-  if (donation.volunteer_id !== volunteerId) {
+  const isAssigned = donation.volunteer_id === volunteerId || donation.assigned_member_id === volunteerId;
+  if (!isAssigned) {
     throw new AppError('You are not allowed to view this donation assignment.', HTTP_STATUS.FORBIDDEN);
   }
 
-  return donation;
+  let team = null;
+  if (donation.assignment_mode === 'team' && donation.team_id) {
+    const rawMembers = await teamMemberModel.findByTeamId(donation.team_id);
+    const members = rawMembers.map((m) => ({
+      id: m.user_id,
+      name: m.name,
+      role: m.role,
+      isOnline: socketRegistry.isOnline(m.user_id),
+    }));
+    team = {
+      id: donation.team_id,
+      members,
+      leader: members.find((m) => m.role === 'leader') || null,
+    };
+  }
+
+  return { ...donation, team };
 }
 
 module.exports = {
