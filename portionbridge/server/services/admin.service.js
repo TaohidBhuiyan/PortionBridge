@@ -8,6 +8,7 @@ const teamMemberModel = require('../models/teamMember.model');
 const teamModel = require('../models/team.model');
 const volunteerProfileModel = require('../models/volunteerProfile.model');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
+const socketRegistry = require('../sockets/socketRegistry');
 
 /**
  * Normalizes a value that may arrive from mysql2 as a string/Buffer/null
@@ -566,6 +567,170 @@ async function getUserActivity(userId, query) {
   return { user, activity: parsedActivity, summary, meta };
 }
 
+/* ============================================================
+ * Live Operations (Phase 6)
+ * ============================================================ */
+
+/**
+ * Builds the Admin Live Operations Map's initial snapshot: every active
+ * mission (with donor/volunteer/pickup info), a de-duplicated list of the
+ * volunteers currently on one of them (with an online/offline snapshot
+ * from socketRegistry — same source Phase 4/5 already use), and the teams
+ * involved (leader + roster, reusing teamMemberModel.findByTeamId).
+ *
+ * This is a REST snapshot for first paint only — live updates after that
+ * come from the existing Socket.io 'volunteer_location_updated' /
+ * 'donation_status_updated' events, now also broadcast to the
+ * 'admin_live_ops' room (see tracking.handler.js and
+ * donation.service.js#emitDonationStatusUpdate). No location data is
+ * persisted or returned here beyond what's already real: this endpoint
+ * does NOT invent a "current position" for any volunteer — that only
+ * ever comes from a live socket update after the admin's map has joined
+ * the room, exactly like the volunteer's own MissionMap (Phase 5) has no
+ * position until the browser's geolocation reports one.
+ * @returns {Promise<Object>} { missions, volunteers, teams }
+ */
+async function getLiveOperations() {
+  const missions = await adminModel.findActiveDonationsForMap();
+
+  const volunteerMap = new Map();
+  const teamIds = new Set();
+
+  for (const mission of missions) {
+    const personId = mission.assignment_mode === 'team' ? mission.assigned_member_id : mission.volunteer_id;
+    const personName = mission.assignment_mode === 'team' ? mission.assigned_member_name : mission.volunteer_name;
+
+    if (personId && !volunteerMap.has(personId)) {
+      volunteerMap.set(personId, {
+        id: personId,
+        name: personName,
+        isOnline: socketRegistry.isOnline(personId),
+        donationId: mission.id,
+        status: mission.status,
+      });
+    }
+    if (mission.assignment_mode === 'team' && mission.team_id) {
+      teamIds.add(mission.team_id);
+    }
+  }
+
+  const teams = await Promise.all(
+    Array.from(teamIds).map(async (teamId) => {
+      const [team, members] = await Promise.all([
+        teamModel.findById(teamId),
+        teamMemberModel.findByTeamId(teamId),
+      ]);
+      return {
+        id: team.id,
+        name: team.name,
+        leaderName: team.leader_name,
+        members: members.map((m) => ({
+          id: m.user_id,
+          name: m.name,
+          role: m.role,
+          isOnline: socketRegistry.isOnline(m.user_id),
+        })),
+      };
+    })
+  );
+
+  return {
+    missions,
+    volunteers: Array.from(volunteerMap.values()),
+    teams,
+  };
+}
+
+/* ============================================================
+ * Attention Center (Phase 7)
+ * ============================================================ */
+
+/**
+ * Generates the admin Attention Center list: a flat, prioritized set of
+ * real conditions (reported donations, delayed pickups/deliveries,
+ * unassigned donations, inactive volunteers, stale locations, pending
+ * moderation items). This is computed fresh on every call — nothing here
+ * is stored or persisted as a separate alerts table. Every item has a
+ * direct navigation link to the relevant detail page.
+ * @returns {Promise<Object>} { items, generatedAt }
+ */
+async function getAttentionCenter() {
+  const [reportedDonations, delayedPickups, delayedDeliveries, unassignedDonations, inactiveVolunteers, staleLocations] = await Promise.all([
+    adminModel.findReportedDonations(),
+    adminModel.findDelayedPickups(),
+    adminModel.findDelayedDeliveries(),
+    adminModel.findUnassignedDonations(),
+    adminModel.findInactiveVolunteers(),
+    adminModel.findStaleLocations(),
+  ]);
+
+  const ATTENTION_ITEM_META = {
+    reported_donation: { severity: 'high', title: 'Reported Donation' },
+    pending_moderation: { severity: 'medium', title: 'Pending Moderation' },
+    delayed_pickup: { severity: 'medium', title: 'Delayed Pickup' },
+    delayed_delivery: { severity: 'high', title: 'Delayed Delivery' },
+    unassigned_donation: { severity: 'medium', title: 'Unassigned Donation' },
+    inactive_volunteer: { severity: 'low', title: 'Inactive Volunteer' },
+    stale_location: { severity: 'low', title: 'Stale Location' },
+  };
+
+  const items = [
+    ...reportedDonations.map((d) => ({
+      id: `reported-${d.id}`,
+      type: 'reported_donation',
+      severity: ATTENTION_ITEM_META.reported_donation.severity,
+      description: `Donation #${d.id} by ${d.donor_name} has been reported`,
+      link: `/admin/donations/${d.id}`,
+      detectedAt: d.reported_at,
+    })),
+    ...delayedPickups.map((d) => ({
+      id: `delayed-pickup-${d.id}`,
+      type: 'delayed_pickup',
+      severity: ATTENTION_ITEM_META.delayed_pickup.severity,
+      description: `Donation #${d.id} pickup was scheduled for ${new Date(d.scheduled_at).toLocaleString()}`,
+      link: `/admin/donations/${d.id}`,
+      detectedAt: d.scheduled_at,
+    })),
+    ...delayedDeliveries.map((d) => ({
+      id: `delayed-delivery-${d.id}`,
+      type: 'delayed_delivery',
+      severity: ATTENTION_ITEM_META.delayed_delivery.severity,
+      description: `Donation #${d.id} was picked up but not yet completed`,
+      link: `/admin/donations/${d.id}`,
+      detectedAt: d.picked_up_at,
+    })),
+    ...unassignedDonations.map((d) => ({
+      id: `unassigned-${d.id}`,
+      type: 'unassigned_donation',
+      severity: ATTENTION_ITEM_META.unassigned_donation.severity,
+      description: `Donation #${d.id} by ${d.donor_name} has no volunteer assigned`,
+      link: `/admin/donations/${d.id}`,
+      detectedAt: d.created_at,
+    })),
+    ...inactiveVolunteers.map((v) => ({
+      id: `inactive-volunteer-${v.id}`,
+      type: 'inactive_volunteer',
+      severity: ATTENTION_ITEM_META.inactive_volunteer.severity,
+      description: `Volunteer ${v.name} appears offline`,
+      link: `/admin/volunteers/${v.id}`,
+      detectedAt: v.last_seen_at,
+    })),
+    ...staleLocations.map((d) => ({
+      id: `stale-location-${d.id}`,
+      type: 'stale_location',
+      severity: ATTENTION_ITEM_META.stale_location.severity,
+      description: `Donation #${d.id} volunteer location hasn't updated recently`,
+      link: `/admin/donations/${d.id}`,
+      detectedAt: d.last_location_at,
+    })),
+  ];
+
+  return {
+    items: items.sort((a, b) => new Date(b.detectedAt) - new Date(a.detectedAt)),
+    generatedAt: new Date().toISOString(),
+  };
+}
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -580,4 +745,6 @@ module.exports = {
   listTeams,
   getTeamDetail,
   getUserActivity,
+  getLiveOperations,
+  getAttentionCenter,
 };

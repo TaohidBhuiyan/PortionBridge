@@ -124,10 +124,33 @@ async function countMyReports({ reporterId, status }) {
   return rows[0].total;
 }
 
+/**
+ * Finds all reports filed against a specific donation, most recent first,
+ * joined with the reporter's name for admin display. Backs Phase 3's
+ * admin donation detail ("Reported" context) and the Donation Management
+ * "Reported" filter in admin.model.js#buildAdminDonationFilter.
+ * @param {number} donationId - Donation ID
+ * @returns {Promise<Array>} Array of report rows with reporter_name
+ */
+async function findByDonationId(donationId) {
+  const [rows] = await pool.query(
+    `SELECT r.id, r.reporter_id, r.reported_user_id, r.reported_donation_id,
+            r.reason, r.details, r.status, r.created_at, r.updated_at,
+            reporter.name AS reporter_name, reporter.email AS reporter_email
+     FROM reports r
+     LEFT JOIN users reporter ON reporter.id = r.reporter_id
+     WHERE r.reported_donation_id = :donationId
+     ORDER BY r.created_at DESC`,
+    { donationId }
+  );
+  return rows;
+}
+
 module.exports = {
   create,
   findById,
   findByReporterAndDonation,
   findMyReports,
   countMyReports,
+  findByDonationId,
 };

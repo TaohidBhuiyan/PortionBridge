@@ -164,6 +164,10 @@ const getTeamValidationRules = [
   param('id').isInt({ min: 1 }).withMessage('A valid team id is required.'),
 ];
 
+// Live operations and attention center take no input — empty rule sets
+const liveOperationsValidationRules = [];
+const attentionCenterValidationRules = [];
+
 module.exports = {
   dashboardValidationRules,
   listUsersValidationRules,
@@ -178,4 +182,6 @@ module.exports = {
   getVolunteerValidationRules,
   listTeamsValidationRules,
   getTeamValidationRules,
+  liveOperationsValidationRules,
+  attentionCenterValidationRules,
 };

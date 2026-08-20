@@ -26,10 +26,14 @@ async function isDbAvailable() {
   return dbAvailable;
 }
 
+const createdEmails = [];
 let userCounter = 0;
 function uniqueEmail(prefix = 'test') {
   userCounter += 1;
-  return `${prefix}_${Date.now()}_${userCounter}@example.test`;
+  const rand = Math.random().toString(36).substring(2, 7);
+  const email = `${prefix}_${process.pid}_${Date.now()}_${userCounter}_${rand}@example.test`;
+  createdEmails.push(email);
+  return email;
 }
 
 const TEST_PASSWORD = 'StrongPass123!';
@@ -71,26 +75,27 @@ async function createVerifiedUser({ role = 'donor', name = 'Test User' } = {}) {
  * mistake.
  */
 async function cleanupTestData() {
-  const testDomain = '%@example.test';
+  if (createdEmails.length === 0) return;
   await pool.query(
     `DELETE dr FROM donation_requests dr
      JOIN users u ON dr.donor_id = u.id
-     WHERE u.email LIKE :domain`,
-    { domain: testDomain }
+     WHERE u.email IN (?)`,
+    [createdEmails]
   );
   await pool.query(
     `DELETE tm FROM team_members tm
      JOIN users u ON tm.user_id = u.id
-     WHERE u.email LIKE :domain`,
-    { domain: testDomain }
+     WHERE u.email IN (?)`,
+    [createdEmails]
   );
   await pool.query(
     `DELETE t FROM teams t
      JOIN users u ON t.leader_id = u.id
-     WHERE u.email LIKE :domain`,
-    { domain: testDomain }
+     WHERE u.email IN (?)`,
+    [createdEmails]
   );
-  await pool.query('DELETE FROM users WHERE email LIKE :domain', { domain: testDomain });
+  await pool.query('DELETE FROM users WHERE email IN (?)', [createdEmails]);
+  createdEmails.length = 0;
 }
 
 function validFoodDonationPayload(overrides = {}) {

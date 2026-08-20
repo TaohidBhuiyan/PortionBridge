@@ -177,6 +177,32 @@ const getTeam = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/v1/admin/live-operations (Phase 6)
+ */
+const getLiveOperations = asyncHandler(async (req, res) => {
+  const data = await adminService.getLiveOperations();
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Live operations data retrieved successfully.',
+    data,
+  });
+});
+
+/**
+ * GET /api/v1/admin/attention-center (Phase 7)
+ */
+const getAttentionCenter = asyncHandler(async (req, res) => {
+  const data = await adminService.getAttentionCenter();
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Attention center data retrieved successfully.',
+    data,
+  });
+});
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -191,4 +217,6 @@ module.exports = {
   getVolunteer,
   listTeams,
   getTeam,
+  getLiveOperations,
+  getAttentionCenter,
 };

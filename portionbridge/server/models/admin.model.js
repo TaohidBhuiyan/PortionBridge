@@ -37,7 +37,8 @@ const ADMIN_DONATION_COLUMNS_WITH_NAMES = `
   dr.is_deleted, dr.deleted_at, dr.created_at, dr.updated_at,
   donor.name AS donor_name, donor.email AS donor_email, donor.phone AS donor_phone,
   volunteer.name AS volunteer_name, volunteer.email AS volunteer_email, volunteer.phone AS volunteer_phone,
-  member.name AS assigned_member_name
+  member.name AS assigned_member_name,
+  sa.latitude AS pickup_latitude, sa.longitude AS pickup_longitude
 `;
 
 const ADMIN_DONATION_JOINS = `
@@ -45,6 +46,7 @@ const ADMIN_DONATION_JOINS = `
   LEFT JOIN users donor ON donor.id = dr.donor_id
   LEFT JOIN users volunteer ON volunteer.id = dr.volunteer_id
   LEFT JOIN users member ON member.id = dr.assigned_member_id
+  LEFT JOIN saved_addresses sa ON sa.id = dr.saved_address_id
 `;
 
 const ALLOWED_USER_SORT_COLUMNS = ['created_at', 'name', 'email'];
@@ -839,6 +841,221 @@ async function findRecentActivity(limit) {
   return rows;
 }
 
+/* ============================================================
+ * Live Operations (Phase 6)
+ * ============================================================ */
+
+/**
+ * Finds every active donation (accepted, scheduled, on_the_way, picked_up)
+ * for the Admin Live Operations Map, enriched with donor/volunteer names
+ * so the map's markers and panels can show who's involved without a second
+ * round trip. Returns pickup_latitude/longitude when available (from
+ * saved addresses) — NULL when a donor entered a manual address, which is
+ * expected and handled: the map will show a donor location marker but no
+ * route line until the volunteer's location actually arrives.
+ *
+ * The assignment_mode/team_id/assigned_member_id fields are included so
+ * the map can correctly render individual volunteer markers vs team markers
+ * and look up team rosters when a team-mode mission is selected.
+ *
+ * This is a first-paint snapshot only: live position updates come from
+ * Socket.io, not this endpoint. The endpoint itself does NOT return any
+ * volunteer location data — that would be stale the moment it's rendered.
+ * @returns {Promise<Array>} Array of active donation objects with donor/volunteer names
+ */
+async function findActiveDonationsForMap() {
+  const [rows] = await pool.query(
+    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
+     ${ADMIN_DONATION_JOINS}
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)
+     ORDER BY dr.updated_at DESC
+     LIMIT 200`,
+    {
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+    }
+  );
+  return rows;
+}
+
+/* ============================================================
+ * Attention Center (Phase 7)
+ * ============================================================ */
+
+/**
+ * Every pending (not pending/scheduled-for-later — actually non-terminal)
+ * donation, enriched with everything admin.service.js#getAttentionCenter
+ * needs to derive operational flags (see utils/donationHealthScore.js):
+ * donor verification, assignment, scheduling, and — via a correlated
+ * subquery against the trigger-populated donation_status_history table —
+ * when the donation entered 'picked_up', since that timestamp isn't its
+ * own column on donation_requests.
+ *
+ * Capped at 300 rows for the same "sane ceiling, not a silent truncation
+ * surprise" reasoning as findActiveDonationsForMap (Phase 6).
+ * @returns {Promise<Array>} Array of candidate donation rows
+ */
+async function findDonationsForAttentionCenter() {
+  const [rows] = await pool.query(
+    `SELECT
+       dr.id, dr.title, dr.category, dr.status, dr.donor_id, dr.volunteer_id,
+       dr.assignment_mode, dr.team_id, dr.assigned_member_id,
+       dr.scheduled_at, dr.created_at, dr.updated_at, dr.is_deleted,
+       donor.name AS donor_name, donor.email_verified AS donor_verified,
+       volunteer.name AS volunteer_name,
+       (SELECT new_status FROM donation_status_history h
+        WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
+        ORDER BY h.changed_at DESC LIMIT 1) AS picked_up_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     LEFT JOIN users volunteer ON volunteer.id = dr.volunteer_id
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:pending, :accepted, :scheduled, :onTheWay, :pickedUp)
+     ORDER BY dr.updated_at DESC
+     LIMIT 300`,
+    {
+      pending: DONATION_STATUS.PENDING,
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+    }
+  );
+  return rows;
+}
+
+/**
+ * Finds donations with at least one unresolved report.
+ * @returns {Promise<Array>} Array of reported donation objects
+ */
+async function findReportedDonations() {
+  const [rows] = await pool.query(
+    `SELECT dr.id, dr.donor_id, donor.name AS donor_name, MAX(r.created_at) AS reported_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     INNER JOIN reports r ON r.reported_donation_id = dr.id AND r.status = 'pending'
+     WHERE dr.is_deleted = 0
+     GROUP BY dr.id, dr.donor_id, donor.name
+     ORDER BY reported_at DESC
+     LIMIT 50`
+  );
+  return rows;
+}
+
+/**
+ * Finds accepted/scheduled donations whose scheduled_at time has passed
+ * by more than the grace period (15 minutes).
+ * @returns {Promise<Array>} Array of delayed pickup donation objects
+ */
+async function findDelayedPickups() {
+  const [rows] = await pool.query(
+    `SELECT id, donor_id, donor.name AS donor_name, scheduled_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:accepted, :scheduled)
+       AND dr.scheduled_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+     ORDER BY scheduled_at ASC
+     LIMIT 50`,
+    { accepted: DONATION_STATUS.ACCEPTED, scheduled: DONATION_STATUS.SCHEDULED }
+  );
+  return rows;
+}
+
+/**
+ * Finds picked_up donations that have been in that state for more than
+ * the grace period (90 minutes).
+ * @returns {Promise<Array>} Array of delayed delivery donation objects
+ */
+async function findDelayedDeliveries() {
+  const [rows] = await pool.query(
+    `SELECT dr.id, dr.donor_id, donor.name AS donor_name,
+       (SELECT h.changed_at FROM donation_status_history h
+        WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
+        ORDER BY h.changed_at DESC LIMIT 1) AS picked_up_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     WHERE dr.is_deleted = 0
+       AND dr.status = :pickedUp
+       AND (SELECT h.changed_at FROM donation_status_history h
+           WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
+           ORDER BY h.changed_at DESC LIMIT 1) < DATE_SUB(NOW(), INTERVAL 90 MINUTE)
+     ORDER BY picked_up_at ASC
+     LIMIT 50`,
+    { pickedUp: DONATION_STATUS.PICKED_UP }
+  );
+  return rows;
+}
+
+/**
+ * Finds pending donations that have been unassigned for more than the
+ * grace period (2 hours).
+ * @returns {Promise<Array>} Array of unassigned donation objects
+ */
+async function findUnassignedDonations() {
+  const [rows] = await pool.query(
+    `SELECT id, donor_id, donor.name AS donor_name, created_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     WHERE dr.is_deleted = 0
+       AND dr.status = :pending
+       AND dr.volunteer_id IS NULL
+       AND dr.created_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)
+     ORDER BY created_at ASC
+     LIMIT 50`,
+    { pending: DONATION_STATUS.PENDING }
+  );
+  return rows;
+}
+
+/**
+ * Finds volunteers who are currently assigned to active missions but
+ * appear offline (no socket connection).
+ * @returns {Promise<Array>} Array of inactive volunteer objects
+ */
+async function findInactiveVolunteers() {
+  const [rows] = await pool.query(
+    `SELECT DISTINCT u.id, u.name, MAX(a.created_at) AS last_seen_at
+     FROM users u
+     INNER JOIN donation_requests dr ON (dr.volunteer_id = u.id OR dr.assigned_member_id = u.id)
+     LEFT JOIN audit_logs a ON a.user_id = u.id
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)
+       AND u.role = :volunteer
+     GROUP BY u.id, u.name
+     LIMIT 50`,
+    { accepted: DONATION_STATUS.ACCEPTED, scheduled: DONATION_STATUS.SCHEDULED, onTheWay: DONATION_STATUS.ON_THE_WAY, pickedUp: DONATION_STATUS.PICKED_UP, volunteer: USER_ROLES.VOLUNTEER }
+  );
+  return rows;
+}
+
+/**
+ * Finds active missions where the assigned volunteer's location hasn't
+ * updated in more than the grace period (10 minutes).
+ * @returns {Promise<Array>} Array of stale location donation objects
+ */
+async function findStaleLocations() {
+  const [rows] = await pool.query(
+    `SELECT dr.id, dr.donor_id, donor.name AS donor_name,
+       MAX(a.created_at) AS last_location_at
+     FROM donation_requests dr
+     LEFT JOIN users donor ON donor.id = dr.donor_id
+     LEFT JOIN audit_logs a ON a.user_id = COALESCE(dr.volunteer_id, dr.assigned_member_id)
+       AND a.action = 'location_updated'
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:onTheWay, :pickedUp)
+       AND (dr.volunteer_id IS NOT NULL OR dr.assigned_member_id IS NOT NULL)
+     GROUP BY dr.id, dr.donor_id, donor.name
+     HAVING last_location_at IS NULL OR last_location_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)
+     LIMIT 50`,
+    { onTheWay: DONATION_STATUS.ON_THE_WAY, pickedUp: DONATION_STATUS.PICKED_UP }
+  );
+  return rows;
+}
+
 module.exports = {
   getUserCounts,
   getDonationCounts,
@@ -870,4 +1087,12 @@ module.exports = {
   countUserActivity,
   getUserActivityActionSummary,
   findRecentActivity,
+  findActiveDonationsForMap,
+  findDonationsForAttentionCenter,
+  findReportedDonations,
+  findDelayedPickups,
+  findDelayedDeliveries,
+  findUnassignedDonations,
+  findInactiveVolunteers,
+  findStaleLocations,
 };

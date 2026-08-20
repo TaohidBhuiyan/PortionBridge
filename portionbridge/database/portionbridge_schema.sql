@@ -445,333 +445,233 @@ CREATE TABLE donation_requests (
   KEY idx_donation_category (category),
   KEY idx_donation_donor_id (donor_id),
   KEY idx_donation_volunteer_id (volunteer_id),
-  KEY idx_donation_is_deleted (is_deleted),
-  KEY idx_donation_pickup_location (pickup_location),
-  KEY idx_donation_pickup_date (pickup_date),
-  KEY idx_donation_saved_address_id (saved_address_id),
   KEY idx_donation_team_id (team_id),
-  KEY idx_donation_assigned_member_id (assigned_member_id),
-  KEY idx_donation_assignment_mode (assignment_mode),
+  KEY idx_donation_scheduled_at (scheduled_at),
+  KEY idx_donation_created_at (created_at),
+  KEY idx_donation_is_deleted (is_deleted),
 
-  CONSTRAINT fk_donation_donor
-    FOREIGN KEY (donor_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_donation_volunteer
-    FOREIGN KEY (volunteer_id) REFERENCES users(id)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_donation_saved_address
-    FOREIGN KEY (saved_address_id) REFERENCES saved_addresses(id)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_donation_team
-    FOREIGN KEY (team_id) REFERENCES teams(id)
+  CONSTRAINT fk_donation_donor FOREIGN KEY (donor_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_donation_volunteer FOREIGN KEY (volunteer_id) REFERENCES users(id)
     ON DELETE SET NULL ON UPDATE CASCADE,
-
-  CONSTRAINT fk_donation_assigned_member
-    FOREIGN KEY (assigned_member_id) REFERENCES users(id)
+  CONSTRAINT fk_donation_team FOREIGN KEY (team_id) REFERENCES teams(id)
     ON DELETE SET NULL ON UPDATE CASCADE,
-
-  CONSTRAINT chk_donation_quantity CHECK (quantity > 0)
+  CONSTRAINT fk_donation_saved_address FOREIGN KEY (saved_address_id) REFERENCES saved_addresses(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-
--- ============================================================================
--- TABLE: donation_assignments
--- Migration 011
--- Tracks which team members are assigned to which donations
--- ============================================================================
-CREATE TABLE donation_assignments (
-  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  donation_id INT UNSIGNED NOT NULL,
-  team_id INT UNSIGNED NOT NULL,
-  member_id INT UNSIGNED NOT NULL,
-  assigned_by INT UNSIGNED NOT NULL,
-  assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  status ENUM('assigned', 'in_progress', 'completed', 'cancelled') NOT NULL DEFAULT 'assigned',
-  completed_at DATETIME DEFAULT NULL,
-  
-  CONSTRAINT fk_donation_assignments_donation FOREIGN KEY (donation_id) 
-    REFERENCES donation_requests(id) ON DELETE CASCADE,
-  
-  CONSTRAINT fk_donation_assignments_team FOREIGN KEY (team_id) 
-    REFERENCES teams(id) ON DELETE CASCADE,
-  
-  CONSTRAINT fk_donation_assignments_member FOREIGN KEY (member_id) 
-    REFERENCES users(id) ON DELETE CASCADE,
-  
-  CONSTRAINT fk_donation_assignments_assigned_by FOREIGN KEY (assigned_by) 
-    REFERENCES users(id) ON DELETE CASCADE,
-  
-  CONSTRAINT uq_donation_assignments UNIQUE (donation_id, member_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
-CREATE INDEX idx_donation_assignments_donation ON donation_assignments(donation_id);
-CREATE INDEX idx_donation_assignments_team ON donation_assignments(team_id);
-CREATE INDEX idx_donation_assignments_member ON donation_assignments(member_id);
-CREATE INDEX idx_donation_assignments_status ON donation_assignments(status);
 
 
 -- ============================================================================
 -- TABLE: donation_status_history
--- Full audit trail: logs every status transition of a donation request.
+-- Audit trail for donation status changes (logs every transition).
+-- Migration 005
 -- ============================================================================
 CREATE TABLE donation_status_history (
-  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  donation_request_id   INT UNSIGNED NOT NULL,
-  changed_by            INT UNSIGNED DEFAULT NULL,
-  old_status            VARCHAR(20) DEFAULT NULL,
-  new_status            VARCHAR(20) NOT NULL,
-  changed_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                  INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  donation_request_id INT UNSIGNED NOT NULL,
+  changed_by          INT UNSIGNED DEFAULT NULL,
+  old_status          ENUM('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed') DEFAULT NULL,
+  new_status          ENUM('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed') NOT NULL,
+  changed_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
+  KEY idx_status_history_donation_id (donation_request_id),
+  KEY idx_status_history_changed_at (changed_at),
 
-  KEY idx_history_donation_id (donation_request_id),
-  KEY idx_history_changed_by (changed_by),
-  KEY idx_history_changed_at (changed_at),
-
-  CONSTRAINT fk_history_donation
-    FOREIGN KEY (donation_request_id) REFERENCES donation_requests(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_history_changed_by
-    FOREIGN KEY (changed_by) REFERENCES users(id)
-    ON DELETE SET NULL
-    ON UPDATE CASCADE
+  CONSTRAINT fk_status_history_donation FOREIGN KEY (donation_request_id) REFERENCES donation_requests(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_status_history_changed_by FOREIGN KEY (changed_by) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
 -- TABLE: chat_messages
--- Persistent chat tied to a specific donation request (donor <-> volunteer).
+-- Real-time messaging between donors and volunteers.
+-- Migration 006
 -- ============================================================================
 CREATE TABLE chat_messages (
-  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  donation_request_id   INT UNSIGNED NOT NULL,
-  sender_id             INT UNSIGNED NOT NULL,
-  message               TEXT NOT NULL,
-  is_read               TINYINT(1) NOT NULL DEFAULT 0,
-  created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  donation_id       INT UNSIGNED NOT NULL,
+  sender_id         INT UNSIGNED NOT NULL,
+  message           TEXT NOT NULL,
+  is_read           TINYINT(1) NOT NULL DEFAULT 0,
+  read_at           DATETIME DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
-
-  KEY idx_chat_donation_id (donation_request_id),
+  KEY idx_chat_donation_id (donation_id),
   KEY idx_chat_sender_id (sender_id),
   KEY idx_chat_created_at (created_at),
 
-  CONSTRAINT fk_chat_donation
-    FOREIGN KEY (donation_request_id) REFERENCES donation_requests(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_chat_sender
-    FOREIGN KEY (sender_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  CONSTRAINT fk_chat_donation FOREIGN KEY (donation_id) REFERENCES donation_requests(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_chat_sender FOREIGN KEY (sender_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
 -- TABLE: notifications
--- In-app notifications per user (donation accepted, new message, etc.).
+-- User notifications for donation updates, system messages, etc.
+-- Migration 006
 -- ============================================================================
 CREATE TABLE notifications (
-  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_id       INT UNSIGNED NOT NULL,
-  type          ENUM(
-                  'donation_created',
-                  'volunteer_assigned',
-                  'donation_accepted',
-                  'pickup_scheduled',
-                  'volunteer_on_the_way',
-                  'pickup_completed',
-                  'donation_cancelled',
-                  'assignment_changed',
-                  'new_message',
-                  'status_updated',
-                  'rating_received',
-                  'report_filed',
-                  'team_invitation_received',
-                  'team_invitation_accepted',
-                  'team_member_joined',
-                  'team_member_left',
-                  'team_leadership_transferred',
-                  'team_member_promoted',
-                  'team_member_removed',
-                  'team_announcement',
-                  'team_donation_assigned',
-                  'team_donation_completed'
-                ) NOT NULL,
-  title         VARCHAR(150) NOT NULL,
-  message       VARCHAR(500) NOT NULL,
-  related_id    INT UNSIGNED DEFAULT NULL,
-  is_read       TINYINT(1) NOT NULL DEFAULT 0,
-  created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id           INT UNSIGNED NOT NULL,
+  type              VARCHAR(50) NOT NULL,
+  title             VARCHAR(200) NOT NULL,
+  message           TEXT NOT NULL,
+  related_id        INT UNSIGNED DEFAULT NULL,
+  is_read           TINYINT(1) NOT NULL DEFAULT 0,
+  read_at           DATETIME DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
-
   KEY idx_notifications_user_id (user_id),
-  KEY idx_notifications_is_read (is_read),
   KEY idx_notifications_type (type),
+  KEY idx_notifications_is_read (is_read),
+  KEY idx_notifications_created_at (created_at),
 
-  CONSTRAINT fk_notifications_user
-    FOREIGN KEY (user_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE
+  CONSTRAINT fk_notifications_user FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
 -- TABLE: ratings
--- Donor <-> Volunteer mutual ratings after a donation is completed.
+-- Donor ratings for volunteers after completed donations.
+-- Migration 007
 -- ============================================================================
 CREATE TABLE ratings (
-  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  donation_request_id   INT UNSIGNED NOT NULL,
-  rated_by              INT UNSIGNED NOT NULL,
-  rated_user            INT UNSIGNED NOT NULL,
-  stars                 TINYINT UNSIGNED NOT NULL,
-  comment               VARCHAR(500) DEFAULT NULL,
-  created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  donation_id       INT UNSIGNED NOT NULL,
+  donor_id          INT UNSIGNED NOT NULL,
+  volunteer_id      INT UNSIGNED NOT NULL,
+  rating            TINYINT UNSIGNED NOT NULL,
+  comment           TEXT DEFAULT NULL,
+  created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
+  UNIQUE KEY uq_ratings_donation (donation_id),
+  KEY idx_ratings_volunteer_id (volunteer_id),
+  KEY idx_ratings_created_at (created_at),
 
-  UNIQUE KEY uq_rating_per_donation_rater (donation_request_id, rated_by),
+  CONSTRAINT fk_ratings_donation FOREIGN KEY (donation_id) REFERENCES donation_requests(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ratings_donor FOREIGN KEY (donor_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ratings_volunteer FOREIGN KEY (volunteer_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
 
-  KEY idx_ratings_rated_user (rated_user),
-  KEY idx_ratings_rated_by (rated_by),
-
-  CONSTRAINT fk_ratings_donation
-    FOREIGN KEY (donation_request_id) REFERENCES donation_requests(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_ratings_rated_by
-    FOREIGN KEY (rated_by) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_ratings_rated_user
-    FOREIGN KEY (rated_user) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT chk_ratings_stars CHECK (stars BETWEEN 1 AND 5),
-  CONSTRAINT chk_ratings_not_self CHECK (rated_by <> rated_user)
+  CONSTRAINT chk_ratings_range CHECK (rating >= 1 AND rating <= 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
 -- TABLE: reports
--- Report/Flag a user or a donation post; reviewed by Admin.
--- Migration 006: Added details column and unique constraint
+-- User reports for donations, volunteers, or other users.
+-- Migration 006
 -- ============================================================================
 CREATE TABLE reports (
-  id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  reporter_id             INT UNSIGNED NOT NULL,
-  reported_user_id        INT UNSIGNED DEFAULT NULL,
-  reported_donation_id    INT UNSIGNED DEFAULT NULL,
-  reason                  VARCHAR(500) NOT NULL,
-  details                 TEXT DEFAULT NULL,
-  status                  ENUM('pending', 'reviewed', 'resolved') NOT NULL DEFAULT 'pending',
-  created_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at              TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-                             ON UPDATE CURRENT_TIMESTAMP,
+  id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  reporter_id          INT UNSIGNED NOT NULL,
+  reported_user_id     INT UNSIGNED DEFAULT NULL,
+  reported_donation_id INT UNSIGNED DEFAULT NULL,
+  reason               VARCHAR(100) NOT NULL,
+  details              TEXT DEFAULT NULL,
+  status               ENUM('pending', 'reviewed', 'resolved', 'dismissed') NOT NULL DEFAULT 'pending',
+  created_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                        ON UPDATE CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
-
   KEY idx_reports_reporter_id (reporter_id),
   KEY idx_reports_reported_user_id (reported_user_id),
   KEY idx_reports_reported_donation_id (reported_donation_id),
   KEY idx_reports_status (status),
-  UNIQUE KEY uq_reports_reporter_donation (reporter_id, reported_donation_id),
 
-  CONSTRAINT fk_reports_reporter
-    FOREIGN KEY (reporter_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
+  CONSTRAINT fk_reports_reporter FOREIGN KEY (reporter_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_reports_reported_user FOREIGN KEY (reported_user_id) REFERENCES users(id)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_reports_reported_donation FOREIGN KEY (reported_donation_id) REFERENCES donation_requests(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
 
-  CONSTRAINT fk_reports_reported_user
-    FOREIGN KEY (reported_user_id) REFERENCES users(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT fk_reports_reported_donation
-    FOREIGN KEY (reported_donation_id) REFERENCES donation_requests(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-
-  CONSTRAINT chk_reports_target_present
-    CHECK (reported_user_id IS NOT NULL OR reported_donation_id IS NOT NULL)
+  CONSTRAINT uq_reports_reporter_donation UNIQUE (reporter_id, reported_donation_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
--- VIEW: top_donors
--- Leaderboard: ranks donors by completed donation count.
--- Migration 007: Fixed to avoid Cartesian product bug
+-- TABLE: schema_migrations
+-- Tracks which migrations have been applied.
+-- ============================================================================
+CREATE TABLE schema_migrations (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  version     VARCHAR(50) NOT NULL,
+  applied_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_schema_migrations_version (version)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: donation_assignments
+-- Tracks volunteer assignments for team-based donation assignments.
+-- Migration 011
+-- ============================================================================
+CREATE TABLE donation_assignments (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  donation_id     INT UNSIGNED NOT NULL,
+  volunteer_id    INT UNSIGNED NOT NULL,
+  assigned_by     INT UNSIGNED NOT NULL,
+  assigned_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status          ENUM('assigned', 'completed', 'cancelled') NOT NULL DEFAULT 'assigned',
+  
+  PRIMARY KEY (id),
+  KEY idx_donation_assignments_donation_id (donation_id),
+  KEY idx_donation_assignments_volunteer_id (volunteer_id),
+  KEY idx_donation_assignments_status (status),
+  
+  CONSTRAINT fk_donation_assignments_donation FOREIGN KEY (donation_id) 
+    REFERENCES donation_requests(id) ON DELETE CASCADE,
+  CONSTRAINT fk_donation_assignments_volunteer FOREIGN KEY (volunteer_id) 
+    REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_donation_assignments_assigned_by FOREIGN KEY (assigned_by) 
+    REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- VIEWS: Top Donors and Top Volunteers
 -- ============================================================================
 CREATE VIEW top_donors AS
-SELECT
-  u.id                              AS user_id,
-  u.name                            AS donor_name,
-  u.profile_photo                   AS profile_photo,
-  dstats.total_donations            AS total_donations,
-  dstats.completed_count            AS completed_count,
-  dstats.total_quantity_donated     AS total_quantity_donated,
-  rstats.average_rating             AS average_rating
+SELECT 
+  u.id,
+  u.name,
+  u.email,
+  COUNT(dr.id) AS total_donations,
+  SUM(CASE WHEN dr.status = 'completed' THEN 1 ELSE 0 END) AS completed_donations
 FROM users u
-JOIN (
-  SELECT
-    donor_id,
-    COUNT(*)                                                    AS total_donations,
-    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END)       AS completed_count,
-    SUM(CASE WHEN status = 'completed' THEN quantity ELSE 0 END) AS total_quantity_donated
-  FROM donation_requests
-  WHERE is_deleted = 0
-  GROUP BY donor_id
-) dstats ON dstats.donor_id = u.id
-LEFT JOIN (
-  SELECT rated_user, ROUND(AVG(stars), 2) AS average_rating
-  FROM ratings
-  GROUP BY rated_user
-) rstats ON rstats.rated_user = u.id
+LEFT JOIN donation_requests dr ON u.id = dr.donor_id AND dr.is_deleted = 0
 WHERE u.role = 'donor' AND u.is_deleted = 0
-ORDER BY completed_count DESC, total_quantity_donated DESC;
+GROUP BY u.id, u.name, u.email
+ORDER BY completed_donations DESC
+LIMIT 10;
 
-
--- ============================================================================
--- VIEW: top_volunteers
--- Leaderboard: ranks volunteers by completed pickup count.
--- Migration 007: Fixed to avoid Cartesian product bug
--- ============================================================================
 CREATE VIEW top_volunteers AS
-SELECT
-  u.id                    AS user_id,
-  u.name                  AS volunteer_name,
-  u.profile_photo         AS profile_photo,
-  dstats.total_pickups    AS total_pickups,
-  dstats.completed_count  AS completed_count,
-  rstats.average_rating   AS average_rating
+SELECT 
+  u.id,
+  u.name,
+  u.email,
+  vp.rating,
+  vp.total_pickups,
+  COUNT(dr.id) AS total_assignments,
+  SUM(CASE WHEN dr.status = 'completed' THEN 1 ELSE 0 END) AS completed_pickups
 FROM users u
-JOIN (
-  SELECT
-    volunteer_id,
-    COUNT(*)                                              AS total_pickups,
-    SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count
-  FROM donation_requests
-  WHERE is_deleted = 0 AND volunteer_id IS NOT NULL
-  GROUP BY volunteer_id
-) dstats ON dstats.volunteer_id = u.id
-LEFT JOIN (
-  SELECT rated_user, ROUND(AVG(stars), 2) AS average_rating
-  FROM ratings
-  GROUP BY rated_user
-) rstats ON rstats.rated_user = u.id
+LEFT JOIN volunteer_profiles vp ON u.id = vp.user_id
+LEFT JOIN donation_requests dr ON u.id = dr.volunteer_id AND dr.is_deleted = 0
 WHERE u.role = 'volunteer' AND u.is_deleted = 0
-ORDER BY completed_count DESC, average_rating DESC;
+GROUP BY u.id, u.name, u.email, vp.rating, vp.total_pickups
+ORDER BY completed_pickups DESC
+LIMIT 10;

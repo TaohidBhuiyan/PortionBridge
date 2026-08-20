@@ -15,6 +15,8 @@ const {
   getVolunteer,
   listTeams,
   getTeam,
+  getLiveOperations,
+  getAttentionCenter,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -31,6 +33,8 @@ const {
   getVolunteerValidationRules,
   listTeamsValidationRules,
   getTeamValidationRules,
+  liveOperationsValidationRules,
+  attentionCenterValidationRules,
 } = require('../../validators/admin.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -159,6 +163,26 @@ router.get(
   getTeamValidationRules,
   validateRequest,
   getTeam
+);
+
+// --- Live operations (Phase 6) ---
+router.get(
+  '/live-operations',
+  protect,
+  authorize('admin'),
+  liveOperationsValidationRules,
+  validateRequest,
+  getLiveOperations
+);
+
+// --- Attention Center (Phase 7) ---
+router.get(
+  '/attention-center',
+  protect,
+  authorize('admin'),
+  attentionCenterValidationRules,
+  validateRequest,
+  getAttentionCenter
 );
 
 module.exports = router;

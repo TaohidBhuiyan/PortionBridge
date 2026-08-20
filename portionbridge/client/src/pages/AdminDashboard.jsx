@@ -1,59 +1,97 @@
+import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/dashboard';
-import { EmptyState } from '../components/dashboard';
-import { Shield } from 'lucide-react';
+import {
+  AdminStatsCards,
+  AdminImpactSection,
+  AdminAnalyticsSection,
+  AdminRecentDonations,
+  AdminRecentUsers,
+  AdminRecentActivity,
+} from '../components/dashboard/admin';
+import { ErrorState } from '../components/dashboard';
+import { adminApi } from '../services/adminApi';
 
 /**
- * Sample Admin Dashboard page for testing the Dashboard Layout
+ * Admin Dashboard — Overview / Command Center (Phase 2).
+ *
+ * Everything here comes from the single enriched GET /admin/dashboard
+ * payload (adminApi.getDashboard / admin.service.js#getDashboard) — no
+ * fake/hardcoded numbers anywhere on this page. Other sidebar sections
+ * (Users, Donations, Volunteers & Teams, Analytics [drill-down], Reports,
+ * Audit Logs, Live Operations, Attention Center, Settings) remain
+ * later-phase features; see AdminSectionPage for their routing
+ * foundation from Phase 1.
  */
 export function AdminDashboard() {
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  // Matches the refreshTrigger convention used elsewhere (VolunteerHistory,
+  // VolunteerTeam, VolunteerOpportunities) so onRetry re-fetches without
+  // calling setState synchronously from inside the effect body.
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchDashboard = async () => {
+      setLoading(true);
+      setError(null);
+      const result = await adminApi.getDashboard();
+      if (cancelled) return;
+      if (result.success) {
+        setDashboard(result.data);
+      } else {
+        setError(result.error);
+      }
+      setLoading(false);
+    };
+
+    fetchDashboard();
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshTrigger]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-2">
-            Admin Dashboard
-          </h1>
-          <p className="text-text-secondary">
-            Manage users, donations, and platform settings.
+          <h1 className="text-2xl font-bold text-text-primary mb-1">Admin Overview</h1>
+          <p className="text-text-secondary text-sm">
+            Platform-wide activity across donors, volunteers, and donations.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { label: 'Total Users', value: '1,234', color: 'bg-dash-primary' },
-            { label: 'Active Donors', value: '456', color: 'bg-success' },
-            { label: 'Volunteers', value: '78', color: 'bg-info' },
-            { label: 'Pending Reports', value: '12', color: 'bg-danger' },
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="bg-surface rounded-lg border border-border p-6"
-            >
-              <div className={`w-10 h-10 rounded-lg ${stat.color} flex items-center justify-center mb-3`}>
-                <Shield size={20} className="text-white" />
-              </div>
-              <p className="text-2xl font-bold text-text-primary mb-1">
-                {stat.value}
-              </p>
-              <p className="text-sm text-text-secondary">
-                {stat.label}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-surface rounded-lg border border-border p-6">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
-            Recent Activity
-          </h2>
-          <EmptyState
-            icon={Shield}
-            title="No recent activity"
-            description="There are no recent activities to display."
-            actionLabel="Refresh"
-            onAction={() => console.log('Refresh clicked')}
+        {error ? (
+          <ErrorState
+            title="Failed to load dashboard"
+            message={error}
+            onRetry={() => setRefreshTrigger((t) => t + 1)}
           />
-        </div>
+        ) : (
+          <>
+            <AdminStatsCards dashboard={dashboard} loading={loading} />
+
+            <AdminImpactSection impact={dashboard?.impact} loading={loading} />
+
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary mb-3">Analytics</h2>
+              <AdminAnalyticsSection analytics={dashboard?.analytics} loading={loading} />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-text-primary mb-3">Recent Activity</h2>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div className="lg:col-span-2 space-y-4">
+                  <AdminRecentDonations donations={dashboard?.recentDonations} loading={loading} />
+                  <AdminRecentUsers users={dashboard?.recentUsers} loading={loading} />
+                </div>
+                <AdminRecentActivity activity={dashboard?.recentActivity} loading={loading} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

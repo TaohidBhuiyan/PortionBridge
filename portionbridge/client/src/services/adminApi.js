@@ -302,4 +302,55 @@ export const adminApi = {
       return { success: false, error: message, status };
     }
   },
+
+  /* ============================================================
+   * Live Operations (Phase 6)
+   * ============================================================ */
+
+  /**
+   * Initial snapshot of every active mission, involved volunteers, and
+   * involved teams — first-paint data for the Live Operations Map. Live
+   * updates after this come from Socket.io ('volunteer_location_updated'
+   * / 'donation_status_updated' in the 'admin_live_ops' room), not polling.
+   * GET /admin/live-operations
+   */
+  getLiveOperations: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/live-operations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch live operations';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /* ============================================================
+   * Attention Center (Phase 7)
+   * ============================================================ */
+
+  /**
+   * Get the prioritized list of donations/reports/volunteers needing
+   * admin attention right now (reported donations, delayed pickups/
+   * deliveries, unassigned donations, inactive volunteers, stale
+   * locations, pending moderation items). Recomputed fresh on every
+   * call — nothing here is a stored/persisted alert.
+   * GET /admin/attention-center
+   */
+  getAttentionCenter: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/attention-center`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch attention center';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
 };

@@ -43,6 +43,8 @@ const AdminDonationDetail = lazy(() => import("./pages/AdminDonationDetail").the
 const AdminVolunteersTeams = lazy(() => import("./pages/AdminVolunteersTeams").then(m => ({ default: m.AdminVolunteersTeams })));
 const AdminVolunteerDetail = lazy(() => import("./pages/AdminVolunteerDetail").then(m => ({ default: m.AdminVolunteerDetail })));
 const AdminTeamDetail = lazy(() => import("./pages/AdminTeamDetail").then(m => ({ default: m.AdminTeamDetail })));
+const AdminLiveOperations = lazy(() => import("./pages/AdminLiveOperations").then(m => ({ default: m.AdminLiveOperations })));
+const AdminAttentionCenter = lazy(() => import("./pages/AdminAttentionCenter").then(m => ({ default: m.AdminAttentionCenter })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -263,25 +265,45 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/admin/teams/:id" 
+              <Route
+                path="/admin/teams/:id"
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminTeamDetail />
                     </AuthSocketProvider>
                   </ProtectedRoute>
-                } 
+                }
               />
-              <Route 
-                path="/admin/:section" 
+              <Route
+                path="/admin/live-operations"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminLiveOperations />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/attention-center"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminAttentionCenter />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/:section"
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminSectionPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
-                } 
+                }
               />
               <Route 
                 path="/donation/create" 

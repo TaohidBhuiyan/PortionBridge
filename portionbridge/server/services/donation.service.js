@@ -1063,7 +1063,9 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
   }
 
   // Log audit
-  await auditService.logAudit(assignedBy, 'team_member_assigned', { donationId, teamId, memberId });
+  await auditService.record({ userId: assignedBy, action: 'team_member_assigned', metadata: { donationId, teamId, memberId } });
+
+  return await donationModel.findById(donationId);
 }
 
 /**
