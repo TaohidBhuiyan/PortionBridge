@@ -1,4 +1,4 @@
-const { HTTP_STATUS, USER_ROLES } = require('../constants');
+const { HTTP_STATUS, USER_ROLES, AUDIT_ACTIONS, REPORT_STATUS } = require('../constants');
 const AppError = require('../utils/AppError');
 const adminModel = require('../models/admin.model');
 const donationModel = require('../models/donation.model');
@@ -7,8 +7,12 @@ const reportModel = require('../models/report.model');
 const teamMemberModel = require('../models/teamMember.model');
 const teamModel = require('../models/team.model');
 const volunteerProfileModel = require('../models/volunteerProfile.model');
-const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 const socketRegistry = require('../sockets/socketRegistry');
+const { getLastLocationUpdateAt } = require('../sockets/handlers/tracking.handler');
+const { deriveDonationFlags, computeDonationHealthScore } = require('../utils/donationHealthScore');
+const auditService = require('./audit.service');
+const notificationService = require('./notification.service');
+const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 
 /**
  * Normalizes a value that may arrive from mysql2 as a string/Buffer/null
@@ -617,12 +621,17 @@ async function getLiveOperations() {
   const teams = await Promise.all(
     Array.from(teamIds).map(async (teamId) => {
       const [team, members] = await Promise.all([
-        teamModel.findById(teamId),
+        adminModel.findTeamById(teamId),
         teamMemberModel.findByTeamId(teamId),
       ]);
+      if (!team) return null;
+
+      const activeMissionForTeam = missions.find((m) => m.team_id === teamId);
+
       return {
         id: team.id,
         name: team.name,
+        leaderId: team.leader_id,
         leaderName: team.leader_name,
         members: members.map((m) => ({
           id: m.user_id,
@@ -630,6 +639,9 @@ async function getLiveOperations() {
           role: m.role,
           isOnline: socketRegistry.isOnline(m.user_id),
         })),
+        activeMission: activeMissionForTeam
+          ? { donationId: activeMissionForTeam.id, status: activeMissionForTeam.status }
+          : null,
       };
     })
   );
@@ -637,7 +649,7 @@ async function getLiveOperations() {
   return {
     missions,
     volunteers: Array.from(volunteerMap.values()),
-    teams,
+    teams: teams.filter(Boolean),
   };
 }
 
@@ -645,46 +657,138 @@ async function getLiveOperations() {
  * Attention Center (Phase 7)
  * ============================================================ */
 
+// Human-readable labels + the admin-facing link each item type resolves
+// to. Centralized here (rather than inline in the loop below) so the
+// item-building logic and the "what does this type mean" mapping don't
+// drift apart.
+const ATTENTION_ITEM_META = {
+  reported_donation: { severity: 'high', title: 'Donation reported' },
+  pending_moderation: { severity: 'medium', title: 'User report pending review' },
+  delayed_pickup: { severity: 'high', title: 'Pickup overdue' },
+  delayed_delivery: { severity: 'high', title: 'Delivery taking too long' },
+  unassigned_donation: { severity: 'medium', title: 'No volunteer assigned' },
+  inactive_volunteer: { severity: 'medium', title: 'Assigned volunteer appears offline' },
+  stale_location: { severity: 'low', title: "Volunteer location hasn't updated" },
+};
+
+const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
+
 /**
- * Generates the admin Attention Center list: a flat, prioritized set of
- * real conditions (reported donations, delayed pickups/deliveries,
- * unassigned donations, inactive volunteers, stale locations, pending
- * moderation items). This is computed fresh on every call — nothing here
- * is stored or persisted as a separate alerts table. Every item has a
- * direct navigation link to the relevant detail page.
+ * Builds the Admin Attention Center / Smart Monitoring snapshot: a single
+ * prioritized list covering every category the spec asked for (reported
+ * donations, delayed pickups/deliveries, unassigned donations, inactive
+ * volunteers, pending moderation items) — which doubles as the "Alerts"
+ * list, since each entry already IS an operational alert condition. One
+ * unified, recomputed-on-request list rather than two separate detection
+ * systems, so there's no risk of the same real condition producing two
+ * different "alerts" that drift out of sync with each other.
+ *
+ * Everything here is derived fresh from real data on each call — nothing
+ * is persisted, so there's no stale/duplicate notification row to ever
+ * clean up, and no external AI call of any kind (see
+ * utils/donationHealthScore.js for the transparent, rule-based logic).
  * @returns {Promise<Object>} { items, generatedAt }
  */
 async function getAttentionCenter() {
-  const [reportedDonations, delayedPickups, delayedDeliveries, unassignedDonations, inactiveVolunteers, staleLocations] = await Promise.all([
-    adminModel.findReportedDonations(),
-    adminModel.findDelayedPickups(),
-    adminModel.findDelayedDeliveries(),
-    adminModel.findUnassignedDonations(),
-    adminModel.findInactiveVolunteers(),
-    adminModel.findStaleLocations(),
+  const [donations, pendingReports] = await Promise.all([
+    adminModel.findDonationsForAttentionCenter(),
+    adminModel.findPendingReportsForAttentionCenter(),
   ]);
 
-  const ATTENTION_ITEM_META = {
-    reported_donation: { severity: 'high', title: 'Reported Donation' },
-    pending_moderation: { severity: 'medium', title: 'Pending Moderation' },
-    delayed_pickup: { severity: 'medium', title: 'Delayed Pickup' },
-    delayed_delivery: { severity: 'high', title: 'Delayed Delivery' },
-    unassigned_donation: { severity: 'medium', title: 'Unassigned Donation' },
-    inactive_volunteer: { severity: 'low', title: 'Inactive Volunteer' },
-    stale_location: { severity: 'low', title: 'Stale Location' },
-  };
+  const reportedDonationIds = new Set(
+    pendingReports.filter((r) => r.reported_donation_id).map((r) => r.reported_donation_id)
+  );
 
-  const items = [
-    ...reportedDonations.map((d) => ({
-      id: `reported-${d.id}`,
-      type: 'reported_donation',
-      severity: ATTENTION_ITEM_META.reported_donation.severity,
-      description: `Donation #${d.id} by ${d.donor_name} has been reported`,
-      link: `/admin/donations/${d.id}`,
-      detectedAt: d.reported_at,
-    })),
-    ...delayedPickups.map((d) => ({
-      id: `delayed-pickup-${d.id}`,
+  const items = [];
+
+  for (const donation of donations) {
+    const assignedPersonId = donation.assignment_mode === 'team' ? donation.assigned_member_id : donation.volunteer_id;
+    const flags = deriveDonationFlags(donation, {
+      pickedUpAt: donation.picked_up_at,
+      hasOpenReport: reportedDonationIds.has(donation.id),
+      assignedPersonOnline: assignedPersonId ? socketRegistry.isOnline(assignedPersonId) : null,
+      lastLocationUpdateAt: assignedPersonId ? getLastLocationUpdateAt(assignedPersonId, donation.id) : null,
+    });
+
+    const personName = donation.assignment_mode === 'team' ? donation.assigned_member_name : donation.volunteer_name;
+    const link = `/admin/donations/${donation.id}`;
+
+    if (flags.isUnassigned) {
+      items.push(buildAttentionItem('unassigned_donation', donation.id, link, {
+        description: `#${donation.id} (${donation.category}) has had no volunteer for over ${Math.round((Date.now() - new Date(donation.created_at).getTime()) / 60000)} minutes.`,
+      }));
+    }
+    if (flags.isDelayedPickup) {
+      items.push(buildAttentionItem('delayed_pickup', donation.id, link, {
+        description: `#${donation.id} was scheduled for pickup by ${donation.volunteer_name || 'the assigned volunteer'} and is now overdue.`,
+      }));
+    }
+    if (flags.isDelayedDelivery) {
+      items.push(buildAttentionItem('delayed_delivery', donation.id, link, {
+        description: `#${donation.id} has been picked up but not marked completed for an extended period.`,
+      }));
+    }
+    if (flags.isInactiveVolunteer) {
+      items.push(buildAttentionItem('inactive_volunteer', donation.id, link, {
+        description: `${personName || 'The assigned volunteer'} has an active mission (#${donation.id}) but appears offline.`,
+        userId: assignedPersonId,
+      }));
+    }
+    if (flags.isStaleLocation) {
+      items.push(buildAttentionItem('stale_location', donation.id, link, {
+        description: `No location update from ${personName || 'the volunteer'} on mission #${donation.id} recently.`,
+        userId: assignedPersonId,
+      }));
+    }
+  }
+
+  for (const report of pendingReports) {
+    if (report.reported_donation_id) {
+      items.push(buildAttentionItem('reported_donation', report.reported_donation_id, `/admin/donations/${report.reported_donation_id}`, {
+        description: `${report.reporter_name || 'A user'} reported "${report.donation_title || 'a donation'}": ${report.reason}`,
+        reportId: report.id,
+        detectedAt: report.created_at,
+      }));
+    } else if (report.reported_user_id) {
+      items.push(buildAttentionItem('pending_moderation', report.reported_user_id, `/admin/users/${report.reported_user_id}`, {
+        description: `${report.reporter_name || 'A user'} reported ${report.reported_user_name || 'a user'}: ${report.reason}`,
+        reportId: report.id,
+        detectedAt: report.created_at,
+        userId: report.reported_user_id,
+      }));
+    }
+  }
+
+  items.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]
+    || new Date(b.detectedAt) - new Date(a.detectedAt));
+
+  return { items, generatedAt: new Date().toISOString() };
+}
+
+/**
+ * Builds one Attention Center entry from its type + target + extra
+ * fields, filling in the shared title/severity from ATTENTION_ITEM_META
+ * so every item has a consistent shape.
+ * @param {string} type - Key into ATTENTION_ITEM_META
+ * @param {number} donationId - Related donation ID (also used as part of a stable item id)
+ * @param {string} link - Admin-facing route this item should navigate to
+ * @param {Object} extra - { description, userId?, reportId?, detectedAt? }
+ * @returns {Object} Attention Center item
+ */
+function buildAttentionItem(type, donationId, link, extra) {
+  const meta = ATTENTION_ITEM_META[type];
+  return {
+    id: `${type}-${extra.reportId || donationId}`,
+    type,
+    severity: meta.severity,
+    title: meta.title,
+    description: extra.description,
+    donationId,
+    userId: extra.userId || null,
+    link,
+    detectedAt: extra.detectedAt || new Date().toISOString(),
+  };
+}
       type: 'delayed_pickup',
       severity: ATTENTION_ITEM_META.delayed_pickup.severity,
       description: `Donation #${d.id} pickup was scheduled for ${new Date(d.scheduled_at).toLocaleString()}`,
@@ -693,42 +797,330 @@ async function getAttentionCenter() {
     })),
     ...delayedDeliveries.map((d) => ({
       id: `delayed-delivery-${d.id}`,
-      type: 'delayed_delivery',
-      severity: ATTENTION_ITEM_META.delayed_delivery.severity,
-      description: `Donation #${d.id} was picked up but not yet completed`,
-      link: `/admin/donations/${d.id}`,
-      detectedAt: d.picked_up_at,
-    })),
-    ...unassignedDonations.map((d) => ({
-      id: `unassigned-${d.id}`,
-      type: 'unassigned_donation',
-      severity: ATTENTION_ITEM_META.unassigned_donation.severity,
-      description: `Donation #${d.id} by ${d.donor_name} has no volunteer assigned`,
-      link: `/admin/donations/${d.id}`,
-      detectedAt: d.created_at,
-    })),
-    ...inactiveVolunteers.map((v) => ({
-      id: `inactive-volunteer-${v.id}`,
-      type: 'inactive_volunteer',
-      severity: ATTENTION_ITEM_META.inactive_volunteer.severity,
-      description: `Volunteer ${v.name} appears offline`,
-      link: `/admin/volunteers/${v.id}`,
-      detectedAt: v.last_seen_at,
-    })),
-    ...staleLocations.map((d) => ({
-      id: `stale-location-${d.id}`,
-      type: 'stale_location',
-      severity: ATTENTION_ITEM_META.stale_location.severity,
-      description: `Donation #${d.id} volunteer location hasn't updated recently`,
-      link: `/admin/donations/${d.id}`,
-      detectedAt: d.last_location_at,
-    })),
-  ];
+/* ============================================================
+ * Reports & Moderation (Phase 8)
+ * ============================================================ */
 
-  return {
-    items: items.sort((a, b) => new Date(b.detectedAt) - new Date(a.detectedAt)),
-    generatedAt: new Date().toISOString(),
-  };
+/**
+ * Lists reports for the admin moderation queue or history — `status`
+ * decides which: pass 'pending'/'reviewed' for the active queue, or
+ * 'resolved'/'dismissed' for history. Same table/query either way (see
+ * report.model.js#findAllReports) — there's no separate history feature
+ * to keep in sync.
+ * @param {Object} query - Query parameters from request
+ * @returns {Promise<Object>} Object containing reports array and pagination meta
+ */
+async function listReports(query) {
+  const { page, limit, offset } = getPaginationParams(query);
+  const { status, targetType, search, sortBy, sortOrder } = query;
+  const filters = { status, targetType, search };
+
+  const [reports, totalItems] = await Promise.all([
+    reportModel.findAllReports({ ...filters, sortBy, sortOrder, limit, offset }),
+    reportModel.countAllReports(filters),
+  ]);
+
+  const meta = buildPaginationMeta({ page, limit, totalItems });
+  return { reports, meta };
+}
+
+/**
+ * Gets a single report's full detail for the admin moderation view.
+ * @param {number} reportId - Report ID
+ * @returns {Promise<Object>} Enriched report object
+ * @throws {AppError} 404 if no such report exists
+ */
+async function getReportDetail(reportId) {
+  const report = await reportModel.findByIdWithDetails(reportId);
+  if (!report) {
+    throw new AppError('Report not found.', HTTP_STATUS.NOT_FOUND);
+  }
+  return report;
+}
+
+/**
+ * Marks a report as under investigation (status: reviewed) — an admin has
+ * looked at it, but no final decision has been made yet. Does not require
+ * notes; "resolve"/"dismiss" below do.
+ * @param {number} reportId - Report ID
+ * @param {number} adminId - Acting admin's user ID
+ * @returns {Promise<Object>} The updated report
+ * @throws {AppError} 404 not found, 409 already closed
+ */
+async function investigateReport(reportId, adminId) {
+  const report = await reportModel.findByIdWithDetails(reportId);
+  if (!report) {
+    throw new AppError('Report not found.', HTTP_STATUS.NOT_FOUND);
+  }
+  if (report.status === REPORT_STATUS.RESOLVED || report.status === REPORT_STATUS.DISMISSED) {
+    throw new AppError('This report has already been closed.', HTTP_STATUS.CONFLICT);
+  }
+
+  await reportModel.updateReportStatus(reportId, { status: REPORT_STATUS.REVIEWED });
+  await auditService.record({
+    userId: adminId,
+    action: AUDIT_ACTIONS.REPORT_INVESTIGATED,
+    metadata: { reportId, reportedUserId: report.reported_user_id, reportedDonationId: report.reported_donation_id },
+  });
+  return reportModel.findByIdWithDetails(reportId);
+}
+
+/**
+ * Closes a report as resolved (a real issue was found/action was taken)
+ * or dismissed (reviewed, no violation) — the two share this
+ * implementation since the only difference is the final status value and
+ * audit action, both passed in by the two thin wrappers below.
+ * @param {number} reportId - Report ID
+ * @param {number} adminId - Acting admin's user ID
+ * @param {string} status - REPORT_STATUS.RESOLVED or REPORT_STATUS.DISMISSED
+ * @param {string} auditAction - AUDIT_ACTIONS.REPORT_RESOLVED or REPORT_DISMISSED
+ * @param {string} [notes] - Admin's reasoning
+ * @returns {Promise<Object>} The updated report
+ * @throws {AppError} 404 not found, 409 already closed
+ */
+async function closeReport(reportId, adminId, status, auditAction, notes) {
+  const report = await reportModel.findByIdWithDetails(reportId);
+  if (!report) {
+    throw new AppError('Report not found.', HTTP_STATUS.NOT_FOUND);
+  }
+  if (report.status === REPORT_STATUS.RESOLVED || report.status === REPORT_STATUS.DISMISSED) {
+    throw new AppError('This report has already been closed.', HTTP_STATUS.CONFLICT);
+  }
+
+  await reportModel.updateReportStatus(reportId, { status, resolvedBy: adminId, resolutionNotes: notes || null });
+  await auditService.record({
+    userId: adminId,
+    action: auditAction,
+    metadata: {
+      reportId,
+      reportedUserId: report.reported_user_id,
+      reportedDonationId: report.reported_donation_id,
+      notes: notes || null,
+    },
+  });
+  return reportModel.findByIdWithDetails(reportId);
+}
+
+/**
+ * Resolves a report — a real issue was found and (outside this system,
+ * e.g. via the existing ban/unban actions) acted on.
+ * @param {number} reportId - Report ID
+ * @param {number} adminId - Acting admin's user ID
+ * @param {string} [notes] - Admin's reasoning
+ * @returns {Promise<Object>} The updated report
+ */
+async function resolveReport(reportId, adminId, notes) {
+  return closeReport(reportId, adminId, REPORT_STATUS.RESOLVED, AUDIT_ACTIONS.REPORT_RESOLVED, notes);
+}
+
+/**
+ * Dismisses a report — reviewed, no violation found, no action needed.
+ * @param {number} reportId - Report ID
+ * @param {number} adminId - Acting admin's user ID
+ * @param {string} [notes] - Admin's reasoning
+ * @returns {Promise<Object>} The updated report
+ */
+async function dismissReport(reportId, adminId, notes) {
+  return closeReport(reportId, adminId, REPORT_STATUS.DISMISSED, AUDIT_ACTIONS.REPORT_DISMISSED, notes);
+}
+
+/* ============================================================
+ * Admin Notifications (Phase 8)
+ * ============================================================ */
+
+const VALID_AUDIENCES = new Set(['all', 'donors', 'volunteers', 'team']);
+const AUDIENCE_TO_ROLE = { donors: USER_ROLES.DONOR, volunteers: USER_ROLES.VOLUNTEER, all: null };
+
+/**
+ * Sends an admin announcement to a chosen audience — system-wide (all
+ * donors + volunteers), donors only, volunteers only, or a single team.
+ *
+ * Team announcements are NOT reimplemented here — they go straight to
+ * the existing notificationService.sendTeamAnnouncement (same
+ * 'team_announcement' notification type teams already use for their own
+ * leader-to-member announcements). Every other audience goes through the
+ * new notificationService.sendAdminAnnouncement, which reuses the same
+ * createNotification primitive sendTeamAnnouncement itself is built on —
+ * no duplicate notification-creation logic anywhere in this feature.
+ * @param {Object} params
+ * @param {string} params.audience - 'all' | 'donors' | 'volunteers' | 'team'
+ * @param {number} [params.teamId] - Required when audience is 'team'
+ * @param {string} params.title - Announcement title (ignored for 'team' — sendTeamAnnouncement uses a fixed title)
+ * @param {string} params.message - Announcement body
+ * @param {number} adminId - Sending admin's user ID
+ * @returns {Promise<Object>} { audience, recipientCount, sent, failed }
+ * @throws {AppError} 400 invalid audience/missing teamId/empty message, 404 team not found
+ */
+async function sendAnnouncement({ audience, teamId, title, message }, adminId) {
+  if (!VALID_AUDIENCES.has(audience)) {
+    throw new AppError(`audience must be one of: ${Array.from(VALID_AUDIENCES).join(', ')}.`, HTTP_STATUS.BAD_REQUEST);
+  }
+  if (!message || !message.trim()) {
+    throw new AppError('message is required.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (audience === 'team') {
+    if (!teamId) {
+      throw new AppError('teamId is required when audience is "team".', HTTP_STATUS.BAD_REQUEST);
+    }
+    const team = await adminModel.findTeamById(teamId);
+    if (!team) {
+      throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
+    }
+
+    await notificationService.sendTeamAnnouncement(teamId, adminId, message);
+    const members = await teamMemberModel.findByTeamId(teamId);
+
+    await auditService.record({
+      userId: adminId,
+      action: AUDIT_ACTIONS.ADMIN_ANNOUNCEMENT_SENT,
+      metadata: { audience, teamId, recipientCount: members.length },
+    });
+    return { audience, recipientCount: members.length, sent: members.length, failed: 0 };
+  }
+
+  if (!title || !title.trim()) {
+    throw new AppError('title is required.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const userIds = await adminModel.findUserIdsByRole(AUDIENCE_TO_ROLE[audience]);
+  const { sent, failed } = await notificationService.sendAdminAnnouncement(userIds, adminId, { title, message });
+
+  await auditService.record({
+    userId: adminId,
+    action: AUDIT_ACTIONS.ADMIN_ANNOUNCEMENT_SENT,
+    metadata: { audience, recipientCount: userIds.length, sent, failed },
+  });
+
+  return { audience, recipientCount: userIds.length, sent, failed };
+}
+
+/**
+ * History of admin-sent system-wide/donor/volunteer announcements, most
+ * recent first — the "view notification history/status" requirement.
+ * @returns {Promise<Array>} Array of announcement summaries with recipient/read counts
+ */
+async function listAnnouncementHistory() {
+  const rows = await adminModel.findSentAnnouncements(50);
+  return rows.map((r) => ({
+    ...r,
+    recipientCount: toInt(r.recipientCount),
+    readCount: toInt(r.readCount),
+  }));
+}
+
+/* ============================================================
+ * Area Intelligence (Phase 9)
+ * ============================================================ */
+
+// Below this many donations, an area's stats are too small a sample to
+// generate an insight from without being noisy/misleading (e.g. flagging
+// a single delayed pickup as "frequent delays"). Areas below this
+// threshold still appear in the raw `areas` list, just never in `insights`.
+const MIN_SAMPLE_SIZE = 3;
+
+function average(numbers) {
+  if (numbers.length === 0) return 0;
+  return numbers.reduce((sum, n) => sum + n, 0) / numbers.length;
+}
+
+/**
+ * Extracts every area name a volunteer declared in their profile's
+ * service_areas (a JSON array of { division, district, area? } objects —
+ * see validators/profile.validator.js). Falls back to `district` when a
+ * specific `area` wasn't given, since that's still real, user-declared
+ * coverage information, just coarser-grained than the donation-side
+ * `saved_addresses.area` it's being compared against.
+ * @param {string|null} serviceAreasJson - Raw JSON string from volunteer_profiles
+ * @returns {string[]} Area/district names this volunteer covers
+ */
+function extractServiceAreaNames(serviceAreasJson) {
+  if (!serviceAreasJson) return [];
+  try {
+    const parsed = JSON.parse(serviceAreasJson);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry) => entry?.area || entry?.district).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Builds per-area operational metrics (donation demand, volunteer
+ * availability, pickup/delivery delays, completion rate) and a list of
+ * transparent, rule-based bottleneck insights — e.g. "Mirpur has high
+ * donation demand but comparatively low volunteer availability." Every
+ * insight is a template filled with real numbers compared against the
+ * platform-wide average across areas; there is no ML model and no
+ * external API call anywhere in this function.
+ * @returns {Promise<Object>} { areas, insights, generatedAt }
+ */
+async function getAreaIntelligence() {
+  const [areaStats, volunteerProfiles] = await Promise.all([
+    adminModel.findAreaDonationStats(),
+    volunteerProfileModel.findAllWithServiceAreas(),
+  ]);
+
+  const areaVolunteers = new Map(); // area name -> Set of volunteer user IDs
+  for (const profile of volunteerProfiles) {
+    for (const areaName of extractServiceAreaNames(profile.service_areas)) {
+      if (!areaVolunteers.has(areaName)) areaVolunteers.set(areaName, new Set());
+      areaVolunteers.get(areaName).add(profile.user_id);
+    }
+  }
+
+  const areas = areaStats.map((row) => {
+    const totalDonations = toInt(row.totalDonations);
+    const completed = toInt(row.completed);
+    const cancelled = toInt(row.cancelled);
+    const attempted = completed + cancelled;
+
+    return {
+      area: row.area,
+      donationDemand: totalDonations,
+      volunteerAvailability: areaVolunteers.get(row.area)?.size || 0,
+      delayedPickups: toInt(row.delayedPickups),
+      delayedDeliveries: toInt(row.delayedDeliveries),
+      completionRate: attempted > 0 ? Number(((completed / attempted) * 100).toFixed(1)) : null,
+    };
+  });
+
+  const avgDemand = average(areas.map((a) => a.donationDemand));
+  const avgAvailability = average(areas.map((a) => a.volunteerAvailability));
+  const completionRates = areas.map((a) => a.completionRate).filter((r) => r !== null);
+  const avgCompletionRate = average(completionRates);
+
+  const insights = [];
+  for (const a of areas) {
+    if (a.donationDemand < MIN_SAMPLE_SIZE) continue;
+
+    if (a.donationDemand > avgDemand * 1.3 && a.volunteerAvailability < avgAvailability * 0.7) {
+      insights.push({
+        area: a.area,
+        type: 'demand_availability_gap',
+        severity: 'high',
+        message: `${a.area} has high donation demand but comparatively low volunteer availability.`,
+      });
+    }
+    if (a.delayedPickups / a.donationDemand > 0.3) {
+      insights.push({
+        area: a.area,
+        type: 'pickup_delay',
+        severity: 'medium',
+        message: `${a.area} has frequent pickup delays (${a.delayedPickups} of ${a.donationDemand} donations overdue for pickup).`,
+      });
+    }
+    if (completionRates.length > 1 && a.completionRate !== null && a.completionRate < avgCompletionRate - 15) {
+      insights.push({
+        area: a.area,
+        type: 'low_completion',
+        severity: 'medium',
+        message: `${a.area}'s completion rate (${a.completionRate}%) is well below the platform average (${avgCompletionRate.toFixed(1)}%).`,
+      });
+    }
+  }
+
+  return { areas, insights, generatedAt: new Date().toISOString() };
 }
 
 module.exports = {
@@ -743,6 +1135,19 @@ module.exports = {
   listVolunteers,
   getVolunteerDetail,
   listTeams,
+  getTeamDetail,
+  getAttentionCenter,
+  getLiveOperations,
+  listReports,
+  getReportDetail,
+  investigateReport,
+  resolveReport,
+  dismissReport,
+  sendAnnouncement,
+  listAnnouncementHistory,
+  getAreaIntelligence,
+  getUserActivity,
+};
   getTeamDetail,
   getUserActivity,
   getLiveOperations,

@@ -8,7 +8,33 @@ const auditService = require('./audit.service');
 const achievementService = require('./achievement.service');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 const { getIO, broadcastTeamActivity } = require('../sockets/ioInstance');
+const { getDonationRoomName, getAdminLiveOpsRoomName } = require('../sockets/rooms');
 const teamMemberModel = require('../models/teamMember.model');
+const savedAddressModel = require('../models/savedAddress.model');
+
+/**
+ * Broadcasts a real-time 'donation_status_updated' event for one donation,
+ * to both its own tracking room (donor + assigned volunteer, already
+ * consumed by useDonationTracking.js/TrackingPanel.jsx) and the admin
+ * live-operations room (Phase 6). Centralized here so every lifecycle
+ * transition emits the exact same event shape — previously only
+ * markOnTheWay did this; markPickedUp/completeDonation/cancelDonation had
+ * no real-time push at all, which would have left both the donor's live
+ * tracking view and the admin Live Operations Map stuck showing a stale
+ * status until a manual refresh.
+ * @param {Object} donation - Updated donation row (needs id/status/volunteer_id/updated_at/is_deleted)
+ */
+function emitDonationStatusUpdate(donation) {
+  const io = getIO();
+  if (!io) return;
+  io.to(getDonationRoomName(donation.id)).to(getAdminLiveOpsRoomName()).emit('donation_status_updated', {
+    donationId: donation.id,
+    status: donation.status,
+    volunteerId: donation.volunteer_id,
+    isDeleted: !!donation.is_deleted,
+    timestamp: donation.updated_at || new Date().toISOString(),
+  });
+}
 
 /**
  * Ownership check for donor-owned mutations (update/cancel). Kept separate
@@ -339,6 +365,8 @@ async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}
     await donationModel.softDelete(donationId, connection);
 
     await connection.commit();
+
+    emitDonationStatusUpdate({ ...donation, is_deleted: true });
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -644,16 +672,9 @@ async function markOnTheWay(donation, volunteerId, { ipAddress, userAgent } = {}
     // client about a notification that might still be rolled back.
     await notificationService.deliverById(updatedDonation.donor_id, notificationId);
 
-    // Emit real-time status update for live tracking
-    const io = getIO();
-    if (io) {
-      io.to(`donation_${updatedDonation.id}`).emit('donation_status_updated', {
-        donationId: updatedDonation.id,
-        status: updatedDonation.status,
-        volunteerId: updatedDonation.volunteer_id,
-        timestamp: updatedDonation.updated_at,
-      });
-    }
+    // Emit real-time status update for live tracking (donation room +
+    // admin live-ops room — see emitDonationStatusUpdate)
+    emitDonationStatusUpdate(updatedDonation);
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -715,6 +736,8 @@ async function markPickedUp(donation, volunteerId, { ipAddress, userAgent } = {}
     await connection.commit();
 
     await notificationService.deliverById(updatedDonation.donor_id, notificationId);
+
+    emitDonationStatusUpdate(updatedDonation);
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -847,6 +870,8 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     if (updatedDonation.volunteer_id) {
       await notificationService.deliverLatestForRelated(updatedDonation.volunteer_id, updatedDonation.id);
     }
+
+    emitDonationStatusUpdate(updatedDonation);
 
     // trg_donation_status_update only knows about donor_id/volunteer_id —
     // for team donations, volunteer_id holds the TEAM LEADER, while the
@@ -1064,8 +1089,6 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
 
   // Log audit
   await auditService.record({ userId: assignedBy, action: 'team_member_assigned', metadata: { donationId, teamId, memberId } });
-
-  return await donationModel.findById(donationId);
 }
 
 /**

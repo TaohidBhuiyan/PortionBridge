@@ -353,4 +353,176 @@ export const adminApi = {
       return { success: false, error: message, status };
     }
   },
+
+  /* ============================================================
+   * Reports & Moderation (Phase 8)
+   * ============================================================ */
+
+  /**
+   * List reports for the moderation queue or history.
+   * GET /admin/reports
+   * @param {Object} params - { page, limit, status, targetType, search, sortBy, sortOrder }
+   */
+  listReports: async (params = {}) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/reports`, {
+        params,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.reports, meta: response.data.meta };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch reports';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Get a single report's full detail.
+   * GET /admin/reports/:id
+   */
+  getReport: async (reportId) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/reports/${reportId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.report };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch report';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Mark a report as under investigation.
+   * PATCH /admin/reports/:id/investigate
+   */
+  investigateReport: async (reportId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.patch(
+        `${API_BASE}/admin/reports/${reportId}/investigate`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data?.report };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update report';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Resolve a report (a real issue was found/acted on).
+   * PATCH /admin/reports/:id/resolve
+   */
+  resolveReport: async (reportId, notes) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.patch(
+        `${API_BASE}/admin/reports/${reportId}/resolve`,
+        { notes },
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data?.report };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to resolve report';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Dismiss a report (reviewed, no violation found).
+   * PATCH /admin/reports/:id/dismiss
+   */
+  dismissReport: async (reportId, notes) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.patch(
+        `${API_BASE}/admin/reports/${reportId}/dismiss`,
+        { notes },
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data?.report };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to dismiss report';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /* ============================================================
+   * Admin Notifications (Phase 8)
+   * ============================================================ */
+
+  /**
+   * Send an announcement to a chosen audience (all/donors/volunteers/team).
+   * POST /admin/announcements
+   * @param {Object} payload - { audience, teamId?, title?, message }
+   */
+  sendAnnouncement: async (payload) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/admin/announcements`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to send announcement';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * History of sent admin announcements (recipient/read counts).
+   * GET /admin/announcements
+   */
+  getAnnouncementHistory: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/announcements`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.announcements };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch announcement history';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /* ============================================================
+   * Area Intelligence (Phase 9)
+   * ============================================================ */
+
+  /**
+   * Per-area donation demand, volunteer availability, delay signals, and
+   * completion rate, plus transparent rule-based bottleneck insights.
+   * GET /admin/area-intelligence
+   */
+  getAreaIntelligence: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/area-intelligence`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch area intelligence';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
 };

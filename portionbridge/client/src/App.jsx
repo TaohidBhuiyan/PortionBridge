@@ -45,6 +45,10 @@ const AdminVolunteerDetail = lazy(() => import("./pages/AdminVolunteerDetail").t
 const AdminTeamDetail = lazy(() => import("./pages/AdminTeamDetail").then(m => ({ default: m.AdminTeamDetail })));
 const AdminLiveOperations = lazy(() => import("./pages/AdminLiveOperations").then(m => ({ default: m.AdminLiveOperations })));
 const AdminAttentionCenter = lazy(() => import("./pages/AdminAttentionCenter").then(m => ({ default: m.AdminAttentionCenter })));
+const AdminReports = lazy(() => import("./pages/AdminReports").then(m => ({ default: m.AdminReports })));
+const AdminReportDetail = lazy(() => import("./pages/AdminReportDetail").then(m => ({ default: m.AdminReportDetail })));
+const AdminNotifications = lazy(() => import("./pages/AdminNotifications").then(m => ({ default: m.AdminNotifications })));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -294,6 +298,46 @@ function App() {
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 }
+              />
+              <Route 
+                path="/admin/reports" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminReports />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/reports/:id" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminReportDetail />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/notifications" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminNotifications />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/analytics" 
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminAnalytics />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                } 
               />
               <Route
                 path="/admin/:section"

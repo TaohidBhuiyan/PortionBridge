@@ -194,12 +194,117 @@ const getLiveOperations = asyncHandler(async (req, res) => {
  * GET /api/v1/admin/attention-center (Phase 7)
  */
 const getAttentionCenter = asyncHandler(async (req, res) => {
-  const data = await adminService.getAttentionCenter();
+  const { items, generatedAt } = await adminService.getAttentionCenter();
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
-    message: 'Attention center data retrieved successfully.',
-    data,
+    message: 'Attention center retrieved successfully.',
+    data: { items, generatedAt },
+  });
+});
+
+/**
+ * GET /api/v1/admin/reports
+ */
+const listReports = asyncHandler(async (req, res) => {
+  const { reports, meta } = await adminService.listReports(req.query);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Reports retrieved successfully.',
+    data: { reports },
+    meta,
+  });
+});
+
+/**
+ * GET /api/v1/admin/reports/:id
+ */
+const getReport = asyncHandler(async (req, res) => {
+  const report = await adminService.getReportDetail(req.params.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Report retrieved successfully.',
+    data: { report },
+  });
+});
+
+/**
+ * PATCH /api/v1/admin/reports/:id/investigate
+ */
+const investigateReport = asyncHandler(async (req, res) => {
+  const report = await adminService.investigateReport(req.params.id, req.user.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Report marked as under investigation.',
+    data: { report },
+  });
+});
+
+/**
+ * PATCH /api/v1/admin/reports/:id/resolve
+ */
+const resolveReport = asyncHandler(async (req, res) => {
+  const report = await adminService.resolveReport(req.params.id, req.user.id, req.body.notes);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Report resolved.',
+    data: { report },
+  });
+});
+
+/**
+ * PATCH /api/v1/admin/reports/:id/dismiss
+ */
+const dismissReport = asyncHandler(async (req, res) => {
+  const report = await adminService.dismissReport(req.params.id, req.user.id, req.body.notes);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Report dismissed.',
+    data: { report },
+  });
+});
+
+/**
+ * POST /api/v1/admin/announcements
+ */
+const sendAnnouncement = asyncHandler(async (req, res) => {
+  const result = await adminService.sendAnnouncement(req.body, req.user.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Announcement sent.',
+    data: result,
+  });
+});
+
+/**
+ * GET /api/v1/admin/announcements
+ */
+const listAnnouncementHistory = asyncHandler(async (req, res) => {
+  const announcements = await adminService.listAnnouncementHistory();
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Announcement history retrieved successfully.',
+    data: { announcements },
+  });
+});
+
+/**
+ * GET /api/v1/admin/area-intelligence
+ */
+const getAreaIntelligence = asyncHandler(async (req, res) => {
+  const { areas, insights, generatedAt } = await adminService.getAreaIntelligence();
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Area intelligence retrieved successfully.',
+    data: { areas, insights, generatedAt },
   });
 });
 
@@ -219,4 +324,12 @@ module.exports = {
   getTeam,
   getLiveOperations,
   getAttentionCenter,
+  listReports,
+  getReport,
+  investigateReport,
+  resolveReport,
+  dismissReport,
+  sendAnnouncement,
+  listAnnouncementHistory,
+  getAreaIntelligence,
 };

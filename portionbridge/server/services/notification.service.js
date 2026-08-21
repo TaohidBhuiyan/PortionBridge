@@ -1,4 +1,4 @@
-const { HTTP_STATUS } = require('../constants');
+const { HTTP_STATUS, NOTIFICATION_TYPES } = require('../constants');
 const AppError = require('../utils/AppError');
 const { pool } = require('../config/db');
 const notificationModel = require('../models/notification.model');
@@ -237,6 +237,46 @@ async function sendTeamAnnouncement(teamId, senderId, message) {
   }
 }
 
+/**
+ * Sends an admin announcement to a batch of users (Phase 8) — "system-wide
+ * announcements" / "notify volunteers" / "notify donors" all resolve to
+ * this one function with a different `userIds` list; admin.service.js is
+ * responsible for deciding WHO that list contains (see
+ * adminModel.findUserIdsByRole), not for how a notification gets created
+ * or delivered. Reuses createNotification exactly like sendTeamAnnouncement
+ * does — same DB write, same real-time delivery, same everything, just a
+ * different notification type and a role-based (not team-based) audience.
+ *
+ * Per-user try/catch so one bad user ID in a large batch can't abort the
+ * rest of the send.
+ * @param {number[]} userIds - Recipient user IDs
+ * @param {number} senderId - Admin's user ID (skipped if present in userIds)
+ * @param {{title: string, message: string}} content - Announcement content
+ * @returns {Promise<{sent: number, failed: number}>}
+ */
+async function sendAdminAnnouncement(userIds, senderId, { title, message }) {
+  let sent = 0;
+  let failed = 0;
+
+  for (const userId of userIds) {
+    if (userId === senderId) continue;
+    try {
+      await createNotification(userId, {
+        type: NOTIFICATION_TYPES.ADMIN_ANNOUNCEMENT,
+        title,
+        message,
+        relatedId: null,
+      });
+      sent += 1;
+    } catch (err) {
+      console.error('[Notification Service] Failed to send admin announcement to user', userId, err.message);
+      failed += 1;
+    }
+  }
+
+  return { sent, failed };
+}
+
 module.exports = {
   deliver,
   deliverById,
@@ -248,4 +288,5 @@ module.exports = {
   broadcastToTeam,
   createNotification,
   sendTeamAnnouncement,
+  sendAdminAnnouncement,
 };

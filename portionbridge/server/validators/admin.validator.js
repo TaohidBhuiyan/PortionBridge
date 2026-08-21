@@ -1,4 +1,4 @@
-const { param, query } = require('express-validator');
+const { param, query, body } = require('express-validator');
 const { USER_ROLES, DONATION_CATEGORY, DONATION_STATUS, PAGINATION_DEFAULTS } = require('../constants');
 
 const ALLOWED_USER_SORT_FIELDS = ['created_at', 'name', 'email'];

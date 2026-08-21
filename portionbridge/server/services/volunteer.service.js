@@ -98,6 +98,17 @@ async function getUpcoming(volunteerId, query) {
 }
 
 /**
+ * Gets full details for a single assignment, verifying the requesting
+ * volunteer owns it. Reuses donationModel.findById — no new SQL — and
+ * layers the ownership check in the service so a 404 (doesn't exist /
+ * soft-deleted) is always distinguishable from a 403 (exists, but isn't
+ * this volunteer's assignment).
+ * @param {number} volunteerId - ID of the requesting volunteer
+ * @param {number} donationId - Donation ID to look up
+ * @returns {Promise<Object>} The donation object
+ * @throws {AppError} 404 if not found, 403 if not owned by this volunteer
+ */
+/**
  * Gets full assignment detail for the Phase 5 mission map: donor
  * name/phone, real pickup coordinates when available (via saved_addresses),
  * and — for team-mode donations — the team roster with a live online/

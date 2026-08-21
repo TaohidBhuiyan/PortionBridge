@@ -17,6 +17,14 @@ const {
   getTeam,
   getLiveOperations,
   getAttentionCenter,
+  listReports,
+  getReport,
+  investigateReport,
+  resolveReport,
+  dismissReport,
+  sendAnnouncement,
+  listAnnouncementHistory,
+  getAreaIntelligence,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -35,6 +43,11 @@ const {
   getTeamValidationRules,
   liveOperationsValidationRules,
   attentionCenterValidationRules,
+  listReportsValidationRules,
+  getReportValidationRules,
+  reportModerationNotesValidationRules,
+  sendAnnouncementValidationRules,
+  areaIntelligenceValidationRules,
 } = require('../../validators/admin.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -183,6 +196,79 @@ router.get(
   attentionCenterValidationRules,
   validateRequest,
   getAttentionCenter
+);
+
+// --- Reports & Moderation (Phase 8) ---
+router.get(
+  '/reports',
+  protect,
+  authorize('admin'),
+  listReportsValidationRules,
+  validateRequest,
+  listReports
+);
+
+router.get(
+  '/reports/:id',
+  protect,
+  authorize('admin'),
+  getReportValidationRules,
+  validateRequest,
+  getReport
+);
+
+router.patch(
+  '/reports/:id/investigate',
+  protect,
+  authorize('admin'),
+  getReportValidationRules,
+  validateRequest,
+  investigateReport
+);
+
+router.patch(
+  '/reports/:id/resolve',
+  protect,
+  authorize('admin'),
+  reportModerationNotesValidationRules,
+  validateRequest,
+  resolveReport
+);
+
+router.patch(
+  '/reports/:id/dismiss',
+  protect,
+  authorize('admin'),
+  reportModerationNotesValidationRules,
+  validateRequest,
+  dismissReport
+);
+
+// --- Admin Notifications (Phase 8) ---
+router.post(
+  '/announcements',
+  protect,
+  authorize('admin'),
+  sendAnnouncementValidationRules,
+  validateRequest,
+  sendAnnouncement
+);
+
+router.get(
+  '/announcements',
+  protect,
+  authorize('admin'),
+  listAnnouncementHistory
+);
+
+// --- Area Intelligence (Phase 9) ---
+router.get(
+  '/area-intelligence',
+  protect,
+  authorize('admin'),
+  areaIntelligenceValidationRules,
+  validateRequest,
+  getAreaIntelligence
 );
 
 module.exports = router;
