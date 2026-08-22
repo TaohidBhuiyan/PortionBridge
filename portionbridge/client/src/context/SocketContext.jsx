@@ -8,11 +8,7 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 // real-time features, but end users can see the browser console — so
 // this is gated to dev builds only rather than always logging in
 // production.
-const devLog = (...args) => {
-  if (import.meta.env.DEV) {
-    console.log(...args);
-  }
-};
+const devLog = () => {};
 
 /**
  * Decodes the `id` claim out of a JWT access token without a signature

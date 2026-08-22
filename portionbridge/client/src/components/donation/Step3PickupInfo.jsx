@@ -68,8 +68,14 @@ export function Step3PickupInfo({ formData, errors, onChange, onValidationChange
   };
 
   const handleUseCurrentLocation = () => {
-    // UI only - placeholder for future geolocation integration
-    alert('Location services will be integrated in a future update.');
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      onChange('pickupAddress', {
+        ...pickupAddress,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      });
+    });
   };
 
   const TIME_SLOTS = [

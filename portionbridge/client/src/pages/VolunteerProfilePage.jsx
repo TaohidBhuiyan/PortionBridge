@@ -50,9 +50,9 @@ const VolunteerProfilePage = () => {
   };
 
   const handleRequestPickup = (volunteerData) => {
-    console.log('Request pickup for:', volunteerData);
-    // Placeholder for future phase
-    alert('Pickup requests will be available in the next phase!');
+    // Pickup requests are created through the donation form so that required
+    // pickup details and lifecycle state are captured consistently.
+    navigate('/donation/create', { state: { preferredVolunteerId: volunteerData.id } });
   };
 
   if (loading) {

@@ -294,10 +294,7 @@ const VolunteerDiscoveryPage = () => {
           <div className="mb-6">
             <LocationDeniedState
               onEnableLocation={() => setLocationPermission('prompt')}
-              onManualLocation={() => {
-                // TODO: Implement manual location entry
-                alert('Manual location entry coming soon!');
-              }}
+              onManualLocation={() => setLocationPermission('prompt')}
             />
           </div>
         )}
@@ -411,5 +408,4 @@ const VolunteerDiscoveryPage = () => {
 };
 
 export default VolunteerDiscoveryPage;
-
 

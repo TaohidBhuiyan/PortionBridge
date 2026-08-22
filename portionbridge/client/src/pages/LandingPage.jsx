@@ -67,7 +67,7 @@ export function LandingPage() {
   }, [socket, connected]);
 
   return (
-    <div className="min-h-screen w-full bg-white text-[#1A1523] selection:bg-primary/20" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="landing-page min-h-screen w-full bg-white text-[#1A1523] selection:bg-primary/20" style={{ fontFamily: "'Inter', sans-serif" }}>
       <Navbar onGoToRole={goToRole} />
 
       <HeroSection onGoToRole={goToRole} stats={stats} loading={statsLoading} />

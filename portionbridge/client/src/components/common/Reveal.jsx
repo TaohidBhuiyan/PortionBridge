@@ -17,13 +17,13 @@ export function Reveal({ children, className = "", delay = 0 }) {
       : false;
 
   if (prefersReducedMotion) {
-    return <div ref={ref} className={className}>{children}</div>;
+    return <div ref={ref} className={`w-full ${className}`}>{children}</div>;
   }
 
   return (
     <div
       ref={ref}
-      className={className}
+      className={`w-full ${className}`}
       style={{
         transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`,
         opacity: visible ? 1 : 0,

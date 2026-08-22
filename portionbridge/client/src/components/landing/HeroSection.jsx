@@ -57,9 +57,9 @@ export function HeroSection({ stats, loading }) {
         style={{ background: PRIMARY, animation: "float 7s ease-in-out infinite reverse" }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-6 md:px-10 text-white">
+      <div className="relative mx-auto px-6 md:px-10 text-left text-white" style={{ width: '100%', maxWidth: '1152px' }}>
         <Reveal>
-          <div className="inline-flex items-center gap-2 font-mono text-[11px] font-semibold tracking-wider uppercase border border-white/15 rounded-full px-4.5 py-1.5 mb-8 bg-white/5 backdrop-blur-xs transition-colors hover:border-white/25 cursor-default select-none">
+          <div className="inline-flex w-fit items-center gap-2 font-mono text-[11px] font-semibold tracking-wider uppercase border border-white/15 rounded-full px-4.5 py-1.5 mb-8 bg-white/5 backdrop-blur-xs transition-colors hover:border-white/25 cursor-default select-none">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
@@ -68,21 +68,21 @@ export function HeroSection({ stats, loading }) {
           </div>
         </Reveal>
         <Reveal delay={80}>
-          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl leading-[1.02] max-w-3xl tracking-tight">
+          <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl leading-[1.02] tracking-tight" style={{ width: '100%', maxWidth: '850px' }}>
             Spare food. Spare clothes.
             <br />
             <span className="italic" style={{ color: PRIMARY }}>One tap</span> to the right hands.
           </h1>
         </Reveal>
         <Reveal delay={160}>
-          <p className="mt-8 max-w-xl text-white/80 text-base md:text-lg leading-relaxed font-normal">
+          <p className="mt-8 text-white/80 text-base md:text-lg leading-relaxed font-normal" style={{ width: '100%', maxWidth: '620px' }}>
             PortionBridge connects donors with verified volunteers — so every
             meal and every shirt reaches its zone, tracked from pledge to
             delivery.
           </p>
         </Reveal>
         <Reveal delay={240}>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
+          <div className="w-full mt-10 flex flex-wrap items-center gap-4">
             <Link 
               to={getDonatePath()}
               className="font-semibold px-8 py-4 rounded-full text-white transition-all duration-300 hover:scale-105 active:scale-95 shadow-md shadow-primary/10 hover:shadow-lg hover:shadow-primary/20 cursor-pointer" 

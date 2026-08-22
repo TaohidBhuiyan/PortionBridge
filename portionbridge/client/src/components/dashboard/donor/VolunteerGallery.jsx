@@ -8,14 +8,7 @@ import { Image as ImageIcon, X } from 'lucide-react';
 const VolunteerGallery = ({ volunteer }) => {
   const [selectedImage, setSelectedImage] = useState(null);
 
-  // Placeholder images since we don't have actual photo storage yet
-  const placeholderImages = [
-    { id: 1, type: 'volunteer', url: null, caption: 'Volunteer Profile' },
-    { id: 2, type: 'work', url: null, caption: 'In Action' },
-    { id: 3, type: 'team', url: null, caption: 'With Team' },
-  ];
-
-  const images = placeholderImages;
+  const images = Array.isArray(volunteer?.photos) ? volunteer.photos : [];
 
   const handleImageClick = (image) => {
     setSelectedImage(image);

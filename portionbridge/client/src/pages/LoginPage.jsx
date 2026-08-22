@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
+import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
@@ -157,11 +158,11 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6 md:py-10">
-      <div className="w-full max-w-[960px] rounded-2xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-2xl border border-gray-200 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
+    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6">
+      <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-[0_20px_56px_rgba(46,16,101,0.24)] border border-purple-200/70 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
         {/* LEFT PANEL — purple branding / impact stats */}
         <div
-          className="hidden md:flex flex-1 relative flex-col items-center justify-center px-8 py-10 text-center"
+          className="hidden md:flex flex-[0.82] relative flex-col items-center justify-center px-6 py-7 text-left"
           style={{
             background:
               "radial-gradient(ellipse 75% 45% at 50% 2%, #f0e4fb 0%, rgba(240,228,251,0) 65%), linear-gradient(180deg, #b487e8 0%, #9256e0 16%, #7c3aed 32%, #5b21b6 50%, #35127a 68%, #180a35 85%, #050208 100%)",
@@ -175,31 +176,31 @@ export function LoginPage() {
             }}
           />
 
-          <div className="relative z-10 flex items-center justify-center gap-2 text-white text-sm font-semibold mb-3.5">
+          <div className="relative z-10 flex items-center gap-2 text-white text-xs font-semibold mb-3">
             <span className="w-4 h-4 border-2 border-white rounded-full inline-block" />
             PortionBridge
           </div>
-          <h1 className="relative z-10 text-white text-2xl font-bold mb-2.5">
-            Get Started with Us
+          <h1 className="relative z-10 text-white text-2xl font-bold leading-tight mb-2">
+            Welcome back.
           </h1>
-          <p className="relative z-10 text-white/65 text-[13.5px] leading-relaxed max-w-[280px] mb-7">
-            Bridging Abundance with Those in Need
+          <p className="relative z-10 text-white/70 text-xs leading-relaxed max-w-[220px] mb-6">
+            Continue creating real impact in your community.
           </p>
 
-          <div className="relative z-10 w-full max-w-[300px] flex flex-col gap-2.5">
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white text-[#111] text-[13.5px] font-medium animate-fade-in">
+          <div className="relative z-10 w-full max-w-[250px] flex flex-col gap-2">
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white text-[#111] text-xs font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-[#111] text-white flex items-center justify-center text-[11px] shrink-0">
                 🍲
               </span>
               {stats.mealsDelivered.toLocaleString()}+ meals shared to date
             </div>
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium animate-fade-in">
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md text-white/70 text-xs font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
                 👕
               </span>
               {stats.clothesDonated.toLocaleString()}+ clothing items donated
             </div>
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-[10px] bg-white/[0.08] backdrop-blur-md text-white/55 text-[13.5px] font-medium animate-fade-in">
+            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md text-white/70 text-xs font-medium animate-fade-in">
               <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
                 🤝
               </span>
@@ -209,11 +210,11 @@ export function LoginPage() {
         </div>
 
         {/* RIGHT PANEL — merged seamlessly with left panel */}
-        <div className="flex-1 flex flex-col justify-center items-center bg-[#faf9fc] dark:bg-[#120721] px-6 py-8 sm:py-10">
-          <div className="flex w-full flex-col justify-center gap-3.5 max-w-[340px] sm:min-w-[340px]">
-            <div className="left-0 right-0 inline-block px-1 py-1.5 sm:px-2">
-                  <form className="flex flex-col gap-4 pb-4" onSubmit={handleSubmit}>
-                    <h1 className="mb-4 text-2xl font-bold dark:text-white">Login</h1>
+        <div className="flex-1 flex flex-col justify-center items-center bg-white/95 dark:bg-[#120721] px-5 py-6 sm:px-7">
+          <div className="flex w-full flex-col justify-center gap-3 max-w-[340px]">
+            <div className="left-0 right-0 inline-block px-1">
+                  <form className="flex flex-col gap-3 pb-3" onSubmit={handleSubmit}>
+                    <div className="mb-2"><div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-purple-600"><ShieldCheck size={15} /> SECURE SIGN IN</div><h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">Sign in to your account</h1></div>
 
                     {error && (
                       <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
@@ -230,10 +231,10 @@ export function LoginPage() {
                     <div>
                       <div className="mb-2">
                         <label
-                          className="text-sm font-medium text-gray-900 dark:text-gray-300"
+                          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
                           htmlFor="email"
                         >
-                          Email:
+                          Email address
                         </label>
                       </div>
                       <div className="flex w-full rounded-lg pt-1">
@@ -242,10 +243,10 @@ export function LoginPage() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full rounded-xl border-2 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
+                            className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 pl-9 text-sm text-gray-900 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
                             placeholder="email@example.com"
                             disabled={loading}
-                          />
+                          /><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
                       </div>
                       {fieldErrors.email && (
@@ -256,7 +257,7 @@ export function LoginPage() {
                     <div>
                       <div className="mb-2">
                         <label
-                          className="text-sm font-medium text-gray-900 dark:text-gray-300"
+                          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
                           htmlFor="password"
                         >
                           Password
@@ -265,14 +266,14 @@ export function LoginPage() {
                       <div className="flex w-full rounded-lg pt-1">
                         <div className="relative w-full">
                           <input
-                            className="block w-full rounded-xl border-2 border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-purple-500 focus:ring-purple-500 focus:border-transparent dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
+                            className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 pl-9 text-sm text-gray-900 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
                             id="password"
                             type="password"
                             name="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
-                          />
+                          /><LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         </div>
                       </div>
                       {fieldErrors.password && (
@@ -290,9 +291,9 @@ export function LoginPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="w-full rounded-xl border border-transparent bg-gradient-to-r from-purple-400 via-purple-600 to-purple-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-500 hover:via-purple-700 hover:to-purple-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm hovering:shadow-md"
+                        className="w-full rounded-xl border border-transparent bg-gradient-to-r from-purple-500 to-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-600 hover:to-violet-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm"
                       >
-                        {loading ? "Signing in..." : "Sign In"}
+                        <span className="inline-flex items-center gap-2">{loading ? "Signing in..." : "Sign In"}<ArrowRight size={15} /></span>
                       </button>
 
                       <div className="flex items-center gap-3 my-1">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Upload, User, Mail, Phone, Lock, Eye, EyeOff, HandHeart, Users, ArrowRight } from "lucide-react";
+import { Upload, User, Mail, Phone, Lock, Eye, EyeOff, HandHeart, Users, ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
 
@@ -183,10 +183,8 @@ export function RegisterPage() {
     
     if (profilePhoto) {
       objectUrl = URL.createObjectURL(profilePhoto);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setTimeout(() => setProfilePhotoPreview(objectUrl), 0);
     } else {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       setTimeout(() => setProfilePhotoPreview(null), 0);
     }
 
@@ -243,24 +241,41 @@ export function RegisterPage() {
       <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-fuchsia-500/30 blur-3xl"></div>
       <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-violet-600/30 blur-3xl"></div>
       <div
-        className="w-full max-w-[420px] mx-auto rounded-[32px] border border-white/10 px-5 py-6 sm:px-6 sm:py-7 shadow-[0_36px_100px_rgba(15,23,42,0.35)] backdrop-blur-xl relative z-10"
+        className="w-full max-w-[760px] mx-auto grid overflow-hidden rounded-3xl border border-white/10 shadow-[0_20px_56px_rgba(15,23,42,0.28)] backdrop-blur-xl relative z-10 lg:grid-cols-[0.72fr_1.28fr]"
         style={{
           background:
             "radial-gradient(120% 100% at 50% 0%, #8b5cf6 0%, #7c3aed 35%, #4c1d95 70%, #0d0512 100%)",
         }}
       >
+        <aside className="hidden lg:flex flex-col justify-between p-6 text-left bg-slate-950/25 border-r border-white/10">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-purple-100">
+              <Sparkles size={14} /> PORTIONBRIDGE
+            </div>
+            <h2 className="mt-5 text-2xl font-semibold leading-tight tracking-tight text-white">Make every spare portion matter.</h2>
+            <p className="mt-3 text-xs leading-5 text-purple-100/70" style={{ width: '100%', maxWidth: '210px' }}>Create your account to coordinate safer, traceable food and clothing donations.</p>
+          </div>
+          <div className="space-y-3 text-xs text-purple-100/80">
+            {['Track every donation from pledge to delivery', 'Connect with verified local volunteers', 'Keep your account and information protected'].map((item) => (
+              <div key={item} className="flex items-start gap-3"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-fuchsia-300" />{item}</div>
+            ))}
+          </div>
+        </aside>
+
+        <div className="px-5 py-5 sm:px-6 sm:py-6">
         {/* Header */}
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 text-left">
           <div className="space-y-1">
-            <h1 className="text-white text-3xl font-semibold tracking-tight">Create Account</h1>
-            <p className="text-purple-200/80 text-sm sm:text-xs max-w-xl">
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-fuchsia-200"><ShieldCheck size={16} /> CREATE YOUR ACCOUNT</div>
+            <h1 className="mt-1 text-white text-2xl font-semibold tracking-tight">Join PortionBridge</h1>
+            <p className="text-purple-200/80 text-xs leading-relaxed" style={{ width: '100%', maxWidth: '360px' }}>
               Join PortionBridge and start sharing your impact with donors and volunteers.
             </p>
           </div>
         </div>
 
         {/* Avatar upload */}
-        <div className="flex flex-col gap-2 mt-4 mb-5 bg-white/5 p-3.5 sm:p-4 rounded-[28px] border border-dashed border-white/10 shadow-sm shadow-black/20 max-w-[420px] mx-auto">
+        <div className="flex flex-col gap-2 mt-4 mb-4 bg-white/5 p-2.5 rounded-xl border border-dashed border-white/15 shadow-sm shadow-black/20">
           <div className="flex items-center justify-between gap-3">
             <button
               type="button"
@@ -520,6 +535,7 @@ export function RegisterPage() {
             Login here
           </button>
         </p>
+        </div>
       </div>
     </div>
   );
@@ -527,7 +543,7 @@ export function RegisterPage() {
 
 function InputField({ icon, placeholder, type = "text", value, onChange, disabled, rightIcon }) {
   return (
-    <div className="flex items-center gap-3 bg-white/10 rounded-2xl border border-white/10 px-3.5 py-3.5 backdrop-blur-sm min-h-[56px] transition-shadow duration-200 focus-within:shadow-[0_0_0_4px_rgba(124,58,237,0.18)]">
+    <div className="flex items-center gap-2.5 bg-white/10 rounded-xl border border-white/10 px-3 py-2 backdrop-blur-sm min-h-[42px] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.18)]">
       <span className="text-purple-100/70">{icon}</span>
       <input
         type={type}
@@ -535,6 +551,7 @@ function InputField({ icon, placeholder, type = "text", value, onChange, disable
         value={value}
         onChange={onChange}
         disabled={disabled}
+        aria-label={placeholder}
         className="bg-transparent outline-none text-sm text-white placeholder-purple-100/60 w-full min-w-0 disabled:opacity-50"
       />
       {rightIcon && <span className="text-purple-100/70 flex items-center">{rightIcon}</span>}
@@ -548,7 +565,7 @@ function RoleButton({ active, onClick, icon, label, iconColor, disabled }) {
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex flex-col items-center justify-center gap-2 min-h-[86px] rounded-2xl border px-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+      className={`flex flex-col items-center justify-center gap-1 min-h-[56px] rounded-xl border px-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
         active
           ? "bg-gradient-to-br from-purple-500/15 via-fuchsia-500/10 to-slate-900/20 border-purple-300/30 shadow-[0_12px_30px_rgba(124,58,237,0.12)]"
           : "bg-slate-950/70 border-white/10 hover:bg-white/5"

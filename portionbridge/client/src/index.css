@@ -54,6 +54,16 @@
 }
 
 @theme {
+  /* Tailwind v4 container tokens used by `max-w-*` utilities.  Defining the
+     theme locally without these values made max-w-xs through max-w-2xl
+     resolve to missing CSS variables and collapse text measures. */
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
+
   /* Dashboard color tokens (mapped to Tailwind theme) */
   --color-dash-primary: var(--pb-primary);
   --color-dash-primary-hover: var(--pb-primary-hover);
@@ -419,35 +429,64 @@ body {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--sans); /* Default to sans-serif to prevent styling side-effects on Login/Register */
-  font-weight: 500;
-  color: var(--color-text-primary);
+/* Landing content must retain a stable readable measure even when theme
+   container tokens are unavailable.  These selectors intentionally sit
+   outside utility classes so every landing section shares the same layout. */
+.landing-page {
+  width: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
+.landing-page section > div:not(.absolute) {
+  width: min(100% - 3rem, 72rem);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.landing-page section p {
+  width: 100%;
+  max-width: 40rem;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 640px) {
+  .landing-page section > div:not(.absolute) {
+    width: calc(100% - 2rem);
   }
 }
 
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
+/* Keep element defaults in Tailwind's base layer.  Unlayered element rules
+   override utility classes in CSS cascade layers, which previously caused
+   headings such as `.text-white` and `.text-3xl` to render incorrectly. */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--sans);
+    font-weight: 500;
+    color: var(--color-text-primary);
   }
-}
 
-p {
-  margin: 0;
+  h1 {
+    font-size: 56px;
+    letter-spacing: -1.68px;
+    margin: 32px 0;
+  }
+
+  h2 {
+    font-size: 24px;
+    line-height: 118%;
+    letter-spacing: -0.24px;
+    margin: 0 0 8px;
+  }
+
+  p { margin: 0; }
+
+  @media (max-width: 1024px) {
+    h1 { font-size: 36px; margin: 20px 0; }
+    h2 { font-size: 20px; }
+  }
 }
 
 code,
