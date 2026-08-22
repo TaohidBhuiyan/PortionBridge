@@ -16,12 +16,6 @@ const ADMIN_USER_COLUMNS = `
   created_at, updated_at
 `;
 
-const DONATION_COLUMNS = `
-  id, donor_id, volunteer_id, category, quantity, description, photo,
-  pickup_location, pickup_time, scheduled_at, accepted_at, completed_at, status,
-  is_deleted, deleted_at, created_at, updated_at
-`;
-
 // Same donation_requests columns as the donor-facing model would use,
 // plus the donor's, volunteer's, and (for team-mode donations) assigned member's name/email —
 // resolved via LEFT JOIN rather than a second round trip per donation.
@@ -34,11 +28,14 @@ const ADMIN_DONATION_COLUMNS_WITH_NAMES = `
   dr.id, dr.title, dr.donor_id, dr.volunteer_id, dr.assignment_mode, dr.team_id, dr.assigned_member_id,
   dr.category, dr.quantity, dr.quantity_unit, dr.number_of_servings, dr.description, dr.photo,
   dr.pickup_location, dr.pickup_time, dr.scheduled_at, dr.accepted_at, dr.completed_at, dr.status,
-  dr.is_deleted, dr.deleted_at, dr.created_at, dr.updated_at,
+  dr.is_deleted, dr.deleted_at, dr.created_at, dr.updated_at, dr.saved_address_id,
   donor.name AS donor_name, donor.email AS donor_email, donor.phone AS donor_phone,
+  donor.email_verified AS donor_verified,
   volunteer.name AS volunteer_name, volunteer.email AS volunteer_email, volunteer.phone AS volunteer_phone,
   member.name AS assigned_member_name,
-  sa.latitude AS pickup_latitude, sa.longitude AS pickup_longitude
+  sa.latitude AS pickup_latitude, sa.longitude AS pickup_longitude,
+  (SELECT MAX(h.changed_at) FROM donation_status_history h
+     WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up') AS picked_up_at
 `;
 
 const ADMIN_DONATION_JOINS = `
@@ -339,6 +336,30 @@ async function findUsers({ search, role, status, sortBy, sortOrder, limit, offse
 }
 
 /**
+ * All active (not banned, not soft-deleted) user IDs matching a role — the
+ * unpaginated counterpart to findUsers, for Phase 8's admin announcement
+ * broadcast ("notify all volunteers", "notify all donors", "system-wide").
+ * findUsers/countUsers are capped by PAGINATION_DEFAULTS.MAX_LIMIT (100),
+ * which is fine for a browsable list but wrong for "everyone in this
+ * role" — this intentionally has no limit.
+ * @param {string|null} role - USER_ROLES value, or null for every role
+ * @returns {Promise<number[]>} Array of user IDs
+ */
+async function findUserIdsByRole(role) {
+  const conditions = ['is_banned = 0', 'is_deleted = 0'];
+  const params = {};
+  if (role) {
+    conditions.push('role = :role');
+    params.role = role;
+  }
+  const [rows] = await pool.query(
+    `SELECT id FROM users WHERE ${conditions.join(' AND ')}`,
+    params
+  );
+  return rows.map((r) => r.id);
+}
+
+/**
  * Total count matching the same filters as findUsers. Powers pagination meta.
  * @param {Object} filters - Filter options (same as buildUserFilter)
  * @returns {Promise<number>} Total count of matching users
@@ -493,6 +514,38 @@ async function findDonationById(id) {
 }
 
 /**
+ * All currently-active donations (accepted/scheduled/on_the_way/picked_up,
+ * not soft-deleted) for the Phase 6 admin Live Operations Map's initial
+ * load — everything the live map needs to plot before any socket event
+ * has arrived: donor/volunteer names, team info, and pickup coordinates
+ * when available (same conditional-null caveat as everywhere else in this
+ * app: only set when the donor used a saved address).
+ *
+ * Capped at 200 rows as a sane safety ceiling for a live map rendering
+ * markers — if a deployment ever has more concurrent active missions than
+ * that, pagination/clustering would be a real follow-up, not a silent
+ * truncation surprise.
+ * @returns {Promise<Array>} Array of active donation objects
+ */
+async function findActiveDonationsForMap() {
+  const [rows] = await pool.query(
+    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
+     ${ADMIN_DONATION_JOINS}
+     WHERE dr.is_deleted = 0
+       AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)
+     ORDER BY dr.updated_at DESC
+     LIMIT 200`,
+    {
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      onTheWay: DONATION_STATUS.ON_THE_WAY,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+    }
+  );
+  return rows;
+}
+
+/**
  * Full status history for a donation, oldest first, joined with the name/role
  * of whoever triggered each change. Populated entirely by DB triggers
  * (trg_donation_status_insert / trg_donation_status_update) — this is a
@@ -586,6 +639,83 @@ async function countVolunteers({ search }) {
   const { whereClause, params } = buildVolunteerFilter({ search });
   const [rows] = await pool.query(`SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`, params);
   return rows[0].total;
+}
+
+/* ============================================================
+ * Audit support — user activity
+ * ============================================================ */
+
+/**
+ * Paginated raw audit log entries for a single user, most recent first.
+ * @param {number} userId - User ID
+ * @param {Object} options - Pagination options
+ * @returns {Promise<Array>} Array of audit log rows
+ */
+async function findUserActivity(userId, { limit, offset }) {
+  const [rows] = await pool.query(
+    `SELECT id, user_id, action, ip_address, user_agent, metadata, created_at
+     FROM audit_logs
+     WHERE user_id = :userId
+     ORDER BY created_at DESC
+     LIMIT :limit OFFSET :offset`,
+    { userId, limit, offset }
+  );
+  return rows;
+}
+
+/**
+ * Total count of audit log entries for a user. Powers pagination meta.
+ * @param {number} userId - User ID
+ * @returns {Promise<number>} Total count of audit log rows
+ */
+async function countUserActivity(userId) {
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM audit_logs WHERE user_id = :userId`,
+    { userId }
+  );
+  return rows[0].total;
+}
+
+/**
+ * Per-action-type counts for a user's activity (e.g. how many logins,
+ * password resets, etc.) — a single GROUP BY query, not N+1 per action.
+ * @param {number} userId - User ID
+ * @returns {Promise<Array>} Array of { action, count } rows
+ */
+async function getUserActivityActionSummary(userId) {
+  const [rows] = await pool.query(
+    `SELECT action, COUNT(*) AS count
+     FROM audit_logs
+     WHERE user_id = :userId
+     GROUP BY action`,
+    { userId }
+  );
+  return rows;
+}
+
+/* ============================================================
+ * Audit support — platform-wide recent activity
+ * ============================================================ */
+
+/**
+ * Latest N audit log entries across ALL users, joined with the actor's
+ * name/role. Backs the Phase 2 Overview "Recent Activity" feed — distinct
+ * from findUserActivity above, which is scoped to a single user's audit
+ * trail for the (later-phase) Audit Logs page.
+ * @param {number} limit - Number of recent activity entries to return
+ * @returns {Promise<Array>} Array of audit log rows with actor name/role
+ */
+async function findRecentActivity(limit) {
+  const [rows] = await pool.query(
+    `SELECT a.id, a.user_id, a.action, a.metadata, a.created_at,
+            u.name AS user_name, u.role AS user_role
+     FROM audit_logs a
+     LEFT JOIN users u ON u.id = a.user_id
+     ORDER BY a.created_at DESC
+     LIMIT :limit`,
+    { limit }
+  );
+  return rows;
 }
 
 /**
@@ -764,119 +894,32 @@ async function findTeamAnnouncements(teamId, limit) {
   return rows;
 }
 
-/* ============================================================
- * Audit support — user activity
- * ============================================================ */
-
 /**
- * Paginated raw audit log entries for a single user, most recent first.
- * @param {number} userId - User ID
- * @param {Object} options - Pagination options
- * @returns {Promise<Array>} Array of audit log rows
+ * History of admin-sent announcements (Phase 8) — grouped the same way
+ * findTeamAnnouncements groups team_announcement rows, since a single
+ * broadcast fans out into one notifications row per recipient with no
+ * shared "batch" id to group by otherwise. Only covers the 'all'/
+ * 'donors'/'volunteers' audiences (type='admin_announcement'); team
+ * announcements reuse the existing 'team_announcement' type instead (see
+ * admin.service.js#sendAnnouncement) and show up in that team's own
+ * activity feed (findTeamAuditActivity/findTeamAnnouncements above), not
+ * here — notifications.create doesn't record a sender, so there's no
+ * reliable way to attribute a 'team_announcement' row to "sent by an
+ * admin" versus "sent by the team leader" without guessing.
+ * @param {number} limit - Max announcements to return
+ * @returns {Promise<Array>} Array of { id, title, message, created_at, recipientCount, readCount }
  */
-async function findUserActivity(userId, { limit, offset }) {
+async function findSentAnnouncements(limit) {
   const [rows] = await pool.query(
-    `SELECT id, user_id, action, ip_address, user_agent, metadata, created_at
-     FROM audit_logs
-     WHERE user_id = :userId
+    `SELECT MIN(id) AS id, title, message, created_at,
+            COUNT(*) AS recipientCount,
+            SUM(is_read) AS readCount
+     FROM notifications
+     WHERE type = 'admin_announcement'
+     GROUP BY title, message, created_at
      ORDER BY created_at DESC
-     LIMIT :limit OFFSET :offset`,
-    { userId, limit, offset }
-  );
-  return rows;
-}
-
-/**
- * Total count of audit log entries for a user. Powers pagination meta.
- * @param {number} userId - User ID
- * @returns {Promise<number>} Total count of audit log rows
- */
-async function countUserActivity(userId) {
-  const [rows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM audit_logs WHERE user_id = :userId`,
-    { userId }
-  );
-  return rows[0].total;
-}
-
-/**
- * Per-action-type counts for a user's activity (e.g. how many logins,
- * password resets, etc.) — a single GROUP BY query, not N+1 per action.
- * @param {number} userId - User ID
- * @returns {Promise<Array>} Array of { action, count } rows
- */
-async function getUserActivityActionSummary(userId) {
-  const [rows] = await pool.query(
-    `SELECT action, COUNT(*) AS count
-     FROM audit_logs
-     WHERE user_id = :userId
-     GROUP BY action`,
-    { userId }
-  );
-  return rows;
-}
-
-/* ============================================================
- * Audit support — platform-wide recent activity
- * ============================================================ */
-
-/**
- * Latest N audit log entries across ALL users, joined with the actor's
- * name/role. Backs the Phase 2 Overview "Recent Activity" feed — distinct
- * from findUserActivity above, which is scoped to a single user's audit
- * trail for the (later-phase) Audit Logs page.
- * @param {number} limit - Number of recent activity entries to return
- * @returns {Promise<Array>} Array of audit log rows with actor name/role
- */
-async function findRecentActivity(limit) {
-  const [rows] = await pool.query(
-    `SELECT a.id, a.user_id, a.action, a.metadata, a.created_at,
-            u.name AS user_name, u.role AS user_role
-     FROM audit_logs a
-     LEFT JOIN users u ON u.id = a.user_id
-     ORDER BY a.created_at DESC
      LIMIT :limit`,
     { limit }
-  );
-  return rows;
-}
-
-/* ============================================================
- * Live Operations (Phase 6)
- * ============================================================ */
-
-/**
- * Finds every active donation (accepted, scheduled, on_the_way, picked_up)
- * for the Admin Live Operations Map, enriched with donor/volunteer names
- * so the map's markers and panels can show who's involved without a second
- * round trip. Returns pickup_latitude/longitude when available (from
- * saved addresses) — NULL when a donor entered a manual address, which is
- * expected and handled: the map will show a donor location marker but no
- * route line until the volunteer's location actually arrives.
- *
- * The assignment_mode/team_id/assigned_member_id fields are included so
- * the map can correctly render individual volunteer markers vs team markers
- * and look up team rosters when a team-mode mission is selected.
- *
- * This is a first-paint snapshot only: live position updates come from
- * Socket.io, not this endpoint. The endpoint itself does NOT return any
- * volunteer location data — that would be stale the moment it's rendered.
- * @returns {Promise<Array>} Array of active donation objects with donor/volunteer names
- */
-async function findActiveDonationsForMap() {
-  const [rows] = await pool.query(
-    `SELECT ${ADMIN_DONATION_COLUMNS_WITH_NAMES}
-     ${ADMIN_DONATION_JOINS}
-     WHERE dr.is_deleted = 0
-       AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)
-     ORDER BY dr.updated_at DESC
-     LIMIT 200`,
-    {
-      accepted: DONATION_STATUS.ACCEPTED,
-      scheduled: DONATION_STATUS.SCHEDULED,
-      onTheWay: DONATION_STATUS.ON_THE_WAY,
-      pickedUp: DONATION_STATUS.PICKED_UP,
-    }
   );
   return rows;
 }
@@ -906,12 +949,13 @@ async function findDonationsForAttentionCenter() {
        dr.scheduled_at, dr.created_at, dr.updated_at, dr.is_deleted,
        donor.name AS donor_name, donor.email_verified AS donor_verified,
        volunteer.name AS volunteer_name,
-       (SELECT new_status FROM donation_status_history h
-        WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
-        ORDER BY h.changed_at DESC LIMIT 1) AS picked_up_at
+       member.name AS assigned_member_name,
+       (SELECT MAX(h.changed_at) FROM donation_status_history h
+          WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up') AS picked_up_at
      FROM donation_requests dr
      LEFT JOIN users donor ON donor.id = dr.donor_id
      LEFT JOIN users volunteer ON volunteer.id = dr.volunteer_id
+     LEFT JOIN users member ON member.id = dr.assigned_member_id
      WHERE dr.is_deleted = 0
        AND dr.status IN (:pending, :accepted, :scheduled, :onTheWay, :pickedUp)
      ORDER BY dr.updated_at DESC
@@ -928,130 +972,94 @@ async function findDonationsForAttentionCenter() {
 }
 
 /**
- * Finds donations with at least one unresolved report.
- * @returns {Promise<Array>} Array of reported donation objects
+ * Every unresolved (status='pending') report, joined with reporter name,
+ * reported-user name (if any), and the reported donation's title (if
+ * any) — backs the "reported donations" and "pending moderation items"
+ * Attention Center buckets. A report with reported_donation_id set is a
+ * "reported donation" (links to the donation); one without is a
+ * user-only report (links to the reported user) — a real distinction
+ * already present in the reports table, not invented for this feature.
+ * @returns {Promise<Array>} Array of pending report rows
  */
-async function findReportedDonations() {
+async function findPendingReportsForAttentionCenter() {
   const [rows] = await pool.query(
-    `SELECT dr.id, dr.donor_id, donor.name AS donor_name, MAX(r.created_at) AS reported_at
-     FROM donation_requests dr
-     LEFT JOIN users donor ON donor.id = dr.donor_id
-     INNER JOIN reports r ON r.reported_donation_id = dr.id AND r.status = 'pending'
-     WHERE dr.is_deleted = 0
-     GROUP BY dr.id, dr.donor_id, donor.name
-     ORDER BY reported_at DESC
-     LIMIT 50`
+    `SELECT r.id, r.reporter_id, r.reported_user_id, r.reported_donation_id,
+            r.reason, r.details, r.created_at,
+            reporter.name AS reporter_name,
+            reportedUser.name AS reported_user_name,
+            dr.title AS donation_title
+     FROM reports r
+     LEFT JOIN users reporter ON reporter.id = r.reporter_id
+     LEFT JOIN users reportedUser ON reportedUser.id = r.reported_user_id
+     LEFT JOIN donation_requests dr ON dr.id = r.reported_donation_id
+     WHERE r.status = 'pending'
+     ORDER BY r.created_at DESC
+     LIMIT 100`
   );
   return rows;
 }
 
-/**
- * Finds accepted/scheduled donations whose scheduled_at time has passed
- * by more than the grace period (15 minutes).
- * @returns {Promise<Array>} Array of delayed pickup donation objects
- */
-async function findDelayedPickups() {
-  const [rows] = await pool.query(
-    `SELECT id, donor_id, donor.name AS donor_name, scheduled_at
-     FROM donation_requests dr
-     LEFT JOIN users donor ON donor.id = dr.donor_id
-     WHERE dr.is_deleted = 0
-       AND dr.status IN (:accepted, :scheduled)
-       AND dr.scheduled_at < DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-     ORDER BY scheduled_at ASC
-     LIMIT 50`,
-    { accepted: DONATION_STATUS.ACCEPTED, scheduled: DONATION_STATUS.SCHEDULED }
-  );
-  return rows;
-}
+/* ============================================================
+ * Area Intelligence (Phase 9)
+ * ============================================================ */
 
 /**
- * Finds picked_up donations that have been in that state for more than
- * the grace period (90 minutes).
- * @returns {Promise<Array>} Array of delayed delivery donation objects
+ * Per-area donation stats — demand, completion, and delay signals — built
+ * entirely from real, already-entered data: `saved_addresses.area` (a
+ * genuine text field donors fill in when adding a pickup address; NOT
+ * geocoded/derived) joined against every donation that used a saved
+ * address. Donations without a saved address (a one-off typed location)
+ * are excluded — there's no reliable area for them, and guessing one
+ * would violate the "real data only" requirement.
+ *
+ * Delay/completion signals reuse the exact thresholds and picked_up_at
+ * derivation already established in utils/donationHealthScore.js /
+ * Phase 7's Attention Center — a donation counts as a "delayed pickup" or
+ * "delayed delivery" here under the SAME rule it would trigger an
+ * Attention Center item under, so the two features never disagree about
+ * what "delayed" means.
+ *
+ * The inner derived table (x) computes picked_up_at once per donation via
+ * a correlated subquery against donation_status_history, then the outer
+ * query aggregates — avoids running that subquery twice per row.
+ * @returns {Promise<Array>} Array of per-area stat rows, busiest area first
  */
-async function findDelayedDeliveries() {
+async function findAreaDonationStats() {
   const [rows] = await pool.query(
-    `SELECT dr.id, dr.donor_id, donor.name AS donor_name,
-       (SELECT h.changed_at FROM donation_status_history h
-        WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
-        ORDER BY h.changed_at DESC LIMIT 1) AS picked_up_at
-     FROM donation_requests dr
-     LEFT JOIN users donor ON donor.id = dr.donor_id
-     WHERE dr.is_deleted = 0
-       AND dr.status = :pickedUp
-       AND (SELECT h.changed_at FROM donation_status_history h
-           WHERE h.donation_request_id = dr.id AND h.new_status = 'picked_up'
-           ORDER BY h.changed_at DESC LIMIT 1) < DATE_SUB(NOW(), INTERVAL 90 MINUTE)
-     ORDER BY picked_up_at ASC
+    `SELECT sa.area,
+       COUNT(*) AS totalDonations,
+       SUM(x.status = :completed) AS completed,
+       SUM(x.is_deleted = 1) AS cancelled,
+       SUM(
+         x.is_deleted = 0
+         AND x.status IN (:accepted, :scheduled)
+         AND x.scheduled_at IS NOT NULL
+         AND x.scheduled_at < NOW()
+       ) AS delayedPickups,
+       SUM(
+         x.is_deleted = 0
+         AND x.status = :pickedUp
+         AND x.picked_up_at IS NOT NULL
+         AND TIMESTAMPDIFF(MINUTE, x.picked_up_at, NOW()) > 90
+       ) AS delayedDeliveries
+     FROM (
+       SELECT dr.id, dr.status, dr.is_deleted, dr.scheduled_at, dr.saved_address_id,
+              (SELECT MAX(h.changed_at) FROM donation_status_history h
+                 WHERE h.donation_request_id = dr.id AND h.new_status = :pickedUp2) AS picked_up_at
+       FROM donation_requests dr
+       WHERE dr.saved_address_id IS NOT NULL
+     ) x
+     JOIN saved_addresses sa ON sa.id = x.saved_address_id
+     GROUP BY sa.area
+     ORDER BY totalDonations DESC
      LIMIT 50`,
-    { pickedUp: DONATION_STATUS.PICKED_UP }
-  );
-  return rows;
-}
-
-/**
- * Finds pending donations that have been unassigned for more than the
- * grace period (2 hours).
- * @returns {Promise<Array>} Array of unassigned donation objects
- */
-async function findUnassignedDonations() {
-  const [rows] = await pool.query(
-    `SELECT id, donor_id, donor.name AS donor_name, created_at
-     FROM donation_requests dr
-     LEFT JOIN users donor ON donor.id = dr.donor_id
-     WHERE dr.is_deleted = 0
-       AND dr.status = :pending
-       AND dr.volunteer_id IS NULL
-       AND dr.created_at < DATE_SUB(NOW(), INTERVAL 2 HOUR)
-     ORDER BY created_at ASC
-     LIMIT 50`,
-    { pending: DONATION_STATUS.PENDING }
-  );
-  return rows;
-}
-
-/**
- * Finds volunteers who are currently assigned to active missions but
- * appear offline (no socket connection).
- * @returns {Promise<Array>} Array of inactive volunteer objects
- */
-async function findInactiveVolunteers() {
-  const [rows] = await pool.query(
-    `SELECT DISTINCT u.id, u.name, MAX(a.created_at) AS last_seen_at
-     FROM users u
-     INNER JOIN donation_requests dr ON (dr.volunteer_id = u.id OR dr.assigned_member_id = u.id)
-     LEFT JOIN audit_logs a ON a.user_id = u.id
-     WHERE dr.is_deleted = 0
-       AND dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp)
-       AND u.role = :volunteer
-     GROUP BY u.id, u.name
-     LIMIT 50`,
-    { accepted: DONATION_STATUS.ACCEPTED, scheduled: DONATION_STATUS.SCHEDULED, onTheWay: DONATION_STATUS.ON_THE_WAY, pickedUp: DONATION_STATUS.PICKED_UP, volunteer: USER_ROLES.VOLUNTEER }
-  );
-  return rows;
-}
-
-/**
- * Finds active missions where the assigned volunteer's location hasn't
- * updated in more than the grace period (10 minutes).
- * @returns {Promise<Array>} Array of stale location donation objects
- */
-async function findStaleLocations() {
-  const [rows] = await pool.query(
-    `SELECT dr.id, dr.donor_id, donor.name AS donor_name,
-       MAX(a.created_at) AS last_location_at
-     FROM donation_requests dr
-     LEFT JOIN users donor ON donor.id = dr.donor_id
-     LEFT JOIN audit_logs a ON a.user_id = COALESCE(dr.volunteer_id, dr.assigned_member_id)
-       AND a.action = 'location_updated'
-     WHERE dr.is_deleted = 0
-       AND dr.status IN (:onTheWay, :pickedUp)
-       AND (dr.volunteer_id IS NOT NULL OR dr.assigned_member_id IS NOT NULL)
-     GROUP BY dr.id, dr.donor_id, donor.name
-     HAVING last_location_at IS NULL OR last_location_at < DATE_SUB(NOW(), INTERVAL 10 MINUTE)
-     LIMIT 50`,
-    { onTheWay: DONATION_STATUS.ON_THE_WAY, pickedUp: DONATION_STATUS.PICKED_UP }
+    {
+      completed: DONATION_STATUS.COMPLETED,
+      accepted: DONATION_STATUS.ACCEPTED,
+      scheduled: DONATION_STATUS.SCHEDULED,
+      pickedUp: DONATION_STATUS.PICKED_UP,
+      pickedUp2: DONATION_STATUS.PICKED_UP,
+    }
   );
   return rows;
 }
@@ -1069,11 +1077,13 @@ module.exports = {
   getRecentUsers,
   findUsers,
   countUsers,
+  findUserIdsByRole,
   findUserById,
   setUserBanned,
   findDonations,
   countDonations,
   findDonationById,
+  findActiveDonationsForMap,
   findDonationStatusHistory,
   findVolunteersWithStats,
   countVolunteers,
@@ -1083,16 +1093,12 @@ module.exports = {
   findTeamById,
   findTeamAuditActivity,
   findTeamAnnouncements,
+  findSentAnnouncements,
+  findDonationsForAttentionCenter,
+  findPendingReportsForAttentionCenter,
+  findAreaDonationStats,
   findUserActivity,
   countUserActivity,
   getUserActivityActionSummary,
   findRecentActivity,
-  findActiveDonationsForMap,
-  findDonationsForAttentionCenter,
-  findReportedDonations,
-  findDelayedPickups,
-  findDelayedDeliveries,
-  findUnassignedDonations,
-  findInactiveVolunteers,
-  findStaleLocations,
 };

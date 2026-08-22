@@ -219,6 +219,8 @@ async function getUserDetail(userId) {
 /**
  * Soft-disables (bans) a user. Guards against an admin disabling their own
  * account (self-lockout prevention) and against redundant state transitions.
+ * Records the action in audit_logs (Phase 8) — this previously wasn't
+ * logged at all despite being a real moderation action.
  * @param {number} userId - User ID to disable
  * @param {number} requestingAdminId - ID of the admin making the request
  * @returns {Promise<Object>} The updated user object
@@ -241,16 +243,22 @@ async function disableUser(userId, requestingAdminId) {
   }
 
   await adminModel.setUserBanned(userId, true);
+  await auditService.record({
+    userId: requestingAdminId,
+    action: AUDIT_ACTIONS.USER_BANNED,
+    metadata: { targetUserId: userId, targetUserRole: user.role },
+  });
   return adminModel.findUserById(userId);
 }
 
 /**
- * Re-enables (unbans) a user.
+ * Re-enables (unbans) a user. Records the action in audit_logs (Phase 8).
  * @param {number} userId - User ID to re-enable
+ * @param {number} requestingAdminId - ID of the admin making the request
  * @returns {Promise<Object>} The updated user object
  * @throws {AppError} 404 not found, 409 already active/deleted
  */
-async function enableUser(userId) {
+async function enableUser(userId, requestingAdminId) {
   const user = await adminModel.findUserById(userId);
   if (!user) {
     throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
@@ -263,6 +271,11 @@ async function enableUser(userId) {
   }
 
   await adminModel.setUserBanned(userId, false);
+  await auditService.record({
+    userId: requestingAdminId,
+    action: AUDIT_ACTIONS.USER_UNBANNED,
+    metadata: { targetUserId: userId, targetUserRole: user.role },
+  });
   return adminModel.findUserById(userId);
 }
 
@@ -300,6 +313,19 @@ async function listDonations(query) {
  * @returns {Promise<Object>} Donation object with a `reports` array
  * @throws {AppError} 404 if no such donation exists
  */
+/**
+ * Gets full details for a single donation, regardless of soft-delete state,
+ * plus any reports filed against it (Phase 3 — reuses report.model.js,
+ * the same table/rows the donor/volunteer-facing report feature already
+ * writes to; no duplicate report logic), plus (Phase 7) a transparent,
+ * rule-based health score/risk level/reasons — see
+ * utils/donationHealthScore.js. Uses the SAME flag-derivation used by
+ * getAttentionCenter below, so a donation's score here is always
+ * consistent with why (or why not) it shows up in the Attention Center.
+ * @param {number} donationId - Donation ID
+ * @returns {Promise<Object>} Donation object with `reports` array and `healthScore`
+ * @throws {AppError} 404 if no such donation exists
+ */
 async function getDonationDetail(donationId) {
   const donation = await adminModel.findDonationById(donationId);
   if (!donation) {
@@ -307,7 +333,18 @@ async function getDonationDetail(donationId) {
   }
 
   const reports = await reportModel.findByDonationId(donationId);
-  return { ...donation, reports };
+  const hasOpenReport = reports.some((r) => r.status === 'pending');
+
+  const assignedPersonId = donation.assignment_mode === 'team' ? donation.assigned_member_id : donation.volunteer_id;
+  const flags = deriveDonationFlags(donation, {
+    pickedUpAt: donation.picked_up_at,
+    hasOpenReport,
+    assignedPersonOnline: assignedPersonId ? socketRegistry.isOnline(assignedPersonId) : null,
+    lastLocationUpdateAt: assignedPersonId ? getLastLocationUpdateAt(assignedPersonId, donation.id) : null,
+  });
+  const healthScore = computeDonationHealthScore(donation, flags);
+
+  return { ...donation, reports, healthScore };
 }
 
 /**
@@ -526,52 +563,6 @@ async function getTeamDetail(teamId) {
 }
 
 /* ============================================================
- * Audit support
- * ============================================================ */
-
-/**
- * Gets a paginated activity log for a user plus a per-action-type summary.
- * @param {number} userId - User ID
- * @param {Object} query - Query parameters from request
- * @returns {Promise<Object>} Object with user, activity, summary, and pagination meta
- * @throws {AppError} 404 if no such user exists
- */
-async function getUserActivity(userId, query) {
-  const user = await adminModel.findUserById(userId);
-  if (!user) {
-    throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
-  }
-
-  const { page, limit, offset } = getPaginationParams(query);
-
-  const [activity, totalItems, actionSummary] = await Promise.all([
-    adminModel.findUserActivity(userId, { limit, offset }),
-    adminModel.countUserActivity(userId),
-    adminModel.getUserActivityActionSummary(userId),
-  ]);
-
-  const parsedActivity = activity.map((entry) => {
-    let metadata = null;
-    if (entry.metadata) {
-      try {
-        metadata = JSON.parse(entry.metadata);
-      } catch {
-        metadata = entry.metadata; // Fall back to raw string if not valid JSON
-      }
-    }
-    return { ...entry, metadata };
-  });
-
-  const summary = actionSummary.reduce((acc, row) => {
-    acc[row.action] = toInt(row.count);
-    return acc;
-  }, {});
-
-  const meta = buildPaginationMeta({ page, limit, totalItems });
-  return { user, activity: parsedActivity, summary, meta };
-}
-
-/* ============================================================
  * Live Operations (Phase 6)
  * ============================================================ */
 
@@ -651,6 +642,52 @@ async function getLiveOperations() {
     volunteers: Array.from(volunteerMap.values()),
     teams: teams.filter(Boolean),
   };
+}
+
+/* ============================================================
+ * Audit support
+ * ============================================================ */
+
+/**
+ * Gets a paginated activity log for a user plus a per-action-type summary.
+ * @param {number} userId - User ID
+ * @param {Object} query - Query parameters from request
+ * @returns {Promise<Object>} Object with user, activity, summary, and pagination meta
+ * @throws {AppError} 404 if no such user exists
+ */
+async function getUserActivity(userId, query) {
+  const user = await adminModel.findUserById(userId);
+  if (!user) {
+    throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  const { page, limit, offset } = getPaginationParams(query);
+
+  const [activity, totalItems, actionSummary] = await Promise.all([
+    adminModel.findUserActivity(userId, { limit, offset }),
+    adminModel.countUserActivity(userId),
+    adminModel.getUserActivityActionSummary(userId),
+  ]);
+
+  const parsedActivity = activity.map((entry) => {
+    let metadata = null;
+    if (entry.metadata) {
+      try {
+        metadata = JSON.parse(entry.metadata);
+      } catch {
+        metadata = entry.metadata; // Fall back to raw string if not valid JSON
+      }
+    }
+    return { ...entry, metadata };
+  });
+
+  const summary = actionSummary.reduce((acc, row) => {
+    acc[row.action] = toInt(row.count);
+    return acc;
+  }, {});
+
+  const meta = buildPaginationMeta({ page, limit, totalItems });
+  return { user, activity: parsedActivity, summary, meta };
 }
 
 /* ============================================================
@@ -789,14 +826,7 @@ function buildAttentionItem(type, donationId, link, extra) {
     detectedAt: extra.detectedAt || new Date().toISOString(),
   };
 }
-      type: 'delayed_pickup',
-      severity: ATTENTION_ITEM_META.delayed_pickup.severity,
-      description: `Donation #${d.id} pickup was scheduled for ${new Date(d.scheduled_at).toLocaleString()}`,
-      link: `/admin/donations/${d.id}`,
-      detectedAt: d.scheduled_at,
-    })),
-    ...delayedDeliveries.map((d) => ({
-      id: `delayed-delivery-${d.id}`,
+
 /* ============================================================
  * Reports & Moderation (Phase 8)
  * ============================================================ */
@@ -1147,9 +1177,4 @@ module.exports = {
   listAnnouncementHistory,
   getAreaIntelligence,
   getUserActivity,
-};
-  getTeamDetail,
-  getUserActivity,
-  getLiveOperations,
-  getAttentionCenter,
 };

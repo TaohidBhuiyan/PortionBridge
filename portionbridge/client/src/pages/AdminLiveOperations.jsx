@@ -13,6 +13,7 @@ import { haversineDistanceKm } from '../utils/geo';
 import { adminApi } from '../services/adminApi';
 
 const TERMINAL_STATUSES = new Set(['completed']);
+const ACTIVE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_up']);
 
 function StatChip({ icon: Icon, label, value }) {
   return (
@@ -55,25 +56,29 @@ export function AdminLiveOperations() {
   const [selected, setSelected] = useState(null); // { type: 'volunteer'|'team', donationId }
 
   // Initial REST snapshot
+  const fetchMissions = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const result = await adminApi.getLiveOperations();
+    if (result.success) {
+      setMissions(result.data?.missions || []);
+      const onlineMap = {};
+      (result.data?.volunteers || []).forEach((v) => { onlineMap[v.id] = v.isOnline; });
+      setVolunteerOnlineSnapshot(onlineMap);
+      const rosterMap = {};
+      (result.data?.teams || []).forEach((t) => { rosterMap[t.id] = t; });
+      setTeamsRoster(rosterMap);
+    } else {
+      setError(result.error);
+    }
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      setLoading(true);
-      setError(null);
-      const result = await adminApi.getLiveOperations();
       if (cancelled) return;
-      if (result.success) {
-        setMissions(result.data?.missions || []);
-        const onlineMap = {};
-        (result.data?.volunteers || []).forEach((v) => { onlineMap[v.id] = v.isOnline; });
-        setVolunteerOnlineSnapshot(onlineMap);
-        const rosterMap = {};
-        (result.data?.teams || []).forEach((t) => { rosterMap[t.id] = t; });
-        setTeamsRoster(rosterMap);
-      } else {
-        setError(result.error);
-      }
-      setLoading(false);
+      await fetchMissions();
     };
     load();
     return () => { cancelled = true; };
@@ -99,6 +104,15 @@ export function AdminLiveOperations() {
       setMissions((prev) => {
         if (data.isDeleted || TERMINAL_STATUSES.has(data.status)) {
           return prev.filter((m) => m.id !== data.donationId);
+        }
+        // Phase 10 QA fix: detect when a donation newly enters the active set
+        // (e.g., just accepted). The socket event only carries basic info in this case,
+        // so trigger a refresh to get full marker data before rendering.
+        const existing = prev.find((m) => m.id === data.donationId);
+        if (!existing && ACTIVE_STATUSES.has(data.status)) {
+          // Unknown mission now active - refresh to get complete data
+          fetchMissions();
+          return prev;
         }
         return prev.map((m) => (m.id === data.donationId ? { ...m, status: data.status } : m));
       });

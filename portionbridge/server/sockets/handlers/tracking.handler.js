@@ -1,5 +1,5 @@
 const { socketSuccess, socketError } = require('../utils/socketResponse');
-const { getDonationRoomName } = require('../rooms');
+const { getDonationRoomName, getAdminLiveOpsRoomName } = require('../rooms');
 const donationModel = require('../../models/donation.model');
 const { DONATION_STATUS, USER_ROLES } = require('../../constants');
 
@@ -34,7 +34,7 @@ const lastUpdateAt = new Map();
  * the donor, the assigned volunteer, the assigned team member, or an admin.
  * Shared by join/leave AND by the location-sharing check below, so the two
  * can never drift into inconsistent rules about who's allowed in the room
-// versus who's allowed to know where the volunteer is.
+ * versus who's allowed to know where the volunteer is.
  * @param {Object} donation - Donation row (needs donor_id/volunteer_id/assigned_member_id)
  * @param {Object} user - socket.user (needs id/role)
  * @returns {boolean}
@@ -166,7 +166,14 @@ function registerTrackingHandlers(_io, socket) {
 
       const roomName = getDonationRoomName(donationId);
       const timestamp = new Date().toISOString();
-      _io.to(roomName).emit('volunteer_location_updated', {
+      // Chaining .to(a).to(b) broadcasts to the UNION of both rooms in one
+      // call — sockets in both (e.g. an admin who is also somehow in the
+      // donation room) only get one copy. This is the ONLY change needed
+      // to feed the Phase 6 admin live-ops map: no second emit, no new
+      // event name, no parallel broadcast path — the exact same payload
+      // donor tracking and the volunteer's own mission map already
+      // consume now also reaches the admin room.
+      _io.to(roomName).to(getAdminLiveOpsRoomName()).emit('volunteer_location_updated', {
         donationId,
         latitude,
         longitude,
@@ -178,6 +185,48 @@ function registerTrackingHandlers(_io, socket) {
       ack(socketError(err.message, err.statusCode));
     }
   });
+
+  /**
+   * join_admin_live_ops / leave_admin_live_ops — Phase 6. Admin-only room
+   * covering every active mission's location/status updates at once, so
+   * the Live Operations Map doesn't have to discover and join N separate
+   * per-donation rooms itself. Authorization is checked here, not just
+   * left to the frontend routing guard — matches the "admin-only access
+   * enforced server-side" requirement.
+   */
+  socket.on('join_admin_live_ops', (payload, callback) => {
+    const ack = typeof callback === 'function' ? callback : () => {};
+
+    if (socket.user.role !== USER_ROLES.ADMIN) {
+      return ack(socketError('Admin access required.', 403));
+    }
+
+    socket.join(getAdminLiveOpsRoomName());
+    ack(socketSuccess('Joined admin live operations room.'));
+  });
+
+  socket.on('leave_admin_live_ops', (payload, callback) => {
+    const ack = typeof callback === 'function' ? callback : () => {};
+
+    socket.leave(getAdminLiveOpsRoomName());
+    ack(socketSuccess('Left admin live operations room.'));
+  });
 }
 
-module.exports = { registerTrackingHandlers };
+/**
+ * Milliseconds-since-epoch of the last ACCEPTED share_volunteer_location
+ * update for (userId, donationId), or null if none has been received this
+ * process's lifetime. Reused by admin.service.js's Phase 7 Attention
+ * Center to detect "stale location" (an active on_the_way/picked_up
+ * mission whose volunteer hasn't reported a position in a while) — the
+ * SAME in-memory map this handler already keeps for throttling, not a
+ * second tracking mechanism.
+ * @param {number} userId
+ * @param {number} donationId
+ * @returns {number|null}
+ */
+function getLastLocationUpdateAt(userId, donationId) {
+  return lastUpdateAt.get(`${userId}:${donationId}`) || null;
+}
+
+module.exports = { registerTrackingHandlers, getLastLocationUpdateAt };

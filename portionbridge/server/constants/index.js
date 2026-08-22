@@ -60,11 +60,19 @@ const NOTIFICATION_TYPES = {
   TEAM_ANNOUNCEMENT: 'team_announcement',
   TEAM_DONATION_ASSIGNED: 'team_donation_assigned',
   TEAM_DONATION_COMPLETED: 'team_donation_completed',
+  ADMIN_ANNOUNCEMENT: 'admin_announcement',
 };
 
 const REPORT_TARGET_TYPES = {
   USER: 'user',
   DONATION_REQUEST: 'donation_request',
+};
+
+const REPORT_STATUS = {
+  PENDING: 'pending',
+  REVIEWED: 'reviewed',
+  RESOLVED: 'resolved',
+  DISMISSED: 'dismissed',
 };
 
 const PAGINATION_DEFAULTS = {
@@ -142,6 +150,14 @@ const AUDIT_ACTIONS = {
   DONATION_COMPLETED: 'donation_completed',
   RATING_CREATED: 'rating_created',
   REPORT_FILED: 'report_filed',
+
+  // --- Phase 8: Admin moderation & notifications ---
+  USER_BANNED: 'user_banned',
+  USER_UNBANNED: 'user_unbanned',
+  REPORT_INVESTIGATED: 'report_investigated',
+  REPORT_RESOLVED: 'report_resolved',
+  REPORT_DISMISSED: 'report_dismissed',
+  ADMIN_ANNOUNCEMENT_SENT: 'admin_announcement_sent',
 };
 
 // --- Donation Form Enums ---
@@ -304,6 +320,7 @@ module.exports = {
   DONATION_STATUS,
   NOTIFICATION_TYPES,
   REPORT_TARGET_TYPES,
+  REPORT_STATUS,
   PAGINATION_DEFAULTS,
   UPLOAD_LIMITS,
   RATE_LIMIT,

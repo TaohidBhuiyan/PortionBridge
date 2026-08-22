@@ -9,7 +9,8 @@ const { pool } = require('../config/db');
  */
 
 const REPORT_COLUMNS = `
-  id, reporter_id, reported_user_id, reported_donation_id, reason, details, status, created_at, updated_at
+  id, reporter_id, reported_user_id, reported_donation_id, reason, details,
+  resolution_notes, status, resolved_by, resolved_at, created_at, updated_at
 `;
 
 const ALLOWED_REPORT_SORT_COLUMNS = ['created_at', 'status'];
@@ -146,11 +147,151 @@ async function findByDonationId(donationId) {
   return rows;
 }
 
+/* ============================================================
+ * Admin moderation (Phase 8)
+ * ============================================================ */
+
+const ADMIN_REPORT_COLUMNS = `
+  r.id, r.reporter_id, r.reported_user_id, r.reported_donation_id,
+  r.reason, r.details, r.resolution_notes, r.status, r.resolved_by, r.resolved_at,
+  r.created_at, r.updated_at,
+  reporter.name AS reporter_name, reporter.email AS reporter_email,
+  reportedUser.name AS reported_user_name, reportedUser.email AS reported_user_email,
+  reportedUser.is_banned AS reported_user_banned,
+  dr.title AS donation_title, dr.status AS donation_status,
+  resolver.name AS resolved_by_name
+`;
+
+const ADMIN_REPORT_JOINS = `
+  FROM reports r
+  LEFT JOIN users reporter ON reporter.id = r.reporter_id
+  LEFT JOIN users reportedUser ON reportedUser.id = r.reported_user_id
+  LEFT JOIN donation_requests dr ON dr.id = r.reported_donation_id
+  LEFT JOIN users resolver ON resolver.id = r.resolved_by
+`;
+
+/**
+ * Builds the shared WHERE clause + params for the admin report list.
+ * `targetType` distinguishes reports against a donation from reports
+ * against a user only — the same real distinction Phase 7's Attention
+ * Center already uses (reported_donation_id set vs. null), exposed here
+ * as an explicit filter instead of the caller inferring it.
+ * @param {Object} filters
+ * @param {string} [filters.status] - pending/reviewed/resolved/dismissed
+ * @param {string} [filters.targetType] - 'donation' | 'user'
+ * @param {string} [filters.search] - Matches reason/details
+ * @returns {Object} Object containing whereClause string and params object
+ */
+function buildAdminReportFilter({ status, targetType, search }) {
+  const conditions = ['1 = 1'];
+  const params = {};
+
+  if (status) {
+    conditions.push('r.status = :status');
+    params.status = status;
+  }
+  if (targetType === 'donation') {
+    conditions.push('r.reported_donation_id IS NOT NULL');
+  } else if (targetType === 'user') {
+    conditions.push('r.reported_donation_id IS NULL AND r.reported_user_id IS NOT NULL');
+  }
+  if (search) {
+    conditions.push('(r.reason LIKE :search OR r.details LIKE :search)');
+    params.search = `%${search}%`;
+  }
+
+  return { whereClause: conditions.join(' AND '), params };
+}
+
+/**
+ * Lists reports for the admin moderation queue/history — one endpoint
+ * covers both (see admin.service.js#listReports): pending/reviewed
+ * filtered is "the queue", resolved/dismissed filtered is "moderation
+ * history". Same table, same columns, just a different status filter —
+ * no separate history mechanism.
+ * @param {Object} options - Query + pagination options
+ * @returns {Promise<Array>} Array of enriched report objects
+ */
+async function findAllReports({ status, targetType, search, sortBy, sortOrder, limit, offset }) {
+  const { whereClause, params } = buildAdminReportFilter({ status, targetType, search });
+  const orderColumn = ALLOWED_REPORT_SORT_COLUMNS.includes(sortBy) ? `r.${sortBy}` : 'r.created_at';
+  const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+  const [rows] = await pool.query(
+    `SELECT ${ADMIN_REPORT_COLUMNS}
+     ${ADMIN_REPORT_JOINS}
+     WHERE ${whereClause}
+     ORDER BY ${orderColumn} ${orderDirection}
+     LIMIT :limit OFFSET :offset`,
+    { ...params, limit, offset }
+  );
+  return rows;
+}
+
+/**
+ * Total count matching the same filters as findAllReports. Powers pagination meta.
+ * @param {Object} filters - Filter options (same as buildAdminReportFilter)
+ * @returns {Promise<number>} Total count of matching reports
+ */
+async function countAllReports(filters) {
+  const { whereClause, params } = buildAdminReportFilter(filters);
+  const [rows] = await pool.query(
+    `SELECT COUNT(*) AS total FROM reports r WHERE ${whereClause}`,
+    params
+  );
+  return rows[0].total;
+}
+
+/**
+ * Single report, enriched with reporter/reported-user/donation/resolver
+ * names for the admin report detail view.
+ * @param {number} id - Report ID
+ * @returns {Promise<Object|null>} Enriched report object or null
+ */
+async function findByIdWithDetails(id) {
+  const [rows] = await pool.query(
+    `SELECT ${ADMIN_REPORT_COLUMNS}
+     ${ADMIN_REPORT_JOINS}
+     WHERE r.id = :id LIMIT 1`,
+    { id }
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Updates a report's moderation state. `investigate` (status='reviewed')
+ * leaves resolved_by/resolved_at/resolution_notes untouched — it's just
+ * "an admin is looking at this", not a final decision. `resolve`/
+ * `dismiss` set all three, closing the report out.
+ * @param {number} id - Report ID
+ * @param {Object} data
+ * @param {string} data.status - New status (reviewed/resolved/dismissed)
+ * @param {number|null} [data.resolvedBy] - Admin's user ID, only set on resolve/dismiss
+ * @param {string|null} [data.resolutionNotes] - Admin's reasoning, only set on resolve/dismiss
+ * @returns {Promise<void>}
+ */
+async function updateReportStatus(id, { status, resolvedBy = null, resolutionNotes = null }) {
+  const isClosing = status === 'resolved' || status === 'dismissed';
+  await pool.query(
+    `UPDATE reports
+     SET status = :status,
+         resolved_by = CASE WHEN :isClosing THEN :resolvedBy ELSE resolved_by END,
+         resolved_at = CASE WHEN :isClosing THEN NOW() ELSE resolved_at END,
+         resolution_notes = COALESCE(:resolutionNotes, resolution_notes)
+     WHERE id = :id`,
+    { id, status, isClosing, resolvedBy, resolutionNotes }
+  );
+}
+
 module.exports = {
   create,
   findById,
   findByReporterAndDonation,
+  findByDonationId,
   findMyReports,
   countMyReports,
-  findByDonationId,
+  findAllReports,
+  countAllReports,
+  findByIdWithDetails,
+  updateReportStatus,
 };
