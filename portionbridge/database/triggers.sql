@@ -1,6 +1,9 @@
--- portionbridge_triggers.sql
+-- triggers.sql
 -- Contains all triggers for the PortionBridge database
--- Import/run this AFTER importing portionbridge_schema.sql
+-- Import/run this AFTER importing main_schema.sql
+--
+-- Usage: mysql -u root -p portionbridge < triggers.sql
+-- ============================================================================
 
 USE portionbridge;
 

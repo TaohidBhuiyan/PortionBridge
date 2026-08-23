@@ -24,11 +24,38 @@ export function ChatWindow({ donation, currentUser }) {
 
   useEffect(() => {
     if (!donationId || !isVolunteerAssigned) {
-      setLoading(false);
-      return;
+      // No setState needed here — the render logic below already checks
+      // `!isVolunteerAssigned` before ever looking at `loading`, so this
+      // early return doesn't need to touch loading state at all.
+      return undefined;
     }
 
+    let cancelled = false;
+
+    const loadMessages = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const result = await chatApi.getMessages(donationId, { limit: 50 });
+        if (cancelled) return;
+
+        if (result.success) {
+          setMessages(result.data.messages || []);
+        } else {
+          setError(result.error || 'Failed to load messages');
+        }
+      } catch {
+        if (!cancelled) setError('Failed to load messages. Please try again.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     loadMessages();
+    return () => {
+      cancelled = true;
+    };
   }, [donationId, isVolunteerAssigned]);
 
   useEffect(() => {
@@ -79,25 +106,6 @@ export function ChatWindow({ donation, currentUser }) {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  const loadMessages = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const result = await chatApi.getMessages(donationId, { limit: 50 });
-      
-      if (result.success) {
-        setMessages(result.data.messages || []);
-      } else {
-        setError(result.error || 'Failed to load messages');
-      }
-    } catch (err) {
-      setError('Failed to load messages. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

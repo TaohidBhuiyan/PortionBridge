@@ -4,7 +4,15 @@
 -- Requires: MySQL 8.0.16+ or MariaDB 10.2.1+ (for CHECK constraint enforcement)
 -- Charset: utf8mb4 (full Unicode support, including emoji in chat messages)
 -- ============================================================================
--- This schema includes all changes from migrations 002-011
+-- This schema includes all changes from migrations 002-015
+-- ============================================================================
+--
+-- SETUP INSTRUCTIONS:
+-- 1. Run this file first: mysql -u root -p < main_schema.sql
+-- 2. Then run triggers.sql: mysql -u root -p portionbridge < triggers.sql
+-- 3. Finally run dummy_data.sql: mysql -u root -p portionbridge < dummy_data.sql
+--
+-- These 3 files together provide a complete database setup from scratch.
 -- ============================================================================
 
 CREATE DATABASE IF NOT EXISTS portionbridge
@@ -29,7 +37,8 @@ DROP TABLE IF EXISTS saved_addresses;
 DROP TABLE IF EXISTS volunteer_profiles;
 DROP TABLE IF EXISTS notification_settings;
 DROP TABLE IF EXISTS user_preferences;
-DROP TABLE IF EXISTS schema_migrations;
+DROP TABLE IF EXISTS user_achievements;
+DROP TABLE IF EXISTS achievement_definitions;
 DROP TABLE IF EXISTS reports;
 DROP TABLE IF EXISTS ratings;
 DROP TABLE IF EXISTS notifications;
@@ -88,6 +97,16 @@ CREATE TABLE users (
   KEY idx_users_email_verified (email_verified),
 
   CONSTRAINT chk_users_email_format CHECK (email LIKE '%_@__%.__%')
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: schema_migrations
+-- Tracks which migrations have been applied to the database
+-- ============================================================================
+CREATE TABLE schema_migrations (
+  id VARCHAR(100) NOT NULL PRIMARY KEY,
+  applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- ============================================================================
@@ -286,7 +305,7 @@ CREATE TABLE volunteer_profiles (
   bio               TEXT DEFAULT NULL,
   skills            JSON DEFAULT NULL,
   availability      VARCHAR(255) DEFAULT NULL,
-  service_area      VARCHAR(255) DEFAULT NULL,
+  service_areas     VARCHAR(255) DEFAULT NULL,
   vehicle_type      ENUM('none', 'bicycle', 'motorcycle', 'car', 'van', 'truck') DEFAULT NULL,
   total_pickups     INT UNSIGNED NOT NULL DEFAULT 0,
   rating            DECIMAL(3, 2) DEFAULT NULL,
@@ -303,6 +322,81 @@ CREATE TABLE volunteer_profiles (
     ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+
+-- ============================================================================
+-- TABLE: user_achievements
+-- Stores achievements unlocked by users
+-- Migration 008
+-- ============================================================================
+CREATE TABLE user_achievements (
+  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  user_id               INT UNSIGNED NOT NULL,
+  achievement_type      VARCHAR(50) NOT NULL,
+  achievement_name      VARCHAR(100) NOT NULL,
+  description           VARCHAR(255) NOT NULL,
+  icon                  VARCHAR(50) DEFAULT NULL,
+  unlocked_at           TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+
+  UNIQUE KEY uq_user_achievement (user_id, achievement_type),
+  KEY idx_user_achievements_user_id (user_id),
+  KEY idx_user_achievements_type (achievement_type),
+
+  CONSTRAINT fk_user_achievements_user
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ============================================================================
+-- TABLE: achievement_definitions
+-- Defines available achievements and their criteria
+-- Migration 008
+-- ============================================================================
+CREATE TABLE achievement_definitions (
+  id                    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  type                  VARCHAR(50) NOT NULL,
+  name                  VARCHAR(100) NOT NULL,
+  description           VARCHAR(255) NOT NULL,
+  icon                  VARCHAR(50) NOT NULL,
+  role                  ENUM('donor', 'volunteer', 'both') NOT NULL DEFAULT 'both',
+  criteria_type         ENUM('donations_count', 'pickups_count', 'rating_avg', 'streak') NOT NULL,
+  criteria_value        INT UNSIGNED NOT NULL,
+  points                INT UNSIGNED NOT NULL DEFAULT 0,
+  is_active             TINYINT(1) NOT NULL DEFAULT 1,
+  created_at            TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_achievement_type (type),
+  KEY idx_achievement_definitions_role (role),
+  KEY idx_achievement_definitions_active (is_active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ============================================================================
+-- INSERT DEFAULT ACHIEVEMENT DEFINITIONS
+-- Migration 008
+-- ============================================================================
+INSERT INTO achievement_definitions (type, name, description, icon, role, criteria_type, criteria_value, points) VALUES
+-- Donor Achievements
+('first_donation', 'First Donation', 'Completed your first donation', 'gift', 'donor', 'donations_count', 1, 10),
+('helping_hand', 'Helping Hand', 'Completed 5 donations', 'hand-heart', 'donor', 'donations_count', 5, 25),
+('community_hero', 'Community Hero', 'Completed 10 donations', 'award', 'donor', 'donations_count', 10, 50),
+('generous_giver', 'Generous Giver', 'Completed 25 donations', 'heart', 'donor', 'donations_count', 25, 100),
+('legendary_donor', 'Legendary Donor', 'Completed 50 donations', 'crown', 'donor', 'donations_count', 50, 200),
+('top_donor', 'Top Donor', 'Reached top 10 on donor leaderboard', 'trophy', 'donor', 'donations_count', 1, 150),
+
+-- Volunteer Achievements
+('first_pickup', 'First Pickup', 'Completed your first pickup', 'truck', 'volunteer', 'pickups_count', 1, 10),
+('reliable_volunteer', 'Reliable Volunteer', 'Completed 5 pickups', 'shield-check', 'volunteer', 'pickups_count', 5, 25),
+('dedicated_helper', 'Dedicated Helper', 'Completed 10 pickups', 'star', 'volunteer', 'pickups_count', 10, 50),
+('super_volunteer', 'Super Volunteer', 'Completed 25 pickups', 'zap', 'volunteer', 'pickups_count', 25, 100),
+('legendary_volunteer', 'Legendary Volunteer', 'Completed 50 pickups', 'crown', 'volunteer', 'pickups_count', 50, 200),
+('top_volunteer', 'Top Volunteer', 'Reached top 10 on volunteer leaderboard', 'trophy', 'volunteer', 'pickups_count', 1, 150),
+('five_star_hero', '5-Star Hero', 'Maintained 5.0 average rating with 10+ ratings', 'star', 'volunteer', 'rating_avg', 10, 100),
+
+-- Both Roles
+('consistent_contributor', 'Consistent Contributor', 'Active for 30 days', 'calendar-check', 'both', 'streak', 30, 50);
 
 -- ============================================================================
 -- TABLE: teams
@@ -579,6 +673,7 @@ CREATE TABLE chat_messages (
 -- ============================================================================
 -- TABLE: notifications
 -- In-app notifications per user (donation accepted, new message, etc.).
+-- Migration 014: Added admin_announcement notification type
 -- ============================================================================
 CREATE TABLE notifications (
   id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -671,6 +766,7 @@ CREATE TABLE ratings (
 -- TABLE: reports
 -- Report/Flag a user or a donation post; reviewed by Admin.
 -- Migration 006: Added details column and unique constraint
+-- Migration 015: Added moderation fields (resolution_notes, resolved_by, resolved_at, dismissed status)
 -- ============================================================================
 CREATE TABLE reports (
   id                      INT UNSIGNED NOT NULL AUTO_INCREMENT,
