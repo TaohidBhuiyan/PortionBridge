@@ -9,9 +9,7 @@ const {
   loadDonation,
   restrictToDonationOwner
 } = require('../../middleware/donation.middleware');
-const {
-  validateRequest
-} = require('../../middleware/validateRequest');
+const validateRequest = require('../../middleware/validateRequest');
 const {
   getDonationDetails,
   createDonation,
@@ -100,12 +98,14 @@ router.get('/:id', protect, loadDonation, getDonationDetails);
 // );
 
 // Only donors can create/edit/cancel donation requests.
-router.post('/', protect, createDonation);
+router.post('/', protect, authorize('donor'), createDonationValidationRules, validateRequest, createDonation);
 
 router.patch(
   '/:id',
   protect,
   authorize('donor'),
+  updateDonationValidationRules,
+  validateRequest,
   loadDonation,
   restrictToDonationOwner,
   updateDonation
@@ -115,6 +115,8 @@ router.delete(
   '/:id',
   protect,
   authorize('donor'),
+  cancelDonationValidationRules,
+  validateRequest,
   loadDonation,
   restrictToDonationOwner,
   cancelDonation

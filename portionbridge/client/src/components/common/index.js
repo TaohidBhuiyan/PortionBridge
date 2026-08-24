@@ -4,6 +4,7 @@
  */
 
 export { Avatar } from './Avatar';
+export { ErrorBoundary } from './ErrorBoundary';
 export { Icon } from './Icon';
 export { Logo } from './Logo';
 export { Modal } from './Modal';

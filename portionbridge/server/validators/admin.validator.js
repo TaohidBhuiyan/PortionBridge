@@ -5,6 +5,14 @@ const ALLOWED_USER_SORT_FIELDS = ['created_at', 'name', 'email'];
 const ALLOWED_ADMIN_DONATION_SORT_FIELDS = ['created_at', 'pickup_time', 'scheduled_at', 'completed_at'];
 const USER_STATUS_VALUES = ['active', 'banned', 'deleted'];
 
+// Matches REPORT_STATUS in constants/index.js and ALLOWED_REPORT_SORT_COLUMNS
+// in models/report.model.js.
+const REPORT_STATUS_VALUES = ['pending', 'reviewed', 'resolved', 'dismissed'];
+const ALLOWED_REPORT_SORT_FIELDS = ['created_at', 'status'];
+const REPORT_TARGET_TYPE_VALUES = ['donation', 'user'];
+// Matches VALID_AUDIENCES in services/admin.service.js.
+const ANNOUNCEMENT_AUDIENCE_VALUES = ['all', 'donors', 'volunteers', 'team'];
+
 const paginationValidationRules = [
   query('page')
     .optional()
@@ -168,6 +176,78 @@ const getTeamValidationRules = [
 const liveOperationsValidationRules = [];
 const attentionCenterValidationRules = [];
 
+// --- Reports & Moderation (Phase 8) ---
+const listReportsValidationRules = [
+  ...paginationValidationRules,
+
+  query('status')
+    .optional()
+    .trim()
+    .isIn(REPORT_STATUS_VALUES).withMessage(`status must be one of: ${REPORT_STATUS_VALUES.join(', ')}.`),
+
+  query('targetType')
+    .optional()
+    .trim()
+    .isIn(REPORT_TARGET_TYPE_VALUES).withMessage(`targetType must be one of: ${REPORT_TARGET_TYPE_VALUES.join(', ')}.`),
+
+  query('search')
+    .optional()
+    .trim()
+    .isLength({ max: 255 }).withMessage('Search keyword must not exceed 255 characters.'),
+
+  query('sortBy')
+    .optional()
+    .trim()
+    .isIn(ALLOWED_REPORT_SORT_FIELDS).withMessage(`sortBy must be one of: ${ALLOWED_REPORT_SORT_FIELDS.join(', ')}.`),
+
+  query('sortOrder')
+    .optional()
+    .trim()
+    .toLowerCase()
+    .isIn(['asc', 'desc']).withMessage('sortOrder must be either "asc" or "desc".'),
+];
+
+const getReportValidationRules = [
+  param('id').isInt({ min: 1 }).withMessage('A valid report id is required.'),
+];
+
+const reportModerationNotesValidationRules = [
+  param('id').isInt({ min: 1 }).withMessage('A valid report id is required.'),
+
+  body('notes')
+    .optional()
+    .trim()
+    .isLength({ max: 1000 }).withMessage('notes must not exceed 1000 characters.'),
+];
+
+// --- Admin Notifications (Phase 8) ---
+const sendAnnouncementValidationRules = [
+  body('audience')
+    .trim()
+    .isIn(ANNOUNCEMENT_AUDIENCE_VALUES).withMessage(`audience must be one of: ${ANNOUNCEMENT_AUDIENCE_VALUES.join(', ')}.`),
+
+  body('teamId')
+    .if(body('audience').equals('team'))
+    .notEmpty().withMessage('teamId is required when audience is "team".')
+    .bail()
+    .isInt({ min: 1 }).withMessage('A valid teamId is required when audience is "team".'),
+
+  body('title')
+    .if(body('audience').not().equals('team'))
+    .notEmpty().withMessage('title is required.')
+    .bail()
+    .trim()
+    .isLength({ max: 150 }).withMessage('title must not exceed 150 characters.'),
+
+  body('message')
+    .trim()
+    .notEmpty().withMessage('message is required.')
+    .isLength({ max: 1000 }).withMessage('message must not exceed 1000 characters.'),
+];
+
+// --- Area Intelligence (Phase 9) ---
+const areaIntelligenceValidationRules = [];
+
 module.exports = {
   dashboardValidationRules,
   listUsersValidationRules,
@@ -184,4 +264,9 @@ module.exports = {
   getTeamValidationRules,
   liveOperationsValidationRules,
   attentionCenterValidationRules,
+  listReportsValidationRules,
+  getReportValidationRules,
+  reportModerationNotesValidationRules,
+  sendAnnouncementValidationRules,
+  areaIntelligenceValidationRules,
 };

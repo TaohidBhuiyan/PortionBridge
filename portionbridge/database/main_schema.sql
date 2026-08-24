@@ -51,6 +51,7 @@ DROP TABLE IF EXISTS password_history;
 DROP TABLE IF EXISTS email_verifications;
 DROP TABLE IF EXISTS password_resets;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS schema_migrations;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -750,14 +751,21 @@ CREATE TABLE ratings (
   CONSTRAINT fk_ratings_rated_by
     FOREIGN KEY (rated_by) REFERENCES users(id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON UPDATE RESTRICT,
 
   CONSTRAINT fk_ratings_rated_user
     FOREIGN KEY (rated_user) REFERENCES users(id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON UPDATE RESTRICT,
 
   CONSTRAINT chk_ratings_stars CHECK (stars BETWEEN 1 AND 5),
+  -- ON UPDATE RESTRICT (not CASCADE) on the two FKs above is required for
+  -- this CHECK to be creatable at all: MariaDB 10.11 rejects a CHECK
+  -- constraint on any column that also carries ON UPDATE CASCADE (verified
+  -- via isolated repro during Phase 1 audit fixes). users.id is an
+  -- auto-increment PK the application never updates, so this changes no
+  -- real behavior — ON DELETE CASCADE (the action that actually matters
+  -- here) is unchanged.
   CONSTRAINT chk_ratings_not_self CHECK (rated_by <> rated_user)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -800,18 +808,22 @@ CREATE TABLE reports (
   CONSTRAINT fk_reports_reported_user
     FOREIGN KEY (reported_user_id) REFERENCES users(id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON UPDATE RESTRICT,
 
   CONSTRAINT fk_reports_reported_donation
     FOREIGN KEY (reported_donation_id) REFERENCES donation_requests(id)
     ON DELETE CASCADE
-    ON UPDATE CASCADE,
+    ON UPDATE RESTRICT,
 
   CONSTRAINT fk_reports_resolved_by
     FOREIGN KEY (resolved_by) REFERENCES users(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE,
 
+  -- ON UPDATE RESTRICT (not CASCADE) on the two FKs above is required for
+  -- this CHECK to be creatable at all — see the identical note on
+  -- ratings.chk_ratings_not_self. Same reasoning: users.id/donation_requests.id
+  -- are auto-increment PKs the app never updates, so no real behavior changes.
   CONSTRAINT chk_reports_target_present
     CHECK (reported_user_id IS NOT NULL OR reported_donation_id IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
