@@ -23,7 +23,7 @@ Exercise the real service layer (`services/*.js`) against a real MySQL database 
 DB_HOST=localhost
 DB_USER=root
 DB_PASSWORD=...
-DB_NAME=portionbridge          # a fresh import of database/portionbridge_schema.sql + portionbridge_triggers.sql
+DB_NAME=portionbridge          # a fresh import of database/main_schema.sql + triggers.sql
 NODE_ENV=development           # required — see note below
 JWT_ACCESS_SECRET=...          # any 32+ char string
 JWT_REFRESH_SECRET=...         # different from the above

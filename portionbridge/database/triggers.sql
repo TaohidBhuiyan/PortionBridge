@@ -113,4 +113,23 @@ BEGIN
   END IF;
 END$$
 
+-- ============================================================================
+-- TRIGGER: trg_saved_addresses_single_default_insert
+-- Same invariant as trg_saved_addresses_single_default above, but for INSERT.
+-- Without this, a user could end up with two is_default=1 rows: the app's
+-- createAddress service only force-defaults a user's FIRST address, so a
+-- request that explicitly sets isDefault=true for a 2nd/3rd address passed
+-- straight through with no existing default cleared (verified live: inserting
+-- such a row previously left two is_default=1 rows for the same user).
+-- ============================================================================
+-- NOTE: A mirrored "single default on INSERT" trigger was attempted here but
+-- is not possible in MySQL/MariaDB — a trigger fired by INSERT can never
+-- modify its own table (BEFORE or AFTER), unlike UPDATE triggers, which can.
+-- Verified via direct testing: both BEFORE INSERT and AFTER INSERT variants
+-- fail with "Can't update table 'saved_addresses' ... already used by
+-- statement which invoked this stored function/trigger." This specific
+-- invariant (a newly inserted default address unsets the previous default)
+-- is enforced at the application layer instead — see createAddress() in
+-- server/services/savedAddress.service.js.
+
 DELIMITER ;

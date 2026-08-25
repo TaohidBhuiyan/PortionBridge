@@ -91,7 +91,7 @@ async function validateDatabaseSchema() {
       missingColumns.length && `columns: ${missingColumns.join(', ')}`,
       missingIndexes.length && `indexes: ${missingIndexes.join(', ')}`,
     ].filter(Boolean).join('; ');
-    throw new Error(`Database schema is incomplete (${details}). Run \"npm run migrate\" after importing database/portionbridge_schema.sql.`);
+    throw new Error(`Database schema is incomplete (${details}). Run \"npm run migrate\" after importing database/main_schema.sql.`);
   }
 }
 

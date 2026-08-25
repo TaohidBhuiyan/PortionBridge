@@ -305,17 +305,25 @@ CREATE TABLE volunteer_profiles (
   user_id           INT UNSIGNED NOT NULL,
   bio               TEXT DEFAULT NULL,
   skills            JSON DEFAULT NULL,
-  availability      VARCHAR(255) DEFAULT NULL,
-  service_areas     VARCHAR(255) DEFAULT NULL,
+  availability      JSON DEFAULT NULL,
+  service_areas     JSON DEFAULT NULL,
   vehicle_type      ENUM('none', 'bicycle', 'motorcycle', 'car', 'van', 'truck') DEFAULT NULL,
   total_pickups     INT UNSIGNED NOT NULL DEFAULT 0,
   rating            DECIMAL(3, 2) DEFAULT NULL,
+  latitude          DECIMAL(10, 8) DEFAULT NULL,
+  longitude         DECIMAL(11, 8) DEFAULT NULL,
+  is_online         TINYINT(1) NOT NULL DEFAULT 0,
+  last_location_update TIMESTAMP NULL DEFAULT NULL,
+  coverage_radius   DECIMAL(10, 2) DEFAULT NULL,
   created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                       ON UPDATE CURRENT_TIMESTAMP,
 
   PRIMARY KEY (id),
   UNIQUE KEY uq_volunteer_profiles_user_id (user_id),
+
+  KEY idx_volunteer_profiles_location (latitude, longitude),
+  KEY idx_volunteer_profiles_is_online (is_online),
 
   CONSTRAINT fk_volunteer_profiles_user
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -408,6 +416,9 @@ CREATE TABLE teams (
   name VARCHAR(100) NOT NULL,
   description VARCHAR(500) DEFAULT NULL,
   leader_id INT UNSIGNED NOT NULL,
+  latitude DECIMAL(10, 8) DEFAULT NULL,
+  longitude DECIMAL(11, 8) DEFAULT NULL,
+  coverage_radius DECIMAL(10, 2) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
@@ -418,6 +429,7 @@ CREATE TABLE teams (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 CREATE INDEX idx_teams_leader ON teams(leader_id);
+CREATE INDEX idx_teams_location ON teams(latitude, longitude);
 
 
 -- ============================================================================

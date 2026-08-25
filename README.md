@@ -81,8 +81,9 @@ portionbridge/
 │   ├── utils/                 # Shared helpers
 │   └── validators/            # express-validator request rules
 └── database/
-    ├── portionbridge_schema.sql     # Consolidated current schema (source of truth for a fresh install)
-    ├── portionbridge_triggers.sql   # DB triggers (e.g. donation-status notifications)
+    ├── main_schema.sql              # Consolidated current schema (source of truth for a fresh install)
+    ├── triggers.sql                 # DB triggers (e.g. donation-status notifications)
+    ├── dummy_data.sql               # Test data for development
     └── migrations/                   # Historical/incremental migration files
 ```
 
@@ -95,11 +96,12 @@ portionbridge/
 ### 1. Database Setup
 
 ```bash
-mysql -u root -p < database/portionbridge_schema.sql
-mysql -u root -p portionbridge < database/portionbridge_triggers.sql
+mysql -u root -p < database/main_schema.sql
+mysql -u root -p portionbridge < database/triggers.sql
+mysql -u root -p portionbridge < database/dummy_data.sql
 ```
 
-`portionbridge_schema.sql` is the consolidated, current schema — importing it gives you a complete, up-to-date database in one step. You do not need to separately run older migration files against a fresh database.
+`main_schema.sql` is the consolidated, current schema — importing it gives you a complete, up-to-date database in one step. You do not need to separately run older migration files against a fresh database. The triggers.sql file adds database-level audit logging and notification triggers, and dummy_data.sql provides test data for development.
 
 > **MySQL 8.0.19+ note:** two `CHECK` constraints (`chk_ratings_not_self` on `ratings`, `chk_reports_target_present` on `reports`) reference columns that are also part of a foreign key with a `CASCADE` action. MySQL 8.0.19+ rejects this combination (`ERROR 3823`). If your import fails on either of these lines, remove that one `CONSTRAINT ... CHECK (...)` clause from `portionbridge_schema.sql` before importing — the rest of the schema is unaffected. This is a known limitation of the current schema file, not something you need to work around by hand each time (a proper fix means restructuring the FK actions, which is out of scope of a schema-preserving fix).
 

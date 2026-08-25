@@ -6,7 +6,7 @@ const { pool } = require('../config/db');
  */
 
 const BASE_COLUMNS = `
-  id, user_id, vehicle_type, availability, service_areas, created_at, updated_at
+  id, user_id, vehicle_type, availability, service_areas, latitude, longitude, is_online, last_location_update, coverage_radius, created_at, updated_at
 `;
 
 /**

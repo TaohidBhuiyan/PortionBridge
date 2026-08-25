@@ -3,7 +3,7 @@ const { pool } = require('../config/db');
 /**
  * Raw SQL data-access layer for the top_donors / top_volunteers leaderboard
  * views. All aggregation lives in the views themselves (see
- * database/portionbridge_schema.sql and migration_007) — this module only
+ * database/main_schema.sql and migration_007) — this module only
  * reads from them, whitelisting sort columns and applying pagination.
  */
 
