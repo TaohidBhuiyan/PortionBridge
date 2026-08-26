@@ -12,7 +12,7 @@ import { Avatar } from '../components/common/Avatar';
  */
 export function DonorProfilePage() {
   const navigate = useNavigate();
-  const { user, setUser } = useAuth();
+  const { setUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -44,7 +44,7 @@ export function DonorProfilePage() {
       } else {
         setError(result.error || 'Failed to load profile');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load profile. Please try again.');
     } finally {
       setLoading(false);
@@ -80,7 +80,7 @@ export function DonorProfilePage() {
       } else {
         setError(result.error || 'Failed to update profile');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to update profile. Please try again.');
     } finally {
       setSaving(false);

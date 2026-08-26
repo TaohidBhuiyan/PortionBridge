@@ -1,4 +1,3 @@
-import React from "react";
 
 const ICON_PATHS = {
   food: "M4 3v8a3 3 0 003 3v7M4 3a1 1 0 00-1 1v6a1 1 0 001 1M7 3v8M4 3h3M14 3c-2 2-2 5-2 7 0 2 1 3 2 3v8m0-18c2 2 2 5 2 7 0 2-1 3-2 3",

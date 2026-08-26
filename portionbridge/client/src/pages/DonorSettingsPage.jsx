@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, Lock, Bell, Moon, Sun, LogOut, Shield, Smartphone } from 'lucide-react';
+import { ArrowLeft, Lock, Bell, Moon, Sun, LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
@@ -45,7 +45,7 @@ export function DonorSettingsPage() {
       if (result.success) {
         setNotificationSettings(result.data.notificationSettings);
       }
-    } catch (err) {
+    } catch {
       // Failed to load notification settings
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export function DonorSettingsPage() {
       } else {
         setError(result.error || 'Failed to change password');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to change password. Please try again.');
     } finally {
       setLoading(false);
@@ -102,7 +102,7 @@ export function DonorSettingsPage() {
       } else {
         setError(result.error || 'Failed to update notification settings');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to update notification settings. Please try again.');
     } finally {
       setLoading(false);

@@ -77,4 +77,24 @@ const forgotPasswordLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, loginLimiter, registerLimiter, forgotPasswordLimiter };
+/**
+ * Rate limiter for resend-verification, to prevent unlimited email-sending
+ * requests for any address (this endpoint has no auth requirement, so
+ * without a limiter it's an open email-abuse vector). Same window/max as
+ * forgotPasswordLimiter since both are "one outbound email per request,
+ * no other side effect" endpoints.
+ */
+const resendVerificationLimiter = rateLimit({
+  windowMs: AUTH.RESEND_VERIFICATION_RATE_LIMIT_WINDOW_MS,
+  max: AUTH.RESEND_VERIFICATION_RATE_LIMIT_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Too many verification email requests. Please try again later.',
+    });
+  },
+});
+
+module.exports = { apiLimiter, loginLimiter, registerLimiter, forgotPasswordLimiter, resendVerificationLimiter };

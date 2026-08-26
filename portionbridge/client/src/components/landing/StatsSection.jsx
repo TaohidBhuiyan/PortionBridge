@@ -1,6 +1,4 @@
-import React from "react";
 import { useCountUp } from "../hooks/useCountUp";
-import { Reveal } from "../common/Reveal";
 
 const PRIMARY_DEEP = "var(--color-primary-deep, oklch(38% 0.19 292.717))";
 

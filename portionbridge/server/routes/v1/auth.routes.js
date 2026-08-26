@@ -30,12 +30,12 @@ const {
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { verifyCsrfToken } = require('../../middleware/csrf.middleware');
-const { loginLimiter, registerLimiter, forgotPasswordLimiter } = require('../../middleware/rateLimiter');
+const { loginLimiter, registerLimiter, forgotPasswordLimiter, resendVerificationLimiter } = require('../../middleware/rateLimiter');
 
 // --- Public routes ---
 router.post('/register', registerLimiter, uploadProfilePhotoMiddleware, registerValidationRules, validateRequest, register);
 router.post('/verify-email', verifyEmailValidationRules, validateRequest, verifyEmail);
-router.post('/resend-verification', resendVerificationValidationRules, validateRequest, resendVerification);
+router.post('/resend-verification', resendVerificationLimiter, resendVerificationValidationRules, validateRequest, resendVerification);
 router.post('/login', loginLimiter, loginValidationRules, validateRequest, login);
 router.post('/google-login', googleLoginValidationRules, validateRequest, googleLogin);
 router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidationRules, validateRequest, forgotPassword);

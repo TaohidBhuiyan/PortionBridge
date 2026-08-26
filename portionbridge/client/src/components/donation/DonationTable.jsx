@@ -1,5 +1,4 @@
-import React from 'react';
-import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MoreVertical } from 'lucide-react';
+import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
 /**

@@ -8,7 +8,6 @@ import { useState } from 'react';
 const DiscoveryFilters = ({ 
   filters, 
   onFiltersChange, 
-  onSearch,
   onReset,
   totalCount 
 }) => {

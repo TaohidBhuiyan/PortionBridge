@@ -65,7 +65,7 @@ export function RoleSection() {
             <p className="text-slate-600 leading-relaxed text-sm md:text-base font-normal">{activeRoleData.body}</p>
           </div>
           <div className="flex flex-col gap-3">
-            {activeRoleData.points.map((p, i) => (
+            {activeRoleData.points.map((p) => (
               <div key={p} className="flex items-start gap-3 bg-white border border-slate-100/80 shadow-[0_2px_8px_rgba(0,0,0,0.015)] rounded-xl p-4 transition-all duration-300 hover:translate-x-1.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.04)]">
                 <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: PRIMARY_TINT, color: PRIMARY_DEEP }}>
                   <Icon name="check" className="w-3.5 h-3.5" />

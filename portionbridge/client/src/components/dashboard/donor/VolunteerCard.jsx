@@ -1,4 +1,4 @@
-import { MapPin, Clock, Star, CheckCircle, Users, Car, Eye, EyeOff } from 'lucide-react';
+import { Clock, Star, CheckCircle, Users, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 

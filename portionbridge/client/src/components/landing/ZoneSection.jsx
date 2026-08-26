@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useReveal } from "../hooks/useReveal";
 import { Avatar } from "../common/Avatar";
@@ -46,7 +46,7 @@ export function ZoneSection() {
   const [ref, visible] = useReveal();
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [selectedZone, setSelectedZone] = useState(null);
   const [showModal, setShowModal] = useState(false);
 

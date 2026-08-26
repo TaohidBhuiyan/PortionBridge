@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Save, AlertTriangle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { Stepper } from '../components/donation/Stepper';
 import { Step1BasicInfo } from '../components/donation/Step1BasicInfo';
 import { Step2DonationDetails } from '../components/donation/Step2DonationDetails';
@@ -33,7 +33,7 @@ export function DonationFormPage() {
   const [formData, setFormData] = useState({});
   const [stepValidation, setStepValidation] = useState([false, false, false, false, false, true]);
   const [errors, setErrors] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
+  const [, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
@@ -53,7 +53,7 @@ export function DonationFormPage() {
           const parsed = JSON.parse(savedData);
           setFormData(parsed);
           setHasUnsavedChanges(true);
-        } catch (e) {
+        } catch {
           // Failed to load saved form data
         }
       }
@@ -108,7 +108,7 @@ export function DonationFormPage() {
         alert(result.error || 'Failed to load donation');
         navigate('/donor/my-donations');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to load donation. Please try again.');
       navigate('/donor/my-donations');
     } finally {
@@ -358,7 +358,7 @@ export function DonationFormPage() {
 
         // Upload images if any
         if (formData.images && formData.images.length > 0) {
-          const uploadPromises = formData.images.map(async (image, index) => {
+          const uploadPromises = formData.images.map(async (image) => {
             const progressKey = image.id;
             setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
 

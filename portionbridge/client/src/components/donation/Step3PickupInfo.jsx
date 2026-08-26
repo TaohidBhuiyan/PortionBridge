@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Phone, Calendar, Clock, Navigation, AlertCircle } from 'lucide-react';
+import { Phone, Calendar, Clock, Navigation, AlertCircle } from 'lucide-react';
 import { donationApi } from '../../services/donationApi';
 
 const inputBase = 'w-full px-3.5 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary/40 text-text-primary placeholder:text-text-secondary';

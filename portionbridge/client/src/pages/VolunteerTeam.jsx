@@ -15,8 +15,6 @@ import {
   UserPlus,
   LogOut,
   MoreVertical,
-  Trash2,
-  Crown as CrownIcon,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuthSocket } from '../context/SocketContext';

@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 
 /**
  * Simple CSS-based Pie Chart component

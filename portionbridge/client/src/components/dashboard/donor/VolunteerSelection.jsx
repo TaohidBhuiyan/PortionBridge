@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Clock, Star, CheckCircle, Users, Car, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { MapPin, Clock, Star, CheckCircle, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
 
 /**

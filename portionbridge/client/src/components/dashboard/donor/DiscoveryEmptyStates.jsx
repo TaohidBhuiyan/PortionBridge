@@ -1,4 +1,4 @@
-import { MapPin, Users, Search, AlertCircle, RefreshCw, XCircle } from 'lucide-react';
+import { Users, Search, AlertCircle, RefreshCw, XCircle } from 'lucide-react';
 
 /**
  * Discovery Empty States Component

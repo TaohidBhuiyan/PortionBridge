@@ -10,7 +10,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortBy, setSortBy] = useState('recent');
+  const [sortBy] = useState('recent');
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {

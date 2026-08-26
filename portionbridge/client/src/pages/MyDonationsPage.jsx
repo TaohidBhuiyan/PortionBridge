@@ -1,15 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
-  Filter, 
   Grid, 
   List, 
   Plus, 
   ArrowLeft,
-  ChevronDown,
-  Loader2,
-  RefreshCw
+  ChevronDown
 } from 'lucide-react';
 import { donationApi } from '../services/donationApi';
 import { DonationCard } from '../components/donation/DonationCard';
@@ -43,12 +40,12 @@ export function MyDonationsPage() {
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(12);
+  const [limit] = useState(12);
   const [total, setTotal] = useState(0);
 
   // UI State
   const [showFilters, setShowFilters] = useState(false);
-  const [cancellingId, setCancellingId] = useState(null);
+  const [, setCancellingId] = useState(null);
 
   // Load donations on mount and when filters change
   useEffect(() => {
@@ -88,7 +85,7 @@ export function MyDonationsPage() {
       } else {
         setError(result.error);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load donations. Please try again.');
     } finally {
       setLoading(false);
@@ -101,31 +98,15 @@ export function MyDonationsPage() {
       if (result.success) {
         setSummary(result.data);
       }
-    } catch (err) {
+    } catch {
       // Failed to load summary
     }
-  };
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-    setPage(1); // Reset to first page on search
   };
 
   const handleFilterChange = (filter, value) => {
     if (filter === 'category') setCategoryFilter(value);
     if (filter === 'status') setStatusFilter(value);
     setPage(1); // Reset to first page on filter change
-  };
-
-  const handleSortChange = (value) => {
-    if (value === sortBy) {
-      // Toggle order if same sort field
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(value);
-      setSortOrder('desc');
-    }
-    setPage(1);
   };
 
   const handlePageChange = (newPage) => {
@@ -158,7 +139,7 @@ export function MyDonationsPage() {
       } else {
         alert(result.error || 'Failed to cancel donation');
       }
-    } catch (err) {
+    } catch {
       alert('Failed to cancel donation. Please try again.');
     } finally {
       setCancellingId(null);

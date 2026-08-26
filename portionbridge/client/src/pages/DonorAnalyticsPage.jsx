@@ -5,7 +5,6 @@ import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { analyticsApi } from '../services/analyticsApi';
 import { LineChart } from '../components/common/LineChart';
-import { BarChart } from '../components/common/BarChart';
 import { PieChart } from '../components/common/PieChart';
 import { AchievementsPanel } from '../components/common/AchievementsPanel';
 
@@ -18,7 +17,7 @@ export function DonorAnalyticsPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('all_time');
 
   useEffect(() => {
@@ -37,7 +36,7 @@ export function DonorAnalyticsPage() {
       } else {
         setError(result.error || 'Failed to load analytics');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load analytics. Please try again.');
     } finally {
       setLoading(false);

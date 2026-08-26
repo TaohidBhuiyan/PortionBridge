@@ -6,7 +6,7 @@ import { AchievementBadge } from './AchievementBadge';
 /**
  * AchievementsPanel - Displays user's achievements with summary
  */
-export function AchievementsPanel({ userId, userRole }) {
+export function AchievementsPanel({ userId }) {
   const [achievements, setAchievements] = useState([]);
   const [summary, setSummary] = useState({ totalPoints: 0, totalCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -29,7 +29,7 @@ export function AchievementsPanel({ userId, userRole }) {
       } else {
         setError(result.error || 'Failed to load achievements');
       }
-    } catch (err) {
+    } catch {
       setError('Failed to load achievements. Please try again.');
     } finally {
       setLoading(false);

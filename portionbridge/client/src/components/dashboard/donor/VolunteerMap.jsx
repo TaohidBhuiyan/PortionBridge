@@ -1,5 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import { MapPin, Maximize2, Navigation, Layers } from 'lucide-react';
+import { Maximize2, Navigation, Layers } from 'lucide-react';
+
+/**
+ * Escapes a value for safe interpolation into an HTML string. Needed
+ * because Leaflet's bindPopup() renders its string argument as raw HTML
+ * (no built-in escaping) — unlike JSX, which escapes by default. Every
+ * user-controlled field (volunteer/team display names) going into a
+ * popup string must go through this first.
+ */
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[char]));
+}
 
 /**
  * Volunteer Map Component
@@ -158,7 +175,7 @@ const VolunteerMap = ({
 
         marker.bindPopup(`
           <div style="min-width: 150px;">
-            <strong>${volunteer.name}</strong><br>
+            <strong>${escapeHtml(volunteer.name)}</strong><br>
             ${volunteer.distance} km away<br>
             ${isOnline ? '<span style="color: green;">Available</span>' : '<span style="color: gray;">Offline</span>'}
           </div>
@@ -200,7 +217,7 @@ const VolunteerMap = ({
 
         marker.bindPopup(`
           <div style="min-width: 150px;">
-            <strong>${team.name}</strong><br>
+            <strong>${escapeHtml(team.name)}</strong><br>
             ${team.member_count} members<br>
             ${team.distance} km away
           </div>

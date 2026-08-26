@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Logo } from "../common/Logo";
 import { Link } from "react-router-dom";
 

@@ -42,7 +42,7 @@ export function useDonationTracking(donationId, callbacks = {}) {
     socket.on('volunteer_location_updated', handleLocationUpdate);
     socket.on('volunteer_assigned', handleVolunteerAssigned);
     socket.on('error', (error) => {
-      // Socket error
+      console.error('Donation tracking socket error:', error);
     });
 
     // Cleanup: leave room and remove listeners

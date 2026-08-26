@@ -1,4 +1,3 @@
-import React from "react";
 
 const PRIMARY = "oklch(60.6% 0.25 292.717)";
 

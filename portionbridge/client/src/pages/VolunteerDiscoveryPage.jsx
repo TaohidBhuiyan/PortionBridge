@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Map as MapIcon, List, Users } from 'lucide-react';
+import { ArrowLeft, Map as MapIcon, List } from 'lucide-react';
 import LocationPermission from '../components/dashboard/donor/LocationPermission';
 import CurrentLocation from '../components/dashboard/donor/CurrentLocation';
 import VolunteerCard from '../components/dashboard/donor/VolunteerCard';
@@ -45,13 +45,69 @@ const VolunteerDiscoveryPage = () => {
     limit: 20,
   });
 
+  // Fetch nearby volunteers
+  const fetchNearbyVolunteers = useCallback(async (locationData) => {
+    if (!locationData) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const result = await volunteerDiscoveryApi.findNearbyVolunteers({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        radius: filters.radius,
+        availableOnly: filters.availableOnly,
+        onlineOnly: filters.onlineOnly,
+        specialty: filters.specialty,
+        search: filters.search,
+        sortBy: filters.sortBy,
+        sortOrder: filters.sortOrder,
+        page: filters.page,
+        limit: filters.limit,
+      });
+      
+      if (result.success) {
+        setVolunteers(result.data.volunteers || []);
+      } else {
+        setError(result.error);
+      }
+    } catch {
+      setError('Failed to fetch volunteers');
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  // Fetch nearby teams
+  const fetchNearbyTeams = useCallback(async (locationData) => {
+    if (!locationData) return;
+    
+    try {
+      const result = await volunteerDiscoveryApi.findNearbyTeams({
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        radius: filters.radius,
+        search: filters.search,
+        page: filters.page,
+        limit: filters.limit,
+      });
+      
+      if (result.success) {
+        setTeams(result.data.teams || []);
+      }
+    } catch {
+      // Error fetching teams
+    }
+  }, [filters]);
+
   // Handle location permission granted
   const handleLocationGranted = useCallback((locationData) => {
     setLocation(locationData);
     setLocationPermission('granted');
     fetchNearbyVolunteers(locationData);
     fetchNearbyTeams(locationData);
-  }, []);
+  }, [fetchNearbyVolunteers, fetchNearbyTeams]);
 
   // Handle location permission denied
   const handleLocationDenied = useCallback(() => {
@@ -80,7 +136,7 @@ const VolunteerDiscoveryPage = () => {
         fetchNearbyVolunteers(locationData);
         fetchNearbyTeams(locationData);
       },
-      (error) => {
+      () => {
         setIsRefreshingLocation(false);
       },
       {
@@ -89,63 +145,7 @@ const VolunteerDiscoveryPage = () => {
         maximumAge: 0,
       }
     );
-  }, []);
-
-  // Fetch nearby volunteers
-  const fetchNearbyVolunteers = useCallback(async (locationData) => {
-    if (!locationData) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await volunteerDiscoveryApi.findNearbyVolunteers({
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        radius: filters.radius,
-        availableOnly: filters.availableOnly,
-        onlineOnly: filters.onlineOnly,
-        specialty: filters.specialty,
-        search: filters.search,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-        page: filters.page,
-        limit: filters.limit,
-      });
-      
-      if (result.success) {
-        setVolunteers(result.data.volunteers || []);
-      } else {
-        setError(result.error);
-      }
-    } catch (err) {
-      setError('Failed to fetch volunteers');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters]);
-
-  // Fetch nearby teams
-  const fetchNearbyTeams = useCallback(async (locationData) => {
-    if (!locationData) return;
-    
-    try {
-      const result = await volunteerDiscoveryApi.findNearbyTeams({
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        radius: filters.radius,
-        search: filters.search,
-        page: filters.page,
-        limit: filters.limit,
-      });
-      
-      if (result.success) {
-        setTeams(result.data.teams || []);
-      }
-    } catch (err) {
-      // Error fetching teams
-    }
-  }, [filters]);
+  }, [fetchNearbyVolunteers, fetchNearbyTeams]);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters) => {
@@ -168,17 +168,17 @@ const VolunteerDiscoveryPage = () => {
   }, []);
 
   // Handle volunteer click
-  const handleVolunteerClick = useCallback((volunteer) => {
+  const handleVolunteerClick = useCallback(() => {
     // Navigate to volunteer profile or show modal
   }, []);
 
   // Handle team click
-  const handleTeamClick = useCallback((team) => {
+  const handleTeamClick = useCallback(() => {
     // Navigate to team profile or show modal
   }, []);
 
   // Handle request pickup (disabled for now - future phase)
-  const handleRequestPickup = useCallback((volunteerOrTeam) => {
+  const handleRequestPickup = useCallback(() => {
     alert('Pickup requests will be available in the next phase!');
   }, []);
 
@@ -408,4 +408,3 @@ const VolunteerDiscoveryPage = () => {
 };
 
 export default VolunteerDiscoveryPage;
-

@@ -4,7 +4,7 @@ import { Star, MapPin, Clock, CheckCircle, Shield, Eye, EyeOff } from 'lucide-re
  * Volunteer Profile Header Component
  * Displays volunteer's key information at the top of the profile page
  */
-const VolunteerProfileHeader = ({ volunteer, distance, eta }) => {
+const VolunteerProfileHeader = ({ volunteer, distance }) => {
   const getProfileImage = () => {
     if (volunteer.profile_photo) return volunteer.profile_photo;
     if (volunteer.profile_picture) return volunteer.profile_picture;

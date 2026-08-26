@@ -128,7 +128,7 @@ export function ChatWindow({ donation, currentUser }) {
         }
         setSending(false);
       });
-    } catch (err) {
+    } catch {
       setError('Failed to send message. Please try again.');
       setSending(false);
     }

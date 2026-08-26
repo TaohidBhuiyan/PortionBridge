@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, ChevronRight } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 /**
  * Stepper component for multi-step form progress indicator

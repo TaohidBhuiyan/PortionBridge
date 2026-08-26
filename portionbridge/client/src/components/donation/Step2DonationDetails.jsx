@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, ChefHat, Shirt, Snowflake, Leaf, Moon, Calendar } from 'lucide-react';
+import { AlertCircle, ChefHat, Shirt, Snowflake, Leaf, Moon } from 'lucide-react';
 
 const inputBase = 'w-full px-3.5 py-2.5 rounded-lg border transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary/40 text-text-primary placeholder:text-text-secondary';
 const inputOk = 'border-border bg-page focus:border-dash-primary';

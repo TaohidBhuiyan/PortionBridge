@@ -18,4 +18,13 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // tailwind.config.js runs in Node (CommonJS module.exports), not the
+    // browser — it needs Node globals (module, require, __dirname, etc.)
+    // rather than the browser globals applied to the rest of the client.
+    files: ['tailwind.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

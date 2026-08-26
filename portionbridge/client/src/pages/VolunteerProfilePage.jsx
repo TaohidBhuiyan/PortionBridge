@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
 import VolunteerProfileHeader from '../components/dashboard/donor/VolunteerProfileHeader';
@@ -24,11 +24,7 @@ const VolunteerProfilePage = () => {
   const [error, setError] = useState(null);
   const [distance, setDistance] = useState(null);
 
-  useEffect(() => {
-    fetchVolunteerProfile();
-  }, [id]);
-
-  const fetchVolunteerProfile = async () => {
+  const fetchVolunteerProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -47,7 +43,11 @@ const VolunteerProfilePage = () => {
     }
     
     setLoading(false);
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchVolunteerProfile();
+  }, [fetchVolunteerProfile]);
 
   const handleRequestPickup = (volunteerData) => {
     // Pickup requests are created through the donation form so that required

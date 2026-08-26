@@ -1,14 +1,6 @@
 import { useMemo } from 'react';
 import { Trophy } from 'lucide-react';
 
-const motivationalMessages = [
-  "Your generosity is making a real difference in people's lives.",
-  "Every donation counts towards building a better community.",
-  "Thank you for being a champion of change.",
-  "Your kindness is inspiring others to give back.",
-  "Together, we're bridging abundance with those in need.",
-];
-
 /**
  * WelcomeHeader component with greeting, user info, date, and leaderboard rank
  * Redesigned for compact, professional appearance

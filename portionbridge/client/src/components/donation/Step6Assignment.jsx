@@ -5,7 +5,7 @@ import { AssignmentModeSelection, AutoAssignRecommendation, VolunteerSelection }
  * Step 6: Assignment Selection
  * Allows donor to choose assignment mode and select volunteer
  */
-export function Step6Assignment({ formData, onChange, onValidationChange, errors, pickupLocation }) {
+export function Step6Assignment({ onChange, onValidationChange, errors, pickupLocation }) {
   const [assignmentMode, setAssignmentMode] = useState('auto');
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
   const [latitude, setLatitude] = useState(null);

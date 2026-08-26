@@ -53,10 +53,15 @@ async function checkAndUnlockAchievements(userId, userRole) {
 
   const newlyUnlocked = [];
 
+  // Batch-fetch the user's existing achievements once instead of querying
+  // per-definition inside the loop (was an N+1 pattern: one findByUserAndType
+  // call per achievement definition on every check).
+  const existingAchievements = await achievementModel.findByUserId(userId);
+  const unlockedTypes = new Set(existingAchievements.map((a) => a.achievement_type));
+
   for (const def of definitions) {
     // Check if already unlocked
-    const existing = await achievementModel.findByUserAndType(userId, def.type);
-    if (existing) continue;
+    if (unlockedTypes.has(def.type)) continue;
 
     // Check if criteria is met
     if (isCriteriaMet(userStats, def)) {
