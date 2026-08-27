@@ -107,7 +107,7 @@ function validFoodDonationPayload(overrides = {}) {
     quantity: 10,
     quantityUnit: 'plate',
     pickupDate: '2027-01-01',
-    pickupTime: '2027-01-01T10:00:00Z',
+    pickupTime: '2027-01-01T10:00:00',
     pickupTimeSlot: 'morning',
     contactPhone: '+8801700000000',
     pickupAddress: {
