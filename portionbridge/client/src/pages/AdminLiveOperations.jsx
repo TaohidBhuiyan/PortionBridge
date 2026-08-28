@@ -82,7 +82,7 @@ export function AdminLiveOperations() {
     };
     load();
     return () => { cancelled = true; };
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchMissions]);
 
   // Join the admin live-ops room; listen for the same events the
   // donor/volunteer tracking views already consume.
@@ -126,7 +126,7 @@ export function AdminLiveOperations() {
       socket.off('volunteer_location_updated', handleLocation);
       socket.off('donation_status_updated', handleStatus);
     };
-  }, [socket, connected]);
+  }, [socket, connected, fetchMissions]);
 
   const getPersonId = useCallback((mission) => (
     mission.assignment_mode === 'team' ? mission.assigned_member_id : mission.volunteer_id

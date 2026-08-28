@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Calendar, TrendingUp, Download, Filter } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
@@ -20,11 +20,7 @@ export function DonorAnalyticsPage() {
   const [, setError] = useState(null);
   const [timeRange, setTimeRange] = useState('all_time');
 
-  useEffect(() => {
-    loadAnalytics();
-  }, [timeRange]);
-
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -41,7 +37,12 @@ export function DonorAnalyticsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    loadAnalytics();
+  }, [loadAnalytics]);
 
   const handleExport = () => {
     // Placeholder for export functionality

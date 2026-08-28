@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Send, Loader2, AlertCircle, MessageSquare } from 'lucide-react';
 import { useAuthSocket } from '../../context/SocketContext';
 import { chatApi } from '../../services/chatApi';
@@ -21,6 +21,10 @@ export function ChatWindow({ donation, currentUser }) {
 
   const donationId = donation?.id;
   const isVolunteerAssigned = donation?.volunteer_id && donation?.status !== 'pending';
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   useEffect(() => {
     if (!donationId || !isVolunteerAssigned) {
@@ -101,15 +105,11 @@ export function ChatWindow({ donation, currentUser }) {
         setRoomJoined(false);
       }
     };
-  }, [socket, connected, donationId, isVolunteerAssigned]);
+  }, [socket, connected, donationId, isVolunteerAssigned, scrollToBottom]);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

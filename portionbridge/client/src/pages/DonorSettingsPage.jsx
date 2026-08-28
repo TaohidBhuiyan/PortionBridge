@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Lock, Bell, Moon, Sun, LogOut, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
@@ -34,11 +34,7 @@ export function DonorSettingsPage() {
     chatNotifications: true,
   });
 
-  useEffect(() => {
-    loadNotificationSettings();
-  }, []);
-
-  const loadNotificationSettings = async () => {
+  const loadNotificationSettings = useCallback(async () => {
     setLoading(true);
     try {
       const result = await profileApi.getNotificationSettings();
@@ -50,7 +46,12 @@ export function DonorSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    loadNotificationSettings();
+  }, [loadNotificationSettings]);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();

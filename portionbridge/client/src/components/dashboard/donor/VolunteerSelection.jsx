@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Clock, Star, CheckCircle, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
 
@@ -11,11 +11,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
   const [error, setError] = useState(null);
   const [volunteers, setVolunteers] = useState([]);
 
-  useEffect(() => {
-    fetchVolunteers();
-  }, [latitude, longitude]);
-
-  const fetchVolunteers = async () => {
+  const fetchVolunteers = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -36,7 +32,12 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
     }
 
     setLoading(false);
-  };
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    fetchVolunteers();
+  }, [fetchVolunteers]);
 
   const formatDistance = (dist) => {
     if (!dist) return 'N/A';

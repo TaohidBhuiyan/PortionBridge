@@ -262,6 +262,7 @@ export function AuthProvider({ children }) {
  * useAuth - Hook to access auth context
  * @returns {Object} Auth context value
  */
+// eslint-disable-next-line react-refresh/only-export-components -- standard Context+hook co-location pattern; splitting would only help dev-mode Fast Refresh, at the cost of touching every import site in the app
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {

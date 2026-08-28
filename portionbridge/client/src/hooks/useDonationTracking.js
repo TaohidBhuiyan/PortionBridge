@@ -13,6 +13,13 @@ import { useAuthSocket } from '../context/SocketContext';
 export function useDonationTracking(donationId, callbacks = {}) {
   const { socket, connected } = useAuthSocket();
   const roomJoinedRef = useRef(false);
+  const callbacksRef = useRef(callbacks);
+
+  // Keep the ref in sync with the latest callbacks after every render,
+  // without re-running (and re-subscribing) the main effect below.
+  useEffect(() => {
+    callbacksRef.current = callbacks;
+  });
 
   useEffect(() => {
     if (!socket || !connected || !donationId) return;
@@ -25,17 +32,17 @@ export function useDonationTracking(donationId, callbacks = {}) {
 
     // Listen for status updates
     const handleStatusUpdate = (data) => {
-      callbacks.onStatusUpdate?.(data);
+      callbacksRef.current.onStatusUpdate?.(data);
     };
 
     // Listen for location updates
     const handleLocationUpdate = (data) => {
-      callbacks.onLocationUpdate?.(data);
+      callbacksRef.current.onLocationUpdate?.(data);
     };
 
     // Listen for volunteer assignment
     const handleVolunteerAssigned = (data) => {
-      callbacks.onVolunteerAssigned?.(data);
+      callbacksRef.current.onVolunteerAssigned?.(data);
     };
 
     socket.on('donation_status_updated', handleStatusUpdate);

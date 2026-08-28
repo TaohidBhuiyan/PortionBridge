@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, Camera, Save, MapPin, Calendar, User, Mail, Phone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
@@ -27,11 +27,15 @@ export function DonorProfilePage() {
     gender: '',
   });
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  const extractFormData = (userData) => ({
+    name: userData.name || '',
+    phone: userData.phone || '',
+    address: userData.address || '',
+    dateOfBirth: userData.date_of_birth || '',
+    gender: userData.gender || '',
+  });
 
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -49,15 +53,12 @@ export function DonorProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const extractFormData = (userData) => ({
-    name: userData.name || '',
-    phone: userData.phone || '',
-    address: userData.address || '',
-    dateOfBirth: userData.date_of_birth || '',
-    gender: userData.gender || '',
-  });
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    loadProfile();
+  }, [loadProfile]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -57,7 +57,7 @@ export function DonationDetailsPage() {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
-  const loadDonationDetails = async () => {
+  const loadDonationDetails = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -78,17 +78,17 @@ export function DonationDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     // loadDonationDetails is also called from real-time update handlers and
     // post-action callbacks below, so it can't be inlined into this effect
-    // alone — it has to stay a shared function. It's intentionally excluded
-    // from the dependency array since it's stable in practice and including
-    // it would risk a re-render loop given it's redefined each render.
+    // alone — it has to stay a shared function. Now memoized via useCallback
+    // (keyed on `id`), so it's safe to include as a dependency here and at
+    // every other call site without causing extra re-runs.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDonationDetails();
-  }, [id]);
+  }, [id, loadDonationDetails]);
 
   // Real-time tracking
   useDonationTracking(id, {

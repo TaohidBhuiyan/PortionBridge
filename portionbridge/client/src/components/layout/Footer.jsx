@@ -42,13 +42,13 @@ export function Footer() {
       <FooterMarquee text="Connecting donors and volunteers so spare food and clothes reach the right zone, every time." />
 
       <div className="max-w-6xl mx-auto px-6 md:px-10 pt-14 pb-10">
-        <div className="grid md:grid-cols-[1.2fr_1fr_1fr] gap-10 pb-10">
+        <div className="grid md:grid-cols-[2.5fr_1fr_1fr] gap-10 pb-10">
           <div>
             <div className="flex items-center gap-2 font-serif text-lg font-medium mb-4">
               <Logo className="w-7 h-7" />
               PortionBridge
             </div>
-            <p className="text-sm text-white/60 max-w-xs leading-relaxed mb-5">
+            <p className="text-sm text-white/60 leading-relaxed mb-5">
               A youth-led platform turning spare meals and clothes into tracked deliveries, zone by zone.
             </p>
           </div>

@@ -190,6 +190,7 @@ const VolunteerDiscoveryPage = () => {
   // Fetch data when filters change
   useEffect(() => {
     if (location && locationPermission === 'granted') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch pattern used throughout this codebase
       fetchNearbyVolunteers(location);
       fetchNearbyTeams(location);
     }
@@ -408,3 +409,4 @@ const VolunteerDiscoveryPage = () => {
 };
 
 export default VolunteerDiscoveryPage;
+

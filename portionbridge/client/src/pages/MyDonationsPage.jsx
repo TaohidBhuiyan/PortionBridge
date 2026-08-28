@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -44,25 +44,10 @@ export function MyDonationsPage() {
   const [total, setTotal] = useState(0);
 
   // UI State
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters] = useState(false);
   const [, setCancellingId] = useState(null);
 
-  // Load donations on mount and when filters change
-  useEffect(() => {
-    loadDonations();
-  }, [searchQuery, categoryFilter, statusFilter, sortBy, sortOrder, page, limit]);
-
-  // Load summary on mount
-  useEffect(() => {
-    loadSummary();
-  }, []);
-
-  // Save view mode preference
-  useEffect(() => {
-    localStorage.setItem('donationViewMode', viewMode);
-  }, [viewMode]);
-
-  const loadDonations = async () => {
+  const loadDonations = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -90,9 +75,9 @@ export function MyDonationsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, categoryFilter, statusFilter, sortBy, sortOrder, page, limit]);
 
-  const loadSummary = async () => {
+  const loadSummary = useCallback(async () => {
     try {
       const result = await donationApi.getDonorHistorySummary();
       if (result.success) {
@@ -101,7 +86,24 @@ export function MyDonationsPage() {
     } catch {
       // Failed to load summary
     }
-  };
+  }, []);
+
+  // Load donations on mount and when filters change
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    loadDonations();
+  }, [loadDonations]);
+
+  // Load summary on mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    loadSummary();
+  }, [loadSummary]);
+
+  // Save view mode preference
+  useEffect(() => {
+    localStorage.setItem('donationViewMode', viewMode);
+  }, [viewMode]);
 
   const handleFilterChange = (filter, value) => {
     if (filter === 'category') setCategoryFilter(value);

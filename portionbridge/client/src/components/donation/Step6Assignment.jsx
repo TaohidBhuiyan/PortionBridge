@@ -8,16 +8,11 @@ import { AssignmentModeSelection, AutoAssignRecommendation, VolunteerSelection }
 export function Step6Assignment({ onChange, onValidationChange, errors, pickupLocation }) {
   const [assignmentMode, setAssignmentMode] = useState('auto');
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
-  const [latitude, setLatitude] = useState(null);
-  const [longitude, setLongitude] = useState(null);
 
-  useEffect(() => {
-    // Get coordinates from pickup address
-    if (pickupLocation?.latitude && pickupLocation?.longitude) {
-      setLatitude(pickupLocation.latitude);
-      setLongitude(pickupLocation.longitude);
-    }
-  }, [pickupLocation]);
+  // Derived directly from the prop each render — no effect needed, since
+  // these are never independently set beyond what pickupLocation provides.
+  const latitude = pickupLocation?.latitude ?? null;
+  const longitude = pickupLocation?.longitude ?? null;
 
   useEffect(() => {
     // Update form data when selection changes.

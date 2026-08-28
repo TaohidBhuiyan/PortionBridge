@@ -18,6 +18,9 @@ export function ResetPasswordPage() {
 
   useEffect(() => {
     if (!token) {
+      // Synchronizing local error state with the URL's token param is a
+      // valid effect use case, not the data-fetching pattern this rule targets.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError("Missing reset token. Please use the link from your email.");
     }
   }, [token]);

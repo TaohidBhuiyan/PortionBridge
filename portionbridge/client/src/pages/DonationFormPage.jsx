@@ -41,26 +41,7 @@ export function DonationFormPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Load donation data if in edit mode
-  useEffect(() => {
-    if (isEditMode && editId) {
-      loadDonationForEdit();
-    } else {
-      // Load saved form data from localStorage on mount (only for create mode)
-      const savedData = localStorage.getItem('donationFormDraft');
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          setFormData(parsed);
-          setHasUnsavedChanges(true);
-        } catch {
-          // Failed to load saved form data
-        }
-      }
-    }
-  }, [isEditMode, editId]);
-
-  const loadDonationForEdit = async () => {
+  const loadDonationForEdit = useCallback(async () => {
     setLoading(true);
     try {
       const result = await donationApi.getDonationDetails(editId);
@@ -114,7 +95,27 @@ export function DonationFormPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [editId, navigate]);
+
+  // Load donation data if in edit mode
+  useEffect(() => {
+    if (isEditMode && editId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+      loadDonationForEdit();
+    } else {
+      // Load saved form data from localStorage on mount (only for create mode)
+      const savedData = localStorage.getItem('donationFormDraft');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setFormData(parsed);
+          setHasUnsavedChanges(true);
+        } catch {
+          // Failed to load saved form data
+        }
+      }
+    }
+  }, [isEditMode, editId, loadDonationForEdit]);
 
   // Auto-save form data to localStorage (only for create mode)
   useEffect(() => {
