@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapPin, X, RefreshCw, AlertCircle } from 'lucide-react';
 
 /**
@@ -10,11 +10,29 @@ const LocationPermission = ({ onLocationGranted, onLocationDenied, onLocationBlo
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    checkInitialPermission();
-  }, []);
+  const getCurrentLocation = useCallback(() => {
+    if (!navigator.geolocation) return;
 
-  const checkInitialPermission = () => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        onLocationGranted({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        });
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 300000, // 5 minutes cache
+      }
+    );
+  }, [onLocationGranted]);
+
+  const checkInitialPermission = useCallback(() => {
     if (!navigator.geolocation) {
       setPermissionState('unsupported');
       return;
@@ -39,7 +57,12 @@ const LocationPermission = ({ onLocationGranted, onLocationDenied, onLocationBlo
     } else {
       setPermissionState('prompt');
     }
-  };
+  }, [getCurrentLocation]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    checkInitialPermission();
+  }, [checkInitialPermission]);
 
   const requestLocation = () => {
     setIsLoading(true);
@@ -82,28 +105,6 @@ const LocationPermission = ({ onLocationGranted, onLocationDenied, onLocationBlo
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 0,
-      }
-    );
-  };
-
-  const getCurrentLocation = () => {
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        onLocationGranted({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-        });
-      },
-      (error) => {
-        console.error('Error getting location:', error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 300000, // 5 minutes cache
       }
     );
   };

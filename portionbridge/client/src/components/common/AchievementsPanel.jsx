@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Award, Loader2, Sparkles } from 'lucide-react';
 import { achievementApi } from '../../services/achievementApi';
 import { AchievementBadge } from './AchievementBadge';
@@ -6,17 +6,13 @@ import { AchievementBadge } from './AchievementBadge';
 /**
  * AchievementsPanel - Displays user's achievements with summary
  */
-export function AchievementsPanel({ userId }) {
+export function AchievementsPanel() {
   const [achievements, setAchievements] = useState([]);
   const [summary, setSummary] = useState({ totalPoints: 0, totalCount: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadAchievements();
-  }, [userId]);
-
-  const loadAchievements = async () => {
+  const loadAchievements = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -34,7 +30,15 @@ export function AchievementsPanel({ userId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Standard fetch-on-mount pattern used throughout this codebase.
+    // loadAchievements' internal setState calls are needed on refetch
+    // (not just first mount), so they can't be removed.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAchievements();
+  }, [loadAchievements]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';

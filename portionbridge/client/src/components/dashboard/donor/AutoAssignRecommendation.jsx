@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Clock, Star, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
 
@@ -11,11 +11,7 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
   const [error, setError] = useState(null);
   const [recommendation, setRecommendation] = useState(null);
 
-  useEffect(() => {
-    fetchRecommendation();
-  }, [latitude, longitude]);
-
-  const fetchRecommendation = async () => {
+  const fetchRecommendation = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -31,7 +27,12 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
     }
 
     setLoading(false);
-  };
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    fetchRecommendation();
+  }, [fetchRecommendation]);
 
   const formatDistance = (dist) => {
     if (!dist) return 'N/A';

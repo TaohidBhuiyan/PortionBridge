@@ -13,14 +13,22 @@ export function PieChart({ data, size = 200 }) {
   }
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  let currentAngle = 0;
+
+  // Precompute each segment's starting angle (cumulative sum of prior
+  // segments' angles) before mapping, rather than mutating an accumulator
+  // inside the map callback — same result, no reassignment during render.
+  const startAngles = data.reduce((acc, item) => {
+    const prevTotal = acc.length > 0 ? acc[acc.length - 1] : 0;
+    const angle = (item.value / total) * 100 / 100 * 360;
+    acc.push(prevTotal + angle);
+    return acc;
+  }, []);
 
   const segments = data.map((item, index) => {
     const percentage = (item.value / total) * 100;
     const angle = (percentage / 100) * 360;
-    const startAngle = currentAngle;
-    const endAngle = currentAngle + angle;
-    currentAngle += angle;
+    const startAngle = index === 0 ? 0 : startAngles[index - 1];
+    const endAngle = startAngle + angle;
 
     // Calculate SVG path for pie slice
     const x1 = 50 + 40 * Math.cos((Math.PI / 180) * startAngle);

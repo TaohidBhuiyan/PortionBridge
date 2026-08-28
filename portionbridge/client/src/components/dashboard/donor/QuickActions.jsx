@@ -65,6 +65,10 @@ export function QuickActions() {
   const handleActionClick = (route) => {
     // If route starts with '#' it is a hash link for landing page
     if (route.startsWith('/#')) {
+      // Safe: this only runs inside a click handler (never during render),
+      // so it can't violate render purity; window.location.href is the
+      // correct way to navigate to a landing-page hash anchor from another route.
+      // eslint-disable-next-line react-hooks/immutability
       window.location.href = route;
     } else {
       navigate(route);

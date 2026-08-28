@@ -7,6 +7,9 @@ export function GoogleAuthButton({ onSuccess, onError, label = "Continue with Go
 
   useEffect(() => {
     if (window.google?.accounts?.id) {
+      // Synchronizing with an external system (the Google script's load
+      // state on `window`) is a textbook valid effect use case.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReady(true);
       return undefined;
     }

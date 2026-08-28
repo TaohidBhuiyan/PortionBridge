@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Star, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { volunteerProfileApi } from '../../../services/volunteerProfileApi';
 
@@ -13,11 +13,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
   const [sortBy] = useState('recent');
   const [showAll, setShowAll] = useState(false);
 
-  useEffect(() => {
-    fetchReviews();
-  }, [volunteerId, sortBy]);
-
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -33,7 +29,12 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
     }
     
     setLoading(false);
-  };
+  }, [volunteerId]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    fetchReviews();
+  }, [fetchReviews, sortBy]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);

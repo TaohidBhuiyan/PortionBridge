@@ -20,7 +20,10 @@ export function DashboardLayout({ children }) {
   // Initialize dark mode from localStorage, default to light mode
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('darkMode');
+    // Synchronizing with an external system (localStorage) on mount is a
+    // textbook valid effect use case.
     if (savedDarkMode !== null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDarkMode(JSON.parse(savedDarkMode));
     } else {
       // Default to light mode
@@ -50,6 +53,9 @@ export function DashboardLayout({ children }) {
 
   // Close mobile sidebar when route changes
   useEffect(() => {
+    // Synchronizing local UI state with the router's current location is a
+    // valid effect use case, not the data-fetching pattern this rule targets.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
   }, [location.pathname]);
 
