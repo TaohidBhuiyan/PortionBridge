@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardLayout } from '../components/dashboard';
+import { PageTransition } from '../components/common';
 import {
   AdminStatsCards,
   AdminImpactSection,
@@ -55,7 +56,8 @@ export function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <PageTransition>
+        <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary mb-1">Admin Overview</h1>
           <p className="text-text-secondary text-sm">
@@ -93,6 +95,7 @@ export function AdminDashboard() {
           </>
         )}
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 }

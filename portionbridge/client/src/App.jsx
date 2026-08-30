@@ -57,6 +57,8 @@ const PageLoader = () => (
   </div>
 );
 
+
+
 /**
  * Main App component with React Router setup
  * Landing page is mounted at root path "/"

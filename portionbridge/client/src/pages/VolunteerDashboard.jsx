@@ -1,5 +1,6 @@
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
+import { PageTransition } from '../components/common';
 import {
   VolunteerWelcomeHeader,
   VolunteerStatisticsCards,
@@ -27,7 +28,8 @@ export function VolunteerDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <PageTransition>
+        <div className="space-y-6">
         {/* Welcome Header */}
         <VolunteerWelcomeHeader user={user} />
 
@@ -43,6 +45,7 @@ export function VolunteerDashboard() {
         {/* PHASE 5: lightweight links to Team / History / Notifications */}
         <VolunteerQuickLinks />
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 }

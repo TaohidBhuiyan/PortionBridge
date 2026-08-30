@@ -1,5 +1,7 @@
 import { Users, UtensilsCrossed, HeartHandshake, Clock, CheckCircle2, Activity, UserCheck } from 'lucide-react';
 import { SkeletonCard } from '../skeletons';
+import { useCountUp } from '../../hooks/useCountUp';
+import { StaggerGrid } from '../../../common';
 
 const TONE_CLASSES = {
   primary: 'bg-dash-primary-soft text-dash-primary',
@@ -10,13 +12,15 @@ const TONE_CLASSES = {
 };
 
 function StatCard({ icon: Icon, label, value, tone = 'primary' }) {
+  const animatedValue = useCountUp(value ?? 0, true, 1000);
+
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-4 hover:border-dash-primary/30 transition-colors duration-150">
+    <div className="bg-surface rounded-lg border border-border/50 p-4 hover:border-dash-primary/30 hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out">
       <div className={`w-9 h-9 rounded-md flex items-center justify-center mb-3 ${TONE_CLASSES[tone]}`}>
         <Icon size={18} />
       </div>
       <p className="text-2xl font-semibold text-text-primary mb-0.5 tracking-tight">
-        {(value ?? 0).toLocaleString()}
+        {animatedValue.toLocaleString()}
       </p>
       <p className="text-xs font-medium text-text-secondary">{label}</p>
     </div>
@@ -58,10 +62,10 @@ export function AdminStatsCards({ dashboard, loading }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card) => (
         <StatCard key={card.label} {...card} />
       ))}
-    </div>
+    </StaggerGrid>
   );
 }

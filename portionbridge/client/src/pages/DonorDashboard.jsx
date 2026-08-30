@@ -1,5 +1,6 @@
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
+import { PageTransition } from '../components/common';
 import {
   WelcomeHeader,
   StatisticsCards,
@@ -22,7 +23,8 @@ export function DonorDashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <PageTransition>
+        <div className="space-y-6">
         {/* Welcome Header */}
         <WelcomeHeader user={user} />
 
@@ -49,6 +51,7 @@ export function DonorDashboard() {
           <NotificationPreview />
         </div>
       </div>
+      </PageTransition>
     </DashboardLayout>
   );
 }

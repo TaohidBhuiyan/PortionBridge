@@ -56,7 +56,7 @@ export function AnnouncementComposer({ isOpen, onClose, onSend, sending = false 
   };
 
   return (
-    <Modal title="New Team Announcement" onClose={handleClose}>
+    <Modal title="New Team Announcement" onClose={handleClose} isOpen={isOpen}>
       <div className="space-y-4">
         <div>
           <label htmlFor="announcement-title" className="block text-sm font-medium text-text-primary mb-2">

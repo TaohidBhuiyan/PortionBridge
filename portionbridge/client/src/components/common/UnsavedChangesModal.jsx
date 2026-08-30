@@ -18,6 +18,7 @@ export function UnsavedChangesModal({
     <Modal 
       title="Unsaved Changes" 
       onClose={onClose}
+      isOpen={isOpen}
     >
       <div className="space-y-4">
         <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-xl border border-amber-100">

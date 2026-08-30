@@ -93,7 +93,7 @@ function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loa
   }[tone] || 'hover:border-dash-primary/30';
 
   return (
-    <div className={`bg-surface rounded-lg border border-border/50 p-3 ${hoverBorderClass} transition-colors duration-150`}>
+    <div className={`bg-surface rounded-lg border border-border/50 p-3 ${hoverBorderClass} hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out`}>
       <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2 ${TONE_CLASSES[tone]}`}>
         <Icon size={16} />
       </div>

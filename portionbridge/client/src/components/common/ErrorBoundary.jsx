@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 /**
  * Root-level Error Boundary.
@@ -18,9 +19,14 @@ import React from "react";
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, prefersReducedMotion: false };
     this.handleRetry = this.handleRetry.bind(this);
     this.handleGoHome = this.handleGoHome.bind(this);
+  }
+
+  componentDidMount() {
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    this.setState({ prefersReducedMotion: mediaQuery.matches });
   }
 
   static getDerivedStateFromError() {
@@ -58,7 +64,10 @@ export class ErrorBoundary extends React.Component {
             padding: "24px",
           }}
         >
-          <div
+          <motion.div
+            initial={this.state.prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: 20, scale: 0.95 }}
+            animate={this.state.prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+            transition={this.state.prefersReducedMotion ? { duration: 0 } : { duration: 0.3, ease: "easeOut" }}
             style={{
               maxWidth: "420px",
               width: "100%",
@@ -153,7 +162,7 @@ export class ErrorBoundary extends React.Component {
                 Go to dashboard
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       );
     }

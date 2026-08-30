@@ -23,6 +23,7 @@ export function CancelConfirmationModal({
     <Modal 
       title="Cancel Donation" 
       onClose={onClose}
+      isOpen={isOpen}
     >
       <div className="space-y-4">
         <div className="flex items-start gap-3 p-4 bg-danger-soft rounded-lg border border-danger/20">

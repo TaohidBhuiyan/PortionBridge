@@ -90,7 +90,7 @@ export function ZoneSection() {
       <div ref={ref} className="py-24 md:py-28 bg-white">
         <div className="max-w-6xl mx-auto px-6 md:px-10">
           <div className="font-mono text-xs mb-4" style={{ color: PRIMARY_DEEP }}>ZONE COVERAGE</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-4">Loading zones...</h2>
+          <h2 className="font-serif text-4xl md:text-5xl max-w-[576px] mb-4">Loading zones...</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[0, 1, 2].map((i) => (
               <div key={i} className="bg-gray-50 rounded-2xl p-6 animate-pulse">
@@ -109,8 +109,8 @@ export function ZoneSection() {
     <div ref={ref} className="py-24 md:py-28 bg-white">
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <div className="font-mono text-xs mb-4" style={{ color: PRIMARY_DEEP }}>ZONE COVERAGE</div>
-        <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-4">Teams serving your area.</h2>
-        <p className="text-black/55 max-w-lg mb-12">
+        <h2 className="font-serif text-4xl md:text-5xl max-w-[576px] mb-4">Teams serving your area.</h2>
+        <p className="text-black/55 max-w-[512px] mb-12">
           Volunteer teams organized by coverage area. Each zone has dedicated volunteers ready to pick up donations.
         </p>
 

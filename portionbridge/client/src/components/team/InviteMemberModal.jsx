@@ -40,7 +40,7 @@ export function InviteMemberModal({ isOpen, onClose, onInvite, sending = false }
   };
 
   return (
-    <Modal title="Invite Team Member" onClose={handleClose}>
+    <Modal title="Invite Team Member" onClose={handleClose} isOpen={isOpen}>
       <div className="space-y-4">
         <div>
           <label htmlFor="invite-email" className="block text-sm font-medium text-text-primary mb-2">

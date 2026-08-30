@@ -29,7 +29,7 @@ export function ConfirmActionModal({
     : 'bg-dash-primary text-white hover:bg-dash-primary-hover';
 
   return (
-    <Modal title={title} onClose={onClose}>
+    <Modal title={title} onClose={onClose} isOpen={isOpen}>
       <div className="space-y-4">
         <div className="flex items-start gap-3">
           <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tone === 'danger' ? 'bg-danger-soft text-danger' : 'bg-dash-primary-soft text-dash-primary'}`}>
