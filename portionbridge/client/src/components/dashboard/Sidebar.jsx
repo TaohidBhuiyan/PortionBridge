@@ -38,7 +38,7 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
       } ${isCollapsed ? 'justify-center px-0' : ''}`}
     >
       {active && !isCollapsed && (
-        <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-dash-primary" />
+        <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full gradient-accent" />
       )}
       <item.icon size={16} className="shrink-0" />
       {!isCollapsed && (

@@ -49,7 +49,7 @@ export function Modal({ title, onClose, children, isOpen = true }) {
           onClick={onClose}
         >
           <motion.div
-            className="bg-surface rounded-2xl max-w-md w-full p-6 relative shadow-2xl border border-border"
+            className="glass-overlay rounded-2xl max-w-md w-full p-6 relative shadow-2xl"
             variants={modalVariants}
             initial="hidden"
             animate="visible"

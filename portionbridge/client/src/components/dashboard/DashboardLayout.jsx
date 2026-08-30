@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
+import { PageTransition } from '../common';
 import { useAuth } from '../../context/AuthContext';
 
 /**
@@ -103,7 +104,9 @@ export function DashboardLayout({ children }) {
 
         {/* Page Content */}
         <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-64px)]">
-          {children || <Outlet />}
+          <PageTransition>
+            {children || <Outlet />}
+          </PageTransition>
         </main>
       </div>
     </div>

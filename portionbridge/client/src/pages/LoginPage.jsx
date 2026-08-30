@@ -4,6 +4,7 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
+import { DevLoginButton } from "../components/auth/DevLoginButton";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -158,8 +159,9 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6">
-      <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-[0_20px_56px_rgba(46,16,101,0.24)] border border-purple-200/70 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
+    <>
+      <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6">
+        <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-[0_20px_56px_rgba(46,16,101,0.24)] border border-purple-200/70 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
         {/* LEFT PANEL — purple branding / impact stats */}
         <div
           className="hidden md:flex flex-[0.82] relative flex-col items-center justify-center px-6 py-7 text-left"
@@ -331,5 +333,7 @@ export function LoginPage() {
             </div>
           </div>
       </div>
+      <DevLoginButton />
+    </>
   );
 }

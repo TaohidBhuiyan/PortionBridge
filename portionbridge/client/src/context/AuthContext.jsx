@@ -80,6 +80,7 @@ export function AuthProvider({ children }) {
     let refreshInFlight = null;
 
     const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh-token', '/auth/google-login'];
+    const DEV_BYPASS_TOKEN = 'dev-bypass-token';
 
     const performRefresh = async () => {
       if (!refreshInFlight) {
@@ -101,7 +102,22 @@ export function AuthProvider({ children }) {
       return refreshInFlight;
     };
 
-    const interceptorId = axios.interceptors.response.use(
+    // Request interceptor to add dev role header for dev bypass token
+    const requestInterceptorId = axios.interceptors.request.use((config) => {
+      const token = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem('user');
+      if (token === DEV_BYPASS_TOKEN && storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          config.headers['x-dev-role'] = userData.role;
+        } catch (e) {
+          console.error('Failed to parse stored user for dev role:', e);
+        }
+      }
+      return config;
+    });
+
+    const responseInterceptorId = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
@@ -128,7 +144,8 @@ export function AuthProvider({ children }) {
     );
 
     return () => {
-      axios.interceptors.response.eject(interceptorId);
+      axios.interceptors.request.eject(requestInterceptorId);
+      axios.interceptors.response.eject(responseInterceptorId);
     };
   }, []);
 

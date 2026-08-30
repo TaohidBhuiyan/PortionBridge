@@ -85,11 +85,11 @@ export function QuickActions() {
             <button
               key={index}
               onClick={() => handleActionClick(action.route)}
-              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
+              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
             >
               <div
                 className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                  action.primary ? 'bg-dash-primary text-white' : 'bg-dash-primary-soft text-dash-primary'
+                  action.primary ? 'gradient-accent text-white' : 'bg-dash-primary-soft text-dash-primary'
                 }`}
               >
                 <Icon size={16} />

@@ -1,7 +1,7 @@
 import { Users, UtensilsCrossed, HeartHandshake, Clock, CheckCircle2, Activity, UserCheck } from 'lucide-react';
 import { SkeletonCard } from '../skeletons';
-import { useCountUp } from '../../hooks/useCountUp';
-import { StaggerGrid } from '../../../common';
+import { useCountUp } from '../../../hooks/useCountUp';
+import { StaggerGrid } from '../../common';
 
 const TONE_CLASSES = {
   primary: 'bg-dash-primary-soft text-dash-primary',

@@ -556,3 +556,49 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Shimmer effect for skeleton loading */
+.shimmer-skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer-skeleton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
+
+.dark .shimmer-skeleton::before {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  );
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-skeleton::before {
+    animation: none;
+  }
+}

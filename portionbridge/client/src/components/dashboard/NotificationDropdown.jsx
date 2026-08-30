@@ -112,7 +112,7 @@ export function NotificationDropdown({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-96 bg-surface rounded-xl shadow-lg border border-border z-50">
+    <div className="absolute right-0 top-full mt-2 w-96 glass-overlay rounded-xl shadow-lg z-50">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">

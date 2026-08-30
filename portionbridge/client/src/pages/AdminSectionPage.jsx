@@ -1,9 +1,5 @@
 import { useParams, Navigate } from 'react-router-dom';
 import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  FileText,
   ScrollText,
   Settings,
 } from 'lucide-react';
@@ -23,27 +19,13 @@ import { DashboardLayout, ComingSoon } from '../components/dashboard';
 // PHASE 4: 'volunteers-teams' was removed the same way — it now has a
 // real route (AdminVolunteersTeams, plus AdminVolunteerDetail/
 // AdminTeamDetail) in App.jsx.
+//
+// PHASE 11: 'live-operations', 'attention-center', 'reports', and 'analytics'
+// were removed as they now have dedicated routes (AdminLiveOperations,
+// AdminAttentionCenter, AdminReports, AdminAnalytics) in App.jsx.
+// The catch-all /admin/:section route now only handles remaining
+// unimplemented sections (audit-logs, settings).
 const SECTIONS = {
-  'live-operations': {
-    title: 'Live Operations',
-    icon: Activity,
-    description: 'A real-time view of active pickups and volunteer movement across zones. Coming in a later phase.',
-  },
-  'attention-center': {
-    title: 'Attention Center',
-    icon: AlertTriangle,
-    description: 'Flagged donations, disputes, and items needing admin review will surface here.',
-  },
-  analytics: {
-    title: 'Analytics',
-    icon: BarChart3,
-    description: 'Platform trends across donations, users, and impact over time.',
-  },
-  reports: {
-    title: 'Reports',
-    icon: FileText,
-    description: 'Generate and export platform activity reports.',
-  },
   'audit-logs': {
     title: 'Audit Logs',
     icon: ScrollText,

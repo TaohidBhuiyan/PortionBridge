@@ -14,6 +14,7 @@ const {
   resetPassword,
   getMe,
   adminOnlyCheck,
+  devLogin,
 } = require('../../controllers/auth.controller');
 const { uploadProfilePhotoMiddleware } = require('../../middleware/upload.middleware');
 
@@ -41,6 +42,9 @@ router.post('/google-login', googleLoginValidationRules, validateRequest, google
 router.post('/forgot-password', forgotPasswordLimiter, forgotPasswordValidationRules, validateRequest, forgotPassword);
 router.post('/reset-password', resetPasswordValidationRules, validateRequest, resetPassword);
 router.post('/reset-password/:token', resetPasswordValidationRules, validateRequest, resetPassword);
+
+// --- Development mode only ---
+router.post('/dev-login', devLogin);
 
 // --- Routes relying on the httpOnly refresh-token cookie: CSRF-protected ---
 router.post('/refresh-token', verifyCsrfToken, refreshToken);

@@ -300,6 +300,45 @@ const adminOnlyCheck = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/v1/auth/dev-login
+ * Development mode only: Quick login with a role without email/password.
+ * Returns a fake access token that bypasses normal authentication.
+ */
+const devLogin = asyncHandler(async (req, res) => {
+  const { role } = req.body;
+  const validRoles = ['donor', 'volunteer', 'admin'];
+
+  if (!AUTH.DEV_MODE) {
+    return error(res, {
+      statusCode: HTTP_STATUS.FORBIDDEN,
+      message: 'Development login is only available in development mode.',
+    });
+  }
+
+  if (!role || !validRoles.includes(role)) {
+    return error(res, {
+      statusCode: HTTP_STATUS.BAD_REQUEST,
+      message: 'Invalid role. Must be donor, volunteer, or admin.',
+    });
+  }
+
+  // Return the dev bypass token
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: `Logged in as ${role} (development mode)`,
+    data: {
+      accessToken: AUTH.DEV_BYPASS_TOKEN,
+      user: {
+        id: `dev-${role}`,
+        role: role,
+        email: `dev-${role}@portionbridge.dev`,
+        name: `Dev ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+      },
+    },
+  });
+});
+
 module.exports = {
   register,
   verifyEmail,
@@ -313,4 +352,5 @@ module.exports = {
   resetPassword,
   getMe,
   adminOnlyCheck,
+  devLogin,
 };
