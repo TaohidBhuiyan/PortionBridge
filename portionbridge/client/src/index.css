@@ -30,6 +30,23 @@
   --pb-danger-soft: #fef2f2;
   --pb-info: #0ea5e9;
   --pb-info-soft: #f0f9ff;
+
+  /* PHASE 7: additional surface/elevation tokens for the premium system.
+     These extend (not replace) the tokens above — elevated/modal are for
+     content that should sit visually above the base card layer (popovers,
+     dropdowns, dialogs); sidebar/navbar let chrome differ subtly from
+     page content if a theme ever wants that, while defaulting to --pb-surface. */
+  --pb-elevated: #ffffff;
+  --pb-modal: #ffffff;
+  --pb-sidebar: #ffffff;
+  --pb-navbar: #ffffff;
+  --pb-input: #ffffff;
+  --pb-border-focus: #0284c7;
+  --pb-radius-pill: 9999px;
+  --pb-shadow-subtle: 0 1px 2px 0 rgb(15 23 42 / 0.04);
+  --pb-shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.06);
+  --pb-shadow-elevated: 0 4px 12px -2px rgb(15 23 42 / 0.08), 0 2px 6px -2px rgb(15 23 42 / 0.05);
+  --pb-shadow-modal: 0 20px 40px -8px rgb(15 23 42 / 0.18), 0 8px 16px -8px rgb(15 23 42 / 0.1);
 }
 
 .dark {
@@ -60,20 +77,30 @@
 
   /* Glassmorphism shadow overlay */
   --shadow-glass: 0 8px 32px 0 rgb(0 0 0 / 0.3);
+
+  /* PHASE 7: dark-mode surface/elevation tokens */
+  --pb-elevated: #1c2637;
+  --pb-modal: #17202f;
+  --pb-sidebar: #10182a;
+  --pb-navbar: #10182a;
+  --pb-input: #131c2c;
+  --pb-border-focus: #38bdf8;
+  --pb-shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --pb-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --pb-shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3);
+  --pb-shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.55), 0 8px 16px -8px rgb(0 0 0 / 0.35);
 }
 
 @theme {
-  --max-width-xs: 20rem;
-  --max-width-sm: 24rem;
-  --max-width-md: 28rem;
-  --max-width-lg: 32rem;
-  --max-width-xl: 36rem;
-  --max-width-2xl: 42rem;
-  --max-width-3xl: 48rem;
-  --max-width-4xl: 56rem;
-  --max-width-5xl: 64rem;
-  --max-width-6xl: 72rem;
-  --max-width-7xl: 80rem;
+  /* Tailwind v4 container tokens used by `max-w-*` utilities.  Defining the
+     theme locally without these values made max-w-xs through max-w-2xl
+     resolve to missing CSS variables and collapse text measures. */
+  --container-xs: 20rem;
+  --container-sm: 24rem;
+  --container-md: 28rem;
+  --container-lg: 32rem;
+  --container-xl: 36rem;
+  --container-2xl: 42rem;
 
   /* Dashboard color tokens (mapped to Tailwind theme) */
   --color-dash-primary: var(--pb-primary);
@@ -94,6 +121,21 @@
   --color-danger-soft: var(--pb-danger-soft);
   --color-info: var(--pb-info);
   --color-info-soft: var(--pb-info-soft);
+
+  /* PHASE 7: elevation/surface tokens mapped to Tailwind utilities
+     (bg-elevated, bg-modal, bg-sidebar, bg-navbar, bg-input, border-focus,
+     rounded-pill, shadow-pb-subtle/card/elevated/modal). */
+  --color-elevated: var(--pb-elevated);
+  --color-modal: var(--pb-modal);
+  --color-sidebar: var(--pb-sidebar);
+  --color-navbar: var(--pb-navbar);
+  --color-input: var(--pb-input);
+  --color-border-focus: var(--pb-border-focus);
+  --radius-pill: var(--pb-radius-pill);
+  --shadow-pb-subtle: var(--pb-shadow-subtle);
+  --shadow-pb-card: var(--pb-shadow-card);
+  --shadow-pb-elevated: var(--pb-shadow-elevated);
+  --shadow-pb-modal: var(--pb-shadow-modal);
 
   /* Primary Brand Colors - Sky Blue (legacy, kept for compatibility) */
   --color-primary-50: #f0f9ff;
@@ -196,6 +238,14 @@
   --text-3xl: 1.875rem;
   --text-4xl: 2.25rem;
 
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
   /* Border Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -293,6 +343,11 @@
 @keyframes rowIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes dropdownIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 :root {
@@ -546,14 +601,19 @@ button:focus-visible {
   background: linear-gradient(135deg, var(--pb-primary-soft) 0%, rgba(56, 189, 248, 0.08) 100%);
 }
 
-/* Reduced motion support */
+/* PHASE 8.2 — respect prefers-reduced-motion globally. This was previously
+   missing entirely: every CSS transition/animation in the app ran at full
+   speed regardless of the user's OS setting. Framer Motion components
+   already opt out individually via useReducedMotion(); this catches
+   everything else (skeletons, hover transitions, the keyframes above). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    animation-duration: 0.01ms !important;
+    animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

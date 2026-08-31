@@ -14,3 +14,5 @@ export { Reveal } from './Reveal';
 export { Stars } from './Stars';
 export { CancelConfirmationModal } from './CancelConfirmationModal';
 export { UnsavedChangesModal } from './UnsavedChangesModal';
+export { Button } from './Button';
+export { Card, CardHeader } from './Card';

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 /**
  * StaggerGrid - Wrapper for list/grid stagger animations
@@ -7,12 +7,7 @@ import { motion } from 'framer-motion';
  * Respects prefers-reduced-motion for accessibility
  */
 export function StaggerGrid({ children, className = '', staggerDelay = 0.05 }) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-  }, []);
+  const prefersReducedMotion = useReducedMotion();
 
   const containerVariants = prefersReducedMotion
     ? {

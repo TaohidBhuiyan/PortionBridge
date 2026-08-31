@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Loader2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';

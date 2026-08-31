@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useAuth } from "../../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Code, Terminal } from "lucide-react";
 
@@ -11,7 +10,6 @@ const isDevelopment = import.meta.env.DEV || import.meta.env.VITE_DEV_MODE === '
 export function DevLoginButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
 
   // Comment out the check for now to test

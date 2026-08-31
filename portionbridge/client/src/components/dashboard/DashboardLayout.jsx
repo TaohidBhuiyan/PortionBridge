@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { TopNavbar } from './TopNavbar';
-import { PageTransition } from '../common';
+import { PageTransition } from './PageTransition';
 import { useAuth } from '../../context/AuthContext';
 
 /**
@@ -41,6 +41,15 @@ export function DashboardLayout({ children }) {
     }
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
+
+  // Stay in sync if dark mode is changed elsewhere in the same tab (e.g. the
+  // theme selector on the Settings page), since the `storage` event only
+  // fires in *other* tabs, not this one.
+  useEffect(() => {
+    const handleExternalChange = (e) => setDarkMode(!!e.detail);
+    window.addEventListener('portionbridge:darkmode', handleExternalChange);
+    return () => window.removeEventListener('portionbridge:darkmode', handleExternalChange);
+  }, []);
 
   // Handle sidebar collapse on desktop
   const toggleSidebar = () => {
@@ -104,9 +113,18 @@ export function DashboardLayout({ children }) {
 
         {/* Page Content */}
         <main className="p-4 md:p-6 lg:p-8 min-h-[calc(100vh-64px)]">
-          <PageTransition>
-            {children || <Outlet />}
-          </PageTransition>
+          {/* PHASE 11 PART B — wide-screen QA: nothing previously capped this
+              container's width, so on very large/ultrawide monitors, pages
+              with no max-width of their own (most Admin pages, the role
+              dashboards) stretched edge-to-edge, leaving stat strips/tables
+              awkwardly spread out. This cap is generous enough that it
+              never fights a page's own inner max-w (e.g. MyDonationsPage's
+              max-w-7xl), it only stops truly excessive stretching. */}
+          <div className="max-w-screen-2xl mx-auto w-full">
+            <PageTransition pageKey={location.pathname}>
+              {children || <Outlet />}
+            </PageTransition>
+          </div>
         </main>
       </div>
     </div>

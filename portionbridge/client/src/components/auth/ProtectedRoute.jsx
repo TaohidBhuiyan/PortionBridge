@@ -36,21 +36,21 @@ export function ProtectedRoute({ children, requiredRole = null }) {
           email: `dev-${role}@portionbridge.dev`,
           name: `Dev ${role.charAt(0).toUpperCase() + role.slice(1)}`,
         };
-        
+
         localStorage.setItem('accessToken', DEV_BYPASS_TOKEN);
         localStorage.setItem('user', JSON.stringify(devUser));
-        
+
         // Force page reload to update auth state
         window.location.reload();
       }
     }
-  }, [isDevelopment, isAuthenticated, loading, location.pathname]);
+  }, [isAuthenticated, loading, location.pathname]);
 
   // Show loading state while checking authentication
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dash-primary"></div>
       </div>
     );
   }

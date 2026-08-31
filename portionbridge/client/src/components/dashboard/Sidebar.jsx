@@ -18,6 +18,13 @@ import {
   Compass,
   Users,
   History,
+  Navigation,
+  ListChecks,
+  HandHeart,
+  Activity,
+  AlertTriangle,
+  FileText,
+  ScrollText,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -38,7 +45,7 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
       } ${isCollapsed ? 'justify-center px-0' : ''}`}
     >
       {active && !isCollapsed && (
-        <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full gradient-accent" />
+        <span className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-dash-primary" />
       )}
       <item.icon size={16} className="shrink-0" />
       {!isCollapsed && (
@@ -76,6 +83,15 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
   // Menu configuration based on role, organized into visual groups.
   // Routes/badges are unchanged from the previous implementation — only the
   // grouping and presentation are new.
+  //
+  // PHASE 10.1: Admin gets its own group labels entirely (Overview /
+  // Operations / Moderation / Insights / System) rather than reusing the
+  // donor/volunteer Main/Insights/Support/Account shape — this was also a
+  // real, severe navigation bug fix: every admin route below (Users,
+  // Donations, Volunteers & Teams, Live Operations, Attention Center,
+  // Reports, Analytics, and the placeholder Audit Logs/Settings pages)
+  // existed and worked, but had no link anywhere in the sidebar — an admin
+  // could only reach them by typing the URL directly.
   const mainItems = [
     {
       title: 'Dashboard',
@@ -96,27 +112,64 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     // PHASE 3/4/5: Opportunities, My Team, and Mission History are the
     // volunteer-specific nav items. Notifications and Messages are
     // already covered by supportItems below for every role.
+    // PHASE 9.1: "My Mission" (/volunteer/mission) and "Active Missions"
+    // (/volunteer/active-missions) were real, working pages with no
+    // navigation path to them at all — added here so they're actually
+    // reachable, matching the WORK-focused grouping the design calls for.
     mainItems.push(
       { title: 'Find Opportunities', icon: Compass, path: '/volunteer/opportunities' },
+      { title: 'My Mission', icon: Navigation, path: '/volunteer/mission' },
+      { title: 'Active Missions', icon: ListChecks, path: '/volunteer/active-missions' },
       { title: 'My Team', icon: Users, path: '/volunteer/team' },
       { title: 'Mission History', icon: History, path: '/volunteer/history' }
     );
   }
 
-  const insightItems = [
-    { title: 'Leaderboard', icon: Trophy, path: '/#leaderboard' },
-  ];
-  if (userRole === 'donor') {
-    // Route already exists and is already linked to from QuickActions on the
-    // donor dashboard — surfacing it here too, not a new feature.
-    insightItems.push({ title: 'Analytics', icon: BarChart3, path: '/donor/analytics' });
+  // PHASE 10.1: Operations + Moderation are admin-only groups — the
+  // day-to-day management surfaces (Users/Donations/Volunteers & Teams/
+  // Live Operations, then Attention Center/Reports).
+  const operationsItems = [];
+  const moderationItems = [];
+  if (userRole === 'admin') {
+    operationsItems.push(
+      { title: 'Users', icon: Users, path: '/admin/users' },
+      { title: 'Donations', icon: Package, path: '/admin/donations' },
+      { title: 'Volunteers & Teams', icon: HandHeart, path: '/admin/volunteers-teams' },
+      { title: 'Live Operations', icon: Activity, path: '/admin/live-operations' }
+    );
+    moderationItems.push(
+      { title: 'Attention Center', icon: AlertTriangle, path: '/admin/attention-center' },
+      { title: 'Reports', icon: FileText, path: '/admin/reports' }
+    );
   }
 
-  const supportItems = [
-    { title: 'Messages', icon: MessageSquare, path: '/messages', badge: unreadMessageCount > 0 ? (unreadMessageCount > 99 ? '99+' : unreadMessageCount) : null },
-    { title: 'Notifications', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
-    { title: 'Help', icon: HelpCircle, path: '/#roles' },
-  ];
+  const insightItems = [];
+  if (userRole === 'admin') {
+    insightItems.push({ title: 'Analytics', icon: BarChart3, path: '/admin/analytics' });
+  } else {
+    insightItems.push({ title: 'Leaderboard', icon: Trophy, path: '/#leaderboard' });
+    if (userRole === 'donor') {
+      // Route already exists and is already linked to from QuickActions on the
+      // donor dashboard — surfacing it here too, not a new feature.
+      insightItems.push({ title: 'Analytics', icon: BarChart3, path: '/donor/analytics' });
+    }
+  }
+
+  // PHASE 10.1: admin's "System" group (Audit Logs/Notifications/Settings)
+  // replaces the consumer-facing Messages/Notifications/Help support group
+  // — admin has its own dedicated Notifications page (/admin/notifications)
+  // rather than the shared donor/volunteer one, and no chat/help surface.
+  const supportItems = userRole === 'admin'
+    ? [
+        { title: 'Audit Logs', icon: ScrollText, path: '/admin/audit-logs' },
+        { title: 'Notifications', icon: Bell, path: '/admin/notifications', badge: unreadCount > 0 ? unreadCount : null },
+        { title: 'Settings', icon: Settings, path: '/admin/settings' },
+      ]
+    : [
+        { title: 'Messages', icon: MessageSquare, path: '/messages', badge: unreadMessageCount > 0 ? (unreadMessageCount > 99 ? '99+' : unreadMessageCount) : null },
+        { title: 'Notifications', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
+        { title: 'Help', icon: HelpCircle, path: '/#roles' },
+      ];
 
   const accountItems = [];
   if (userRole === 'donor') {
@@ -130,11 +183,19 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     );
   }
 
-  const groups = [
-    { label: 'Main', items: mainItems },
-    { label: 'Insights', items: insightItems },
-    { label: 'Support', items: supportItems },
-  ];
+  const groups = userRole === 'admin'
+    ? [
+        { label: 'Overview', items: mainItems },
+        { label: 'Operations', items: operationsItems },
+        { label: 'Moderation', items: moderationItems },
+        { label: 'Insights', items: insightItems },
+        { label: 'System', items: supportItems },
+      ]
+    : [
+        { label: 'Main', items: mainItems },
+        { label: 'Insights', items: insightItems },
+        { label: 'Support', items: supportItems },
+      ];
 
   // Check if menu item is active
   const isActive = (path) => {
@@ -150,7 +211,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     <>
       {/* Desktop Sidebar */}
       <aside
-        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-surface border-r border-border/50 transition-all duration-200 z-30 ${
+        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-surface border-r border-border/50 shadow-pb-subtle transition-all duration-200 z-30 ${
           collapsed ? 'w-14' : 'w-56'
         }`}
       >
@@ -247,7 +308,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
 
         {/* Menu Items */}
         <nav className="flex-1 overflow-y-auto py-3 px-2">
-          {[...mainItems, ...insightItems, ...supportItems, ...accountItems].map((item) => (
+          {[...mainItems, ...operationsItems, ...moderationItems, ...insightItems, ...supportItems, ...accountItems].map((item) => (
             <Link
               key={item.title}
               to={item.path}

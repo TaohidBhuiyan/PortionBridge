@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { Icon } from "./Icon";
 
 /**
@@ -10,12 +10,7 @@ import { Icon } from "./Icon";
  * @param {boolean} isOpen - Whether modal is open
  */
 export function Modal({ title, onClose, children, isOpen = true }) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-  }, []);
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();

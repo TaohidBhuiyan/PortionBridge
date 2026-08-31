@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 
 /**
  * PageTransition - Subtle page transition wrapper
@@ -7,12 +6,7 @@ import { motion } from 'framer-motion';
  * Respects prefers-reduced-motion for accessibility
  */
 export function PageTransition({ children }) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-  }, []);
+  const prefersReducedMotion = useReducedMotion();
 
   const variants = prefersReducedMotion
     ? {

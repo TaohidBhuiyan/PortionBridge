@@ -6,6 +6,8 @@ export { NotificationDropdown } from './NotificationDropdown';
 export { EmptyState } from './EmptyState';
 export { ErrorState } from './ErrorState';
 export { ComingSoon } from './ComingSoon';
+export { ProfileCard } from './ProfileCard';
+export { PageTransition } from './PageTransition';
 export * from './skeletons';
 export * from './volunteer';
 export * from './admin';

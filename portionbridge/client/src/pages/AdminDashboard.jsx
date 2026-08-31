@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { DashboardLayout } from '../components/dashboard';
-import { PageTransition } from '../components/common';
+import { DashboardLayout, ProfileCard } from '../components/dashboard';
+import { useAuth } from '../context/AuthContext';
 import {
   AdminStatsCards,
   AdminImpactSection,
@@ -24,6 +24,7 @@ import { adminApi } from '../services/adminApi';
  * foundation from Phase 1.
  */
 export function AdminDashboard() {
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -56,8 +57,7 @@ export function AdminDashboard() {
 
   return (
     <DashboardLayout>
-      <PageTransition>
-        <div className="space-y-6">
+      <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-text-primary mb-1">Admin Overview</h1>
           <p className="text-text-secondary text-sm">
@@ -73,7 +73,27 @@ export function AdminDashboard() {
           />
         ) : (
           <>
-            <AdminStatsCards dashboard={dashboard} loading={loading} />
+            {/* Hero row — admin identity + dense platform pulse, deliberately
+                less "big card" than Donor/Volunteer's hero: the profile card
+                sits beside the compact KPI strip rather than a large item
+                panel, keeping Admin's denser, control-center personality. */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+              <div className="lg:col-span-1">
+                <ProfileCard
+                  user={user}
+                  roleLabel="Administrator"
+                  tone="admin"
+                  stats={[
+                    { label: 'Total Users', value: dashboard?.totalUsers ?? '—' },
+                    { label: 'Donations', value: dashboard?.totalDonationRequests ?? '—' },
+                    { label: 'Active', value: dashboard?.activeDonations ?? '—' },
+                  ]}
+                />
+              </div>
+              <div className="lg:col-span-2 flex flex-col justify-center">
+                <AdminStatsCards dashboard={dashboard} loading={loading} />
+              </div>
+            </div>
 
             <AdminImpactSection impact={dashboard?.impact} loading={loading} />
 
@@ -95,7 +115,6 @@ export function AdminDashboard() {
           </>
         )}
       </div>
-      </PageTransition>
     </DashboardLayout>
   );
 }
