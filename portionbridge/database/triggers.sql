@@ -98,20 +98,27 @@ BEGIN
 END$$
 
 -- ============================================================================
--- TRIGGER: trg_saved_addresses_single_default
+-- TRIGGER: trg_saved_addresses_single_default — REMOVED (Phase 12 QA)
 -- Ensures only one default address per user when setting a new default
 -- Migration 008
+--
+-- This trigger was fundamentally broken: it fires BEFORE UPDATE and tries to
+-- run its own UPDATE on saved_addresses, which MySQL/MariaDB forbids — a
+-- trigger can never modify the table that is already being modified by the
+-- statement that invoked it. In practice this meant ANY call to
+-- setDefault()'s second statement (`UPDATE saved_addresses SET is_default=1
+-- WHERE id=:id`, which sets NEW.is_default=1/OLD.is_default=0 and so always
+-- satisfies this trigger's condition) failed with:
+--   "Can't update table 'saved_addresses' in stored function/trigger because
+--   it is already used by statement which invoked this stored function/trigger"
+-- i.e. it could never successfully run in the one case it existed for.
+-- The single-default invariant is already correctly enforced at the
+-- application layer — see setDefault() and createAddress() in
+-- server/services/savedAddress.service.js / models/savedAddress.model.js —
+-- so this trigger is redundant as well as broken. Dropped rather than fixed
+-- in place, consistent with the INSERT case documented just below, which
+-- hits the same MySQL limitation and was already handled the same way.
 -- ============================================================================
-CREATE TRIGGER trg_saved_addresses_single_default
-BEFORE UPDATE ON saved_addresses
-FOR EACH ROW
-BEGIN
-  IF NEW.is_default = 1 AND OLD.is_default = 0 THEN
-    UPDATE saved_addresses
-    SET is_default = 0
-    WHERE user_id = NEW.user_id AND id <> NEW.id AND is_default = 1;
-  END IF;
-END$$
 
 -- ============================================================================
 -- TRIGGER: trg_saved_addresses_single_default_insert

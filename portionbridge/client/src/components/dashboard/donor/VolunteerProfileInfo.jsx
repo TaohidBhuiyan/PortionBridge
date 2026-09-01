@@ -68,7 +68,7 @@ const VolunteerProfileInfo = ({ volunteer }) => {
         </div>
 
         {/* Service Areas */}
-        {volunteer.service_area && volunteer.service_area.length > 0 && (
+        {volunteer.service_areas && volunteer.service_areas.length > 0 && (
           <div className="flex items-start gap-3 md:col-span-2">
             <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
               <Globe className="w-5 h-5 text-purple-600 dark:text-purple-400" />
@@ -76,8 +76,8 @@ const VolunteerProfileInfo = ({ volunteer }) => {
             <div className="flex-1">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Service Areas</h3>
               <div className="flex flex-wrap gap-2">
-                {Array.isArray(volunteer.service_area) ? (
-                  volunteer.service_area.map((area, index) => (
+                {Array.isArray(volunteer.service_areas) ? (
+                  volunteer.service_areas.map((area, index) => (
                     <span
                       key={index}
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
@@ -87,7 +87,7 @@ const VolunteerProfileInfo = ({ volunteer }) => {
                   ))
                 ) : (
                   <span className="text-gray-700 dark:text-gray-300 text-sm">
-                    {volunteer.service_area}
+                    {volunteer.service_areas}
                   </span>
                 )}
               </div>
