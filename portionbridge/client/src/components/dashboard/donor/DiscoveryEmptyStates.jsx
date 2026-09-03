@@ -62,7 +62,7 @@ const DiscoveryEmptyStates = ({
     return (
       <div className="flex flex-col items-center justify-center py-12 px-4">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-blue-200 dark:border-blue-800 rounded-full animate-spin" />
+          <div className="w-16 h-16 border-4 border-dash-primary/30 rounded-full animate-spin" />
           <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-600 rounded-full animate-spin" />
         </div>
         <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
@@ -92,7 +92,7 @@ const DiscoveryEmptyStates = ({
       {state.action && state.actionHandler && (
         <button
           onClick={state.actionHandler}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+          className="px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
         >
           {state.action}
         </button>
@@ -121,7 +121,7 @@ export const NoVolunteersState = ({ onExpandRadius, onResetFilters }) => (
     <div className="flex gap-3 justify-center">
       <button
         onClick={onExpandRadius}
-        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+        className="px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
       >
         Expand Search Radius
       </button>
@@ -177,9 +177,9 @@ export const LocationDeniedState = ({ onEnableLocation, onManualLocation }) => (
  * Error State
  */
 export const ErrorState = ({ error, onRetry }) => (
-  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-8 text-center">
-    <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-      <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+  <div className="bg-danger-soft border border-danger/30 rounded-xl p-8 text-center">
+    <div className="w-16 h-16 bg-danger-soft rounded-full flex items-center justify-center mx-auto mb-4">
+      <AlertCircle className="w-8 h-8 text-danger" />
     </div>
     
     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
@@ -192,7 +192,7 @@ export const ErrorState = ({ error, onRetry }) => (
     
     <button
       onClick={onRetry}
-      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors font-medium"
+      className="px-4 py-2 bg-danger hover:opacity-90 text-white rounded-lg transition-colors font-medium"
     >
       Try Again
     </button>

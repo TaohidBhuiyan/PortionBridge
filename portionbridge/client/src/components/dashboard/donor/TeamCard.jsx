@@ -47,7 +47,7 @@ const TeamCard = ({ team, onViewDetails, onRequestPickup, disabled = false }) =>
       <div className="flex items-start gap-4">
         {/* Team Icon */}
         <div className="relative flex-shrink-0">
-          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-full bg-dash-primary flex items-center justify-center">
             <Users className="w-7 h-7 text-white" />
           </div>
         </div>
@@ -68,7 +68,7 @@ const TeamCard = ({ team, onViewDetails, onRequestPickup, disabled = false }) =>
             </div>
 
             {/* Distance Badge */}
-            <div className="flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-lg text-sm font-medium">
+            <div className="flex-shrink-0 bg-dash-primary-soft text-dash-primary px-2 py-1 rounded-lg text-sm font-medium">
               {formatDistance(team.distance)}
             </div>
           </div>
@@ -123,7 +123,7 @@ const TeamCard = ({ team, onViewDetails, onRequestPickup, disabled = false }) =>
         <button
           onClick={() => onRequestPickup?.(team)}
           disabled={disabled}
-          className="flex-1 px-3 py-2 text-sm bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          className="flex-1 px-3 py-2 text-sm bg-dash-primary hover:bg-dash-primary-hover disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
         >
           Request Team
         </button>
@@ -162,7 +162,7 @@ const TeamCard = ({ team, onViewDetails, onRequestPickup, disabled = false }) =>
 
           <button
             onClick={() => onViewDetails?.(team)}
-            className="w-full flex items-center justify-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium"
+            className="w-full flex items-center justify-center gap-1 text-sm text-dash-primary hover:text-dash-primary-hover font-medium"
           >
             View Team Profile
             <ChevronRight className="w-4 h-4" />

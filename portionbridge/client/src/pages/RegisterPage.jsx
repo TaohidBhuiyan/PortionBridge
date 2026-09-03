@@ -236,28 +236,28 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center px-3 py-8 sm:px-6 sm:py-10 relative overflow-hidden" style={{ backgroundColor: "#2e1065" }}>
-      <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-purple-500/40 blur-3xl"></div>
-      <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-fuchsia-500/30 blur-3xl"></div>
-      <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-violet-600/30 blur-3xl"></div>
+    <div className="min-h-screen w-full flex items-center justify-center px-3 py-8 sm:px-6 sm:py-10 relative overflow-hidden" style={{ backgroundColor: "#082f49" }}>
+      <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-sky-500/40 blur-3xl"></div>
+      <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-cyan-500/30 blur-3xl"></div>
+      <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-blue-600/30 blur-3xl"></div>
       <div
         className="w-full max-w-[760px] mx-auto grid overflow-hidden rounded-3xl border border-white/10 shadow-[0_20px_56px_rgba(15,23,42,0.28)] backdrop-blur-xl relative z-10 lg:grid-cols-[0.72fr_1.28fr]"
         style={{
           background:
-            "radial-gradient(120% 100% at 50% 0%, #8b5cf6 0%, #7c3aed 35%, #4c1d95 70%, #0d0512 100%)",
+            "radial-gradient(120% 100% at 50% 0%, #38bdf8 0%, #0ea5e9 35%, #075985 70%, #041018 100%)",
         }}
       >
         <aside className="hidden lg:flex flex-col justify-between p-6 text-left bg-slate-950/25 border-r border-white/10">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-purple-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-semibold text-sky-100">
               <Sparkles size={14} /> PORTIONBRIDGE
             </div>
             <h2 className="mt-5 text-2xl font-semibold leading-tight tracking-tight text-white">Make every spare portion matter.</h2>
-            <p className="mt-3 text-xs leading-5 text-purple-100/70" style={{ width: '100%', maxWidth: '210px' }}>Create your account to coordinate safer, traceable food and clothing donations.</p>
+            <p className="mt-3 text-xs leading-5 text-sky-100/70" style={{ width: '100%', maxWidth: '210px' }}>Create your account to coordinate safer, traceable food and clothing donations.</p>
           </div>
-          <div className="space-y-3 text-xs text-purple-100/80">
+          <div className="space-y-3 text-xs text-sky-100/80">
             {['Track every donation from pledge to delivery', 'Connect with verified local volunteers', 'Keep your account and information protected'].map((item) => (
-              <div key={item} className="flex items-start gap-3"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-fuchsia-300" />{item}</div>
+              <div key={item} className="flex items-start gap-3"><CheckCircle2 size={18} className="mt-0.5 shrink-0 text-cyan-300" />{item}</div>
             ))}
           </div>
         </aside>
@@ -266,9 +266,9 @@ export function RegisterPage() {
         {/* Header */}
         <div className="flex flex-col gap-3 text-left">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-fuchsia-200"><ShieldCheck size={16} /> CREATE YOUR ACCOUNT</div>
+            <div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-cyan-200"><ShieldCheck size={16} /> CREATE YOUR ACCOUNT</div>
             <h1 className="mt-1 text-white text-2xl font-semibold tracking-tight">Join PortionBridge</h1>
-            <p className="text-purple-200/80 text-xs leading-relaxed" style={{ width: '100%', maxWidth: '360px' }}>
+            <p className="text-sky-200/80 text-xs leading-relaxed" style={{ width: '100%', maxWidth: '360px' }}>
               Join PortionBridge and start sharing your impact with donors and volunteers.
             </p>
           </div>
@@ -280,16 +280,16 @@ export function RegisterPage() {
             <button
               type="button"
               onClick={handleProfilePhotoClick}
-              className="w-12 h-12 rounded-3xl border border-dashed border-purple-200/50 bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors duration-200 shrink-0"
+              className="w-12 h-12 rounded-3xl border border-dashed border-sky-200/50 bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors duration-200 shrink-0"
               disabled={loading}
             >
-              <Upload className="w-5 h-5 text-purple-100/80" strokeWidth={1.5} />
+              <Upload className="w-5 h-5 text-sky-100/80" strokeWidth={1.5} />
             </button>
             <div className="flex-1 flex flex-col text-left">
               <span className="text-white text-sm font-semibold">Profile Photo</span>
-              <span className="text-purple-200/70 text-[11px]">Upload an image to personalize your profile.</span>
+              <span className="text-sky-200/70 text-[11px]">Upload an image to personalize your profile.</span>
               {profilePhoto && (
-                <span className="text-[11px] text-purple-100/80 mt-1 break-all">{profilePhoto.name}</span>
+                <span className="text-[11px] text-sky-100/80 mt-1 break-all">{profilePhoto.name}</span>
               )}
             </div>
             {profilePhoto && (
@@ -300,7 +300,7 @@ export function RegisterPage() {
                   fileInputRef.current.value = '';
                   setFieldErrors((prev) => ({ ...prev, profilePhoto: undefined }));
                 }}
-                className="text-xs text-purple-100/80 hover:text-white transition"
+                className="text-xs text-sky-100/80 hover:text-white transition"
                 disabled={loading}
               >
                 Remove
@@ -423,30 +423,30 @@ export function RegisterPage() {
               </div>
             </div>
             {password && (
-              <div className="text-purple-200/90 text-[10px] space-y-1 mt-2 p-2.5 bg-white/5 rounded-2xl border border-purple-500/20">
+              <div className="text-sky-200/90 text-[10px] space-y-1 mt-2 p-2.5 bg-white/5 rounded-2xl border border-sky-500/20">
                 <p className="font-semibold text-white">Password Requirements:</p>
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
-                  <div className={password.length >= 8 && password.length <= 64 ? "text-green-300" : "text-purple-200/50"}>
+                  <div className={password.length >= 8 && password.length <= 64 ? "text-green-300" : "text-sky-200/50"}>
                     {password.length >= 8 && password.length <= 64 ? "✓" : "○"} At least 8 characters
                   </div>
-                  <div className={/[A-Z]/.test(password) ? "text-green-300" : "text-purple-200/50"}>
+                  <div className={/[A-Z]/.test(password) ? "text-green-300" : "text-sky-200/50"}>
                     {/[A-Z]/.test(password) ? "✓" : "○"} One uppercase letter
                   </div>
-                  <div className={/[a-z]/.test(password) ? "text-green-300" : "text-purple-200/50"}>
+                  <div className={/[a-z]/.test(password) ? "text-green-300" : "text-sky-200/50"}>
                     {/[a-z]/.test(password) ? "✓" : "○"} One lowercase letter
                   </div>
-                  <div className={/[0-9]/.test(password) ? "text-green-300" : "text-purple-200/50"}>
+                  <div className={/[0-9]/.test(password) ? "text-green-300" : "text-sky-200/50"}>
                     {/[0-9]/.test(password) ? "✓" : "○"} One number
                   </div>
-                  <div className={/[^A-Za-z0-9]/.test(password) ? "text-green-300" : "text-purple-200/40"}>
+                  <div className={/[^A-Za-z0-9]/.test(password) ? "text-green-300" : "text-sky-200/40"}>
                     {/[^A-Za-z0-9]/.test(password) ? "✓" : "○"} Special char (recommended)
                   </div>
-                  <div className={password === password.trim() ? "text-green-300" : "text-purple-200/50"}>
+                  <div className={password === password.trim() ? "text-green-300" : "text-sky-200/50"}>
                     {password === password.trim() ? "✓" : "○"} No outer spaces
                   </div>
                 </div>
-                <div className="mt-2 pt-1 border-t border-purple-500/10">
-                  <div className="flex justify-between text-[10px] text-purple-200/70 mb-1">
+                <div className="mt-2 pt-1 border-t border-sky-500/10">
+                  <div className="flex justify-between text-[10px] text-sky-200/70 mb-1">
                     <span>Password Strength:</span>
                     <span className="font-bold text-white">{strength.text}</span>
                   </div>
@@ -459,7 +459,7 @@ export function RegisterPage() {
           </div>
 
           {/* Role selection */}
-          <p className="text-purple-100/95 text-xs mt-3 mb-2 font-medium text-left">I want to join as</p>
+          <p className="text-sky-100/95 text-xs mt-3 mb-2 font-medium text-left">I want to join as</p>
           <div className="grid grid-cols-2 gap-3">
             <RoleButton
               active={role === "donor"}
@@ -487,9 +487,9 @@ export function RegisterPage() {
                 checked={agree}
                 onChange={(e) => setAgree(e.target.checked)}
                 disabled={loading}
-                className="w-3.5 h-3.5 rounded border-purple-300/50 accent-purple-500 bg-transparent"
+                className="w-3.5 h-3.5 rounded border-sky-300/50 accent-sky-500 bg-transparent"
               />
-              <span className="text-purple-100/90 text-xs">
+              <span className="text-sky-100/90 text-xs">
                 I agree to the Terms &amp; Conditions
               </span>
             </label>
@@ -504,7 +504,7 @@ export function RegisterPage() {
               disabled={loading}
               className="w-full py-3 rounded-full font-semibold text-white flex items-center justify-center gap-2 shadow-lg transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               style={{
-                background: "linear-gradient(90deg, #a855f7 0%, #7c3aed 100%)",
+                background: "linear-gradient(90deg, #38bdf8 0%, #0284c7 100%)",
               }}
             >
               <span>{loading ? "Creating Account..." : "Create Account"}</span>
@@ -515,7 +515,7 @@ export function RegisterPage() {
 
             <div className="flex items-center gap-3 my-1">
               <div className="h-px flex-1 bg-white/20" />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-purple-100/80">OR</span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-100/80">OR</span>
               <div className="h-px flex-1 bg-white/20" />
             </div>
 
@@ -529,9 +529,9 @@ export function RegisterPage() {
         </form>
 
         {/* Login link */}
-        <p className="text-center text-purple-100/80 text-xs mt-4">
+        <p className="text-center text-sky-100/80 text-xs mt-4">
           Already have an account?{" "}
-          <button onClick={handleLoginClick} className="text-white font-semibold underline hover:text-purple-200 cursor-pointer">
+          <button onClick={handleLoginClick} className="text-white font-semibold underline hover:text-sky-200 cursor-pointer">
             Login here
           </button>
         </p>
@@ -544,7 +544,7 @@ export function RegisterPage() {
 function InputField({ icon, placeholder, type = "text", value, onChange, disabled, rightIcon }) {
   return (
     <div className="flex items-center gap-2.5 bg-white/10 rounded-xl border border-white/10 px-3 py-2 backdrop-blur-sm min-h-[42px] transition-shadow duration-200 focus-within:shadow-[0_0_0_3px_rgba(124,58,237,0.18)]">
-      <span className="text-purple-100/70">{icon}</span>
+      <span className="text-sky-100/70">{icon}</span>
       <input
         type={type}
         placeholder={placeholder}
@@ -552,9 +552,9 @@ function InputField({ icon, placeholder, type = "text", value, onChange, disable
         onChange={onChange}
         disabled={disabled}
         aria-label={placeholder}
-        className="bg-transparent outline-none text-sm text-white placeholder-purple-100/60 w-full min-w-0 disabled:opacity-50"
+        className="bg-transparent outline-none text-sm text-white placeholder-sky-100/60 w-full min-w-0 disabled:opacity-50"
       />
-      {rightIcon && <span className="text-purple-100/70 flex items-center">{rightIcon}</span>}
+      {rightIcon && <span className="text-sky-100/70 flex items-center">{rightIcon}</span>}
     </div>
   );
 }
@@ -567,7 +567,7 @@ function RoleButton({ active, onClick, icon, label, iconColor, disabled }) {
       disabled={disabled}
       className={`flex flex-col items-center justify-center gap-1 min-h-[56px] rounded-xl border px-4 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
         active
-          ? "bg-gradient-to-br from-purple-500/15 via-fuchsia-500/10 to-slate-900/20 border-purple-300/30 shadow-[0_12px_30px_rgba(124,58,237,0.12)]"
+          ? "bg-gradient-to-br from-sky-500/15 via-cyan-500/10 to-slate-900/20 border-sky-300/30 shadow-[0_12px_30px_rgba(124,58,237,0.12)]"
           : "bg-slate-950/70 border-white/10 hover:bg-white/5"
       }`}
     >

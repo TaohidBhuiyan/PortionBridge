@@ -280,11 +280,11 @@ const VolunteerMap = ({
         </div>
         <div className="mt-2 space-y-1.5">
           <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-blue-500 border-2 border-white" />
+            <div className="w-3 h-3 rounded-full bg-dash-primary border-2 border-white" />
             <span className="text-gray-600 dark:text-gray-400">You</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded-full bg-green-500 border-2 border-white" />
+            <div className="w-3 h-3 rounded-full bg-success border-2 border-white" />
             <span className="text-gray-600 dark:text-gray-400">Available Volunteer</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
@@ -292,7 +292,7 @@ const VolunteerMap = ({
             <span className="text-gray-600 dark:text-gray-400">Offline Volunteer</span>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <div className="w-3 h-3 rounded bg-purple-500 border-2 border-white" />
+            <div className="w-3 h-3 rounded bg-dash-primary border-2 border-white" />
             <span className="text-gray-600 dark:text-gray-400">Team</span>
           </div>
         </div>
@@ -302,7 +302,7 @@ const VolunteerMap = ({
       {!mapLoaded && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dash-primary mx-auto mb-2" />
             <p className="text-sm text-gray-500 dark:text-gray-400">Loading map...</p>
           </div>
         </div>

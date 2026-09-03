@@ -15,6 +15,7 @@ const DonorDashboard = lazy(() => import("./pages/DonorDashboard").then(m => ({ 
 const DonorAnalyticsPage = lazy(() => import("./pages/DonorAnalyticsPage").then(m => ({ default: m.DonorAnalyticsPage })));
 const DonorProfilePage = lazy(() => import("./pages/DonorProfilePage").then(m => ({ default: m.DonorProfilePage })));
 const DonorSettingsPage = lazy(() => import("./pages/DonorSettingsPage").then(m => ({ default: m.DonorSettingsPage })));
+const SavedAddressesPage = lazy(() => import("./pages/SavedAddressesPage").then(m => ({ default: m.SavedAddressesPage })));
 const DonationFormPage = lazy(() => import("./pages/DonationFormPage").then(m => ({ default: m.DonationFormPage })));
 const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => ({ default: m.MyDonationsPage })));
 const DonationDetailsPage = lazy(() => import("./pages/DonationDetailsPage").then(m => ({ default: m.DonationDetailsPage })));
@@ -56,8 +57,6 @@ const PageLoader = () => (
     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dash-primary"></div>
   </div>
 );
-
-
 
 /**
  * Main App component with React Router setup
@@ -115,6 +114,16 @@ function App() {
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 } 
+              />
+              <Route
+                path="/donor/addresses"
+                element={
+                  <ProtectedRoute requiredRole="donor">
+                    <AuthSocketProvider>
+                      <SavedAddressesPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/volunteer/dashboard" 

@@ -191,7 +191,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(image.id)}
-                    className="p-2 bg-white/90 hover:bg-red-500 hover:text-white rounded-full transition-colors"
+                    className="p-2 bg-white/90 hover:bg-danger hover:text-white rounded-full transition-colors"
                     title="Remove image"
                     aria-label="Remove image"
                   >

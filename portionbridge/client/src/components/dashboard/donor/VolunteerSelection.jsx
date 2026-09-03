@@ -86,7 +86,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-dash-primary animate-spin" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">Finding nearby volunteers...</span>
         </div>
       </div>
@@ -96,12 +96,12 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
   if (error) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-        <div className="flex items-center gap-3 text-red-600 dark:text-red-400 mb-4">
+        <div className="flex items-center gap-3 text-danger mb-4">
           <p>{error}</p>
         </div>
         <button
           onClick={fetchVolunteers}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+          className="px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors text-sm"
         >
           Try Again
         </button>
@@ -138,7 +138,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
             onClick={() => onSelect(volunteer)}
             className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
               isSelected(volunteer)
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                ? 'border-dash-primary bg-dash-primary-soft'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
             }`}
           >
@@ -152,14 +152,14 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-dash-primary flex items-center justify-center text-white font-semibold">
                     {getInitials(volunteer.name)}
                   </div>
                 )}
                 
                 {/* Online Status */}
                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${
-                  volunteer.is_online ? 'bg-green-500' : 'bg-gray-400'
+                  volunteer.is_online ? 'bg-success' : 'bg-gray-400'
                 }`} />
               </div>
 
@@ -170,7 +170,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
                     {volunteer.name}
                   </h4>
                   {isSelected(volunteer) && (
-                    <CheckCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                    <CheckCircle className="w-5 h-5 text-dash-primary flex-shrink-0" />
                   )}
                 </div>
 
@@ -184,7 +184,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
                 {/* Stats */}
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                    <Star className="w-3 h-3 text-warning fill-yellow-500" />
                     <span>{volunteer.rating || 'N/A'}</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -201,7 +201,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
                   </div>
                   <div className="flex items-center gap-1">
                     {volunteer.is_online ? (
-                      <Eye className="w-3 h-3 text-green-600 dark:text-green-400" />
+                      <Eye className="w-3 h-3 text-success" />
                     ) : (
                       <EyeOff className="w-3 h-3 text-gray-400" />
                     )}
@@ -226,7 +226,7 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
         <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
             onClick={() => onSelect(selectedVolunteer)}
-            className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
+            className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
           >
             Confirm Selection
           </button>

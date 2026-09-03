@@ -84,7 +84,7 @@ function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loa
   }
 
   return (
-    <div className={`bg-surface rounded-lg border border-border/50 p-3 ${HOVER_BORDER_CLASSES[tone] || HOVER_BORDER_CLASSES.primary} hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out cursor-default`}>
+    <div className={`bg-surface rounded-lg border border-border/50 p-3 ${HOVER_BORDER_CLASSES[tone] || HOVER_BORDER_CLASSES.primary} transition-[border-color,box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5`}>
       <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2 ${TONE_CLASSES[tone]}`}>
         <Icon size={16} />
       </div>
@@ -125,7 +125,7 @@ function RatingCard({ averageRating, totalRatings, loading, error }) {
   const hasRatings = totalRatings > 0;
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-3 hover:border-warning/30 hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out cursor-default">
+    <div className="bg-surface rounded-lg border border-border/50 p-3 hover:border-warning/30 transition-[border-color,box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
       <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2 bg-warning-soft text-warning">
         <span className="text-sm leading-none">⭐</span>
       </div>

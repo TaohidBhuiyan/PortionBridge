@@ -80,7 +80,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
           size={32}
           className={`${
             isActive
-              ? 'text-yellow-500 fill-yellow-500'
+              ? 'text-warning fill-warning'
               : 'text-border'
           }`}
         />

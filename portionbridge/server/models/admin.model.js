@@ -308,8 +308,17 @@ function buildUserFilter({ search, role, status }) {
   }
 
   if (search) {
-    conditions.push('(name LIKE :search OR email LIKE :search)');
-    params.search = `%${search}%`;
+    // Same ID-aware search as buildVolunteerFilter — a purely numeric term
+    // also matches the user's ID, not just name/email.
+    const trimmed = String(search).trim();
+    if (/^\d+$/.test(trimmed)) {
+      conditions.push('(name LIKE :search OR email LIKE :search OR id = :searchId)');
+      params.search = `%${search}%`;
+      params.searchId = Number(trimmed);
+    } else {
+      conditions.push('(name LIKE :search OR email LIKE :search)');
+      params.search = `%${search}%`;
+    }
   }
 
   return { whereClause: conditions.join(' AND '), params };
@@ -581,8 +590,19 @@ function buildVolunteerFilter({ search }) {
   const params = { volunteerRole: USER_ROLES.VOLUNTEER };
 
   if (search) {
-    conditions.push('(name LIKE :search OR email LIKE :search)');
-    params.search = `%${search}%`;
+    // PHASE — the Admin volunteer search UI needs to support searching by
+    // volunteer ID as well as name/email. Only treat the term as an ID
+    // match when it's purely numeric, so a normal name/email search is
+    // unaffected.
+    const trimmed = String(search).trim();
+    if (/^\d+$/.test(trimmed)) {
+      conditions.push('(name LIKE :search OR email LIKE :search OR id = :searchId)');
+      params.search = `%${search}%`;
+      params.searchId = Number(trimmed);
+    } else {
+      conditions.push('(name LIKE :search OR email LIKE :search)');
+      params.search = `%${search}%`;
+    }
   }
 
   return { whereClause: conditions.join(' AND '), params };

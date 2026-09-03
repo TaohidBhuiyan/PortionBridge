@@ -14,9 +14,9 @@ const VolunteerStatistics = ({ statistics }) => {
 
   const getRateColor = (rate) => {
     if (rate === undefined || rate === null) return 'text-gray-500';
-    if (rate >= 90) return 'text-green-600 dark:text-green-400';
-    if (rate >= 70) return 'text-yellow-600 dark:text-yellow-400';
-    return 'text-red-600 dark:text-red-400';
+    if (rate >= 90) return 'text-success';
+    if (rate >= 70) return 'text-warning';
+    return 'text-danger';
   };
 
   return (
@@ -27,7 +27,7 @@ const VolunteerStatistics = ({ statistics }) => {
         {/* Completed Pickups */}
         <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <CheckCircle className="w-5 h-5 text-success" />
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -37,9 +37,9 @@ const VolunteerStatistics = ({ statistics }) => {
         </div>
 
         {/* Active Pickups */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
+        <div className="bg-dash-primary-soft rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Activity className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <Activity className="w-5 h-5 text-dash-primary" />
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Active</span>
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -49,9 +49,9 @@ const VolunteerStatistics = ({ statistics }) => {
         </div>
 
         {/* Acceptance Rate */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-4">
+        <div className="bg-success-soft rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <TrendingUp className="w-5 h-5 text-success" />
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Acceptance</span>
           </div>
           <p className={`text-2xl font-bold ${getRateColor(stats.acceptance_rate)}`}>

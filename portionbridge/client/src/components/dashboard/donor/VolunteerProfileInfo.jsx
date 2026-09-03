@@ -40,8 +40,8 @@ const VolunteerProfileInfo = ({ volunteer }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Vehicle Type */}
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Car className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+          <div className="w-10 h-10 bg-dash-primary-soft rounded-lg flex items-center justify-center flex-shrink-0">
+            <Car className="w-5 h-5 text-dash-primary" />
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Vehicle Type</h3>
@@ -56,8 +56,8 @@ const VolunteerProfileInfo = ({ volunteer }) => {
 
         {/* Coverage Radius */}
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-            <MapPin className="w-5 h-5 text-green-600 dark:text-green-400" />
+          <div className="w-10 h-10 bg-success-soft rounded-lg flex items-center justify-center flex-shrink-0">
+            <MapPin className="w-5 h-5 text-success" />
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Coverage Radius</h3>
@@ -68,16 +68,16 @@ const VolunteerProfileInfo = ({ volunteer }) => {
         </div>
 
         {/* Service Areas */}
-        {volunteer.service_areas && volunteer.service_areas.length > 0 && (
+        {volunteer.service_area && volunteer.service_area.length > 0 && (
           <div className="flex items-start gap-3 md:col-span-2">
-            <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-              <Globe className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 bg-dash-primary-soft rounded-lg flex items-center justify-center flex-shrink-0">
+              <Globe className="w-5 h-5 text-dash-primary" />
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Service Areas</h3>
               <div className="flex flex-wrap gap-2">
-                {Array.isArray(volunteer.service_areas) ? (
-                  volunteer.service_areas.map((area, index) => (
+                {Array.isArray(volunteer.service_area) ? (
+                  volunteer.service_area.map((area, index) => (
                     <span
                       key={index}
                       className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm"
@@ -87,7 +87,7 @@ const VolunteerProfileInfo = ({ volunteer }) => {
                   ))
                 ) : (
                   <span className="text-gray-700 dark:text-gray-300 text-sm">
-                    {volunteer.service_areas}
+                    {volunteer.service_area}
                   </span>
                 )}
               </div>
@@ -153,8 +153,8 @@ const VolunteerProfileInfo = ({ volunteer }) => {
 
         {/* Member Since */}
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Calendar className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+          <div className="w-10 h-10 bg-dash-primary-soft rounded-lg flex items-center justify-center flex-shrink-0">
+            <Calendar className="w-5 h-5 text-dash-primary" />
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Member Since</h3>
@@ -166,12 +166,12 @@ const VolunteerProfileInfo = ({ volunteer }) => {
 
         {/* Verification Status */}
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-            <Shield className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+          <div className="w-10 h-10 bg-warning-soft rounded-lg flex items-center justify-center flex-shrink-0">
+            <Shield className="w-5 h-5 text-warning" />
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Email Verified</h3>
-            <p className={`font-medium ${volunteer.email_verified ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
+            <p className={`font-medium ${volunteer.email_verified ? 'text-success' : 'text-gray-500 dark:text-gray-400'}`}>
               {volunteer.email_verified ? 'Verified' : 'Not Verified'}
             </p>
           </div>

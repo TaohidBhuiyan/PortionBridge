@@ -106,11 +106,11 @@ export function AdminUsers() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary w-4 h-4" aria-hidden="true" />
                 <input
                   type="text"
-                  placeholder="Search by name or email..."
+                  placeholder="Search by name, email, or user ID..."
                   value={search}
                   onChange={(e) => handleFilterChange(setSearch)(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-                  aria-label="Search users"
+                  aria-label="Search users by name, email, or ID"
                 />
               </div>
             </div>
@@ -136,7 +136,7 @@ export function AdminUsers() {
         {/* Results */}
         {loading ? (
           <div className="bg-surface rounded-lg border border-border/50 p-4">
-            <SkeletonTable rows={8} columns={5} />
+            <SkeletonTable rows={8} columns={6} />
           </div>
         ) : error ? (
           <ErrorState title="Failed to load users" message={error} onRetry={() => setRefreshTrigger((t) => t + 1)} />
@@ -150,6 +150,7 @@ export function AdminUsers() {
                   <thead>
                     <tr className="border-b border-border/50">
                       <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">User</th>
+                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">ID</th>
                       <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Role</th>
                       <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Status</th>
                       <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Joined</th>
@@ -175,6 +176,7 @@ export function AdminUsers() {
                               </div>
                             </div>
                           </td>
+                          <td className="py-2.5 px-4 text-xs font-mono text-text-secondary">#{u.id}</td>
                           <td className="py-2.5 px-4 text-xs text-text-secondary capitalize">{u.role}</td>
                           <td className="py-2.5 px-4">
                             <AdminUserStatusBadge isBanned={!!u.is_banned} isDeleted={!!u.is_deleted} size="small" />

@@ -27,10 +27,12 @@ export function AdminVolunteersTeams() {
           </p>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" role="tablist" aria-label="Switch between volunteers and teams">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeTab === tab.key

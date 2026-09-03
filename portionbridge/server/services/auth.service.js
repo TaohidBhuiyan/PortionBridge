@@ -10,6 +10,7 @@ const passwordResetModel = require('../models/passwordReset.model');
 const emailVerificationModel = require('../models/emailVerification.model');
 const passwordHistoryModel = require('../models/passwordHistory.model');
 const refreshTokenModel = require('../models/refreshToken.model');
+const volunteerProfileModel = require('../models/volunteerProfile.model');
 
 const tokenService = require('./token.service');
 const emailService = require('./email.service');
@@ -23,7 +24,11 @@ const auditService = require('./audit.service');
 /**
  * Registers a new Donor or Volunteer account (Admin accounts can never be
  * self-registered). Sends an email verification link; the account cannot
- * log in until that link is used.
+ * log in until that link is used — except in development (NODE_ENV ===
+ * 'development'), where the account is auto-verified immediately so the
+ * register -> login flow doesn't require a real mailbox. See PHASE 11
+ * PART A below. This is a development-only convenience; production
+ * behavior (and the verification email/token itself) is unchanged.
  */
 async function verifyGoogleToken(idToken) {
   if (!process.env.GOOGLE_CLIENT_ID) {
@@ -63,6 +68,27 @@ async function register({ name, email, password, role, phone, address, profilePh
       phone,
       address,
       profilePhotoPath,
+      // PHASE 11 PART A — temporary development-only convenience: skip the
+      // "click the email link" step so registration -> login works
+      // immediately while testing, without touching the real verification
+      // email/token infrastructure below (which still runs unchanged so
+      // the genuine flow keeps working and is what ships to production,
+      // where NODE_ENV !== 'development' and this stays false as before).
+      emailVerified: process.env.NODE_ENV === 'development',
+      // Same demo-only convenience for phone — there is no OTP/SMS
+      // verification system in this project at all (phone_verified simply
+      // defaulted to 0 forever with no way to ever set it to 1), so this
+      // isn't bypassing a real security flow, just marking demo accounts
+      // consistently "verified" the same way email is in this environment.
+      phoneVerified: process.env.NODE_ENV === 'development',
+      // Same demo-only convenience for phone — there is no OTP/SMS
+      // verification system in this project at all (confirmed: no
+      // phone-verification model, route, or service exists anywhere), so
+      // phone_verified was permanently stuck at its schema default (0)
+      // for every account, forever, with no way to ever change it. This
+      // just avoids that dead-end in the demo/dev environment; it isn't
+      // bypassing a real verification flow because none exists yet.
+      phoneVerified: process.env.NODE_ENV === 'development',
     });
   } catch (error) {
     // The unique constraint remains the source of truth when concurrent
@@ -74,6 +100,16 @@ async function register({ name, email, password, role, phone, address, profilePh
   }
 
   await passwordHistoryModel.addPasswordToHistory(newUserId, hashedPassword);
+
+  // A volunteer_profiles row doesn't exist until this — and several
+  // volunteer-only endpoints (updating location/going online for the
+  // donor discovery map, editing vehicle/availability) all require an
+  // existing row and throw a 404 otherwise. Every newly-registered
+  // volunteer was previously unable to appear on the map at all as a
+  // result. Volunteer-only, since donors/admins have no such table.
+  if (assignedRole === USER_ROLES.VOLUNTEER) {
+    await volunteerProfileModel.upsert({ userId: newUserId, vehicleType: null, availability: null, serviceAreas: null });
+  }
 
   const rawToken = generateOpaqueToken(32);
   const tokenHash = hashToken(rawToken);

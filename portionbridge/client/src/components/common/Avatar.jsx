@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { resolveMediaUrl } from "../../utils/mediaUrl";
 
 /**
  * Avatar component for displaying user profile images with fallback initials
@@ -15,7 +16,16 @@ export function Avatar({ item, className, tone = "brand" }) {
     ? "var(--color-dash-primary, #0284c7)"
     : "var(--color-primary, oklch(60.6% 0.25 292.717))";
 
-  if (!item?.photo || broken) {
+  // The API/DB uses `profile_photo` (manual upload) and, separately,
+  // `profile_picture` (synced from Google OAuth) — every call site in the
+  // app was passing the raw user/volunteer object straight in and this
+  // component only ever checked `.photo`, which neither field is named,
+  // so every avatar in the app silently fell back to initials even when a
+  // real photo existed. A manual upload should win over an auto-synced
+  // Google photo if both are somehow set, hence this order.
+  const photoUrl = resolveMediaUrl(item?.photo || item?.profile_photo || item?.profile_picture);
+
+  if (!photoUrl || broken) {
     return (
       <div
         className={`${className} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}

@@ -88,8 +88,8 @@ export function ReviewSection() {
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <Reveal>
           <div className="font-mono text-xs mb-4 tracking-wider" style={{ color: PRIMARY_DEEP }}>USER REVIEWS</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-[576px] mb-3">What people are saying.</h2>
-          <p className="text-slate-500 max-w-[512px] text-sm md:text-base font-normal mb-14">
+          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-3">What people are saying.</h2>
+          <p className="text-slate-500 max-w-lg text-sm md:text-base font-normal mb-14">
             Real feedback from donors and volunteers using PortionBridge.
           </p>
         </Reveal>

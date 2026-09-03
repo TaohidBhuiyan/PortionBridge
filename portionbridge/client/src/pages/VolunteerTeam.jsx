@@ -15,6 +15,12 @@ import {
   UserPlus,
   LogOut,
   MoreVertical,
+  Search,
+  UserCheck,
+  Navigation,
+  ExternalLink,
+  ArrowLeftRight,
+  UserMinus,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useAuthSocket } from '../context/SocketContext';
@@ -78,6 +84,14 @@ export function VolunteerTeam() {
   // Refresh trigger for post-action reloads (accept invitation, send announcement)
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // PHASE — Team Operations Workspace: search/filter over the already-
+  // fetched team.members array (no new API — the full member list is
+  // already loaded by GET /teams/my) and a single open-menu tracker for
+  // the per-member actions dropdown.
+  const [memberSearch, setMemberSearch] = useState('');
+  const [memberFilter, setMemberFilter] = useState('all');
+  const [openMenuFor, setOpenMenuFor] = useState(null);
+
   useEffect(() => {
     const loadTeamData = async () => {
       setLoading(true);
@@ -118,6 +132,14 @@ export function VolunteerTeam() {
 
     loadTeamData();
   }, [refreshTrigger]);
+
+  // Close the member actions menu on outside click.
+  useEffect(() => {
+    if (!openMenuFor) return;
+    const handleClick = () => setOpenMenuFor(null);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [openMenuFor]);
 
   const handleAcceptInvitation = async (invitationId) => {
     if (acceptingId) return;
@@ -240,6 +262,34 @@ export function VolunteerTeam() {
 
   const activeDonations = donations.filter(d => ACTIVE_STATUSES.has(d.status));
   const completedDonations = donations.filter(d => d.status === 'completed');
+
+  // Real, existing data only: donation_requests.assigned_member_id stores
+  // the assigned volunteer's user_id (same convention as donor_id/
+  // volunteer_id elsewhere), so this is a genuine cross-reference — not a
+  // fabricated "current mission" — built from the team's own active
+  // donations, keyed by member user_id for O(1) lookup per card.
+  const missionByUserId = new Map();
+  activeDonations.forEach((d) => {
+    const assignedTo = d.assigned_member_id || d.volunteer_id;
+    if (assignedTo) missionByUserId.set(assignedTo, d);
+  });
+
+  const totalMembers = team.members?.length || 0;
+  const onMissionCount = (team.members || []).filter((m) => missionByUserId.has(m.user_id)).length;
+  const availableCount = totalMembers - onMissionCount;
+
+  const filteredMembers = (team.members || []).filter((member) => {
+    const q = memberSearch.trim().toLowerCase();
+    const matchesSearch = !q
+      || member.name?.toLowerCase().includes(q)
+      || String(member.user_id).includes(q);
+    if (!matchesSearch) return false;
+
+    if (memberFilter === 'leader') return member.role === 'leader';
+    if (memberFilter === 'mission') return missionByUserId.has(member.user_id);
+    if (memberFilter === 'available') return !missionByUserId.has(member.user_id);
+    return true;
+  });
 
   if (loading) {
     return (
@@ -407,6 +457,200 @@ export function VolunteerTeam() {
         </div>
       </div>
 
+      {/* Team stats — real, derived from the already-loaded members + team donations, no invented numbers */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-lg border border-border/50 divide-x divide-y sm:divide-y-0 divide-border/50 overflow-hidden mb-6">
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <Users size={15} className="shrink-0 text-dash-primary" />
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-text-primary leading-tight tabular-nums">{totalMembers}</p>
+            <p className="text-[11px] font-medium text-text-secondary truncate">Total Members</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <UserCheck size={15} className="shrink-0 text-success" />
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-text-primary leading-tight tabular-nums">{availableCount}</p>
+            <p className="text-[11px] font-medium text-text-secondary truncate">Available</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <Navigation size={15} className="shrink-0 text-warning" />
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-text-primary leading-tight tabular-nums">{onMissionCount}</p>
+            <p className="text-[11px] font-medium text-text-secondary truncate">On a Mission</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2.5 px-4 py-3">
+          <Package size={15} className="shrink-0 text-info" />
+          <div className="min-w-0">
+            <p className="text-lg font-semibold text-text-primary leading-tight tabular-nums">{activeDonations.length}</p>
+            <p className="text-[11px] font-medium text-text-secondary truncate">Ongoing Missions</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Team Members — full-width operations workspace: search, filter, premium member cards */}
+      <div className="bg-surface rounded-lg border border-border p-5 mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 className="text-sm font-semibold text-text-primary">Team Members</h2>
+          {isLeader && (
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-dash-primary-soft text-dash-primary text-xs font-medium hover:bg-dash-primary-soft/80 transition-colors"
+            >
+              <UserPlus size={12} />
+              Invite
+            </button>
+          )}
+        </div>
+
+        {/* Search + filters */}
+        <div className="flex flex-col sm:flex-row gap-2.5 mb-4">
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden="true" />
+            <input
+              type="text"
+              value={memberSearch}
+              onChange={(e) => setMemberSearch(e.target.value)}
+              placeholder="Search by volunteer name or ID..."
+              aria-label="Search team members"
+              className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-input text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
+            />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto" role="tablist" aria-label="Filter team members">
+            {[
+              { key: 'all', label: 'All' },
+              { key: 'leader', label: 'Leader' },
+              { key: 'mission', label: 'On Mission' },
+              { key: 'available', label: 'Available' },
+            ].map((f) => (
+              <button
+                key={f.key}
+                role="tab"
+                aria-selected={memberFilter === f.key}
+                onClick={() => setMemberFilter(f.key)}
+                className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  memberFilter === f.key
+                    ? 'bg-dash-primary text-white'
+                    : 'bg-page border border-border/50 text-text-secondary hover:bg-surface-hover'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {filteredMembers.length === 0 ? (
+          <p className="text-sm text-text-secondary text-center py-8">
+            No members match your search or filter.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {filteredMembers.map((member, index) => {
+              const isThisMemberLeader = member.role === 'leader';
+              const isThisMemberCurrentUser = member.user_id === user?.id;
+              const canManageThisMember = isLeader && !isThisMemberLeader && !isThisMemberCurrentUser;
+              const mission = missionByUserId.get(member.user_id);
+              const menuOpen = openMenuFor === member.id;
+
+              return (
+                <div
+                  key={member.id}
+                  style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${Math.min(index, 8) * 30}ms` }}
+                  className={`relative rounded-lg border p-3.5 transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5 ${
+                    isThisMemberLeader ? 'border-dash-primary/30 bg-dash-primary-soft/40' : 'border-border/50 bg-page'
+                  }`}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Avatar item={member} tone="dash" className="w-9 h-9 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm font-medium text-text-primary truncate">{member.name}</p>
+                        {isThisMemberLeader && <Crown size={13} className="text-dash-primary shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-text-secondary">
+                        ID #{member.user_id} &middot; {isThisMemberLeader ? 'Team Leader' : 'Member'}
+                        {isThisMemberCurrentUser && ' (You)'}
+                      </p>
+                    </div>
+                    {(canManageThisMember || !isThisMemberCurrentUser) && (
+                      <div className="relative shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setOpenMenuFor(menuOpen ? null : member.id); }}
+                          className="p-1 rounded-md hover:bg-surface-hover text-text-secondary transition-colors"
+                          aria-label={`Actions for ${member.name}`}
+                          aria-expanded={menuOpen}
+                        >
+                          <MoreVertical size={14} />
+                        </button>
+                        {menuOpen && (
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ animation: 'dropdownIn 0.15s ease' }}
+                            className="absolute right-0 top-full mt-1 w-44 bg-surface rounded-lg shadow-pb-elevated border border-border py-1 z-20"
+                          >
+                            <button
+                              onClick={() => { navigate(`/volunteers/${member.user_id}`); setOpenMenuFor(null); }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                            >
+                              <ExternalLink size={12} /> View Profile
+                            </button>
+                            {mission && (
+                              <button
+                                onClick={() => { navigate(`/donations/${mission.id}`); setOpenMenuFor(null); }}
+                                className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                              >
+                                <Navigation size={12} /> View Mission
+                              </button>
+                            )}
+                            {canManageThisMember && (
+                              <>
+                                <div className="my-1 border-t border-border" />
+                                <button
+                                  onClick={() => {
+                                    setConfirmModal({ type: 'transfer', memberUserId: member.user_id, memberName: member.name });
+                                    setOpenMenuFor(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                                >
+                                  <ArrowLeftRight size={12} /> Transfer Leadership
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setConfirmModal({ type: 'remove', memberUserId: member.user_id, memberName: member.name });
+                                    setOpenMenuFor(null);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-danger hover:bg-danger-soft transition-colors"
+                                >
+                                  <UserMinus size={12} /> Remove Member
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2.5 pt-2.5 border-t border-border/50">
+                    {mission ? (
+                      <p className="text-[11px] text-warning font-medium truncate flex items-center gap-1">
+                        <Navigation size={11} className="shrink-0" /> On mission: {mission.title || `Donation #${mission.id}`}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-success font-medium flex items-center gap-1">
+                        <UserCheck size={11} className="shrink-0" /> Available
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Team Info */}
         <div className="lg:col-span-1 space-y-6">
@@ -431,58 +675,6 @@ export function VolunteerTeam() {
                   {new Date(team.created_at).toLocaleDateString()}
                 </span>
               </div>
-            </div>
-          </div>
-
-          {/* Team Members */}
-          <div className="bg-surface rounded-lg border border-border p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-text-primary">Team Members</h2>
-              {isLeader && (
-                <button
-                  onClick={() => setShowInviteModal(true)}
-                  className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-dash-primary-soft text-dash-primary text-xs font-medium hover:bg-dash-primary-soft/80 transition-colors"
-                >
-                  <UserPlus size={12} />
-                  Invite
-                </button>
-              )}
-            </div>
-            <div className="space-y-3">
-              {team.members?.map((member) => {
-                const isThisMemberLeader = member.id === team.leader_id;
-                const isThisMemberCurrentUser = member.id === user?.id;
-                const canManageThisMember = isLeader && !isThisMemberLeader && !isThisMemberCurrentUser;
-                return (
-                  <div key={member.id} className="flex items-center gap-3">
-                    <Avatar item={member} tone="dash" className="w-8 h-8" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">{member.name}</p>
-                      <p className="text-xs text-text-secondary">
-                        {isThisMemberLeader ? 'Team Leader' : 'Member'}
-                      </p>
-                    </div>
-                    {isThisMemberLeader && (
-                      <Crown size={14} className="text-dash-primary" />
-                    )}
-                    {canManageThisMember && (
-                      <div className="relative">
-                        <button
-                          onClick={() => setConfirmModal({
-                            type: 'remove',
-                            memberUserId: member.id,
-                            memberName: member.name,
-                          })}
-                          className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary hover:text-danger transition-colors"
-                          aria-label="Manage member"
-                        >
-                          <MoreVertical size={14} />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           </div>
 

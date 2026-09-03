@@ -13,7 +13,8 @@ export function DonorSettingsPage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('security');
-  const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
@@ -34,8 +35,25 @@ export function DonorSettingsPage() {
     chatNotifications: true,
   });
 
+  // Theme — mirrors the same localStorage key + document class DashboardLayout
+  // uses, and notifies it via a custom event so both stay in sync (see
+  // DashboardLayout's 'portionbridge:darkmode' listener). No "System" option
+  // yet since there's no OS-preference detection wired up anywhere.
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved !== null && JSON.parse(saved) ? 'dark' : 'light';
+  });
+
+  const handleThemeChange = (e) => {
+    const value = e.target.value;
+    setTheme(value);
+    const isDark = value === 'dark';
+    localStorage.setItem('darkMode', JSON.stringify(isDark));
+    window.dispatchEvent(new CustomEvent('portionbridge:darkmode', { detail: isDark }));
+  };
+
   const loadNotificationSettings = useCallback(async () => {
-    setLoading(true);
+    setPageLoading(true);
     try {
       const result = await profileApi.getNotificationSettings();
       if (result.success) {
@@ -44,7 +62,7 @@ export function DonorSettingsPage() {
     } catch {
       // Failed to load notification settings
     } finally {
-      setLoading(false);
+      setPageLoading(false);
     }
   }, []);
 
@@ -63,7 +81,7 @@ export function DonorSettingsPage() {
       return;
     }
 
-    setLoading(true);
+    setActionLoading(true);
 
     try {
       const result = await profileApi.changePassword(passwordData);
@@ -81,7 +99,7 @@ export function DonorSettingsPage() {
     } catch {
       setError('Failed to change password. Please try again.');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -91,7 +109,7 @@ export function DonorSettingsPage() {
   };
 
   const handleSaveNotifications = async () => {
-    setLoading(true);
+    setActionLoading(true);
     setError(null);
     setSuccess(null);
 
@@ -106,7 +124,7 @@ export function DonorSettingsPage() {
     } catch {
       setError('Failed to update notification settings. Please try again.');
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -121,7 +139,7 @@ export function DonorSettingsPage() {
     { id: 'appearance', label: 'Appearance', icon: Moon },
   ];
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <DashboardLayout>
         <div className="max-w-4xl mx-auto space-y-6">
@@ -271,10 +289,10 @@ export function DonorSettingsPage() {
                     </div>
                     <button
                       type="submit"
-                      disabled={loading}
+                      disabled={actionLoading}
                       className="w-full px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
                     >
-                      {loading ? 'Changing...' : 'Change Password'}
+                      {actionLoading ? 'Changing...' : 'Change Password'}
                     </button>
                   </form>
                 </div>
@@ -358,10 +376,10 @@ export function DonorSettingsPage() {
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleSaveNotifications}
-                    disabled={loading}
+                    disabled={actionLoading}
                     className="px-6 py-2 bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Saving...' : 'Save Changes'}
+                    {actionLoading ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </div>
@@ -376,23 +394,23 @@ export function DonorSettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between py-3 border-b border-border">
                     <div className="flex items-center gap-3">
-                      <Sun size={20} className="text-text-secondary" />
+                      <Sun size={20} className={theme === 'light' ? 'text-dash-primary' : 'text-text-secondary'} />
                       <div>
                         <p className="font-medium text-text-primary">Theme</p>
                         <p className="text-sm text-text-secondary">Choose your preferred theme</p>
                       </div>
                     </div>
                     <select
-                      className="px-4 py-2 border border-border rounded-lg bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary"
-                      defaultValue="system"
+                      className="px-4 py-2 border border-border rounded-lg bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary"
+                      value={theme}
+                      onChange={handleThemeChange}
                     >
-                      <option value="system">System Default</option>
                       <option value="light">Light Mode</option>
                       <option value="dark">Dark Mode</option>
                     </select>
                   </div>
                   <p className="text-xs text-text-secondary mt-2">
-                    Theme preferences will be saved to your browser.
+                    Theme preference is saved to this browser.
                   </p>
                 </div>
               </div>

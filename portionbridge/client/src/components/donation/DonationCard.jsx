@@ -83,7 +83,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
   const canAccept = Boolean(onAccept) && status === 'pending';
 
   return (
-    <div className="bg-surface rounded-2xl shadow-sm border border-border overflow-hidden hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out cursor-pointer">
+    <div className="bg-surface rounded-xl shadow-pb-card border border-border overflow-hidden transition-[box-shadow,transform] duration-200 hover:shadow-pb-elevated hover:-translate-y-0.5">
       {/* Cover Image */}
       {coverImage ? (
         <div className="aspect-video w-full overflow-hidden bg-surface-hover">

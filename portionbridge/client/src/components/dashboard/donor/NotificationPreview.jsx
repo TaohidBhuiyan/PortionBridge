@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
 import { Bell, ArrowRight } from 'lucide-react';
 import { useAuthSocket } from '../../../context/SocketContext';
+import { getNotificationMeta, formatNotificationTimestamp } from '../../../utils/notificationMeta';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -71,44 +72,6 @@ export function NotificationPreview() {
     }
   }, [socket]);
 
-  const formatTimestamp = (timestamp) => {
-    const now = new Date();
-    const notificationTime = new Date(timestamp);
-    const diffMs = now - notificationTime;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return notificationTime.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const getNotificationIcon = (type) => {
-    switch (type) {
-      case 'donation_created':
-      case 'donation_accepted':
-      case 'volunteer_assigned':
-      case 'pickup_scheduled':
-      case 'pickup_completed':
-        return '📦';
-      case 'volunteer_on_the_way':
-        return '🚗';
-      case 'donation_cancelled':
-        return '❌';
-      case 'assignment_changed':
-        return '🔄';
-      case 'new_message':
-        return '💬';
-      case 'rating_received':
-        return '⭐';
-      default:
-        return '🔔';
-    }
-  };
-
   if (loading) {
     return (
       <div className="bg-surface rounded-lg border border-border/50 p-4">
@@ -155,36 +118,37 @@ export function NotificationPreview() {
         </div>
       ) : (
         <div className="space-y-1">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`flex items-start gap-2 p-2 rounded-md transition-colors ${
-                notification.is_read ? '' : 'bg-dash-primary-soft'
-              }`}
-            >
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
-                notification.is_read ? 'bg-page text-text-secondary' : 'bg-surface text-text-primary'
-              }`}>
-                {getNotificationIcon(notification.type)}
+          {notifications.map((notification) => {
+            const { Icon, toneClass } = getNotificationMeta(notification.type);
+            return (
+              <div
+                key={notification.id}
+                className={`flex items-start gap-2 p-2 rounded-md transition-colors ${
+                  notification.is_read ? '' : 'bg-dash-primary-soft'
+                }`}
+              >
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${toneClass}`}>
+                  <Icon size={12} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[11px] mb-0.5 truncate ${
+                    notification.is_read ? 'font-normal text-text-secondary' : 'font-medium text-text-primary'
+                  }`}>
+                    {notification.title}
+                  </p>
+                  <p className="text-[10px] text-text-secondary line-clamp-1">
+                    {notification.message}
+                  </p>
+                </div>
+                <span className="text-[9px] text-text-muted shrink-0">
+                  {formatNotificationTimestamp(notification.created_at)}
+                </span>
+                {!notification.is_read && (
+                  <div className="w-1 h-1 bg-dash-primary rounded-full shrink-0 mt-1" />
+                )}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-[11px] mb-0.5 truncate ${
-                  notification.is_read ? 'font-normal text-text-secondary' : 'font-medium text-text-primary'
-                }`}>
-                  {notification.title}
-                </p>
-                <p className="text-[10px] text-text-secondary line-clamp-1">
-                  {notification.message}
-                </p>
-              </div>
-              <span className="text-[9px] text-text-secondary shrink-0">
-                {formatTimestamp(notification.created_at)}
-              </span>
-              {!notification.is_read && (
-                <div className="w-1 h-1 bg-dash-primary rounded-full shrink-0 mt-1" />
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

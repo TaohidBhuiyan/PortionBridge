@@ -55,8 +55,24 @@ describe('auth: register / login / refresh', { skip: false }, () => {
   test('login before email verification is rejected', async (t) => {
     if (!dbReady) return t.skip('no test database reachable');
 
+    // PHASE 12: can't use authService.register() here anymore — as of
+    // PHASE 11 it intentionally auto-verifies in development so the
+    // register -> login flow doesn't need a real mailbox during testing.
+    // That's the correct behavior for that feature, but it means this test
+    // needs to build the "genuinely unverified" fixture directly at the
+    // model layer instead, to exercise login()'s verification gate itself
+    // (a real, still fully-enforced production behavior) independent of
+    // that dev convenience.
+    const userModel = require('../../models/user.model');
+    const { hashPassword } = require('../../utils/password');
     const email = uniqueEmail('unverified');
-    await authService.register({ name: 'Unverified', email, password: TEST_PASSWORD, role: 'donor' });
+    await userModel.createUser({
+      name: 'Unverified',
+      email,
+      hashedPassword: await hashPassword(TEST_PASSWORD),
+      role: 'donor',
+      emailVerified: false,
+    });
 
     await assert.rejects(
       () => authService.login({ email, password: TEST_PASSWORD, ipAddress: '127.0.0.1', userAgent: 'test' }),

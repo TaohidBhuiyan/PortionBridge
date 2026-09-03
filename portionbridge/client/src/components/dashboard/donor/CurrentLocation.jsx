@@ -19,8 +19,8 @@ const CurrentLocation = ({ location, onRefresh, isRefreshing, onManualLocation }
   };
 
   const accuracy = formatAccuracy();
-  const accuracyColor = accuracy === 'High' ? 'text-green-600 dark:text-green-400' :
-                       accuracy === 'Medium' ? 'text-yellow-600 dark:text-yellow-400' :
+  const accuracyColor = accuracy === 'High' ? 'text-success' :
+                       accuracy === 'Medium' ? 'text-warning' :
                        'text-orange-600 dark:text-orange-400';
 
   if (!location) {
@@ -36,7 +36,7 @@ const CurrentLocation = ({ location, onRefresh, isRefreshing, onManualLocation }
           </div>
           <button
             onClick={onManualLocation}
-            className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-3 py-1.5 text-sm bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors"
           >
             Set Location
           </button>
@@ -46,9 +46,9 @@ const CurrentLocation = ({ location, onRefresh, isRefreshing, onManualLocation }
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+    <div className="bg-dash-primary-soft border border-border rounded-xl p-4">
       <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 bg-dash-primary rounded-full flex items-center justify-center flex-shrink-0">
           <MapPin className="w-5 h-5 text-white" />
         </div>
         

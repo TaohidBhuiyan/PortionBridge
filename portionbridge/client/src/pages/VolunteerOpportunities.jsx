@@ -176,7 +176,7 @@ export function VolunteerOpportunities() {
       </div>
 
       {/* Search and Filters */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 mb-6">
+      <div className="bg-surface rounded-xl shadow-pb-card border border-border p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
@@ -255,13 +255,17 @@ export function VolunteerOpportunities() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
-            {donations.map((donation) => (
-              <DonationCard
+            {donations.map((donation, index) => (
+              <div
                 key={donation.id}
-                donation={donation}
-                onAccept={handleAccept}
-                accepting={acceptingId === donation.id}
-              />
+                style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${Math.min(index, 10) * 25}ms` }}
+              >
+                <DonationCard
+                  donation={donation}
+                  onAccept={handleAccept}
+                  accepting={acceptingId === donation.id}
+                />
+              </div>
             ))}
           </div>
 

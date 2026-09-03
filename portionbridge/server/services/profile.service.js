@@ -501,8 +501,8 @@ async function getNotificationSettings(userId) {
       sms_notifications: 0,
       push_notifications: 1,
       donation_updates: 1,
-      pickup_updates: 1,
-      chat_notifications: 1,
+      chat_messages: 1,
+      rating_notifications: 1,
     };
   }
 

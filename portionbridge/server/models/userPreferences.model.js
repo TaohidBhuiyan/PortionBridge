@@ -6,7 +6,7 @@ const { pool } = require('../config/db');
  */
 
 const BASE_COLUMNS = `
-  id, user_id, preferred_pickup_time_slot, preferred_contact_method, created_at, updated_at
+  id, user_id, preferred_pickup_time, preferred_contact, created_at, updated_at
 `;
 
 /**
@@ -20,11 +20,11 @@ const BASE_COLUMNS = `
  */
 async function upsert({ userId, preferredPickupTimeSlot, preferredContactMethod }) {
   const [result] = await pool.query(
-    `INSERT INTO user_preferences (user_id, preferred_pickup_time_slot, preferred_contact_method)
+    `INSERT INTO user_preferences (user_id, preferred_pickup_time, preferred_contact)
      VALUES (:userId, :preferredPickupTimeSlot, :preferredContactMethod)
      ON DUPLICATE KEY UPDATE
-       preferred_pickup_time_slot = VALUES(preferred_pickup_time_slot),
-       preferred_contact_method = VALUES(preferred_contact_method)`,
+       preferred_pickup_time = VALUES(preferred_pickup_time),
+       preferred_contact = VALUES(preferred_contact)`,
     {
       userId,
       preferredPickupTimeSlot: preferredPickupTimeSlot || null,
@@ -58,8 +58,8 @@ async function updateByUserId(userId, fields) {
   const params = { userId };
 
   const fieldMap = {
-    preferredPickupTimeSlot: 'preferred_pickup_time_slot',
-    preferredContactMethod: 'preferred_contact_method',
+    preferredPickupTimeSlot: 'preferred_pickup_time',
+    preferredContactMethod: 'preferred_contact',
   };
 
   Object.keys(fields).forEach((camelKey) => {

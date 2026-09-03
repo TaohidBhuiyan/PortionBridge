@@ -17,13 +17,6 @@ import { Avatar } from '../common/Avatar';
  */
 export function ProfileCard({ user, roleLabel, tone = 'donor', stats = [], action }) {
   const displayName = user?.name || 'User';
-  // Avatar expects `item.photo`; the user object from the API carries the
-  // photo as `profile_photo` (matching the DB column). Every existing
-  // <Avatar item={user}> call site in the app has this same mismatch (so
-  // avatars fall back to initials everywhere today) — not something to fix
-  // project-wide here, but this card can at least show the real photo when
-  // one exists rather than repeating the gap.
-  const avatarItem = { ...user, photo: user?.profile_photo || user?.photo };
 
   const toneClasses = {
     donor: 'bg-gradient-to-br from-dash-primary-soft via-surface to-surface border-border/50',
@@ -34,7 +27,7 @@ export function ProfileCard({ user, roleLabel, tone = 'donor', stats = [], actio
   return (
     <div className={`rounded-xl border p-5 h-full flex flex-col ${toneClasses}`}>
       <div className="flex items-start gap-4">
-        <Avatar item={avatarItem} tone="dash" className="w-16 h-16 text-xl shrink-0 shadow-pb-card" />
+        <Avatar item={user} tone="dash" className="w-16 h-16 text-xl shrink-0 shadow-pb-card" />
         <div className="min-w-0 flex-1">
           <p className="text-lg font-bold text-text-primary truncate">{displayName}</p>
           <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-dash-primary-soft text-dash-primary">

@@ -8,10 +8,12 @@ import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+// Gold / silver / bronze — distinct from each other so the top 3 don't
+// blend together (previously #1 and #3 shared the same warning tone).
 const RANK_TONE = {
   1: 'bg-warning-soft text-warning',
   2: 'bg-surface-hover text-text-secondary',
-  3: 'bg-warning-soft text-warning',
+  3: 'bg-warning-soft/50 text-warning/70',
 };
 
 /**

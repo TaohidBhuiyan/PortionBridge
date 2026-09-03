@@ -1,5 +1,5 @@
 /**
- * SkeletonCard - Loading skeleton for card components with shimmer effect
+ * SkeletonCard - Loading skeleton for card components
  */
 export function SkeletonCard({ count = 1 }) {
   return (
@@ -7,7 +7,7 @@ export function SkeletonCard({ count = 1 }) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="bg-surface rounded-lg border border-border p-4 shimmer-skeleton"
+          className="bg-surface rounded-lg border border-border p-4 animate-pulse"
         >
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-full bg-surface-hover shrink-0" />

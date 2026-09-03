@@ -7,7 +7,7 @@ export function LineChart({ data, height = 200 }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center" style={{ height }}>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">No data available</p>
+        <p className="text-text-muted text-sm">No data available</p>
       </div>
     );
   }
@@ -31,17 +31,17 @@ export function LineChart({ data, height = 200 }) {
         {/* Area fill */}
         <polygon
           points={areaPoints}
-          fill="rgba(147, 51, 234, 0.1)"
-          className="dark:fill-purple-900/20"
+          fill="rgba(2, 132, 199, 0.12)"
+          className="dark:fill-sky-400/15"
         />
         {/* Line */}
         <polyline
           points={points}
           fill="none"
-          stroke="rgb(147, 51, 234)"
+          stroke="rgb(2, 132, 199)"
           strokeWidth="2"
           vectorEffect="non-scaling-stroke"
-          className="dark:stroke-purple-400"
+          className="dark:stroke-sky-400"
         />
         {/* Data points */}
         {data.map((d, i) => {
@@ -53,8 +53,8 @@ export function LineChart({ data, height = 200 }) {
               cx={x}
               cy={y}
               r="2"
-              fill="rgb(147, 51, 234)"
-              className="dark:fill-purple-400"
+              fill="rgb(2, 132, 199)"
+              className="dark:fill-sky-400"
             />
           );
         })}

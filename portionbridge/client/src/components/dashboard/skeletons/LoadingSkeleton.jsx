@@ -1,21 +1,21 @@
 /**
- * LoadingSkeleton - Comprehensive loading skeleton for donation details page with shimmer effect
+ * LoadingSkeleton - Comprehensive loading skeleton for donation details page
  */
 export function LoadingSkeleton() {
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header Skeleton */}
       <div className="mb-8">
-        <div className="h-8 w-32 bg-surface-hover rounded-lg shimmer-skeleton mb-4" />
+        <div className="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse mb-4" />
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div className="space-y-2">
-            <div className="h-10 w-64 bg-surface-hover rounded-lg shimmer-skeleton" />
-            <div className="h-4 w-48 bg-surface-hover rounded-lg shimmer-skeleton" />
+            <div className="h-10 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div className="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
           </div>
           <div className="flex items-center gap-2">
-            <div className="h-10 w-24 bg-surface-hover rounded-xl shimmer-skeleton" />
-            <div className="h-10 w-24 bg-surface-hover rounded-xl shimmer-skeleton" />
-            <div className="h-10 w-24 bg-surface-hover rounded-xl shimmer-skeleton" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
+            <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded-xl animate-pulse" />
           </div>
         </div>
       </div>
@@ -25,35 +25,35 @@ export function LoadingSkeleton() {
         {/* Left Column - Main Details */}
         <div className="lg:col-span-2 space-y-6">
           {/* Donation Overview Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
             <div className="space-y-4">
-              <div className="h-4 w-32 bg-surface-hover rounded-lg" />
-              <div className="h-20 w-full bg-surface-hover rounded-lg" />
-              <div className="h-4 w-24 bg-surface-hover rounded-lg" />
+              <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
             </div>
           </div>
 
           {/* Pickup Details Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
             <div className="space-y-3">
-              <div className="h-4 w-full bg-surface-hover rounded-lg" />
-              <div className="h-4 w-3/4 bg-surface-hover rounded-lg" />
-              <div className="h-4 w-1/2 bg-surface-hover rounded-lg" />
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+              <div className="h-4 w-1/2 bg-gray-200 dark:bg-gray-700 rounded-lg" />
             </div>
           </div>
 
           {/* Status Timeline Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
             <div className="space-y-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-4">
-                  <div className="w-8 h-8 rounded-full bg-surface-hover" />
+                  <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-surface-hover rounded-lg" />
-                    <div className="h-3 w-24 bg-surface-hover rounded-lg" />
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                    <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
                   </div>
                 </div>
               ))}
@@ -64,29 +64,29 @@ export function LoadingSkeleton() {
         {/* Right Column - Sidebar */}
         <div className="space-y-6">
           {/* Volunteer Card Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 rounded-full bg-surface-hover" />
+              <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 w-32 bg-surface-hover rounded-lg" />
-                <div className="h-3 w-24 bg-surface-hover rounded-lg" />
+                <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded-lg" />
+                <div className="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg" />
               </div>
             </div>
           </div>
 
           {/* Tracking Panel Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
-            <div className="h-48 w-full bg-surface-hover rounded-lg" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
+            <div className="h-48 w-full bg-gray-200 dark:bg-gray-700 rounded-lg" />
           </div>
 
           {/* Chat Window Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 shimmer-skeleton">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg mb-4" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded-lg mb-4" />
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 w-3/4 bg-surface-hover rounded-lg" />
+                <div key={i} className="h-12 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
               ))}
             </div>
           </div>

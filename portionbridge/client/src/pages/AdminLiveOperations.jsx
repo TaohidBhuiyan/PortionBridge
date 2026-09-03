@@ -336,7 +336,7 @@ function MissionDetailPanel({ mission, position, isTeam, teamRoster, isVolunteer
             {isVolunteerOnline ? 'Online' : 'Offline'}
           </span>
         </div>
-        <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+        <button onClick={onClose} aria-label="Close details panel" className="text-text-secondary hover:text-text-primary">
           <X size={16} />
         </button>
       </div>

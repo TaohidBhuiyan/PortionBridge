@@ -375,11 +375,12 @@ const acceptDonationForTeam = asyncHandler(async (req, res) => {
  */
 const assignTeamMember = asyncHandler(async (req, res) => {
   const { teamId, memberId } = req.body;
-  await donationService.assignTeamMemberToDonation(req.params.id, teamId, memberId, req.user.id);
+  const donation = await donationService.assignTeamMemberToDonation(req.params.id, teamId, memberId, req.user.id);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
     message: 'Team member assigned successfully.',
+    data: { donation },
   });
 });
 

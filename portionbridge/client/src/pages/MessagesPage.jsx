@@ -5,6 +5,7 @@ import { useAuthSocket } from '../context/SocketContext';
 import { donationApi } from '../services/donationApi';
 import { chatApi } from '../services/chatApi';
 import { ChatWindow } from '../components/donation/ChatWindow';
+import { Avatar } from '../components/common/Avatar';
 import { formatNotificationTimestamp } from '../utils/notificationMeta';
 
 /**
@@ -142,24 +143,33 @@ export function MessagesPage() {
                         : 'hover:bg-surface-hover'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm truncate ${donation.unreadCount > 0 ? 'font-semibold text-text-primary' : 'text-text-primary'}`}>
-                        {donation.title || `Donation #${donation.id}`}
-                      </p>
-                      {donation.unreadCount > 0 && (
-                        <span className="shrink-0 bg-danger text-white text-[9px] leading-none px-1.5 py-0.5 rounded-full">
-                          {donation.unreadCount > 99 ? '99+' : donation.unreadCount}
-                        </span>
-                      )}
+                    <div className="flex items-start gap-2.5">
+                      <Avatar
+                        item={{ name: donation.title || `Donation #${donation.id}` }}
+                        tone="dash"
+                        className="w-9 h-9 text-xs mt-0.5"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className={`text-sm truncate ${donation.unreadCount > 0 ? 'font-semibold text-text-primary' : 'text-text-primary'}`}>
+                            {donation.title || `Donation #${donation.id}`}
+                          </p>
+                          {donation.unreadCount > 0 && (
+                            <span className="shrink-0 bg-danger text-white text-[9px] leading-none px-1.5 py-0.5 rounded-full">
+                              {donation.unreadCount > 99 ? '99+' : donation.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                        <p className={`text-xs truncate mt-0.5 ${donation.unreadCount > 0 ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+                          {donation.latestMessage?.message || `Chat with your ${counterpartLabel.toLowerCase()}`}
+                        </p>
+                        {donation.latestMessage?.created_at && (
+                          <p className="text-[11px] text-text-muted mt-1">
+                            {formatNotificationTimestamp(donation.latestMessage.created_at)}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-text-secondary truncate mt-0.5">
-                      {donation.latestMessage?.message || 'No messages yet'}
-                    </p>
-                    {donation.latestMessage?.created_at && (
-                      <p className="text-[11px] text-text-secondary mt-1">
-                        {formatNotificationTimestamp(donation.latestMessage.created_at)}
-                      </p>
-                    )}
                   </button>
                 </li>
               ))}
@@ -179,6 +189,11 @@ export function MessagesPage() {
                 >
                   <ChevronLeft size={18} />
                 </button>
+                <Avatar
+                  item={{ name: selectedDonation.title || `Donation #${selectedDonation.id}` }}
+                  tone="dash"
+                  className="w-7 h-7 text-[10px]"
+                />
                 <p className="text-sm font-medium text-text-primary truncate">
                   {selectedDonation.title || `Donation #${selectedDonation.id}`}
                 </p>

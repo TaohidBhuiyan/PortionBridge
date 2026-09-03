@@ -2,8 +2,17 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+function authHeaders() {
+  const token = localStorage.getItem('accessToken');
+  return { Authorization: `Bearer ${token}` };
+}
+
 /**
  * Rating API service for donor-volunteer ratings
+ *
+ * PHASE — Donor UI/UX pass: same missing-Authorization-header bug found
+ * across several service files during the profile picture audit — fixed
+ * here too. RatingSubmission was silently unable to submit any rating.
  */
 export const ratingApi = {
   /**
@@ -16,6 +25,7 @@ export const ratingApi = {
   async createRating(data) {
     const response = await axios.post(`${API_BASE_URL}/ratings`, data, {
       withCredentials: true,
+      headers: authHeaders(),
     });
     return response.data;
   },
@@ -27,6 +37,7 @@ export const ratingApi = {
   async getRatingByDonation(donationId) {
     const response = await axios.get(`${API_BASE_URL}/ratings/${donationId}`, {
       withCredentials: true,
+      headers: authHeaders(),
     });
     return response.data;
   },

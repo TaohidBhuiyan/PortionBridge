@@ -113,7 +113,7 @@ export function UpcomingMissions() {
       <h2 className="text-sm font-semibold text-text-primary mb-3">Upcoming Missions</h2>
 
       <div className="space-y-2">
-        {missions.map((mission) => {
+        {missions.map((mission, index) => {
           const CategoryIcon = CATEGORY_ICON[mission.category] || Package;
           const scheduledLabel = formatDateTime(mission.scheduled_at);
 
@@ -121,7 +121,8 @@ export function UpcomingMissions() {
             <div
               key={mission.id}
               onClick={() => navigate(`/donations/${mission.id}`)}
-              className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover cursor-pointer transition-colors"
+              style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${index * 40}ms` }}
+              className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover hover:shadow-pb-card cursor-pointer transition-[border-color,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5"
             >
               <div className="w-8 h-8 rounded-md bg-dash-primary-soft flex items-center justify-center shrink-0">
                 <CategoryIcon size={14} className="text-dash-primary" />

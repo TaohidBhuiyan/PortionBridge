@@ -73,6 +73,7 @@ export function ImageGallery({ images = [], coverImage }) {
           {/* Close Button */}
           <button
             onClick={handleClose}
+            aria-label="Close image viewer"
             className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
           >
             <X size={24} />
@@ -86,6 +87,7 @@ export function ImageGallery({ images = [], coverImage }) {
                   e.stopPropagation();
                   handlePrevious();
                 }}
+                aria-label="Previous image"
                 className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
               >
                 <ChevronLeft size={28} />
@@ -95,6 +97,7 @@ export function ImageGallery({ images = [], coverImage }) {
                   e.stopPropagation();
                   handleNext();
                 }}
+                aria-label="Next image"
                 className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
               >
                 <ChevronRight size={28} />

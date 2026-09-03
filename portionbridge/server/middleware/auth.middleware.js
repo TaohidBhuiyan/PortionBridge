@@ -1,14 +1,12 @@
 const { verifyAccessToken } = require('../utils/token');
 const { error } = require('../utils/apiResponse');
-const { HTTP_STATUS, AUTH } = require('../constants');
+const { HTTP_STATUS } = require('../constants');
 const userModel = require('../models/user.model');
 
 /**
  * Protects a route: requires a valid `Authorization: Bearer <accessToken>` header.
  * On success, attaches a minimal `req.user = { id, role, email, name }` object
  * for downstream handlers and the `authorize` middleware to use.
- *
- * In development mode, also accepts a special dev bypass token for quick testing.
  */
 async function protect(req, res, next) {
   try {
@@ -22,27 +20,6 @@ async function protect(req, res, next) {
     }
 
     const token = authHeader.split(' ')[1];
-
-    // Development mode bypass
-    if (AUTH.DEV_MODE && token === AUTH.DEV_BYPASS_TOKEN) {
-      const devRole = req.headers['x-dev-role'];
-      const validRoles = ['donor', 'volunteer', 'admin'];
-      
-      if (!devRole || !validRoles.includes(devRole)) {
-        return error(res, {
-          statusCode: HTTP_STATUS.BAD_REQUEST,
-          message: 'Development mode: Set x-dev-role header to donor, volunteer, or admin',
-        });
-      }
-
-      req.user = {
-        id: `dev-${devRole}`,
-        role: devRole,
-        email: `dev-${devRole}@portionbridge.dev`,
-        name: `Dev ${devRole.charAt(0).toUpperCase() + devRole.slice(1)}`,
-      };
-      return next();
-    }
 
     let decoded;
     try {

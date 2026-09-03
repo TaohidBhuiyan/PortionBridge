@@ -37,7 +37,7 @@ export function RoleSection() {
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <Reveal>
           <div className="font-mono text-xs mb-4" style={{ color: PRIMARY_DEEP }}>HOW IT WORKS</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-[576px]">Two roles, one bridge.</h2>
+          <h2 className="font-serif text-4xl md:text-5xl max-w-xl">Two roles, one bridge.</h2>
         </Reveal>
 
         <Reveal delay={80}>

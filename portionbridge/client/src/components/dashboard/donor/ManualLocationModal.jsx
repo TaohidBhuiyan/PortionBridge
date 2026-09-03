@@ -37,31 +37,37 @@ const ManualLocationModal = ({ isOpen, onClose, onSubmit }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm p-6">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      style={{ animation: 'fadeIn 0.2s ease' }}
+    >
+      <div
+        className="bg-surface rounded-xl shadow-pb-modal border border-border w-full max-w-sm p-6"
+        style={{ animation: 'modalIn 0.2s ease' }}
+      >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <MapPin className="w-5 h-5 text-dash-primary" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h3 className="text-lg font-semibold text-text-primary">
               Enter Your Location
             </h3>
           </div>
           <button
             onClick={onClose}
             aria-label="Close"
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="text-text-muted hover:text-text-secondary"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <p className="text-sm text-text-secondary mb-4">
           Enter coordinates for your pickup area. You can find these by searching your address on any map app and copying the shown coordinates.
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="manual-latitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="manual-latitude" className="block text-sm font-medium text-text-secondary mb-1">
               Latitude
             </label>
             <input
@@ -73,12 +79,12 @@ const ManualLocationModal = ({ isOpen, onClose, onSubmit }) => {
               value={latitude}
               onChange={(e) => setLatitude(e.target.value)}
               placeholder="e.g. 23.8103"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-dash-primary"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
             />
           </div>
 
           <div>
-            <label htmlFor="manual-longitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label htmlFor="manual-longitude" className="block text-sm font-medium text-text-secondary mb-1">
               Longitude
             </label>
             <input
@@ -90,19 +96,19 @@ const ManualLocationModal = ({ isOpen, onClose, onSubmit }) => {
               value={longitude}
               onChange={(e) => setLongitude(e.target.value)}
               placeholder="e.g. 90.4125"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-dash-primary"
+              className="w-full px-3 py-2 border border-border rounded-lg bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
             />
           </div>
 
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+            <p className="text-sm text-danger">{error}</p>
           )}
 
           <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+              className="flex-1 px-4 py-2 border border-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors font-medium"
             >
               Cancel
             </button>

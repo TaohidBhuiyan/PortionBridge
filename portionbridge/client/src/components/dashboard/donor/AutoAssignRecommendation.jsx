@@ -68,7 +68,7 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+          <Loader2 className="w-8 h-8 text-dash-primary animate-spin" />
           <span className="ml-3 text-gray-600 dark:text-gray-400">Finding the best volunteer...</span>
         </div>
       </div>
@@ -78,13 +78,13 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
   if (error) {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
-        <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+        <div className="flex items-center gap-3 text-danger">
           <AlertCircle className="w-5 h-5" />
           <p>{error}</p>
         </div>
         <button
           onClick={fetchRecommendation}
-          className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm"
+          className="mt-4 px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors text-sm"
         >
           Try Again
         </button>
@@ -104,9 +104,9 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
   }
 
   return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-xl p-6">
+    <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-success/30 rounded-xl p-6">
       <div className="flex items-center gap-2 mb-4">
-        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+        <CheckCircle className="w-5 h-5 text-success" />
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Recommended Volunteer
         </h3>
@@ -122,7 +122,7 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
               className="w-16 h-16 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg"
             />
           ) : (
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl border-2 border-white dark:border-gray-700 shadow-lg">
+            <div className="w-16 h-16 rounded-full bg-dash-primary flex items-center justify-center text-white font-bold text-xl border-2 border-white dark:border-gray-700 shadow-lg">
               {getInitials(recommendation.name)}
             </div>
           )}
@@ -133,7 +133,7 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
             </h4>
 
             <div className="flex items-center gap-2 mb-2">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              <Star className="w-4 h-4 text-warning fill-yellow-500" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {recommendation.rating || 'N/A'}
               </span>
@@ -165,7 +165,7 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
           <ul className="space-y-1">
             {recommendation.reasons?.map((reason, index) => (
               <li key={index} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+                <CheckCircle className="w-3 h-3 text-success" />
                 <span>{reason}</span>
               </li>
             ))}
@@ -174,10 +174,10 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 mt-6 pt-6 border-t border-green-200 dark:border-green-800">
+      <div className="flex gap-3 mt-6 pt-6 border-t border-success/30">
         <button
           onClick={() => onConfirm(recommendation)}
-          className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium"
+          className="flex-1 px-4 py-2 bg-success hover:opacity-90 text-white rounded-lg transition-colors font-medium"
         >
           Confirm Assignment
         </button>

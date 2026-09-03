@@ -38,7 +38,7 @@ const VolunteerQuickActions = ({ volunteer, onRequestPickup }) => {
         <button
           onClick={() => onRequestPickup?.(volunteer)}
           disabled
-          className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
+          className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-dash-primary hover:bg-dash-primary-hover disabled:bg-gray-300 dark:disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors font-medium"
         >
           <AlertCircle className="w-5 h-5" />
           Request Pickup

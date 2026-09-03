@@ -26,13 +26,13 @@ export function ConfirmActionModal({
 
   const confirmClasses = tone === 'danger'
     ? 'bg-danger text-white hover:opacity-90'
-    : 'gradient-accent text-white hover:opacity-90';
+    : 'bg-dash-primary text-white hover:bg-dash-primary-hover';
 
   return (
-    <Modal title={title} onClose={onClose} isOpen={isOpen}>
+    <Modal title={title} onClose={onClose}>
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tone === 'danger' ? 'bg-danger-soft text-danger' : 'gradient-accent-subtle text-dash-primary'}`}>
+          <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${tone === 'danger' ? 'bg-danger-soft text-danger' : 'bg-dash-primary-soft text-dash-primary'}`}>
             <AlertTriangle size={16} />
           </div>
           <p className="text-sm text-text-secondary pt-1.5">{message}</p>

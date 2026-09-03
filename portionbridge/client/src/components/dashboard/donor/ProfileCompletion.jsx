@@ -109,7 +109,9 @@ export function ProfileCompletion() {
               strokeDasharray={`${2 * Math.PI * 20}`}
               strokeDashoffset={`${2 * Math.PI * 20 * (1 - completion / 100)}`}
               strokeLinecap="round"
-              className="text-dash-primary transition-all duration-700"
+              className={`transition-all duration-700 ${
+                completion >= 100 ? 'text-success' : completion >= 50 ? 'text-dash-primary' : 'text-warning'
+              }`}
             />
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">

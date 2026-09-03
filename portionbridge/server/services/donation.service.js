@@ -588,7 +588,13 @@ async function schedulePickup(donation, volunteerId, scheduledAt) {
   try {
     await connection.beginTransaction();
 
-    const updatedDonation = await donationModel.schedulePickup(connection, donation.id, scheduledAt);
+    // BUG FIX (Phase 12 QA): this was passing the raw `scheduledAt` string
+    // (e.g. an ISO string with a trailing 'Z') straight to the model/MySQL,
+    // which throws ER_TRUNCATED_WRONG_VALUE under strict SQL mode — the
+    // validated `scheduledDate` above was computed but never actually used.
+    // Passing the Date object lets mysql2 format it correctly, the same
+    // pattern already used elsewhere in this file (e.g. completeDonation).
+    const updatedDonation = await donationModel.schedulePickup(connection, donation.id, scheduledDate);
 
     if (!updatedDonation) {
       throw new AppError(
@@ -1040,11 +1046,19 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
  * with no verification that assignedBy was that team's leader, or that
  * memberId was even a member of the team at all — any volunteer could
  * assign an arbitrary user to someone else's team donation. Now verifies both.
+ *
+ * PHASE 12 FIX: this fell through to an implicit `undefined` return (the
+ * function did the update but never re-fetched/returned the donation),
+ * unlike the otherwise-identical `acceptDonationForTeam` right above it,
+ * which does return the updated row. Callers weren't relying on the
+ * missing value (the controller only ever sent back a static success
+ * message), so this is purely additive — no existing behavior changes,
+ * it just makes the contract consistent with its sibling endpoint.
  * @param {number} donationId - Donation ID
  * @param {number} teamId - Team ID
  * @param {number} memberId - Member ID to assign
  * @param {number} assignedBy - User ID assigning the member (leader)
- * @returns {Promise<void>}
+ * @returns {Promise<Object>} The updated donation record
  */
 async function assignTeamMemberToDonation(donationId, teamId, memberId, assignedBy) {
   const leaderMembership = await teamMemberModel.findByTeamAndUser(teamId, assignedBy);
@@ -1089,6 +1103,8 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
 
   // Log audit
   await auditService.record({ userId: assignedBy, action: 'team_member_assigned', metadata: { donationId, teamId, memberId } });
+
+  return donationModel.findById(donationId);
 }
 
 /**

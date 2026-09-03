@@ -61,7 +61,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`}
+        className={`w-4 h-4 ${i < rating ? 'text-warning fill-yellow-500' : 'text-gray-300 dark:text-gray-600'}`}
       />
     ));
   };
@@ -94,7 +94,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
     return (
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Reviews</h2>
-        <p className="text-red-600 dark:text-red-400">Failed to load reviews: {error}</p>
+        <p className="text-danger">Failed to load reviews: {error}</p>
       </div>
     );
   }
@@ -130,7 +130,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
                 <span className="text-sm text-gray-600 dark:text-gray-400 w-8">{star}★</span>
                 <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-yellow-500 rounded-full"
+                    className="h-full bg-warning rounded-full"
                     style={{ width: `${percentage}%` }}
                   />
                 </div>
@@ -165,7 +165,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold">
+                  <div className="w-12 h-12 rounded-full bg-dash-primary flex items-center justify-center text-white font-semibold">
                     {getReviewerInitials(review.reviewer_name)}
                   </div>
                 )}
@@ -209,7 +209,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
           {reviews.length > 3 && (
             <button
               onClick={() => setShowAll(!showAll)}
-              className="w-full flex items-center justify-center gap-2 py-2 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+              className="w-full flex items-center justify-center gap-2 py-2 text-sm text-dash-primary hover:text-dash-primary dark:hover:text-dash-primary font-medium"
             >
               {showAll ? (
                 <>

@@ -4,15 +4,15 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
-import { DevLoginButton } from "../components/auth/DevLoginButton";
+import { Button } from "../components/common/Button";
 import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
  * PortionBridge — Login page
- * Fused branding / impact-stats panel and Flowbite login card.
- * Styled with deep violet matching colors and viewport heights.
+ * Fused branding / impact-stats panel and login card.
+ * PHASE 7: restyled onto the sky-blue premium design system (was deep violet).
  */
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -159,15 +159,14 @@ export function LoginPage() {
   };
 
   return (
-    <>
-      <div className="min-h-screen flex items-center justify-center bg-[#fbfbfe] dark:bg-[#0a0518] px-4 py-6">
-        <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-[0_20px_56px_rgba(46,16,101,0.24)] border border-purple-200/70 dark:border-purple-950/30 bg-[#faf9fc] dark:bg-[#120721]">
-        {/* LEFT PANEL — purple branding / impact stats */}
+    <div className="min-h-screen flex items-center justify-center bg-page px-4 py-6">
+      <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-pb-modal border border-border bg-surface">
+        {/* LEFT PANEL — sky-blue branding / impact stats */}
         <div
           className="hidden md:flex flex-[0.82] relative flex-col items-center justify-center px-6 py-7 text-left"
           style={{
             background:
-              "radial-gradient(ellipse 75% 45% at 50% 2%, #f0e4fb 0%, rgba(240,228,251,0) 65%), linear-gradient(180deg, #b487e8 0%, #9256e0 16%, #7c3aed 32%, #5b21b6 50%, #35127a 68%, #180a35 85%, #050208 100%)",
+              "radial-gradient(ellipse 75% 45% at 50% 2%, rgba(224,242,254,0.5) 0%, rgba(224,242,254,0) 65%), linear-gradient(180deg, #7dd3fc 0%, #38bdf8 16%, #0ea5e9 32%, #0284c7 50%, #075985 68%, #0c2a3d 85%, #041018 100%)",
           }}
         >
           <div
@@ -212,20 +211,20 @@ export function LoginPage() {
         </div>
 
         {/* RIGHT PANEL — merged seamlessly with left panel */}
-        <div className="flex-1 flex flex-col justify-center items-center bg-white/95 dark:bg-[#120721] px-5 py-6 sm:px-7">
+        <div className="flex-1 flex flex-col justify-center items-center bg-surface px-5 py-6 sm:px-7">
           <div className="flex w-full flex-col justify-center gap-3 max-w-[340px]">
             <div className="left-0 right-0 inline-block px-1">
                   <form className="flex flex-col gap-3 pb-3" onSubmit={handleSubmit}>
-                    <div className="mb-2"><div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-purple-600"><ShieldCheck size={15} /> SECURE SIGN IN</div><h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">Sign in to your account</h1></div>
+                    <div className="mb-2"><div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-dash-primary"><ShieldCheck size={15} /> SECURE SIGN IN</div><h1 className="mt-1 text-2xl font-bold text-text-primary">Sign in to your account</h1></div>
 
                     {error && (
-                      <div className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+                      <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
                         {error}
                       </div>
                     )}
 
                     {successMsg && (
-                      <div className="rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-600 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">
+                      <div className="rounded-lg border border-success/30 bg-success-soft px-3 py-2 text-sm text-success">
                         {successMsg}
                       </div>
                     )}
@@ -233,7 +232,7 @@ export function LoginPage() {
                     <div>
                       <div className="mb-2">
                         <label
-                          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
+                          className="text-xs font-semibold text-text-secondary"
                           htmlFor="email"
                         >
                           Email address
@@ -245,21 +244,21 @@ export function LoginPage() {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 pl-9 text-sm text-gray-900 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
+                            className="block w-full rounded-xl border border-border bg-input p-2.5 pl-9 text-sm text-text-primary focus:border-dash-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 transition-all"
                             placeholder="email@example.com"
                             disabled={loading}
-                          /><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          /><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                         </div>
                       </div>
                       {fieldErrors.email && (
-                        <span className="text-red-600 dark:text-red-400 text-xs mt-1 block">{fieldErrors.email}</span>
+                        <span className="text-danger text-xs mt-1 block">{fieldErrors.email}</span>
                       )}
                     </div>
 
                     <div>
                       <div className="mb-2">
                         <label
-                          className="text-xs font-semibold text-gray-700 dark:text-gray-300"
+                          className="text-xs font-semibold text-text-secondary"
                           htmlFor="password"
                         >
                           Password
@@ -268,21 +267,21 @@ export function LoginPage() {
                       <div className="flex w-full rounded-lg pt-1">
                         <div className="relative w-full">
                           <input
-                            className="block w-full rounded-xl border border-gray-200 bg-gray-50 p-2.5 pl-9 text-sm text-gray-900 focus:border-purple-500 focus:ring-4 focus:ring-purple-500/10 dark:border-gray-600 dark:bg-gray-700 dark:text-white transition-all"
+                            className="block w-full rounded-xl border border-border bg-input p-2.5 pl-9 text-sm text-text-primary focus:border-dash-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 transition-all"
                             id="password"
                             type="password"
                             name="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
-                          /><LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          /><LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
                         </div>
                       </div>
                       {fieldErrors.password && (
-                        <span className="text-red-600 dark:text-red-400 text-xs mt-1 block">{fieldErrors.password}</span>
+                        <span className="text-danger text-xs mt-1 block">{fieldErrors.password}</span>
                       )}
                       <p
-                        className="mt-2 cursor-pointer text-purple-600 hover:text-purple-700"
+                        className="mt-2 cursor-pointer text-dash-primary hover:text-dash-primary-hover"
                         onClick={handleForgotPasswordClick}
                       >
                         Forgot password?
@@ -290,18 +289,14 @@ export function LoginPage() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full rounded-xl border border-transparent bg-gradient-to-r from-purple-500 to-violet-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:from-purple-600 hover:to-violet-800 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 shadow-sm"
-                      >
-                        <span className="inline-flex items-center gap-2">{loading ? "Signing in..." : "Sign In"}<ArrowRight size={15} /></span>
-                      </button>
+                      <Button type="submit" loading={loading} icon={ArrowRight} className="w-full">
+                        {loading ? "Signing in..." : "Sign In"}
+                      </Button>
 
                       <div className="flex items-center gap-3 my-1">
-                        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600" />
-                        <span className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">OR</span>
-                        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-600" />
+                        <div className="h-px flex-1 bg-border" />
+                        <span className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">OR</span>
+                        <div className="h-px flex-1 bg-border" />
                       </div>
 
                       <GoogleAuthButton
@@ -314,10 +309,10 @@ export function LoginPage() {
                   </form>
 
                   <div className="min-w-[270px]">
-                    <div className="mt-4 text-center dark:text-gray-200">
+                    <div className="mt-4 text-center text-text-secondary">
                       New user?{" "}
                       <a
-                        className="text-purple-600 underline hover:text-purple-700"
+                        className="text-dash-primary underline hover:text-dash-primary-hover"
                         href="/register"
                         onClick={(e) => {
                           e.preventDefault();
@@ -333,7 +328,5 @@ export function LoginPage() {
             </div>
           </div>
       </div>
-      <DevLoginButton />
-    </>
   );
 }

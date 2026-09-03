@@ -1,4 +1,5 @@
 import { User, Star, MapPin } from 'lucide-react';
+import { Avatar } from '../common/Avatar';
 
 /**
  * VolunteerCard — shows real volunteer info when assigned. Only renders
@@ -24,22 +25,12 @@ export function VolunteerCard({ volunteer }) {
     );
   }
 
-  const { name, profile_photo, team_name, rating, completed_pickups } = volunteer;
+  const { name, team_name, rating, completed_pickups } = volunteer;
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-3">
-        {profile_photo ? (
-          <img
-            src={profile_photo}
-            alt={name}
-            className="w-12 h-12 rounded-full object-cover shrink-0"
-          />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-dash-primary-soft flex items-center justify-center shrink-0">
-            <User size={22} className="text-dash-primary" />
-          </div>
-        )}
+        <Avatar item={volunteer} tone="dash" className="w-12 h-12 text-base" />
         <div className="min-w-0">
           <p className="text-sm font-medium text-text-primary truncate">{name}</p>
           {team_name && (

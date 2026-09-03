@@ -95,10 +95,12 @@ export function AdminDonations() {
         </div>
 
         {/* Status tabs */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label="Filter donations by status">
           {TABS.map((tab) => (
             <button
               key={tab.key}
+              role="tab"
+              aria-selected={activeTab === tab.key}
               onClick={() => handleTabChange(tab.key)}
               className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 activeTab === tab.key

@@ -4,6 +4,11 @@ import { useState } from 'react';
 /**
  * Discovery Filters Component
  * Provides filtering options for volunteer discovery
+ *
+ * PHASE 8.3: retokenized — was the one donor-facing filter panel still
+ * built from raw Tailwind gray/blue/green/orange/pink instead of the
+ * shared design tokens, so it looked visually out of step with the rest
+ * of the donor dashboard (e.g. MyDonationsPage's filter panel).
  */
 const DiscoveryFilters = ({ 
   filters, 
@@ -36,22 +41,33 @@ const DiscoveryFilters = ({
     return false;
   }).length;
 
+  const pillClass = (active, activeTone = 'bg-dash-primary-soft text-dash-primary border-dash-primary') =>
+    `px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-colors ${
+      active ? activeTone : 'bg-page text-text-secondary border-transparent hover:bg-surface-hover'
+    }`;
+
+  const sortPillClass = (active) =>
+    `px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+      active ? 'bg-dash-primary text-white' : 'bg-page text-text-secondary hover:bg-surface-hover'
+    }`;
+
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 space-y-4">
+    <div className="bg-surface border border-border rounded-xl p-4 space-y-4 shadow-pb-card">
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" aria-hidden="true" />
         <input
           type="text"
           placeholder="Search volunteers by name or team..."
           value={filters.search || ''}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          className="w-full pl-10 pr-9 py-2.5 bg-input border border-border rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
         />
         {filters.search && (
           <button
             onClick={() => handleSearchChange('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-secondary transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -62,44 +78,32 @@ const DiscoveryFilters = ({
       <div className="flex flex-wrap gap-2">
         <button
           onClick={() => handleFilterChange('availableOnly', !filters.availableOnly)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            filters.availableOnly
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-2 border-blue-500'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-transparent'
-          }`}
+          aria-pressed={!!filters.availableOnly}
+          className={pillClass(filters.availableOnly)}
         >
           Available Only
         </button>
 
         <button
           onClick={() => handleFilterChange('onlineOnly', !filters.onlineOnly)}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            filters.onlineOnly
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-2 border-green-500'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-transparent'
-          }`}
+          aria-pressed={!!filters.onlineOnly}
+          className={pillClass(filters.onlineOnly, 'bg-success-soft text-success border-success')}
         >
           Online Now
         </button>
 
         <button
           onClick={() => handleFilterChange('specialty', filters.specialty === 'food' ? null : 'food')}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            filters.specialty === 'food'
-              ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-2 border-orange-500'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-transparent'
-          }`}
+          aria-pressed={filters.specialty === 'food'}
+          className={pillClass(filters.specialty === 'food', 'bg-warning-soft text-warning border-warning')}
         >
           🍽️ Food
         </button>
 
         <button
           onClick={() => handleFilterChange('specialty', filters.specialty === 'clothes' ? null : 'clothes')}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-            filters.specialty === 'clothes'
-              ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 border-2 border-pink-500'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-2 border-transparent'
-          }`}
+          aria-pressed={filters.specialty === 'clothes'}
+          className={pillClass(filters.specialty === 'clothes', 'bg-info-soft text-info border-info')}
         >
           👕 Clothes
         </button>
@@ -108,12 +112,13 @@ const DiscoveryFilters = ({
       {/* Advanced Filters Toggle */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+        aria-expanded={showAdvanced}
+        className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
       >
         <SlidersHorizontal className="w-4 h-4" />
         <span>{showAdvanced ? 'Hide' : 'Show'} Advanced Filters</span>
         {activeFilterCount > 0 && (
-          <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
+          <span className="bg-dash-primary text-white text-xs px-2 py-0.5 rounded-full">
             {activeFilterCount}
           </span>
         )}
@@ -121,10 +126,10 @@ const DiscoveryFilters = ({
 
       {/* Advanced Filters */}
       {showAdvanced && (
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
+        <div className="pt-4 border-t border-border space-y-4">
           {/* Sort By */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
               Sort By
             </label>
             <div className="flex gap-2">
@@ -132,11 +137,8 @@ const DiscoveryFilters = ({
                 <button
                   key={option}
                   onClick={() => handleFilterChange('sortBy', option)}
-                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
-                    filters.sortBy === option
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                  }`}
+                  aria-pressed={filters.sortBy === option}
+                  className={`capitalize ${sortPillClass(filters.sortBy === option)}`}
                 >
                   {option}
                 </button>
@@ -146,27 +148,21 @@ const DiscoveryFilters = ({
 
           {/* Sort Order */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
               Sort Order
             </label>
             <div className="flex gap-2">
               <button
                 onClick={() => handleFilterChange('sortOrder', 'asc')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filters.sortOrder === 'asc'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                aria-pressed={filters.sortOrder === 'asc'}
+                className={sortPillClass(filters.sortOrder === 'asc')}
               >
                 Ascending
               </button>
               <button
                 onClick={() => handleFilterChange('sortOrder', 'desc')}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filters.sortOrder === 'desc'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}
+                aria-pressed={filters.sortOrder === 'desc'}
+                className={sortPillClass(filters.sortOrder === 'desc')}
               >
                 Descending
               </button>
@@ -175,23 +171,25 @@ const DiscoveryFilters = ({
 
           {/* Radius Slider */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="discovery-radius" className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
               Search Radius: {filters.radius || 10} km
             </label>
             <input
+              id="discovery-radius"
               type="range"
               min="1"
               max="50"
               value={filters.radius || 10}
               onChange={(e) => handleFilterChange('radius', parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-surface-hover rounded-lg appearance-none cursor-pointer accent-dash-primary"
             />
           </div>
 
           {/* Reset Button */}
           <button
             onClick={handleReset}
-            className="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
+            disabled={activeFilterCount === 0 && !filters.search}
+            className="w-full px-4 py-2 text-sm border border-border rounded-lg text-text-primary hover:bg-surface-hover transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Reset All Filters
           </button>
@@ -200,7 +198,7 @@ const DiscoveryFilters = ({
 
       {/* Results Count */}
       {totalCount !== undefined && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-text-secondary">
           {totalCount} {totalCount === 1 ? 'volunteer' : 'volunteers'} found
         </p>
       )}

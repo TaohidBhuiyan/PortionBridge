@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Camera, Save, MapPin, Calendar, User, Mail, Phone } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { ArrowLeft, Save, MapPin, Calendar, User, Mail, Phone, Camera, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
@@ -12,12 +12,15 @@ import { Avatar } from '../components/common/Avatar';
  */
 export function DonorProfilePage() {
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState(null);
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -65,6 +68,29 @@ export function DonorProfilePage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file later
+    if (!file) return;
+
+    setPhotoError(null);
+    setPhotoUploading(true);
+    try {
+      const result = await profileApi.uploadPhoto(file);
+      if (result.success) {
+        setProfile(result.data.user);
+        updateUser(result.data.user);
+        setSuccess('Profile photo updated!');
+      } else {
+        setPhotoError(result.message || 'Failed to upload photo.');
+      }
+    } catch (err) {
+      setPhotoError(err.response?.data?.message || 'Failed to upload photo. Please try again.');
+    } finally {
+      setPhotoUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -77,7 +103,7 @@ export function DonorProfilePage() {
       if (result.success) {
         setSuccess('Profile updated successfully!');
         setProfile(result.data.user);
-        setUser(result.data.user);
+        updateUser(result.data.user);
       } else {
         setError(result.error || 'Failed to update profile');
       }
@@ -173,33 +199,51 @@ export function DonorProfilePage() {
         )}
 
         {/* Profile Photo Section */}
-        <div className="bg-surface rounded-2xl border border-border p-6 mb-6 shadow-sm hover:shadow-md transition-shadow">
+        <div className="bg-surface rounded-xl border border-border p-6 mb-6 shadow-pb-card">
           <h2 className="text-lg font-semibold text-text-primary mb-4">
             Profile Photo
           </h2>
           <div className="flex items-center gap-6">
             <div className="relative group">
               <Avatar item={profile} className="w-24 h-24 text-3xl" />
-              <button className="absolute bottom-0 right-0 p-2 bg-dash-primary text-white rounded-full hover:bg-dash-primary-hover transition-all shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2">
-                <Camera size={16} />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photoUploading}
+                aria-label="Change profile photo"
+                className="absolute bottom-0 right-0 p-2 bg-dash-primary text-white rounded-full hover:bg-dash-primary-hover transition-all shadow-pb-elevated focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 disabled:opacity-60"
+              >
+                {photoUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
               </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handlePhotoChange}
+                className="hidden"
+              />
             </div>
             <div>
-              <p className="text-sm text-text-secondary mb-2">
-                Upload a new profile photo
-              </p>
-              <button className="px-4 py-2 bg-page border border-border text-text-primary rounded-xl hover:bg-surface-hover transition-colors text-sm font-medium">
-                Choose File
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={photoUploading}
+                className="px-4 py-2 bg-page border border-border text-text-primary rounded-xl hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-60"
+              >
+                {photoUploading ? 'Uploading...' : 'Choose File'}
               </button>
               <p className="text-xs text-text-secondary mt-2">
-                Recommended: Square image, max 2MB
+                JPG, PNG, or WEBP. Max 5MB.
               </p>
+              {photoError && (
+                <p className="text-xs text-danger mt-1">{photoError}</p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Profile Information Form */}
-        <form onSubmit={handleSubmit} className="bg-surface rounded-2xl border border-border p-6 mb-6 shadow-sm hover:shadow-md transition-shadow">
+        <form onSubmit={handleSubmit} className="bg-surface rounded-xl border border-border p-6 mb-6 shadow-pb-card">
           <h2 className="text-lg font-semibold text-text-primary mb-4">
             Personal Information
           </h2>
@@ -217,7 +261,7 @@ export function DonorProfilePage() {
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
                   placeholder="Enter your full name"
                 />
               </div>
@@ -255,7 +299,7 @@ export function DonorProfilePage() {
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
                   placeholder="+880 1XXX-XXXXXX"
                 />
               </div>
@@ -273,7 +317,7 @@ export function DonorProfilePage() {
                   value={formData.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all resize-none"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all resize-none"
                   placeholder="Enter your address"
                 />
               </div>
@@ -291,7 +335,7 @@ export function DonorProfilePage() {
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
                 />
               </div>
             </div>
@@ -305,7 +349,7 @@ export function DonorProfilePage() {
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all appearance-none cursor-pointer"
+                className="w-full px-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all appearance-none cursor-pointer"
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -330,7 +374,7 @@ export function DonorProfilePage() {
         </form>
 
         {/* Account Info */}
-        <div className="bg-page rounded-2xl border border-border p-6 shadow-sm">
+        <div className="bg-page rounded-xl border border-border p-6 shadow-pb-subtle">
           <h2 className="text-lg font-semibold text-text-primary mb-4">
             Account Information
           </h2>
@@ -351,6 +395,12 @@ export function DonorProfilePage() {
               <span className="text-text-secondary">Email Verified</span>
               <span className={`font-medium ${profile?.email_verified ? 'text-success' : 'text-warning'}`}>
                 {profile?.email_verified ? 'Verified' : 'Not Verified'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-text-secondary">Phone Verified</span>
+              <span className={`font-medium ${profile?.phone_verified ? 'text-success' : 'text-warning'}`}>
+                {profile?.phone_verified ? 'Verified' : 'Not Verified'}
               </span>
             </div>
           </div>

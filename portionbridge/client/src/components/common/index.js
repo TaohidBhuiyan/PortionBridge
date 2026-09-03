@@ -4,15 +4,13 @@
  */
 
 export { Avatar } from './Avatar';
+export { Button } from './Button';
+export { Card, CardHeader } from './Card';
 export { ErrorBoundary } from './ErrorBoundary';
 export { Icon } from './Icon';
 export { Logo } from './Logo';
 export { Modal } from './Modal';
-export { PageTransition } from './PageTransition';
-export { StaggerGrid } from './StaggerGrid';
 export { Reveal } from './Reveal';
 export { Stars } from './Stars';
 export { CancelConfirmationModal } from './CancelConfirmationModal';
 export { UnsavedChangesModal } from './UnsavedChangesModal';
-export { Button } from './Button';
-export { Card, CardHeader } from './Card';

@@ -80,7 +80,6 @@ export function AuthProvider({ children }) {
     let refreshInFlight = null;
 
     const NO_REFRESH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh-token', '/auth/google-login'];
-    const DEV_BYPASS_TOKEN = 'dev-bypass-token';
 
     const performRefresh = async () => {
       if (!refreshInFlight) {
@@ -102,22 +101,7 @@ export function AuthProvider({ children }) {
       return refreshInFlight;
     };
 
-    // Request interceptor to add dev role header for dev bypass token
-    const requestInterceptorId = axios.interceptors.request.use((config) => {
-      const token = localStorage.getItem('accessToken');
-      const storedUser = localStorage.getItem('user');
-      if (token === DEV_BYPASS_TOKEN && storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          config.headers['x-dev-role'] = userData.role;
-        } catch (e) {
-          console.error('Failed to parse stored user for dev role:', e);
-        }
-      }
-      return config;
-    });
-
-    const responseInterceptorId = axios.interceptors.response.use(
+    const interceptorId = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
@@ -144,8 +128,7 @@ export function AuthProvider({ children }) {
     );
 
     return () => {
-      axios.interceptors.request.eject(requestInterceptorId);
-      axios.interceptors.response.eject(responseInterceptorId);
+      axios.interceptors.response.eject(interceptorId);
     };
   }, []);
 
@@ -260,6 +243,22 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // PHASE — profile picture audit: nothing previously let a component
+  // update the cached user object after an in-place change (e.g.
+  // uploading a new profile photo) — components had no way to make the
+  // navbar/sidebar/dashboard avatar reflect a change without a full
+  // logout/login or waiting for the next silent token refresh. This
+  // updates both the live state and the localStorage copy (the same
+  // pair every other place in this file keeps in sync), so a page
+  // refresh immediately after also shows the new value correctly.
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      const next = { ...prev, ...patch };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
+  };
+
   const value = {
     user,
     loading,
@@ -268,6 +267,7 @@ export function AuthProvider({ children }) {
     register,
     googleLogin,
     verifyEmail,
+    updateUser,
     isAuthenticated: !!user,
     userRole: user?.role,
   };

@@ -43,7 +43,7 @@ export function SchedulePickupModal({ isOpen, onClose, onConfirm, donationTitle,
   };
 
   return (
-    <Modal title="Schedule Pickup" onClose={onClose} isOpen={isOpen}>
+    <Modal title="Schedule Pickup" onClose={onClose}>
       <div className="space-y-4">
         <div className="bg-page rounded-lg p-4 border border-border">
           <p className="text-xs text-text-secondary mb-1">Donation:</p>

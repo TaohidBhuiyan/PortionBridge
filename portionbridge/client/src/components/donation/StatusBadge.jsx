@@ -37,7 +37,7 @@ export function StatusBadge({ status, size = 'medium' }) {
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full ${toneClasses[config.tone]} ${sizeClasses[size]}`}
+      className={`inline-flex items-center font-medium rounded-full transition-colors duration-200 ${toneClasses[config.tone]} ${sizeClasses[size]}`}
     >
       <Icon size={iconSize} />
       {config.label}

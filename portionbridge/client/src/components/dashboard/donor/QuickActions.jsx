@@ -35,30 +35,35 @@ export function QuickActions() {
       label: 'My Donations',
       description: 'View and manage your donations',
       route: '/donor/my-donations',
+      tone: 'info',
     },
     {
       icon: Search,
       label: 'Discover Volunteers',
       description: 'Find nearby volunteers and teams',
       route: '/donor/discover-volunteers',
+      tone: 'success',
     },
     {
       icon: Trophy,
       label: 'Leaderboard',
       description: 'See top donors and volunteers',
       route: '/#leaderboard',
+      tone: 'warning',
     },
     {
       icon: BarChart3,
       label: 'Analytics',
       description: 'View your donation impact and trends',
       route: '/donor/analytics',
+      tone: 'primary',
     },
     {
       icon: HelpCircle,
       label: 'Support Center',
       description: 'Get help and support',
       route: '/#roles',
+      tone: 'neutral',
     },
   ];
 
@@ -81,15 +86,22 @@ export function QuickActions() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {actions.map((action, index) => {
           const Icon = action.icon;
+          const toneClasses = {
+            info: 'bg-info-soft text-info',
+            success: 'bg-success-soft text-success',
+            warning: 'bg-warning-soft text-warning',
+            primary: 'bg-dash-primary-soft text-dash-primary',
+            neutral: 'bg-surface-hover text-text-secondary',
+          };
           return (
             <button
               key={index}
               onClick={() => handleActionClick(action.route)}
-              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover hover:shadow-md hover:scale-[1.01] transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
+              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover hover:-translate-y-0.5 hover:shadow-pb-card transition-[border-color,background-color,box-shadow,transform] duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
             >
               <div
-                className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
-                  action.primary ? 'gradient-accent text-white' : 'bg-dash-primary-soft text-dash-primary'
+                className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105 ${
+                  action.primary ? 'bg-dash-primary text-white' : toneClasses[action.tone] || toneClasses.neutral
                 }`}
               >
                 <Icon size={16} />

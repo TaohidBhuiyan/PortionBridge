@@ -149,6 +149,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                       onClick={() => onViewDetails?.(id)}
                       className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
                       title="View Details"
+                      aria-label="View Details"
                     >
                       <Eye size={16} />
                     </button>
@@ -157,6 +158,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                         onClick={() => onEdit?.(id)}
                         className="p-2 rounded-lg hover:bg-surface-hover text-text-secondary transition-colors"
                         title="Edit"
+                        aria-label="Edit donation"
                       >
                         <Edit size={16} />
                       </button>
@@ -166,6 +168,7 @@ export function DonationTable({ donations, onViewDetails, onEdit, onCancel }) {
                         onClick={() => onCancel?.(id)}
                         className="p-2 rounded-lg hover:bg-danger-soft text-danger transition-colors"
                         title="Cancel"
+                        aria-label="Cancel donation"
                       >
                         <Trash2 size={16} />
                       </button>

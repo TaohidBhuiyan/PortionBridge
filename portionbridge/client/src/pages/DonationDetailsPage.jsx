@@ -31,6 +31,7 @@ import { SchedulePickupModal } from '../components/donation/SchedulePickupModal'
 import { TrackingPanel } from '../components/donation/TrackingPanel';
 import { ChatWindow } from '../components/donation/ChatWindow';
 import { RatingSubmission } from '../components/donation/RatingSubmission';
+import { ReportIssueModal } from '../components/donation/ReportIssueModal';
 import { useDonationTracking } from '../hooks/useDonationTracking';
 import { useAuth } from '../context/AuthContext';
 
@@ -56,6 +57,7 @@ export function DonationDetailsPage() {
   // doubles as the double-click guard the audit brief calls for.
   const [actionInProgress, setActionInProgress] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const loadDonationDetails = useCallback(async () => {
     setLoading(true);
@@ -635,7 +637,7 @@ export function DonationDetailsPage() {
         <div className="space-y-6">
           {/* Status Timeline — always visible, shows the real lifecycle stage */}
           <SectionCard title="Status Timeline">
-            <StatusTimeline currentStatus={status} />
+            <StatusTimeline currentStatus={status} donation={donation} />
           </SectionCard>
 
           {/* Live Tracking Panel - real socket-driven data, honest fallbacks */}
@@ -682,7 +684,7 @@ export function DonationDetailsPage() {
                       size={20}
                       className={`${
                         star <= existingRating.stars
-                          ? 'text-yellow-500 fill-yellow-500'
+                          ? 'text-warning fill-warning'
                           : 'text-border'
                       }`}
                     />
@@ -704,8 +706,28 @@ export function DonationDetailsPage() {
               )}
             </SectionCard>
           )}
+
+          {/* Report an Issue — donors and volunteers on this donation only;
+              backend enforces participant authorization either way. */}
+          {status !== 'pending' && (currentUser?.role === 'donor' || isAssignedVolunteer) && (
+            <div className="text-center">
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="text-xs text-text-muted hover:text-danger transition-colors underline underline-offset-2"
+              >
+                Report an issue with this donation
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {showReportModal && (
+        <ReportIssueModal
+          donationId={id}
+          onClose={() => setShowReportModal(false)}
+        />
+      )}
 
       {/* Cancel Confirmation Modal */}
       <CancelConfirmationModal

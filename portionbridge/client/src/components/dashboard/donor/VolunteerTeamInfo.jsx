@@ -18,13 +18,13 @@ const VolunteerTeamInfo = ({ team }) => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6">
+    <div className="bg-dash-primary-soft border border-border rounded-xl p-6">
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Team Information</h2>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Team Icon */}
         <div className="flex-shrink-0">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-20 h-20 bg-dash-primary rounded-2xl flex items-center justify-center shadow-lg">
             <Users className="w-10 h-10 text-white" />
           </div>
         </div>
@@ -87,7 +87,7 @@ const VolunteerTeamInfo = ({ team }) => {
       </div>
 
       {/* Team Leader Info */}
-      <div className="mt-6 pt-6 border-t border-purple-200 dark:border-purple-800">
+      <div className="mt-6 pt-6 border-t border-border">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Team Leader ID: {team.leader_id}</p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 /**
- * SkeletonSidebar - Loading skeleton for sidebar component with shimmer effect
+ * SkeletonSidebar - Loading skeleton for sidebar component
  */
 export function SkeletonSidebar({ collapsed = false }) {
   return (
@@ -12,11 +12,11 @@ export function SkeletonSidebar({ collapsed = false }) {
       <div className="flex items-center justify-between p-4 border-b border-border">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-surface-hover shimmer-skeleton" />
-            <div className="h-6 w-24 bg-surface-hover rounded shimmer-skeleton" />
+            <div className="w-8 h-8 rounded-full bg-surface-hover animate-pulse" />
+            <div className="h-6 w-24 bg-surface-hover rounded animate-pulse" />
           </div>
         )}
-        <div className="w-8 h-8 rounded bg-surface-hover shimmer-skeleton" />
+        <div className="w-8 h-8 rounded bg-surface-hover animate-pulse" />
       </div>
 
       {/* Menu Items */}
@@ -28,9 +28,9 @@ export function SkeletonSidebar({ collapsed = false }) {
               collapsed ? 'justify-center' : ''
             }`}
           >
-            <div className="w-5 h-5 bg-surface-hover rounded shimmer-skeleton shrink-0" />
+            <div className="w-5 h-5 bg-surface-hover rounded animate-pulse shrink-0" />
             {!collapsed && (
-              <div className="flex-1 h-4 bg-surface-hover rounded shimmer-skeleton" />
+              <div className="flex-1 h-4 bg-surface-hover rounded animate-pulse" />
             )}
           </div>
         ))}
@@ -40,10 +40,10 @@ export function SkeletonSidebar({ collapsed = false }) {
       {!collapsed && (
         <div className="p-4 border-t border-border">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-surface-hover shimmer-skeleton shrink-0" />
+            <div className="w-10 h-10 rounded-full bg-surface-hover animate-pulse shrink-0" />
             <div className="flex-1 space-y-1">
-              <div className="h-4 w-20 bg-surface-hover rounded shimmer-skeleton" />
-              <div className="h-3 w-16 bg-surface-hover rounded shimmer-skeleton" />
+              <div className="h-4 w-20 bg-surface-hover rounded animate-pulse" />
+              <div className="h-3 w-16 bg-surface-hover rounded animate-pulse" />
             </div>
           </div>
         </div>

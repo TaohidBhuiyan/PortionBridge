@@ -44,11 +44,6 @@ export function DonorAnalyticsPage() {
     loadAnalytics();
   }, [loadAnalytics]);
 
-  const handleExport = () => {
-    // Placeholder for export functionality
-    alert('Export functionality coming soon!');
-  };
-
   const timeRangeOptions = [
     { value: 'this_month', label: 'This Month' },
     { value: 'last_3_months', label: 'Last 3 Months' },
@@ -151,11 +146,13 @@ export function DonorAnalyticsPage() {
                 ))}
               </select>
             </div>
-            {/* Export Button */}
+            {/* Export — not implemented yet; disabled and honestly labeled
+                rather than a fake primary action with a placeholder alert. */}
             <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl transition-all shadow-sm hover:shadow-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              aria-label="Export analytics data"
+              disabled
+              title="Export is coming soon"
+              className="flex items-center gap-2 px-4 py-2.5 bg-page border border-border text-text-muted rounded-xl text-sm font-medium cursor-not-allowed"
+              aria-label="Export analytics data (coming soon)"
             >
               <Download size={16} />
               Export

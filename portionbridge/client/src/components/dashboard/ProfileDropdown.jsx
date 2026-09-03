@@ -24,7 +24,10 @@ export function ProfileDropdown({ user, onLogout, onClose }) {
   };
 
   return (
-    <div className="absolute right-0 top-full mt-2 w-56 glass-overlay rounded-xl shadow-lg py-1.5 z-50">
+    <div
+      className="absolute right-0 top-full mt-2 w-56 bg-surface rounded-xl shadow-pb-elevated border border-border py-1.5 z-50"
+      style={{ animation: 'dropdownIn 0.15s ease' }}
+    >
       {/* User Info */}
       <div className="flex items-center gap-2.5 px-3.5 py-2.5 border-b border-border">
         <Avatar item={user} tone="dash" className="w-9 h-9 text-sm" />

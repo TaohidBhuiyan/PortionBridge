@@ -115,6 +115,8 @@ async function findNearbyVolunteers({
       vp.skills,
       vp.service_areas,
       vp.coverage_radius,
+      vp.latitude,
+      vp.longitude,
       vp.is_online,
       vp.total_pickups,
       ${distanceFormula} AS distance,
@@ -200,13 +202,15 @@ async function countNearbyVolunteers({
   `;
 
   const [rows] = await pool.query(
-    `SELECT COUNT(*) AS total
-    FROM users u
-    INNER JOIN volunteer_profiles vp ON u.id = vp.user_id
-    LEFT JOIN team_members tm ON u.id = tm.user_id
-    LEFT JOIN teams t ON tm.team_id = t.id
-    WHERE ${whereClause}
-    HAVING distance <= :radius`,
+    `SELECT COUNT(*) AS total FROM (
+      SELECT ${distanceFormula} AS distance
+      FROM users u
+      INNER JOIN volunteer_profiles vp ON u.id = vp.user_id
+      LEFT JOIN team_members tm ON u.id = tm.user_id
+      LEFT JOIN teams t ON tm.team_id = t.id
+      WHERE ${whereClause}
+      HAVING distance <= :radius
+    ) AS nearby`,
     params
   );
 
@@ -264,6 +268,8 @@ async function findNearbyTeams({
       t.name,
       t.description,
       t.coverage_radius,
+      t.latitude,
+      t.longitude,
       ${distanceFormula} AS distance,
       COUNT(DISTINCT tm.user_id) AS member_count,
       u.name AS leader_name,
@@ -323,11 +329,13 @@ async function countNearbyTeams({
   `;
 
   const [rows] = await pool.query(
-    `SELECT COUNT(DISTINCT t.id) AS total
-    FROM teams t
-    INNER JOIN team_members tm ON t.id = tm.team_id
-    WHERE ${whereClause}
-    HAVING distance <= :radius`,
+    `SELECT COUNT(DISTINCT id) AS total FROM (
+      SELECT t.id, ${distanceFormula} AS distance
+      FROM teams t
+      INNER JOIN team_members tm ON t.id = tm.team_id
+      WHERE ${whereClause}
+      HAVING distance <= :radius
+    ) AS nearby`,
     params
   );
 

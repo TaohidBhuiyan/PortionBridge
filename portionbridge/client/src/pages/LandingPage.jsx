@@ -85,8 +85,8 @@ export function LandingPage() {
       <section id="leaderboard" className="py-24 md:py-28 bg-gray-50/60">
         <div className="max-w-6xl mx-auto px-6 md:px-10">
           <div className="font-mono text-xs mb-4 text-primary-deep">LIVE LEADERBOARD</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-[576px] mb-4">Updating as you watch.</h2>
-          <p className="text-black/55 max-w-[512px] mb-12">
+          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-4">Updating as you watch.</h2>
+          <p className="text-black/55 max-w-lg mb-12">
             Numbers here refresh in real time as donations and pickups are confirmed — watch a row light up when it moves.
           </p>
           <LeaderboardSection />

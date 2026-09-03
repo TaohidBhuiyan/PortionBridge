@@ -70,6 +70,7 @@ const VolunteerGallery = ({ volunteer }) => {
               e.stopPropagation();
               handleCloseLightbox();
             }}
+            aria-label="Close image viewer"
             className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
           >
             <X className="w-8 h-8" />

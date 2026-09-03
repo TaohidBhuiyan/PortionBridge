@@ -140,7 +140,7 @@ export function ActiveMissionCard() {
 
       <div
         onClick={() => navigate(`/donations/${mission.id}`)}
-        className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover cursor-pointer transition-colors"
+        className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover hover:shadow-pb-card cursor-pointer transition-[border-color,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5"
       >
         <div className="w-9 h-9 rounded-md bg-dash-primary-soft flex items-center justify-center shrink-0">
           <CategoryIcon size={16} className="text-dash-primary" />

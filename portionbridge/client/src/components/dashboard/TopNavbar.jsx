@@ -46,7 +46,7 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
   const messagesBadge = unreadMessageCount > 99 ? '99+' : unreadMessageCount;
 
   return (
-    <header className="sticky top-0 z-20 h-14 bg-surface border-b border-border/50">
+    <header className="sticky top-0 z-20 h-14 bg-surface border-b border-border/50 shadow-pb-subtle">
       <div className="flex items-center justify-between h-full px-4 md:px-5 gap-4">
         {/* Left Section - Mobile Menu Toggle & Page Title */}
         <div className="flex items-center gap-3">

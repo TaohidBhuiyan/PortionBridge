@@ -24,6 +24,14 @@ async function createAddress(userId, data) {
   // If this is the first address, make it default
   if (currentCount === 0) {
     data.isDefault = true;
+  } else if (data.isDefault) {
+    // BUG FIX (Phase 12 QA): explicitly creating a 2nd/3rd address with
+    // isDefault=true previously left TWO rows with is_default=1, since only
+    // the "first address" branch above ever cleared an existing default.
+    // A matching DB trigger was attempted for this but is impossible in
+    // MySQL/MariaDB (a trigger can't modify the table that fired it on
+    // INSERT) — see database/triggers.sql — so this must be handled here.
+    await savedAddressModel.clearDefaultForUser(userId);
   }
 
   // If label is 'custom', custom_label is required

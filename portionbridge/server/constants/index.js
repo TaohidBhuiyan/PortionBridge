@@ -95,10 +95,6 @@ const RATE_LIMIT = {
 const AUTH = {
   PUBLIC_REGISTERABLE_ROLES: [USER_ROLES.DONOR, USER_ROLES.VOLUNTEER],
 
-  // --- Development mode ---
-  DEV_MODE: process.env.NODE_ENV === 'development',
-  DEV_BYPASS_TOKEN: 'dev-bypass-token',
-
   // --- Refresh token / session cookie ---
   REFRESH_COOKIE_NAME: 'refreshToken',
   REFRESH_TOKEN_EXPIRES_DAYS: 7,

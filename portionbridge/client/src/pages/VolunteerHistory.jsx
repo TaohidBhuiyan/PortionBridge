@@ -171,7 +171,7 @@ export function VolunteerHistory() {
       )}
 
       {/* Filters */}
-      <div className="bg-surface rounded-2xl shadow-sm border border-border p-4 mb-6">
+      <div className="bg-surface rounded-xl shadow-pb-card border border-border p-4 mb-6">
         <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
           <div className="flex-1 min-w-[200px]">
             <div className="relative">

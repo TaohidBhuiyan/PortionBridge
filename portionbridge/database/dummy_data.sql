@@ -142,9 +142,9 @@ INSERT INTO notification_settings (user_id, email_notifications, push_notificati
 -- One record per volunteer
 -- ============================================================================
 INSERT INTO volunteer_profiles (user_id, bio, skills, availability, service_areas, vehicle_type, total_pickups, rating) VALUES
-(5, 'Passionate about reducing food waste and helping communities', '["driving", "communication", "time_management"]', 'weekends', '["Dhaka North", "Gulshan", "Banani"]', 'motorcycle', 3, 4.5),
-(6, 'Dedicated volunteer with experience in logistics', '["organization", "heavy_lifting", "customer_service"]', 'weekdays', '["Dhaka South", "Dhanmondi", "Uttara"]', 'van', 2, 4.0),
-(7, 'Environmental activist focused on sustainable practices', '["sustainability", "coordination", "teamwork"]', 'flexible', '["Mirpur", "Mohammadpur", "Pallabi"]', 'car', 2, 4.5);
+(5, 'Passionate about reducing food waste and helping communities', '["driving", "communication", "time_management"]', '["weekends"]', '["Dhaka North", "Gulshan", "Banani"]', 'motorcycle', 3, 4.5),
+(6, 'Dedicated volunteer with experience in logistics', '["organization", "heavy_lifting", "customer_service"]', '["weekdays"]', '["Dhaka South", "Dhanmondi", "Uttara"]', 'van', 2, 4.0),
+(7, 'Environmental activist focused on sustainable practices', '["sustainability", "coordination", "teamwork"]', '["flexible"]', '["Mirpur", "Mohammadpur", "Pallabi"]', 'car', 2, 4.5);
 
 -- ============================================================================
 -- SAVED ADDRESSES

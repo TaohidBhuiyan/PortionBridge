@@ -34,6 +34,18 @@ const BASE_COLUMNS = `
  * @param {boolean} data.isDefault - Whether this is the default address
  * @returns {Promise<number>} The insert ID of the new address
  */
+/**
+ * Clears is_default on every existing address for a user. Used by
+ * createAddress() when a new address is explicitly created as the default
+ * (for a user who already has addresses) — see the BUG FIX note there.
+ */
+async function clearDefaultForUser(userId) {
+  await pool.query(
+    `UPDATE saved_addresses SET is_default = 0 WHERE user_id = :userId AND is_default = 1`,
+    { userId }
+  );
+}
+
 async function create({
   userId,
   label,
@@ -242,4 +254,5 @@ module.exports = {
   deleteById,
   setDefault,
   findDefaultByUserId,
+  clearDefaultForUser,
 };

@@ -175,6 +175,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
   if (userRole === 'donor') {
     accountItems.push(
       { title: 'Profile', icon: User, path: '/donor/profile' },
+      { title: 'Saved Addresses', icon: MapPin, path: '/donor/addresses' },
       { title: 'Settings', icon: Settings, path: '/donor/settings' }
     );
   } else if (userRole === 'volunteer') {

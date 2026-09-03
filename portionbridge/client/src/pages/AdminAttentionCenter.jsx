@@ -142,15 +142,15 @@ export function AdminAttentionCenter() {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center">
+          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
             <p className="text-2xl font-bold text-danger">{counts.high}</p>
             <p className="text-xs text-text-secondary">High Priority</p>
           </div>
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center">
+          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
             <p className="text-2xl font-bold text-warning">{counts.medium}</p>
             <p className="text-xs text-text-secondary">Medium Priority</p>
           </div>
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center">
+          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
             <p className="text-2xl font-bold text-info">{counts.low}</p>
             <p className="text-xs text-text-secondary">Low Priority</p>
           </div>

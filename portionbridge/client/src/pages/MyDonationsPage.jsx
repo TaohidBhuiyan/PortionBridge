@@ -2,17 +2,21 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search, 
-  Grid, 
+  LayoutGrid, 
   List, 
   Plus, 
   ArrowLeft,
-  ChevronDown
+  ChevronLeft,
+  ChevronRight,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { donationApi } from '../services/donationApi';
 import { DonationCard } from '../components/donation/DonationCard';
 import { DonationTable } from '../components/donation/DonationTable';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
+import { Button } from '../components/common/Button';
 import { Package } from 'lucide-react';
 
 /**
@@ -30,7 +34,7 @@ export function MyDonationsPage() {
   const [viewMode, setViewMode] = useState(() => {
     // Load saved view mode from localStorage
     const saved = localStorage.getItem('donationViewMode');
-    return saved || 'card';
+    return saved === 'table' ? 'table' : 'grid';
   });
 
   // Filters
@@ -44,8 +48,10 @@ export function MyDonationsPage() {
   const [total, setTotal] = useState(0);
 
   // UI State
-  const [showFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [, setCancellingId] = useState(null);
+
+  const activeFilterCount = [categoryFilter, statusFilter].filter(Boolean).length;
 
   const loadDonations = useCallback(async () => {
     setLoading(true);
@@ -153,39 +159,32 @@ export function MyDonationsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
+          className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-3"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={16} />
           <span className="font-medium">Back</span>
         </button>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-text-primary mb-2">
+            <h1 className="text-2xl font-bold text-text-primary">
               My Donations
             </h1>
-            {summary && (
-              <p className="text-text-secondary">
-                Total: {summary.totalDonations || 0} donations
-              </p>
-            )}
+            <p className="text-sm text-text-secondary mt-1">
+              {summary ? `${summary.totalDonations || 0} donation${summary.totalDonations === 1 ? '' : 's'} total` : 'Track and manage everything you\u2019ve given'}
+            </p>
           </div>
-          <button
-            onClick={() => navigate('/donation/create')}
-            className="flex items-center gap-2 px-4 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-            aria-label="Create new donation"
-          >
-            <Plus size={18} />
+          <Button onClick={() => navigate('/donation/create')} icon={Plus}>
             Create Donation
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Stats Cards */}
       {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard
             label="Total"
             value={summary.totalDonations || 0}
@@ -210,45 +209,62 @@ export function MyDonationsPage() {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-surface rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-border p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-          <div className="flex-1 w-full sm:w-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary w-5 h-5" aria-hidden="true" />
+      <div className="bg-surface rounded-xl shadow-pb-card border border-border p-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+          <div className="flex-1 w-full sm:w-auto flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden="true" />
               <input
                 type="text"
-                placeholder="Search donations..."
+                placeholder="Search by title, category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+                className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
                 aria-label="Search donations"
               />
             </div>
+            <button
+              onClick={() => setShowFilters((v) => !v)}
+              className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border text-sm font-medium transition-colors shrink-0 ${
+                showFilters || activeFilterCount > 0
+                  ? 'border-dash-primary bg-dash-primary-soft text-dash-primary'
+                  : 'border-border bg-page text-text-secondary hover:bg-surface-hover'
+              }`}
+              aria-expanded={showFilters}
+            >
+              <SlidersHorizontal size={15} />
+              <span className="hidden sm:inline">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-dash-primary text-white text-[10px] font-bold">
+                  {activeFilterCount}
+                </span>
+              )}
+            </button>
           </div>
-          <div className="flex items-center gap-2" role="group" aria-label="View mode">
+          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5" role="group" aria-label="View mode">
             <button
               onClick={() => setViewMode('grid')}
-              className={`p-2.5 transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 viewMode === 'grid'
                   ? 'bg-dash-primary text-white'
-                  : 'bg-page text-text-secondary hover:bg-surface-hover'
+                  : 'text-text-secondary hover:bg-surface-hover'
               }`}
               aria-label="Grid view"
               aria-pressed={viewMode === 'grid'}
             >
-              <Grid size={18} />
+              <LayoutGrid size={16} />
             </button>
             <button
               onClick={() => setViewMode('table')}
-              className={`p-2.5 transition-colors ${
+              className={`p-2 rounded-md transition-colors ${
                 viewMode === 'table'
                   ? 'bg-dash-primary text-white'
-                  : 'bg-page text-text-secondary hover:bg-surface-hover'
+                  : 'text-text-secondary hover:bg-surface-hover'
               }`}
               aria-label="Table view"
               aria-pressed={viewMode === 'table'}
             >
-              <List size={18} />
+              <List size={16} />
             </button>
           </div>
         </div>
@@ -257,13 +273,13 @@ export function MyDonationsPage() {
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
                 Category
               </label>
               <select
                 value={categoryFilter}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all appearance-none cursor-pointer"
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
               >
                 <option value="">All Categories</option>
                 <option value="food">Food</option>
@@ -271,13 +287,13 @@ export function MyDonationsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
                 Status
               </label>
               <select
                 value={statusFilter}
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all appearance-none cursor-pointer"
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
               >
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
@@ -299,9 +315,10 @@ export function MyDonationsPage() {
                   setSortOrder('desc');
                   setPage(1);
                 }}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-page text-text-primary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+                disabled={activeFilterCount === 0 && !searchQuery}
+                className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-border bg-page text-sm text-text-primary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Clear Filters
+                <X size={14} /> Clear Filters
               </button>
             </div>
           </div>
@@ -318,30 +335,54 @@ export function MyDonationsPage() {
           onRetry={loadDonations}
         />
       ) : donations.length === 0 ? (
-        <EmptyState
-          icon={Package}
-          title="No donations yet"
-          description="You haven't created any donations yet. Start by creating your first donation to help those in need."
-          actionLabel="Create Donation"
-          onAction={() => navigate('/donation/create')}
-        />
+        (searchQuery || activeFilterCount > 0) ? (
+          <EmptyState
+            icon={Search}
+            title="No matching donations"
+            description="No donations match your current search or filters. Try adjusting or clearing them."
+            actionLabel="Clear Filters"
+            onAction={() => {
+              setSearchQuery('');
+              setCategoryFilter('');
+              setStatusFilter('');
+              setPage(1);
+            }}
+          />
+        ) : (
+          <EmptyState
+            icon={Package}
+            title="No donations yet"
+            description="You haven't created any donations yet. Start by creating your first donation to help those in need."
+            actionLabel="Create Donation"
+            onAction={() => navigate('/donation/create')}
+          />
+        )
       ) : (
         <>
           {/* Results */}
-          {viewMode === 'card' ? (
+          {viewMode === 'grid' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {donations.map((donation) => (
-                <DonationCard
+              {donations.map((donation, index) => (
+                <div
                   key={donation.id}
-                  donation={donation}
-                  onViewDetails={handleViewDetails}
-                  onEdit={handleEdit}
-                  onCancel={handleCancel}
-                />
+                  style={{
+                    animation: 'rowIn 0.25s ease backwards',
+                    // Cap the stagger delay so long lists don't feel sluggish —
+                    // everything past the first ~10 cards animates together.
+                    animationDelay: `${Math.min(index, 10) * 25}ms`,
+                  }}
+                >
+                  <DonationCard
+                    donation={donation}
+                    onViewDetails={handleViewDetails}
+                    onEdit={handleEdit}
+                    onCancel={handleCancel}
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="bg-surface rounded-2xl shadow-sm hover:shadow-md transition-shadow border border-border overflow-hidden">
+            <div className="bg-surface rounded-xl shadow-pb-card border border-border overflow-hidden">
               <DonationTable
                 donations={donations}
                 onViewDetails={handleViewDetails}
@@ -353,36 +394,50 @@ export function MyDonationsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-8">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                <ChevronDown size={20} className="rotate-90" />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
+              <p className="text-xs text-text-muted">
+                Page {page} of {totalPages} &middot; {total} total
+              </p>
+              <div className="flex items-center gap-1.5">
                 <button
-                  key={pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={`w-10 h-10 rounded-lg font-medium transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 ${
-                    pageNum === page
-                      ? 'bg-dash-primary text-white'
-                      : 'border border-border bg-page text-text-primary hover:bg-surface-hover'
-                  }`}
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  aria-label="Previous page"
+                  className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40"
                 >
-                  {pageNum}
+                  <ChevronLeft size={16} />
                 </button>
-              ))}
 
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === totalPages}
-                className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                <ChevronDown size={20} className="-rotate-90" />
-              </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                  .map((pageNum, idx, arr) => (
+                    <span key={pageNum} className="flex items-center">
+                      {idx > 0 && arr[idx - 1] !== pageNum - 1 && (
+                        <span className="px-1 text-text-muted text-sm">&hellip;</span>
+                      )}
+                      <button
+                        onClick={() => handlePageChange(pageNum)}
+                        aria-current={pageNum === page ? 'page' : undefined}
+                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 ${
+                          pageNum === page
+                            ? 'bg-dash-primary text-white'
+                            : 'border border-border bg-page text-text-primary hover:bg-surface-hover'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    </span>
+                  ))}
+
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  aria-label="Next page"
+                  className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           )}
         </>
@@ -421,9 +476,9 @@ function StatCard({ label, value, color }) {
   const classes = colorClasses[color] || colorClasses.primary;
 
   return (
-    <div className={`p-4 rounded-xl border ${classes.bg} ${classes.border}`}>
-      <p className={`text-sm font-medium ${classes.text} mb-1`}>{label}</p>
-      <p className="text-2xl font-bold text-text-primary">{value}</p>
+    <div className={`p-3.5 rounded-lg border ${classes.bg} ${classes.border}`}>
+      <p className={`text-xs font-semibold ${classes.text} mb-1`}>{label}</p>
+      <p className="text-xl font-bold text-text-primary">{value}</p>
     </div>
   );
 }
@@ -435,9 +490,9 @@ function LoadingState() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="bg-surface rounded-2xl border border-border overflow-hidden">
+        <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden shadow-pb-card">
           <div className="aspect-video bg-surface-hover animate-pulse" />
-          <div className="p-5 space-y-3">
+          <div className="p-4 space-y-2.5">
             <div className="h-4 bg-surface-hover rounded animate-pulse" />
             <div className="h-3 bg-surface-hover rounded animate-pulse w-2/3" />
             <div className="h-3 bg-surface-hover rounded animate-pulse w-1/2" />

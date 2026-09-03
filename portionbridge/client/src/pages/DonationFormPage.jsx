@@ -500,7 +500,7 @@ export function DonationFormPage() {
       </nav>
 
       {/* Form Card */}
-      <div className="bg-surface rounded-lg border border-border p-5 md:p-6 shadow-sm">
+      <div className="bg-surface rounded-xl border border-border p-5 md:p-6 shadow-pb-card">
         {/* Step Content */}
         <div className="min-h-[350px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
           {currentStep === 0 && (
