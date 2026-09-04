@@ -31,7 +31,6 @@ export function DonorSettingsPage() {
     smsNotifications: false,
     pushNotifications: true,
     donationUpdates: true,
-    pickupUpdates: true,
     chatNotifications: true,
   });
 
@@ -57,7 +56,22 @@ export function DonorSettingsPage() {
     try {
       const result = await profileApi.getNotificationSettings();
       if (result.success) {
-        setNotificationSettings(result.data.notificationSettings);
+        // The API returns the raw DB row (snake_case columns); this page's
+        // state/toggle keys are camelCase. Previously this just did
+        // setNotificationSettings(raw), which silently replaced the
+        // camelCase defaults with snake_case keys the toggles don't read —
+        // every switch always rendered "off" regardless of the real saved
+        // value, and there's no "pickup_updates" column at all (see
+        // notificationSettings.model.js), so that toggle never persisted.
+        const s = result.data.notificationSettings;
+        setNotificationSettings((prev) => ({
+          ...prev,
+          emailNotifications: !!s.email_notifications,
+          smsNotifications: !!s.sms_notifications,
+          pushNotifications: !!s.push_notifications,
+          donationUpdates: !!s.donation_updates,
+          chatNotifications: !!s.chat_messages,
+        }));
       }
     } catch {
       // Failed to load notification settings
@@ -352,7 +366,6 @@ export function DonorSettingsPage() {
                     { key: 'smsNotifications', label: 'SMS Notifications', desc: 'Receive notifications via SMS' },
                     { key: 'pushNotifications', label: 'Push Notifications', desc: 'Receive push notifications (coming soon)' },
                     { key: 'donationUpdates', label: 'Donation Updates', desc: 'Updates about your donations' },
-                    { key: 'pickupUpdates', label: 'Pickup Updates', desc: 'Updates about pickup status' },
                     { key: 'chatNotifications', label: 'Chat Notifications', desc: 'New message notifications' },
                   ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
