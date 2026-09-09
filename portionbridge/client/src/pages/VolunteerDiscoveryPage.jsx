@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Map as MapIcon, List } from 'lucide-react';
 import LocationPermission from '../components/dashboard/donor/LocationPermission';
@@ -8,7 +8,17 @@ import TeamCard from '../components/dashboard/donor/TeamCard';
 import VolunteerMap from '../components/dashboard/donor/VolunteerMap';
 import DiscoveryFilters from '../components/dashboard/donor/DiscoveryFilters';
 import DiscoveryEmptyStates, { NoVolunteersState, LocationDeniedState, ErrorState } from '../components/dashboard/donor/DiscoveryEmptyStates';
+import ManualLocationModal from '../components/dashboard/donor/ManualLocationModal';
 import { volunteerDiscoveryApi } from '../services/volunteerDiscoveryApi';
+
+// Keep this in sync with DiscoveryFilters.jsx's radius <input type="range">
+// max — the slider is the single source of truth for how far "expand
+// radius" is allowed to go, so the two never disagree.
+const MAX_RADIUS_KM = 50;
+
+// How long to wait after the user stops changing filters (e.g. dragging
+// the radius slider) before actually firing the API request.
+const FILTER_DEBOUNCE_MS = 400;
 
 /**
  * Volunteer Discovery Page
@@ -21,6 +31,7 @@ const VolunteerDiscoveryPage = () => {
   const [location, setLocation] = useState(null);
   const [locationPermission, setLocationPermission] = useState('unknown');
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+  const [showManualLocationModal, setShowManualLocationModal] = useState(false);
   
   // Data state
   const [volunteers, setVolunteers] = useState([]);
@@ -45,79 +56,131 @@ const VolunteerDiscoveryPage = () => {
     limit: 20,
   });
 
-  // Fetch nearby volunteers
-  const fetchNearbyVolunteers = useCallback(async (locationData) => {
-    if (!locationData) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const result = await volunteerDiscoveryApi.findNearbyVolunteers({
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        radius: filters.radius,
-        availableOnly: filters.availableOnly,
-        onlineOnly: filters.onlineOnly,
-        specialty: filters.specialty,
-        search: filters.search,
-        sortBy: filters.sortBy,
-        sortOrder: filters.sortOrder,
-        page: filters.page,
-        limit: filters.limit,
-      });
-      
-      if (result.success) {
-        setVolunteers(result.data.volunteers || []);
-      } else {
-        setError(result.error);
-      }
-    } catch {
-      setError('Failed to fetch volunteers');
-    } finally {
-      setLoading(false);
-    }
+  // BUG FIX: `filters` updates immediately so the slider itself stays
+  // responsive, but the actual API call now fires off this debounced copy
+  // instead — dragging the radius slider used to send one request per
+  // "onChange" tick. `debouncedFilters` only catches up FILTER_DEBOUNCE_MS
+  // after the user stops moving it.
+  const [debouncedFilters, setDebouncedFilters] = useState(filters);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedFilters(filters);
+    }, FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(timeoutId);
   }, [filters]);
 
-  // Fetch nearby teams
-  const fetchNearbyTeams = useCallback(async (locationData) => {
+  // BUG FIX: previously two separate un-coordinated fetches (volunteers had
+  // its own loading/error state; teams had none at all, so switching to the
+  // Teams tab while data was mid-flight could show a stale/empty list with
+  // no loading indicator). Combined into one request pair sharing one
+  // AbortController, so a newer request (e.g. radius changed again before
+  // the last one resolved) always cancels the in-flight one — an older,
+  // slower response can never overwrite a newer result.
+  const abortControllerRef = useRef(null);
+
+  const fetchDiscoveryData = useCallback(async (locationData, filtersToUse) => {
     if (!locationData) return;
-    
-    try {
-      const result = await volunteerDiscoveryApi.findNearbyTeams({
-        latitude: locationData.latitude,
-        longitude: locationData.longitude,
-        radius: filters.radius,
-        search: filters.search,
-        page: filters.page,
-        limit: filters.limit,
-      });
-      
-      if (result.success) {
-        setTeams(result.data.teams || []);
-      }
-    } catch {
-      // Error fetching teams
+
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setLoading(true);
+    setError(null);
+
+    const [volunteersResult, teamsResult] = await Promise.all([
+      volunteerDiscoveryApi.findNearbyVolunteers(
+        {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          radius: filtersToUse.radius,
+          availableOnly: filtersToUse.availableOnly,
+          onlineOnly: filtersToUse.onlineOnly,
+          specialty: filtersToUse.specialty,
+          search: filtersToUse.search,
+          sortBy: filtersToUse.sortBy,
+          sortOrder: filtersToUse.sortOrder,
+          page: filtersToUse.page,
+          limit: filtersToUse.limit,
+        },
+        { signal: controller.signal }
+      ),
+      volunteerDiscoveryApi.findNearbyTeams(
+        {
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          radius: filtersToUse.radius,
+          search: filtersToUse.search,
+          page: filtersToUse.page,
+          limit: filtersToUse.limit,
+        },
+        { signal: controller.signal }
+      ),
+    ]);
+
+    // This exact request pair was superseded by a newer one (or the
+    // component unmounted) while it was in flight — its response is stale,
+    // so it's dropped silently instead of touching state.
+    if (controller.signal.aborted) return;
+
+    if (volunteersResult.success) {
+      setVolunteers(volunteersResult.data.volunteers || []);
+    } else if (!volunteersResult.aborted) {
+      setError(volunteersResult.error);
     }
-  }, [filters]);
+
+    if (teamsResult.success) {
+      setTeams(teamsResult.data.teams || []);
+    }
+
+    setLoading(false);
+  }, []);
+
+  // Cancel any in-flight discovery request on unmount.
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   // Handle location permission granted
   const handleLocationGranted = useCallback((locationData) => {
     setLocation(locationData);
     setLocationPermission('granted');
-    fetchNearbyVolunteers(locationData);
-    fetchNearbyTeams(locationData);
-  }, [fetchNearbyVolunteers, fetchNearbyTeams]);
+    // Fetching itself is handled by the effect below, keyed off `location`
+    // + `locationPermission` — avoids firing the request twice (once here,
+    // once from the effect) the way the previous version did.
+  }, []);
 
   // Handle location permission denied
   const handleLocationDenied = useCallback(() => {
     setLocationPermission('denied');
   }, []);
 
-  // Handle location permission blocked
+  // BUG FIX: this used to land on locationPermission = 'blocked', a state
+  // VolunteerDiscoveryPage's render logic never actually handled — every
+  // exit from the LocationPermission modal (the X button, "Cancel", and
+  // "Use Manual Location") funneled here and produced a blank page with no
+  // way forward except a manual location button that also opens the modal
+  // now. There's no separate 'blocked' UI to keep in sync, so this now
+  // reuses the existing, already-actionable "denied" state instead.
   const handleLocationBlocked = useCallback(() => {
-    setLocationPermission('blocked');
+    setLocationPermission('denied');
   }, []);
+
+  // Opens the real manual-location flow (address input + geocoding) rather
+  // than re-triggering the browser GPS prompt.
+  const handleOpenManualLocation = useCallback(() => {
+    setShowManualLocationModal(true);
+  }, []);
+
+  const handleManualLocationSubmit = useCallback((locationData) => {
+    setShowManualLocationModal(false);
+    // Reuses the exact same path a granted GPS permission takes — no
+    // separate manual-location discovery logic.
+    handleLocationGranted(locationData);
+  }, [handleLocationGranted]);
 
   // Refresh location
   const handleRefreshLocation = useCallback(() => {
@@ -126,15 +189,12 @@ const VolunteerDiscoveryPage = () => {
     setIsRefreshingLocation(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const locationData = {
+        setLocation({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-        };
-        setLocation(locationData);
+        });
         setIsRefreshingLocation(false);
-        fetchNearbyVolunteers(locationData);
-        fetchNearbyTeams(locationData);
       },
       () => {
         setIsRefreshingLocation(false);
@@ -145,7 +205,7 @@ const VolunteerDiscoveryPage = () => {
         maximumAge: 0,
       }
     );
-  }, [fetchNearbyVolunteers, fetchNearbyTeams]);
+  }, []);
 
   // Handle filter changes
   const handleFiltersChange = useCallback((newFilters) => {
@@ -177,24 +237,30 @@ const VolunteerDiscoveryPage = () => {
     // Navigate to team profile or show modal
   }, []);
 
-  // Handle request pickup (disabled for now - future phase)
-  const handleRequestPickup = useCallback(() => {
-    alert('Pickup requests will be available in the next phase!');
-  }, []);
+  // Handle request pickup — the button calling this is always disabled
+  // (VolunteerCard.jsx/TeamCard.jsx now show "(Coming Soon)" on it
+  // directly), since there's no preferred-volunteer field anywhere in the
+  // donation schema/API yet. Kept as a real, wired-up handler rather than
+  // removed so implementing the feature later is a one-line change here.
+  const handleRequestPickup = useCallback(() => {}, []);
 
   // Expand search radius
+  // BUG FIX: this used to add +10 with no ceiling, so repeated clicks could
+  // push the value past DiscoveryFilters.jsx's slider max (50) — the label
+  // would read e.g. "60 km" while the slider itself stayed visually pinned
+  // at 50, an impossible-to-represent state. Capped at MAX_RADIUS_KM so the
+  // slider can always faithfully represent whatever radius is active.
   const handleExpandRadius = useCallback(() => {
-    setFilters(prev => ({ ...prev, radius: prev.radius + 10 }));
+    setFilters(prev => ({ ...prev, radius: Math.min(prev.radius + 10, MAX_RADIUS_KM) }));
   }, []);
 
-  // Fetch data when filters change
+  // Fetch data whenever location or the (debounced) filters change.
   useEffect(() => {
     if (location && locationPermission === 'granted') {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch pattern used throughout this codebase
-      fetchNearbyVolunteers(location);
-      fetchNearbyTeams(location);
+      fetchDiscoveryData(location, debouncedFilters);
     }
-  }, [filters, location, locationPermission, fetchNearbyVolunteers, fetchNearbyTeams]);
+  }, [location, locationPermission, debouncedFilters, fetchDiscoveryData]);
 
   // Show location permission modal if not granted
   if (locationPermission === 'unknown' || locationPermission === 'prompt') {
@@ -204,6 +270,12 @@ const VolunteerDiscoveryPage = () => {
           onLocationGranted={handleLocationGranted}
           onLocationDenied={handleLocationDenied}
           onLocationBlocked={handleLocationBlocked}
+          onManualLocation={handleOpenManualLocation}
+        />
+        <ManualLocationModal
+          isOpen={showManualLocationModal}
+          onClose={() => setShowManualLocationModal(false)}
+          onSubmit={handleManualLocationSubmit}
         />
       </div>
     );
@@ -286,7 +358,7 @@ const VolunteerDiscoveryPage = () => {
             location={location}
             onRefresh={handleRefreshLocation}
             isRefreshing={isRefreshingLocation}
-            onManualLocation={() => setLocationPermission('denied')}
+            onManualLocation={handleOpenManualLocation}
           />
         </div>
 
@@ -295,7 +367,7 @@ const VolunteerDiscoveryPage = () => {
           <div className="mb-6">
             <LocationDeniedState
               onEnableLocation={() => setLocationPermission('prompt')}
-              onManualLocation={() => setLocationPermission('prompt')}
+              onManualLocation={handleOpenManualLocation}
             />
           </div>
         )}
@@ -346,7 +418,7 @@ const VolunteerDiscoveryPage = () => {
 
               {/* Error State */}
               {error && !loading && (
-                <ErrorState error={error} onRetry={() => fetchNearbyVolunteers(location)} />
+                <ErrorState error={error} onRetry={() => fetchDiscoveryData(location, debouncedFilters)} />
               )}
 
               {/* No Results State */}
@@ -404,6 +476,12 @@ const VolunteerDiscoveryPage = () => {
           </div>
         )}
       </div>
+
+      <ManualLocationModal
+        isOpen={showManualLocationModal}
+        onClose={() => setShowManualLocationModal(false)}
+        onSubmit={handleManualLocationSubmit}
+      />
     </div>
   );
 };

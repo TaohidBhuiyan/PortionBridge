@@ -20,11 +20,15 @@ function success(res, { statusCode = HTTP_STATUS.OK, message = 'Success', data =
   return res.status(statusCode).json(body);
 }
 
-function error(res, { statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, message = 'Something went wrong', errors = null } = {}) {
+function error(res, { statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR, message = 'Something went wrong', errors = null, code = null } = {}) {
   const body = {
     success: false,
     message,
   };
+
+  if (code) {
+    body.code = code;
+  }
 
   if (errors) {
     body.errors = errors;

@@ -1,195 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ArrowLeft, Lock, Bell, Moon, Sun, LogOut, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowLeft, Lock, Bell, Moon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
-import { useAuth } from '../context/AuthContext';
-import { profileApi } from '../services/profileApi';
+import { SecuritySettings } from '../components/dashboard/settings/SecuritySettings';
+import { NotificationSettings } from '../components/dashboard/settings/NotificationSettings';
+import { AppearanceSettings } from '../components/dashboard/settings/AppearanceSettings';
 
 /**
- * Donor Account Settings Page
- * Manage password, notifications, appearance, and security
+ * Account Settings Page — password, notifications, appearance, and logout.
+ *
+ * File/export name is legacy ("Donor..."), but nothing in here is actually
+ * donor-specific: every tab is one of the shared, role-agnostic
+ * components in components/dashboard/settings/ (see their own doc
+ * comments for why). COMING-SOON ELIMINATION: rather than duplicate this
+ * whole page for volunteers, App.jsx also mounts this same component at
+ * /volunteer/settings; Admin Settings (AdminSectionPage.jsx) reuses the
+ * same three section components directly alongside its own Profile Photo
+ * section.
  */
 export function DonorSettingsPage() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('security');
-  const [pageLoading, setPageLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-
-  // Password change state
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-
-  // Notification settings state
-  const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    donationUpdates: true,
-    chatNotifications: true,
-  });
-
-  // Theme — mirrors the same localStorage key + document class DashboardLayout
-  // uses, and notifies it via a custom event so both stay in sync (see
-  // DashboardLayout's 'portionbridge:darkmode' listener). No "System" option
-  // yet since there's no OS-preference detection wired up anywhere.
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved !== null && JSON.parse(saved) ? 'dark' : 'light';
-  });
-
-  const handleThemeChange = (e) => {
-    const value = e.target.value;
-    setTheme(value);
-    const isDark = value === 'dark';
-    localStorage.setItem('darkMode', JSON.stringify(isDark));
-    window.dispatchEvent(new CustomEvent('portionbridge:darkmode', { detail: isDark }));
-  };
-
-  const loadNotificationSettings = useCallback(async () => {
-    setPageLoading(true);
-    try {
-      const result = await profileApi.getNotificationSettings();
-      if (result.success) {
-        // The API returns the raw DB row (snake_case columns); this page's
-        // state/toggle keys are camelCase. Previously this just did
-        // setNotificationSettings(raw), which silently replaced the
-        // camelCase defaults with snake_case keys the toggles don't read —
-        // every switch always rendered "off" regardless of the real saved
-        // value, and there's no "pickup_updates" column at all (see
-        // notificationSettings.model.js), so that toggle never persisted.
-        const s = result.data.notificationSettings;
-        setNotificationSettings((prev) => ({
-          ...prev,
-          emailNotifications: !!s.email_notifications,
-          smsNotifications: !!s.sms_notifications,
-          pushNotifications: !!s.push_notifications,
-          donationUpdates: !!s.donation_updates,
-          chatNotifications: !!s.chat_messages,
-        }));
-      }
-    } catch {
-      // Failed to load notification settings
-    } finally {
-      setPageLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
-    loadNotificationSettings();
-  }, [loadNotificationSettings]);
-
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
-    setActionLoading(true);
-
-    try {
-      const result = await profileApi.changePassword(passwordData);
-      
-      if (result.success) {
-        setSuccess('Password changed successfully. Please log in again.');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-        setTimeout(() => {
-          logout();
-          navigate('/login');
-        }, 2000);
-      } else {
-        setError(result.error || 'Failed to change password');
-      }
-    } catch {
-      setError('Failed to change password. Please try again.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleNotificationChange = async (e) => {
-    const { name, checked } = e.target;
-    setNotificationSettings(prev => ({ ...prev, [name]: checked }));
-  };
-
-  const handleSaveNotifications = async () => {
-    setActionLoading(true);
-    setError(null);
-    setSuccess(null);
-
-    try {
-      const result = await profileApi.updateNotificationSettings(notificationSettings);
-      
-      if (result.success) {
-        setSuccess('Notification settings updated successfully!');
-      } else {
-        setError(result.error || 'Failed to update notification settings');
-      }
-    } catch {
-      setError('Failed to update notification settings. Please try again.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const tabs = [
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Moon },
   ];
-
-  if (pageLoading) {
-    return (
-      <DashboardLayout>
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header Skeleton */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-10 w-10 bg-border rounded-lg animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-8 w-48 bg-border rounded-lg animate-pulse" />
-              <div className="h-4 w-64 bg-border rounded-lg animate-pulse" />
-            </div>
-          </div>
-
-          {/* Tabs Skeleton */}
-          <div className="flex gap-6">
-            <div className="w-48 flex-shrink-0 space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-12 w-full bg-border rounded-xl animate-pulse" />
-              ))}
-            </div>
-            <div className="flex-1 space-y-6">
-              <div className="bg-surface rounded-2xl border border-border p-6 animate-pulse space-y-4">
-                <div className="h-6 w-48 bg-border rounded-lg animate-pulse" />
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="h-4 w-32 bg-border rounded-lg animate-pulse" />
-                    <div className="h-12 w-full bg-border rounded-lg animate-pulse" />
-                  </div>
-                ))}
-                <div className="h-12 w-full bg-border rounded-lg animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
 
   return (
     <DashboardLayout>
@@ -211,18 +48,6 @@ export function DonorSettingsPage() {
             </p>
           </div>
         </div>
-
-        {/* Success/Error Messages */}
-        {success && (
-          <div className="mb-4 p-4 bg-success-soft border border-success rounded-lg" role="alert" aria-live="polite">
-            <p className="text-sm text-success">{success}</p>
-          </div>
-        )}
-        {error && (
-          <div className="mb-4 p-4 bg-danger-soft border border-danger rounded-lg" role="alert" aria-live="assertive">
-            <p className="text-sm text-danger">{error}</p>
-          </div>
-        )}
 
         <div className="flex gap-6">
           {/* Sidebar Tabs */}
@@ -253,181 +78,9 @@ export function DonorSettingsPage() {
 
           {/* Content Area */}
           <div className="flex-1">
-            {activeTab === 'security' && (
-              <div className="space-y-6">
-                {/* Change Password */}
-                <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                    <Lock size={20} className="text-dash-primary" />
-                    Change Password
-                  </h2>
-                  <form onSubmit={handlePasswordChange} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        Current Password
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-                        placeholder="Enter current password"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        New Password
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-                        placeholder="Enter new password"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-text-primary mb-2">
-                        Confirm New Password
-                      </label>
-                      <input
-                        type="password"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-page text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-                        placeholder="Confirm new password"
-                        required
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={actionLoading}
-                      className="w-full px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-                    >
-                      {actionLoading ? 'Changing...' : 'Change Password'}
-                    </button>
-                  </form>
-                </div>
-
-                {/* Account Actions */}
-                <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow">
-                  <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                    <Shield size={20} className="text-dash-primary" />
-                    Account Actions
-                  </h2>
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-3 px-4 py-3 bg-danger-soft text-danger rounded-xl hover:bg-danger-soft/70 transition-all border border-danger font-medium focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2"
-                    >
-                      <LogOut size={18} />
-                      <span>Logout from Current Device</span>
-                    </button>
-                    <p className="text-xs text-text-secondary">
-                      You will need to log in again to access your account.
-                    </p>
-                  </div>
-                </div>
-
-                {/* Account Info */}
-                <div className="bg-page rounded-xl border border-border p-6">
-                  <h2 className="text-lg font-semibold text-text-primary mb-4">
-                    Security Information
-                  </h2>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">Last Login</span>
-                      <span className="text-text-primary font-medium">
-                        {user?.last_login_at ? new Date(user.last_login_at).toLocaleString() : 'N/A'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-text-secondary">Login Provider</span>
-                      <span className="text-text-primary font-medium capitalize">
-                        {user?.provider || 'Email'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'notifications' && (
-              <div className="bg-surface rounded-xl border border-border p-6">
-                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Bell size={20} className="text-dash-primary" />
-                  Notification Preferences
-                </h2>
-                <div className="space-y-4">
-                  {[
-                    { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
-                    { key: 'smsNotifications', label: 'SMS Notifications', desc: 'Receive notifications via SMS' },
-                    { key: 'pushNotifications', label: 'Push Notifications', desc: 'Receive push notifications (coming soon)' },
-                    { key: 'donationUpdates', label: 'Donation Updates', desc: 'Updates about your donations' },
-                    { key: 'chatNotifications', label: 'Chat Notifications', desc: 'New message notifications' },
-                  ].map((item) => (
-                    <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-                      <div>
-                        <p className="font-medium text-text-primary">{item.label}</p>
-                        <p className="text-sm text-text-secondary">{item.desc}</p>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                          type="checkbox"
-                          name={item.key}
-                          checked={notificationSettings[item.key]}
-                          onChange={handleNotificationChange}
-                          className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-dash-primary/40 rounded-full peer dark:bg-border peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-border peer-checked:bg-dash-primary"></div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={handleSaveNotifications}
-                    disabled={actionLoading}
-                    className="px-6 py-2 bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {actionLoading ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'appearance' && (
-              <div className="bg-surface rounded-xl border border-border p-6">
-                <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-                  <Moon size={20} className="text-dash-primary" />
-                  Appearance
-                </h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between py-3 border-b border-border">
-                    <div className="flex items-center gap-3">
-                      <Sun size={20} className={theme === 'light' ? 'text-dash-primary' : 'text-text-secondary'} />
-                      <div>
-                        <p className="font-medium text-text-primary">Theme</p>
-                        <p className="text-sm text-text-secondary">Choose your preferred theme</p>
-                      </div>
-                    </div>
-                    <select
-                      className="px-4 py-2 border border-border rounded-lg bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary"
-                      value={theme}
-                      onChange={handleThemeChange}
-                    >
-                      <option value="light">Light Mode</option>
-                      <option value="dark">Dark Mode</option>
-                    </select>
-                  </div>
-                  <p className="text-xs text-text-secondary mt-2">
-                    Theme preference is saved to this browser.
-                  </p>
-                </div>
-              </div>
-            )}
+            {activeTab === 'security' && <SecuritySettings />}
+            {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'appearance' && <AppearanceSettings />}
           </div>
         </div>
       </div>

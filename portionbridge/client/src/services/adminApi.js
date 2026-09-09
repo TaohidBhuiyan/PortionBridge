@@ -525,4 +525,27 @@ export const adminApi = {
       return { success: false, error: message, status };
     }
   },
+
+  /* ============================================================
+   * Audit Logs (COMING-SOON ELIMINATION)
+   * ============================================================ */
+
+  /**
+   * Paginated, filterable audit log listing.
+   * GET /admin/audit-logs
+   */
+  listAuditLogs: async (params = {}) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/audit-logs`, {
+        params,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.logs, meta: response.data.meta };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch audit logs';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
 };

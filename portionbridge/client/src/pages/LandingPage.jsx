@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useReveal } from "../components/hooks/useReveal";
+import { useHashScroll } from "../components/hooks/useHashScroll";
 import { useSocket } from "../context/SocketContext";
 import { Navbar } from "../components/layout/Navbar";
 import { Footer } from "../components/layout/Footer";
@@ -26,10 +27,18 @@ export function LandingPage() {
   const [statsError, setStatsError] = useState(null);
   const { socket, connected } = useSocket();
 
-  const goToRole = (role) => {
-    setActiveRole(role);
-    document.getElementById("roles")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
+  // Scrolls to the section matching the URL hash (e.g. "/#roles",
+  // "/#leaderboard") — handles Navbar/Footer links and arriving here from
+  // another route with a hash already set. Replaces the old goToRole()
+  // function, which combined this scroll with a role-tab change but was
+  // never actually wired up: Navbar/Footer/HeroSection all received an
+  // onGoToRole prop none of them declared or called, and every real nav
+  // link here (Navbar, Footer, both "Donors"/"Volunteers" footer links)
+  // just points at the generic "/#roles" anchor, not a specific role — so
+  // there was no real call site that needed "set role AND scroll" as one
+  // action. RoleSection's own Donor/Volunteer buttons already update
+  // `activeRole` directly via onSetActiveRole below.
+  useHashScroll();
 
   // Initial stats fetch via API
   useEffect(() => {
@@ -68,9 +77,9 @@ export function LandingPage() {
 
   return (
     <div className="landing-page min-h-screen w-full bg-white text-[#1A1523] selection:bg-primary/20" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <Navbar onGoToRole={goToRole} />
+      <Navbar />
 
-      <HeroSection onGoToRole={goToRole} stats={stats} loading={statsLoading} />
+      <HeroSection stats={stats} loading={statsLoading} />
 
       <ActivityTicker />
 
@@ -95,7 +104,7 @@ export function LandingPage() {
 
       <ReviewSection />
 
-      <Footer onGoToRole={goToRole} />
+      <Footer />
     </div>
   );
 }

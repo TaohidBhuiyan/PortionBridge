@@ -142,10 +142,23 @@ const volunteerStatsValidationRules = [
     .withMessage('Volunteer ID must be a positive integer'),
 ];
 
+/**
+ * Validation rules for geocoding a free-text address
+ */
+const geocodeAddressValidationRules = [
+  query('address')
+    .notEmpty()
+    .withMessage('Address is required')
+    .trim()
+    .isLength({ min: 3, max: 200 })
+    .withMessage('Address must be between 3 and 200 characters'),
+];
+
 module.exports = {
   nearbyVolunteersValidationRules,
   nearbyTeamsValidationRules,
   updateVolunteerLocationValidationRules,
   updateTeamLocationValidationRules,
   volunteerStatsValidationRules,
+  geocodeAddressValidationRules,
 };

@@ -1,5 +1,6 @@
 const AppError = require('../utils/AppError');
 const { hashPassword, comparePassword } = require('../utils/password');
+const { generateOpaqueToken, hashToken } = require('../utils/token');
 const { USER_ROLES, DONATION_STATUS, DONATION_CATEGORY, AUTH, HTTP_STATUS, AUDIT_ACTIONS } = require('../constants');
 
 const userModel = require('../models/user.model');
@@ -10,8 +11,10 @@ const donationModel = require('../models/donation.model');
 const ratingModel = require('../models/rating.model');
 const passwordHistoryModel = require('../models/passwordHistory.model');
 const refreshTokenModel = require('../models/refreshToken.model');
+const emailVerificationModel = require('../models/emailVerification.model');
 
 const auditService = require('./audit.service');
+const emailService = require('./email.service');
 
 /**
  * Core profile management business logic. Controllers stay thin — they parse
@@ -164,6 +167,24 @@ async function updateEmail(userId, newEmail, password, { ipAddress, userAgent })
   }
 
   await userModel.updateEmail(userId, newEmail);
+
+  // BUG FIX: this unverifies the new address (correct — a changed email
+  // must be re-proven) but never actually sent a new verification email,
+  // despite the audit action below already being named
+  // EMAIL_VERIFICATION_RESENT — the send call was simply missing. Left as
+  // an unrecoverable-looking dead end otherwise: resendVerification(email)
+  // would work as a manual rescue, but nothing told the user a new link
+  // was needed. Same token-generation pattern as
+  // authService.resendVerification.
+  const rawToken = generateOpaqueToken(32);
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = new Date(Date.now() + AUTH.EMAIL_VERIFICATION_EXPIRES_HOURS * 60 * 60 * 1000);
+  await emailVerificationModel.createVerificationToken({ userId, tokenHash, expiresAt });
+  try {
+    await emailService.sendVerificationEmail({ email: newEmail, name: user.name, rawToken });
+  } catch (emailError) {
+    console.error(`[Profile] Failed to send re-verification email after an email change: ${emailError.message}`);
+  }
 
   await auditService.record({
     userId,

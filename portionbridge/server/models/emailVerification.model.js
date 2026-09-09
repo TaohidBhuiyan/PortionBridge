@@ -55,9 +55,29 @@ async function invalidateAllForUser(userId) {
   );
 }
 
+/**
+ * Finds a verification record by its hashed token regardless of used/expired
+ * state — used only to distinguish *why* a token isn't valid (already
+ * consumed vs. expired vs. never existed) for user-facing messaging.
+ * findValidToken (above) remains the one used to decide whether to
+ * actually perform verification.
+ */
+async function findByTokenHash(tokenHash) {
+  const [rows] = await pool.query(
+    `SELECT id, user_id, token_hash, expires_at, is_used
+     FROM email_verifications
+     WHERE token_hash = :tokenHash
+     ORDER BY id DESC
+     LIMIT 1`,
+    { tokenHash }
+  );
+  return rows[0] || null;
+}
+
 module.exports = {
   createVerificationToken,
   findValidToken,
+  findByTokenHash,
   markTokenUsed,
   invalidateAllForUser,
 };

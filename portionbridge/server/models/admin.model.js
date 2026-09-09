@@ -586,7 +586,7 @@ async function findDonationStatusHistory(donationRequestId) {
  * @returns {Object} Object containing whereClause string and params object
  */
 function buildVolunteerFilter({ search }) {
-  const conditions = ['role = :volunteerRole', 'is_deleted = 0'];
+  const conditions = ['u.role = :volunteerRole', 'u.is_deleted = 0'];
   const params = { volunteerRole: USER_ROLES.VOLUNTEER };
 
   if (search) {
@@ -596,11 +596,11 @@ function buildVolunteerFilter({ search }) {
     // unaffected.
     const trimmed = String(search).trim();
     if (/^\d+$/.test(trimmed)) {
-      conditions.push('(name LIKE :search OR email LIKE :search OR id = :searchId)');
+      conditions.push('(u.name LIKE :search OR u.email LIKE :search OR u.id = :searchId)');
       params.search = `%${search}%`;
       params.searchId = Number(trimmed);
     } else {
-      conditions.push('(name LIKE :search OR email LIKE :search)');
+      conditions.push('(u.name LIKE :search OR u.email LIKE :search)');
       params.search = `%${search}%`;
     }
   }
@@ -657,7 +657,7 @@ async function findVolunteersWithStats({ search, limit, offset }) {
  */
 async function countVolunteers({ search }) {
   const { whereClause, params } = buildVolunteerFilter({ search });
-  const [rows] = await pool.query(`SELECT COUNT(*) AS total FROM users WHERE ${whereClause}`, params);
+  const [rows] = await pool.query(`SELECT COUNT(*) AS total FROM users u WHERE ${whereClause}`, params);
   return rows[0].total;
 }
 

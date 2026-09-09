@@ -18,6 +18,7 @@ function errorHandler(err, req, res, next) {
   return error(res, {
     statusCode,
     message,
+    code: isOperational ? err.code || null : null,
     errors: process.env.NODE_ENV === 'development' ? { stack: err.stack } : null,
   });
 }

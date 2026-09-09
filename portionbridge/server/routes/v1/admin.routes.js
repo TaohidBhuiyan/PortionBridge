@@ -25,6 +25,7 @@ const {
   sendAnnouncement,
   listAnnouncementHistory,
   getAreaIntelligence,
+  listAuditLogs,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -48,6 +49,7 @@ const {
   reportModerationNotesValidationRules,
   sendAnnouncementValidationRules,
   areaIntelligenceValidationRules,
+  listAuditLogsValidationRules,
 } = require('../../validators/admin.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -269,6 +271,16 @@ router.get(
   areaIntelligenceValidationRules,
   validateRequest,
   getAreaIntelligence
+);
+
+// --- Audit Logs (COMING-SOON ELIMINATION) ---
+router.get(
+  '/audit-logs',
+  protect,
+  authorize('admin'),
+  listAuditLogsValidationRules,
+  validateRequest,
+  listAuditLogs
 );
 
 module.exports = router;

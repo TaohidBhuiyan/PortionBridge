@@ -1,6 +1,7 @@
 const { HTTP_STATUS, USER_ROLES, AUDIT_ACTIONS, REPORT_STATUS } = require('../constants');
 const AppError = require('../utils/AppError');
 const adminModel = require('../models/admin.model');
+const auditLogModel = require('../models/auditLog.model');
 const donationModel = require('../models/donation.model');
 const volunteerModel = require('../models/volunteer.model');
 const reportModel = require('../models/report.model');
@@ -1153,6 +1154,28 @@ async function getAreaIntelligence() {
   return { areas, insights, generatedAt: new Date().toISOString() };
 }
 
+/**
+ * Paginated, filterable audit log listing for the admin audit log page
+ * (COMING-SOON ELIMINATION — audit_logs was already being written to
+ * throughout the app — auth, donations, teams, reports, moderation — but
+ * had no read path at all until now).
+ * @param {object} query - Raw query params from the request
+ * @returns {Promise<{logs: Array, meta: Object}>}
+ */
+async function listAuditLogs(query) {
+  const { page, limit, offset } = getPaginationParams(query);
+  const { action, userId, dateFrom, dateTo } = query;
+  const filters = { action, userId, dateFrom, dateTo };
+
+  const [logs, totalItems] = await Promise.all([
+    auditLogModel.findAll({ ...filters, limit, offset }),
+    auditLogModel.countAll(filters),
+  ]);
+
+  const meta = buildPaginationMeta({ page, limit, totalItems });
+  return { logs, meta };
+}
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -1177,4 +1200,5 @@ module.exports = {
   listAnnouncementHistory,
   getAreaIntelligence,
   getUserActivity,
+  listAuditLogs,
 };

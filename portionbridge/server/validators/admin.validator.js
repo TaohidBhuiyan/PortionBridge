@@ -1,5 +1,5 @@
 const { param, query, body } = require('express-validator');
-const { USER_ROLES, DONATION_CATEGORY, DONATION_STATUS, PAGINATION_DEFAULTS } = require('../constants');
+const { USER_ROLES, DONATION_CATEGORY, DONATION_STATUS, PAGINATION_DEFAULTS, AUDIT_ACTIONS } = require('../constants');
 
 const ALLOWED_USER_SORT_FIELDS = ['created_at', 'name', 'email'];
 const ALLOWED_ADMIN_DONATION_SORT_FIELDS = ['created_at', 'pickup_time', 'scheduled_at', 'completed_at'];
@@ -248,6 +248,32 @@ const sendAnnouncementValidationRules = [
 // --- Area Intelligence (Phase 9) ---
 const areaIntelligenceValidationRules = [];
 
+/**
+ * Validation rules for GET /admin/audit-logs
+ */
+const listAuditLogsValidationRules = [
+  ...paginationValidationRules,
+
+  query('action')
+    .optional()
+    .trim()
+    .isIn(Object.values(AUDIT_ACTIONS))
+    .withMessage(`action must be one of: ${Object.values(AUDIT_ACTIONS).join(', ')}.`),
+
+  query('userId')
+    .optional()
+    .isInt({ min: 1 }).withMessage('userId must be a positive integer.')
+    .toInt(),
+
+  query('dateFrom')
+    .optional()
+    .isISO8601().withMessage('dateFrom must be a valid ISO 8601 date.'),
+
+  query('dateTo')
+    .optional()
+    .isISO8601().withMessage('dateTo must be a valid ISO 8601 date.'),
+];
+
 module.exports = {
   dashboardValidationRules,
   listUsersValidationRules,
@@ -269,4 +295,5 @@ module.exports = {
   reportModerationNotesValidationRules,
   sendAnnouncementValidationRules,
   areaIntelligenceValidationRules,
+  listAuditLogsValidationRules,
 };

@@ -6,15 +6,21 @@
  * Usage:
  *   throw new AppError('Invalid email or password.', 401);
  *
- * The centralized errorHandler middleware reads `err.statusCode` and
- * `err.message` directly, so throwing this from inside an asyncHandler-wrapped
+ * An optional third argument adds a machine-readable `code` to the response
+ * (e.g. 'EMAIL_NOT_VERIFIED') for the rare case where the frontend needs to
+ * branch on more than just the status code/message text — most callers
+ * don't need this and can omit it entirely.
+ *
+ * The centralized errorHandler middleware reads `err.statusCode`, `err.message`,
+ * and `err.code` directly, so throwing this from inside an asyncHandler-wrapped
  * controller is automatically caught and formatted into the standard
- * { success: false, message } response shape.
+ * { success: false, message, code? } response shape.
  */
 class AppError extends Error {
-  constructor(message, statusCode) {
+  constructor(message, statusCode, code = null) {
     super(message);
     this.statusCode = statusCode;
+    this.code = code;
     this.isOperational = true;
     Error.captureStackTrace(this, this.constructor);
   }

@@ -308,6 +308,23 @@ const getAreaIntelligence = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/v1/admin/audit-logs
+ * COMING-SOON ELIMINATION: audit_logs has been written to across the app
+ * since early on (auth, donations, teams, reports, moderation actions) —
+ * this is the first read path exposed for it.
+ */
+const listAuditLogs = asyncHandler(async (req, res) => {
+  const { logs, meta } = await adminService.listAuditLogs(req.query);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Audit logs retrieved successfully.',
+    data: { logs },
+    meta,
+  });
+});
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -332,4 +349,5 @@ module.exports = {
   sendAnnouncement,
   listAnnouncementHistory,
   getAreaIntelligence,
+  listAuditLogs,
 };

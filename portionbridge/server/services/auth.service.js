@@ -68,19 +68,22 @@ async function register({ name, email, password, role, phone, address, profilePh
       phone,
       address,
       profilePhotoPath,
-      // PHASE 11 PART A — temporary development-only convenience: skip the
-      // "click the email link" step so registration -> login works
-      // immediately while testing, without touching the real verification
-      // email/token infrastructure below (which still runs unchanged so
-      // the genuine flow keeps working and is what ships to production,
-      // where NODE_ENV !== 'development' and this stays false as before).
-      emailVerified: process.env.NODE_ENV === 'development',
-      // Same demo-only convenience for phone — there is no OTP/SMS
-      // verification system in this project at all (phone_verified simply
-      // defaulted to 0 forever with no way to ever set it to 1), so this
-      // isn't bypassing a real security flow, just marking demo accounts
-      // consistently "verified" the same way email is in this environment.
-      phoneVerified: process.env.NODE_ENV === 'development',
+      // BUG FIX (email verification implementation): this used to be
+      // `process.env.NODE_ENV === 'development'` — a dev-only shortcut
+      // that auto-verified every new account, skipping the "click the
+      // email link" step entirely. That's exactly the kind of
+      // auto-verify-everything logic the real verification system below
+      // needs to NOT be short-circuited by: it silently defeated testing
+      // the actual flow in the one environment used for development, and
+      // it's why a later test ("login before email verification is
+      // rejected") had to bypass register() entirely and build an
+      // unverified fixture directly at the model layer just to exercise
+      // login()'s verification gate. Always false now — every account
+      // goes through the real token + email flow below, in every
+      // environment; devVerificationToken (below) is the actual intended
+      // mechanism for verifying without a real mailbox in development/
+      // tests, and was already being returned for exactly that reason.
+      emailVerified: false,
       // Same demo-only convenience for phone — there is no OTP/SMS
       // verification system in this project at all (confirmed: no
       // phone-verification model, route, or service exists anywhere), so
@@ -116,7 +119,25 @@ async function register({ name, email, password, role, phone, address, profilePh
   const expiresAt = new Date(Date.now() + AUTH.EMAIL_VERIFICATION_EXPIRES_HOURS * 60 * 60 * 1000);
 
   await emailVerificationModel.createVerificationToken({ userId: newUserId, tokenHash, expiresAt });
-  await emailService.sendVerificationEmail(email, rawToken);
+
+  // BUG FIX: this call was unguarded — a Brevo failure (bad API key,
+  // unverified sender, network issue, rate limit) would throw out of
+  // register() entirely, and the controller's asyncHandler would turn
+  // that into a 500 "registration failed" response — even though the
+  // user row, password history, and verification token above were all
+  // already committed. The account would silently exist with no way for
+  // the person to know that, since the API told them registration
+  // failed. Caught here instead: the account is real either way, and
+  // "Resend Verification Email" (POST /auth/resend-verification) is
+  // already the correct recovery path if the first send didn't go out —
+  // exactly as it is for a normal successful send that the user simply
+  // didn't receive.
+  try {
+    await emailService.sendVerificationEmail({ email, name, rawToken });
+  } catch (emailError) {
+    // Never log the token/password/API key — only that sending failed.
+    console.error(`[Auth] Failed to send verification email to a new registrant: ${emailError.message}`);
+  }
 
   await auditService.record({
     userId: newUserId,
@@ -213,12 +234,46 @@ async function loginWithGoogle({ idToken, role, ipAddress, userAgent }) {
   return { user: freshUser, ...session };
 }
 
+/**
+ * Verifies a user's email from a raw token.
+ *
+ * BUG FIX: this used to treat "already verified" (clicking an old link a
+ * second time, or after verifying via another tab/device), "expired", and
+ * "never existed" identically — one generic "Invalid or expired
+ * verification link." for all three. That's a real UX gap the frontend
+ * needs to resolve into three distinct states (see VerifyEmailPage.jsx),
+ * so this now looks up the token by hash regardless of used/expired state
+ * first, to tell those cases apart, before falling back to the original
+ * strict findValidToken check to actually perform verification.
+ * @returns {Promise<{userId: number, alreadyVerified: boolean}>}
+ */
 async function verifyEmail(rawToken) {
   const tokenHash = hashToken(rawToken);
-  const record = await emailVerificationModel.findValidToken(tokenHash);
+  const record = await emailVerificationModel.findByTokenHash(tokenHash);
 
   if (!record) {
-    throw new AppError('Invalid or expired verification link.', HTTP_STATUS.BAD_REQUEST);
+    throw new AppError('This verification link is invalid.', HTTP_STATUS.BAD_REQUEST, 'TOKEN_INVALID');
+  }
+
+  const user = await userModel.findById(record.user_id);
+
+  // A token can be marked used() as a side effect of a later resend
+  // (invalidateAllForUser), not only by a successful verification — so
+  // "already verified" is decided from the user's actual email_verified
+  // flag, not from this token's used/expired state.
+  if (user?.email_verified) {
+    return { userId: record.user_id, alreadyVerified: true };
+  }
+
+  if (new Date(record.expires_at).getTime() < Date.now()) {
+    throw new AppError('This verification link has expired. Please request a new verification email.', HTTP_STATUS.BAD_REQUEST, 'TOKEN_EXPIRED');
+  }
+
+  if (record.is_used) {
+    // Consumed by something other than a successful verification (see
+    // comment above) and the user still isn't verified — safest to treat
+    // as invalid rather than silently re-verify off a stale token.
+    throw new AppError('This verification link is invalid.', HTTP_STATUS.BAD_REQUEST, 'TOKEN_INVALID');
   }
 
   await userModel.markEmailVerified(record.user_id);
@@ -229,7 +284,7 @@ async function verifyEmail(rawToken) {
     action: AUDIT_ACTIONS.EMAIL_VERIFIED,
   });
 
-  return { userId: record.user_id };
+  return { userId: record.user_id, alreadyVerified: false };
 }
 
 /**
@@ -252,7 +307,15 @@ async function resendVerification(email, { ipAddress, userAgent } = {}) {
   const expiresAt = new Date(Date.now() + AUTH.EMAIL_VERIFICATION_EXPIRES_HOURS * 60 * 60 * 1000);
 
   await emailVerificationModel.createVerificationToken({ userId: user.id, tokenHash, expiresAt });
-  await emailService.sendVerificationEmail(email, rawToken);
+
+  // Same reasoning as register()'s guard above — a Brevo failure here
+  // must not 500 the resend endpoint itself; the new token already exists
+  // either way, and the generic response below is accurate regardless.
+  try {
+    await emailService.sendVerificationEmail({ email, name: user.name, rawToken });
+  } catch (emailError) {
+    console.error(`[Auth] Failed to send a resent verification email: ${emailError.message}`);
+  }
 
   await auditService.record({
     userId: user.id,
@@ -365,7 +428,8 @@ async function login({ email, password, role, ipAddress, userAgent }) {
   if (!user.email_verified) {
     throw new AppError(
       'Please verify your email address before logging in. Check your inbox for the verification link.',
-      HTTP_STATUS.FORBIDDEN
+      HTTP_STATUS.FORBIDDEN,
+      'EMAIL_NOT_VERIFIED'
     );
   }
 

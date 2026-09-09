@@ -1,51 +1,43 @@
-const nodemailer = require('nodemailer');
+const { BrevoClient } = require('@getbrevo/brevo');
 const fs = require('fs');
 const path = require('path');
 
 /**
- * Email delivery service with production-ready email provider support.
- * 
- * Supports both development (console logging for testing) and production
- * environments with configurable SMTP providers. Uses nodemailer for
- * email delivery and HTML templates for professional formatting.
+ * Email delivery service, backed by Brevo's transactional email API
+ * (https://developers.brevo.com/docs/send-a-transactional-email).
+ *
+ * MIGRATION NOTE: this used to send via nodemailer/SMTP (EMAIL_HOST/
+ * EMAIL_USER/EMAIL_PASSWORD). Every other file in the app calls the same
+ * five exported functions as before — sendVerificationEmail (now also
+ * takes the user's name, previously just email+token),
+ * sendPasswordResetEmail, sendAccountLockedEmail — so nothing outside this
+ * file needed to change. Same dev-mode console-logging behavior, same
+ * local HTML templates, same "throw if unconfigured in production, log
+ * and no-op in development" behavior — only the actual transport changed.
  */
 
-// Email configuration from environment variables
 const EMAIL_CONFIG = {
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || '587', 10),
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  from: process.env.EMAIL_FROM || 'noreply@portionbridge.com',
-  fromName: process.env.EMAIL_FROM_NAME || 'PortionBridge',
+  senderEmail: process.env.BREVO_SENDER_EMAIL || 'noreply@portionbridge.com',
+  senderName: process.env.BREVO_SENDER_NAME || 'PortionBridge',
   supportUrl: process.env.SUPPORT_URL || process.env.CLIENT_URL || 'https://portionbridge.com/support',
 };
 
 // Development mode detection
 const isDevelopment = process.env.NODE_ENV === 'development';
-const isEmailConfigured = EMAIL_CONFIG.host && EMAIL_CONFIG.auth.user && EMAIL_CONFIG.auth.pass;
+const isEmailConfigured = Boolean(process.env.BREVO_API_KEY);
 
-/**
- * Creates a nodemailer transporter based on configuration.
- * Returns null if email is not configured (development mode).
- */
-function createTransporter() {
+// Constructed lazily (not at module load) so a missing BREVO_API_KEY in
+// development doesn't throw on require() — mirrors the old
+// createTransporter()'s "return null if unconfigured" behavior.
+let brevoClient = null;
+function getBrevoClient() {
   if (!isEmailConfigured) {
     return null;
   }
-
-  return nodemailer.createTransport({
-    host: EMAIL_CONFIG.host,
-    port: EMAIL_CONFIG.port,
-    secure: EMAIL_CONFIG.secure,
-    auth: {
-      user: EMAIL_CONFIG.auth.user,
-      pass: EMAIL_CONFIG.auth.pass,
-    },
-  });
+  if (!brevoClient) {
+    brevoClient = new BrevoClient({ apiKey: process.env.BREVO_API_KEY });
+  }
+  return brevoClient;
 }
 
 /**
@@ -92,7 +84,7 @@ function logEmailDevelopment(subject, toEmail, url, token) {
 }
 
 /**
- * Sends an email using the configured transporter.
+ * Sends an email via Brevo's transactional email API.
  * @param {Object} options - Email options
  * @param {string} options.to - Recipient email
  * @param {string} options.subject - Email subject
@@ -101,51 +93,64 @@ function logEmailDevelopment(subject, toEmail, url, token) {
  * @returns {Promise<void>}
  */
 async function sendEmail({ to, subject, html, text }) {
-  const transporter = createTransporter();
-  
-  if (!transporter) {
+  const client = getBrevoClient();
+
+  if (!client) {
     // Development mode: log that email would be sent
     if (isDevelopment) {
-      console.log(`[Email Service] Email not configured. Would send to: ${to}, Subject: ${subject}`);
+      console.log(`[Email Service] Brevo not configured (BREVO_API_KEY missing). Would send to: ${to}, Subject: ${subject}`);
       return;
     }
-    throw new Error('Email service is not configured. Please set EMAIL_HOST, EMAIL_USER, and EMAIL_PASSWORD environment variables.');
+    throw new Error('Email service is not configured. Please set BREVO_API_KEY, BREVO_SENDER_EMAIL, and BREVO_SENDER_NAME environment variables.');
   }
 
   try {
-    await transporter.sendMail({
-      from: `"${EMAIL_CONFIG.fromName}" <${EMAIL_CONFIG.from}>`,
-      to,
+    await client.transactionalEmails.sendTransacEmail({
+      sender: { email: EMAIL_CONFIG.senderEmail, name: EMAIL_CONFIG.senderName },
+      to: [{ email: to }],
       subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for plain text fallback
+      htmlContent: html,
+      textContent: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for plain text fallback
     });
   } catch (error) {
-    console.error('Failed to send email:', error);
+    // Log only the message — never the full error object, which could
+    // echo request details — and never the API key (which isn't part of
+    // this error at all; it's set once at client construction, not
+    // per-request).
+    console.error('Failed to send email via Brevo:', error.message);
     throw new Error('Failed to send email. Please try again later.');
   }
 }
 
 /**
  * Sends an email verification email to a newly registered user.
- * @param {string} toEmail - Recipient email address
- * @param {string} rawToken - Raw verification token (only used in development logging)
+ * @param {Object} params
+ * @param {string} params.email - Recipient email address
+ * @param {string} params.name - Recipient's display name, for personalization
+ * @param {string} params.rawToken - Raw verification token (only used in development logging)
  */
-async function sendVerificationEmail(toEmail, rawToken) {
+async function sendVerificationEmail({ email, name, rawToken }) {
   const verifyUrl = `${process.env.CLIENT_URL}/verify-email?token=${rawToken}`;
   const html = loadTemplate('email-verification', {
+    name: name || 'there',
     verificationUrl: verifyUrl,
     supportUrl: EMAIL_CONFIG.supportUrl,
   });
+  const text = `Welcome to PortionBridge, ${name || 'there'}!\n\n`
+    + `Thanks for creating your PortionBridge account. Please verify your email address to activate it:\n\n`
+    + `${verifyUrl}\n\n`
+    + `This verification link expires in 24 hours.\n\n`
+    + `If you did not create this account, you can safely ignore this email.`;
 
   // Log in development mode only
-  logEmailDevelopment('Verify Your PortionBridge Account', toEmail, verifyUrl, rawToken);
+  logEmailDevelopment('Verify your PortionBridge account', email, verifyUrl, rawToken);
 
   // Send actual email if configured
   await sendEmail({
-    to: toEmail,
-    subject: 'Verify Your PortionBridge Account',
+    to: email,
+    subject: 'Verify your PortionBridge account',
     html,
+    text,
   });
 }
 

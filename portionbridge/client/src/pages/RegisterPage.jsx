@@ -24,8 +24,19 @@ export function RegisterPage() {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [profilePhotoPreview, setProfilePhotoPreview] = useState(null);
   const fileInputRef = useRef(null);
-  
-  const { register, googleLogin } = useAuth();
+
+  // COMING-SOON ELIMINATION / email verification: registration used to
+  // navigate straight to /login with a toast-style message saying "please
+  // verify your email" — telling the user to do something without ever
+  // showing them where the email went or giving them a way to resend it.
+  const [registered, setRegistered] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState("");
+  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef(null);
+
+  const { register, googleLogin, resendVerification } = useAuth();
   const navigate = useNavigate();
 
   const getPasswordStrength = () => {
@@ -136,10 +147,11 @@ export function RegisterPage() {
         return;
       }
 
-      // Redirect to login page after successful registration
-      navigate("/login", { 
-        state: { message: "Account created successfully. Please verify your email before logging in." }
-      });
+      // Show a "check your email" screen instead of silently redirecting
+      // to login — the user needs to actually know where the
+      // verification link went and have a way to resend it.
+      setRegisteredEmail(email.trim());
+      setRegistered(true);
     } catch (err) {
       setError(err.message || "Something went wrong.");
     } finally {
@@ -234,6 +246,81 @@ export function RegisterPage() {
     }));
     setProfilePhoto(file);
   };
+
+  useEffect(() => {
+    return () => clearInterval(cooldownRef.current);
+  }, []);
+
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0) return;
+    setResendStatus("sending");
+    const result = await resendVerification(registeredEmail);
+    setResendMessage(result.success ? result.message : result.error);
+    setResendStatus("sent");
+    startResendCooldown();
+  };
+
+  if (registered) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center px-3 py-8 sm:px-6 sm:py-10 relative overflow-hidden" style={{ backgroundColor: "#082f49" }}>
+        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-sky-500/40 blur-3xl"></div>
+        <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-cyan-500/30 blur-3xl"></div>
+        <div className="w-full max-w-[460px] mx-auto rounded-3xl border border-white/10 shadow-[0_20px_56px_rgba(15,23,42,0.28)] backdrop-blur-xl relative z-10 bg-slate-950/40 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-cyan-300">
+            <Mail size={26} />
+          </div>
+          <h1 className="text-white text-2xl font-semibold tracking-tight mb-2">Check your email</h1>
+          <p className="text-sky-100/80 text-sm mb-1">We&apos;ve sent a verification link to:</p>
+          <p className="text-white font-medium mb-4">{registeredEmail}</p>
+          <p className="text-sky-100/70 text-sm mb-6">Please verify your email before logging in.</p>
+
+          {resendMessage && (
+            <div className="mb-4 rounded-lg border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-sm text-cyan-100">
+              {resendMessage}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleResendVerification}
+            disabled={resendStatus === "sending" || resendCooldown > 0}
+            className="w-full rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-medium py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {resendCooldown > 0
+              ? `Resend Verification Email (${resendCooldown}s)`
+              : resendStatus === "sending"
+                ? "Sending..."
+                : "Resend Verification Email"}
+          </button>
+
+          <p className="mt-5 text-xs text-sky-100/60">
+            Didn&apos;t receive the email? Check your spam/junk folder.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="mt-6 text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center px-3 py-8 sm:px-6 sm:py-10 relative overflow-hidden" style={{ backgroundColor: "#082f49" }}>

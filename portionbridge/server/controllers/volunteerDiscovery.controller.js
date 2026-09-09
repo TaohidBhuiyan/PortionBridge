@@ -178,6 +178,21 @@ const getRecommendedVolunteer = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/v1/volunteer-discovery/geocode
+ * Resolves a free-text address into coordinates, for the manual-location
+ * fallback used when the donor denies/blocks browser geolocation.
+ */
+const geocodeAddress = asyncHandler(async (req, res) => {
+  const location = await volunteerDiscoveryService.geocodeAddress(req.query.address);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Location resolved successfully.',
+    data: { location },
+  });
+});
+
 module.exports = {
   getNearbyVolunteers,
   getNearbyTeams,
@@ -185,4 +200,5 @@ module.exports = {
   updateTeamLocation,
   getVolunteerStats,
   getRecommendedVolunteer,
+  geocodeAddress,
 };

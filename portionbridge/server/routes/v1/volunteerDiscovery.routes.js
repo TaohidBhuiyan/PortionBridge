@@ -8,6 +8,7 @@ const {
   updateTeamLocation,
   getVolunteerStats,
   getRecommendedVolunteer,
+  geocodeAddress,
 } = require('../../controllers/volunteerDiscovery.controller');
 
 const {
@@ -16,6 +17,7 @@ const {
   updateVolunteerLocationValidationRules,
   updateTeamLocationValidationRules,
   volunteerStatsValidationRules,
+  geocodeAddressValidationRules,
 } = require('../../validators/volunteerDiscovery.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
@@ -39,6 +41,17 @@ router.get(
   nearbyTeamsValidationRules,
   validateRequest,
   getNearbyTeams
+);
+
+// Manual-location fallback: resolves a typed address into coordinates so
+// discovery can run without browser GPS (see ManualLocationModal.jsx).
+router.get(
+  '/geocode',
+  protect,
+  authorize(USER_ROLES.DONOR),
+  geocodeAddressValidationRules,
+  validateRequest,
+  geocodeAddress
 );
 
 // Volunteer-only routes

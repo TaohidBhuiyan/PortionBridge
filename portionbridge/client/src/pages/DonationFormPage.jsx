@@ -30,7 +30,17 @@ export function DonationFormPage() {
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState({});
+  // BUG FIX: the donor sidebar has separate "Donate Food" and "Donate
+  // Clothes" links that both pointed at this same route with no way to
+  // tell them apart — clicking either produced the identical blank form.
+  // They now carry ?category=food / ?category=clothes (see Sidebar.jsx),
+  // which just pre-fills Step1BasicInfo's existing category field.
+  const [formData, setFormData] = useState(() => {
+    const initialCategory = searchParams.get('category');
+    return initialCategory === 'food' || initialCategory === 'clothes'
+      ? { category: initialCategory }
+      : {};
+  });
   const [stepValidation, setStepValidation] = useState([false, false, false, false, false, true]);
   const [errors, setErrors] = useState({});
   const [, setIsSaving] = useState(false);

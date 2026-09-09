@@ -28,7 +28,7 @@ export const volunteerDiscoveryApi = {
    * @param {number} params.limit - Results per page
    * @returns {Promise<Object>} Nearby volunteers with pagination
    */
-  findNearbyVolunteers: async (params = {}) => {
+  findNearbyVolunteers: async (params = {}, options = {}) => {
     try {
       const token = getAuthToken();
       
@@ -51,11 +51,18 @@ export const volunteerDiscoveryApi = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: options.signal,
         }
       );
       
       return { success: true, data: response.data.data, meta: response.data.meta };
     } catch (error) {
+      // A caller-triggered abort (see VolunteerDiscoveryPage's stale-request
+      // guard) isn't a real failure — let the caller distinguish it from an
+      // actual API/network error instead of surfacing "Failed to..." for it.
+      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+        return { success: false, aborted: true };
+      }
       const message = error.response?.data?.message || 'Failed to find nearby volunteers';
       return { success: false, error: message };
     }
@@ -72,7 +79,7 @@ export const volunteerDiscoveryApi = {
    * @param {number} params.limit - Results per page
    * @returns {Promise<Object>} Nearby teams with pagination
    */
-  findNearbyTeams: async (params = {}) => {
+  findNearbyTeams: async (params = {}, options = {}) => {
     try {
       const token = getAuthToken();
       
@@ -90,11 +97,15 @@ export const volunteerDiscoveryApi = {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          signal: options.signal,
         }
       );
       
       return { success: true, data: response.data.data, meta: response.data.meta };
     } catch (error) {
+      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+        return { success: false, aborted: true };
+      }
       const message = error.response?.data?.message || 'Failed to find nearby teams';
       return { success: false, error: message };
     }
@@ -218,6 +229,34 @@ export const volunteerDiscoveryApi = {
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch volunteer stats';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * Resolves a free-text address into latitude/longitude via the backend
+   * (server proxies to OpenStreetMap Nominatim — see
+   * server/services/volunteerDiscovery.service.js#geocodeAddress). Used by
+   * ManualLocationModal so the manual-location fallback never needs to call
+   * browser geolocation.
+   * @param {string} address - Free-text address/place name
+   * @returns {Promise<Object>} { success, data: { latitude, longitude, displayName } }
+   */
+  geocodeAddress: async (address) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(
+        `${API_BASE}/volunteer-discovery/geocode?address=${encodeURIComponent(address)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return { success: true, data: response.data.data.location };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to resolve that location';
       return { success: false, error: message };
     }
   },

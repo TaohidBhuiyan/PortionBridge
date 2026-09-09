@@ -68,20 +68,20 @@ function registerPublicHandlers(io, socket) {
     try {
       const [activities] = await pool.query(
         `SELECT 
-           al.action_type,
+           al.action,
            al.description,
            al.created_at,
            u.name as user_name,
            u.profile_photo
          FROM audit_logs al
          LEFT JOIN users u ON al.user_id = u.id
-         WHERE al.action_type IN ('donation_created', 'donation_completed', 'pickup_completed', 'volunteer_registered')
+         WHERE al.action IN ('donation_created', 'donation_completed', 'pickup_completed', 'volunteer_registered')
          ORDER BY al.created_at DESC
          LIMIT 20`
       );
 
       const formattedActivities = activities.map(a => ({
-        type: a.action_type,
+        type: a.action,
         text: a.description,
         userName: a.user_name || 'System',
         userPhoto: a.profile_photo,

@@ -40,14 +40,8 @@ function validateEnvironment() {
       errors.push('GOOGLE_CLIENT_ID is required in production for Google sign-in.');
     }
 
-    ['EMAIL_HOST', 'EMAIL_USER', 'EMAIL_PASSWORD'].forEach((name) => {
-      if (!process.env[name]) {
-        errors.push(`${name} is required in production for email delivery.`);
-      }
-    });
-
-    if (process.env.EMAIL_PORT && (!Number.isInteger(Number(process.env.EMAIL_PORT)) || Number(process.env.EMAIL_PORT) < 1 || Number(process.env.EMAIL_PORT) > 65535)) {
-      errors.push('EMAIL_PORT must be a valid port number (1-65535).');
+    if (!process.env.BREVO_API_KEY) {
+      errors.push('BREVO_API_KEY is required in production for email delivery.');
     }
   }
 

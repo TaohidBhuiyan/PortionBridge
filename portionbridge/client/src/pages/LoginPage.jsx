@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
@@ -20,10 +20,25 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { login, googleLogin } = useAuth();
+  const { login, googleLogin, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [successMsg, setSuccessMsg] = useState(location.state?.message || "");
+
+  // COMING-SOON ELIMINATION / email verification: login() already
+  // rejected unverified users, but the response carried no way to tell
+  // that apart from "wrong password" — this showed the exact same
+  // generic error for both. Now checked via the new `code` field the
+  // backend returns (see AppError's optional code param).
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
+  const [resendMessage, setResendMessage] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef(null);
+
+  useEffect(() => {
+    return () => clearInterval(cooldownRef.current);
+  }, []);
 
   const { socket, connected } = useSocket();
   const [stats, setStats] = useState({
@@ -84,13 +99,17 @@ export function LoginPage() {
     }
 
     setLoading(true);
+    setNeedsVerification(false);
 
     try {
       // Use sequential role login implemented in context
       const result = await login(email.trim(), password);
 
       if (!result.success) {
-        if (result.errors && Array.isArray(result.errors)) {
+        if (result.code === "EMAIL_NOT_VERIFIED") {
+          setNeedsVerification(true);
+          setError("");
+        } else if (result.errors && Array.isArray(result.errors)) {
           const errorsMap = {};
           result.errors.forEach(err => {
             errorsMap[err.field] = err.message;
@@ -131,6 +150,28 @@ export function LoginPage() {
 
   const handleForgotPasswordClick = () => {
     navigate("/forgot-password");
+  };
+
+  const startResendCooldown = () => {
+    setResendCooldown(60);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const handleResendVerification = async () => {
+    if (resendCooldown > 0) return;
+    setResendStatus("sending");
+    const result = await resendVerification(email.trim());
+    setResendMessage(result.success ? result.message : result.error);
+    setResendStatus("sent");
+    startResendCooldown();
   };
 
   const handleGoogleSuccess = async (credential) => {
@@ -220,6 +261,25 @@ export function LoginPage() {
                     {error && (
                       <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
                         {error}
+                      </div>
+                    )}
+
+                    {needsVerification && (
+                      <div className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2.5 text-sm text-warning space-y-2">
+                        <p>Please verify your email before logging in.</p>
+                        {resendMessage && <p className="text-xs opacity-90">{resendMessage}</p>}
+                        <button
+                          type="button"
+                          onClick={handleResendVerification}
+                          disabled={resendStatus === "sending" || resendCooldown > 0}
+                          className="text-xs font-semibold underline underline-offset-2 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {resendCooldown > 0
+                            ? `Resend Verification Email (${resendCooldown}s)`
+                            : resendStatus === "sending"
+                              ? "Sending..."
+                              : "Resend Verification Email"}
+                        </button>
                       </div>
                     )}
 
