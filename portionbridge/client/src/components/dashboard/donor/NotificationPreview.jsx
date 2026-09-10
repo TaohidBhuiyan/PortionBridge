@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
-import { Bell, ArrowRight, CheckCheck, Radio } from 'lucide-react';
+import { Bell, ArrowRight, CheckCheck } from 'lucide-react';
 import { useAuthSocket } from '../../../context/SocketContext';
 import { getNotificationMeta, formatNotificationTimestamp } from '../../../utils/notificationMeta';
 import axios from 'axios';
@@ -123,34 +123,41 @@ export function NotificationPreview() {
 
         {/* Notifications List */}
         {notifications.length === 0 ? (
-          <div className="text-center py-6 text-text-secondary">
-            <CheckCheck size={24} className="mx-auto mb-1.5 opacity-40" />
-            <p className="text-xs font-medium">All caught up!</p>
-            <p className="text-[10px] opacity-75">No unread notifications at this time.</p>
+          <div className="text-center py-7 text-text-secondary">
+            <div className="w-10 h-10 rounded-2xl bg-dash-primary-soft text-dash-primary mx-auto flex items-center justify-center mb-2">
+              <CheckCheck size={20} />
+            </div>
+            <p className="text-xs font-semibold text-text-primary">All caught up!</p>
+            <p className="text-[11px] text-text-muted mt-0.5">No unread notifications at this time.</p>
           </div>
         ) : (
           <div className="space-y-2">
             {notifications.slice(0, 4).map((notification) => {
-              const meta = getNotificationMeta(notification.type);
+              const { Icon, toneClass } = getNotificationMeta(notification.type);
               const isUnread = !notification.is_read;
 
               return (
                 <div
                   key={notification.id}
                   onClick={() => navigate('/notifications')}
-                  className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
+                  className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-2.5 ${
                     isUnread
-                      ? 'bg-dash-primary-soft/40 border-dash-primary/30 hover:bg-dash-primary-soft/60'
-                      : 'bg-surface hover:bg-surface-hover border-border/40'
+                      ? 'bg-surface hover:bg-surface-hover border-dash-primary/30 shadow-2xs border-l-3 border-l-dash-primary'
+                      : 'bg-surface/70 hover:bg-surface border-border/50 hover:border-border'
                   }`}
                 >
-                  <div className="w-7 h-7 rounded-lg bg-surface flex items-center justify-center text-dash-primary shrink-0 shadow-2xs border border-border/40">
-                    <Radio size={13} className="text-dash-primary" />
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-2xs ${toneClass}`}>
+                    <Icon size={14} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-text-primary line-clamp-1">
-                      {notification.title || meta.title || 'Notification'}
-                    </p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className={`text-xs line-clamp-1 ${isUnread ? 'font-bold text-text-primary' : 'font-medium text-text-primary/90'}`}>
+                        {notification.title || 'Notification'}
+                      </p>
+                      {isUnread && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-dash-primary shrink-0" />
+                      )}
+                    </div>
                     <p className="text-[11px] text-text-secondary line-clamp-1 mt-0.5">
                       {notification.message}
                     </p>
@@ -158,9 +165,6 @@ export function NotificationPreview() {
                       {formatNotificationTimestamp(notification.created_at)}
                     </span>
                   </div>
-                  {isUnread && (
-                    <span className="w-2 h-2 rounded-full bg-dash-primary shrink-0 mt-1" />
-                  )}
                 </div>
               );
             })}

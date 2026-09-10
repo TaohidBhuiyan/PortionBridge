@@ -20,14 +20,14 @@ const SavedAddressesPage = lazy(() => import("./pages/SavedAddressesPage").then(
 const DonationFormPage = lazy(() => import("./pages/DonationFormPage").then(m => ({ default: m.DonationFormPage })));
 const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => ({ default: m.MyDonationsPage })));
 const DonationDetailsPage = lazy(() => import("./pages/DonationDetailsPage").then(m => ({ default: m.DonationDetailsPage })));
-const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage").then(m => ({ default: m.VolunteerDiscoveryPage })));
+const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage").then(m => ({ default: m.VolunteerDiscoveryPage || m.default })));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
 const MessagesPage = lazy(() => import("./pages/MessagesPage").then(m => ({ default: m.MessagesPage })));
 
 // Lazy load volunteer and admin dashboards (not part of donor module review)
 const VolunteerDashboard = lazy(() => import("./pages/VolunteerDashboard").then(m => ({ default: m.VolunteerDashboard })));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage").then(m => ({ default: m.VolunteerProfilePage })));
+const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage").then(m => ({ default: m.VolunteerProfilePage || m.default })));
 // PHASE 3: Nearby Opportunities + mission actions
 const VolunteerOpportunities = lazy(() => import("./pages/VolunteerOpportunities").then(m => ({ default: m.VolunteerOpportunities })));
 // PHASE 4: My Team + announcements

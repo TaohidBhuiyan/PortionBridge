@@ -214,5 +214,5 @@ const VolunteerProfilePage = () => {
     </div>
   );
 };
-
+export { VolunteerProfilePage };
 export default VolunteerProfilePage;

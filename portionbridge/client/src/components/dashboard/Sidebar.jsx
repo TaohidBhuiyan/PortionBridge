@@ -90,7 +90,6 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
       { title: 'Donate Food', icon: Utensils, path: '/donation/create?category=food' },
       { title: 'Donate Clothes', icon: Shirt, path: '/donation/create?category=clothes' },
       { title: 'My Donations', icon: Package, path: '/donor/my-donations' },
-      { title: 'Track Donation', icon: MapPin, path: '/donor/my-donations' },
       { title: 'Discover Volunteers', icon: Compass, path: '/donor/discover-volunteers' }
     );
   } else if (userRole === 'volunteer') {

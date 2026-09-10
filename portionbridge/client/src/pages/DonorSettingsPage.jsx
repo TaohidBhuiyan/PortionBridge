@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { ArrowLeft, Lock, Bell, Moon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { SecuritySettings } from '../components/dashboard/settings/SecuritySettings';
 import { NotificationSettings } from '../components/dashboard/settings/NotificationSettings';
@@ -20,7 +19,15 @@ import { AppearanceSettings } from '../components/dashboard/settings/AppearanceS
  */
 export function DonorSettingsPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('security');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const activeTab = tabParam && ['security', 'notifications', 'appearance'].includes(tabParam)
+    ? tabParam
+    : 'security';
+
+  const handleTabChange = (tabId) => {
+    setSearchParams({ tab: tabId });
+  };
 
   const tabs = [
     { id: 'security', label: 'Security', icon: Lock },
@@ -58,7 +65,7 @@ export function DonorSettingsPage() {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
+                    onClick={() => handleTabChange(tab.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                       activeTab === tab.id
                         ? 'bg-dash-primary-soft text-dash-primary shadow-sm'

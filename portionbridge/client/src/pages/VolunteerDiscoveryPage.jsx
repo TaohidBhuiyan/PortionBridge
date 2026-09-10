@@ -493,6 +493,6 @@ const VolunteerDiscoveryPage = () => {
     </DashboardLayout>
   );
 };
-
+export { VolunteerDiscoveryPage };
 export default VolunteerDiscoveryPage;
 

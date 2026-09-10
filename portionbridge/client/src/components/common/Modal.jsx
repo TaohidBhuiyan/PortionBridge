@@ -8,7 +8,7 @@ import { Icon } from "./Icon";
  * @param {Function} onClose - Callback when modal should close
  * @param {React.ReactNode} children - Modal content
  */
-export function Modal({ title, onClose, children }) {
+export function Modal({ title, onClose, children, maxWidth = "max-w-md", className = "" }) {
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -22,7 +22,7 @@ export function Modal({ title, onClose, children }) {
       onClick={onClose}
     >
       <div
-        className="bg-surface rounded-2xl max-w-md w-full p-6 relative shadow-2xl border border-border"
+        className={`bg-surface rounded-2xl ${maxWidth} w-full p-6 relative shadow-2xl border border-border ${className}`}
         style={{ animation: "modalIn 0.2s ease" }}
         onClick={(e) => e.stopPropagation()}
       >
