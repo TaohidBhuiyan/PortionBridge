@@ -497,7 +497,7 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
         },
         rating_summary: {
           total_ratings: ratingSummary.total_ratings,
-          average_rating: ratingSummary.average_rating ? parseFloat(ratingSummary.average_rating.toFixed(2)) : 0,
+          average_rating: ratingSummary.average_rating ? parseFloat(Number(ratingSummary.average_rating).toFixed(2)) : 0,
         },
       },
     },

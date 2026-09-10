@@ -50,6 +50,7 @@ const AdminReports = lazy(() => import("./pages/AdminReports").then(m => ({ defa
 const AdminReportDetail = lazy(() => import("./pages/AdminReportDetail").then(m => ({ default: m.AdminReportDetail })));
 const AdminNotifications = lazy(() => import("./pages/AdminNotifications").then(m => ({ default: m.AdminNotifications })));
 const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
+const AdminAuditLogs = lazy(() => import("./pages/AdminAuditLogs").then(m => ({ default: m.AdminAuditLogs })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -349,6 +350,16 @@ function App() {
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 } 
+              />
+              <Route
+                path="/admin/audit-logs"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminAuditLogs />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/admin/:section"

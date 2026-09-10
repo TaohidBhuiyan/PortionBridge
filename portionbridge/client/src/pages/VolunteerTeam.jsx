@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  ArrowLeft,
   Users,
   Crown,
   Calendar,
@@ -22,6 +21,7 @@ import {
   ArrowLeftRight,
   UserMinus,
 } from 'lucide-react';
+import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { useAuthSocket } from '../context/SocketContext';
 import { teamApi } from '../services/teamApi';
@@ -62,7 +62,6 @@ const ACTIVE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_
  *   - DELETE /teams/my/leave   → leave team (Phase 5)
  */
 export function VolunteerTeam() {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const { socket } = useAuthSocket();
 
@@ -293,169 +292,155 @@ export function VolunteerTeam() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Users size={20} className="text-dash-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                My Team
-              </h1>
-              <p className="text-text-secondary text-sm mt-0.5">
-                Manage your team and view team activity
-              </p>
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+                <Users size={20} className="text-dash-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                  My Team
+                </h1>
+                <p className="text-text-secondary text-sm mt-0.5">
+                  Manage your team and view team activity
+                </p>
+              </div>
             </div>
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SkeletonCard count={4} />
+          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SkeletonCard count={4} />
-        </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium">Back</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Users size={20} className="text-dash-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                My Team
-              </h1>
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+                <Users size={20} className="text-dash-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                  My Team
+                </h1>
+              </div>
             </div>
           </div>
+          <ErrorState
+            title="Failed to load team information"
+            message={error}
+            onRetry={() => setRefreshTrigger(t => t + 1)}
+          />
         </div>
-        <ErrorState
-          title="Failed to load team information"
-          message={error}
-          onRetry={() => setRefreshTrigger(t => t + 1)}
-        />
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (!team) {
     return (
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-          >
-            <ArrowLeft size={20} />
-            <span className="font-medium">Back</span>
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Users size={20} className="text-dash-primary" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                My Team
-              </h1>
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+                <Users size={20} className="text-dash-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                  My Team
+                </h1>
+              </div>
             </div>
           </div>
-        </div>
 
-        <EmptyState
-          icon={Users}
-          title="You're not on a team yet"
-          description="Join a team to collaborate with other volunteers on donation missions. Team invitations will appear here when a team leader invites you."
-          showAction={false}
-        />
+          <EmptyState
+            icon={Users}
+            title="You're not on a team yet"
+            description="Join a team to collaborate with other volunteers on donation missions. Team invitations will appear here when a team leader invites you."
+            showAction={false}
+          />
 
-        {invitations.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-lg font-semibold text-text-primary mb-4">Pending Invitations</h2>
-            <div className="space-y-3">
-              {invitations.map((invitation) => (
-                <div key={invitation.id} className="bg-surface rounded-lg border border-border p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar item={invitation.team} tone="dash" className="w-10 h-10" />
-                      <div>
-                        <p className="text-sm font-medium text-text-primary">{invitation.team?.name}</p>
-                        <p className="text-xs text-text-secondary">Invited by {invitation.inviter?.name}</p>
+          {invitations.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-lg font-semibold text-text-primary mb-4">Pending Invitations</h2>
+              <div className="space-y-3">
+                {invitations.map((invitation) => (
+                  <div key={invitation.id} className="bg-surface rounded-lg border border-border p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <Avatar item={invitation.team} tone="dash" className="w-10 h-10" />
+                        <div>
+                          <p className="text-sm font-medium text-text-primary">{invitation.team?.name}</p>
+                          <p className="text-xs text-text-secondary">Invited by {invitation.inviter?.name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAcceptInvitation(invitation.id)}
+                          disabled={acceptingId === invitation.id}
+                          className="px-3 py-1.5 rounded-lg bg-dash-primary text-white text-xs font-medium hover:bg-dash-primary-hover transition-colors disabled:opacity-50"
+                        >
+                          {acceptingId === invitation.id ? (
+                            <Loader2 size={14} className="animate-spin" />
+                          ) : (
+                            'Accept'
+                          )}
+                        </button>
+                        <button
+                          onClick={() => handleDeclineInvitation(invitation.id)}
+                          className="px-3 py-1.5 rounded-lg border border-border text-text-primary text-xs font-medium hover:bg-surface-hover transition-colors"
+                        >
+                          Decline
+                        </button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleAcceptInvitation(invitation.id)}
-                        disabled={acceptingId === invitation.id}
-                        className="px-3 py-1.5 rounded-lg bg-dash-primary text-white text-xs font-medium hover:bg-dash-primary-hover transition-colors disabled:opacity-50"
-                      >
-                        {acceptingId === invitation.id ? (
-                          <Loader2 size={14} className="animate-spin" />
-                        ) : (
-                          'Accept'
-                        )}
-                      </button>
-                      <button
-                        onClick={() => handleDeclineInvitation(invitation.id)}
-                        className="px-3 py-1.5 rounded-lg border border-border text-text-primary text-xs font-medium hover:bg-surface-hover transition-colors"
-                      >
-                        Decline
-                      </button>
-                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-        >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Users size={20} className="text-dash-primary" />
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+                <Users size={20} className="text-dash-primary" />
+              </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                  {team.name}
+                </h1>
+                <p className="text-text-secondary text-sm mt-0.5">
+                  {team.description || 'Team overview and activity'}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-                {team.name}
-              </h1>
-              <p className="text-text-secondary text-sm mt-0.5">
-                {team.description || 'Team overview and activity'}
-              </p>
-            </div>
+            {isLeader && (
+              <button
+                onClick={() => setShowAnnouncementModal(true)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-dash-primary text-white text-sm font-medium hover:bg-dash-primary-hover transition-colors"
+              >
+                <Megaphone size={16} />
+                Send Announcement
+              </button>
+            )}
           </div>
-          {isLeader && (
-            <button
-              onClick={() => setShowAnnouncementModal(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-dash-primary text-white text-sm font-medium hover:bg-dash-primary-hover transition-colors"
-            >
-              <Megaphone size={16} />
-              Send Announcement
-            </button>
-          )}
         </div>
-      </div>
 
       {/* Team stats — real, derived from the already-loaded members + team donations, no invented numbers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-lg border border-border/50 divide-x divide-y sm:divide-y-0 divide-border/50 overflow-hidden mb-6">
@@ -875,5 +860,6 @@ export function VolunteerTeam() {
         />
       )}
     </div>
+    </DashboardLayout>
   );
 }

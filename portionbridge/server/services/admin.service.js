@@ -9,7 +9,7 @@ const teamMemberModel = require('../models/teamMember.model');
 const teamModel = require('../models/team.model');
 const volunteerProfileModel = require('../models/volunteerProfile.model');
 const socketRegistry = require('../sockets/socketRegistry');
-const { getLastLocationUpdateAt } = require('../sockets/handlers/tracking.handler');
+const { getLastLocationUpdateAt, getLastKnownLocation } = require('../sockets/handlers/tracking.handler');
 const { deriveDonationFlags, computeDonationHealthScore } = require('../utils/donationHealthScore');
 const auditService = require('./audit.service');
 const notificationService = require('./notification.service');
@@ -638,8 +638,17 @@ async function getLiveOperations() {
     })
   );
 
+  const missionsWithLocation = missions.map((mission) => {
+    const personId = mission.assignment_mode === 'team' ? mission.assigned_member_id : mission.volunteer_id;
+    const lastKnownLocation = personId ? getLastKnownLocation(personId, mission.id) : null;
+    return {
+      ...mission,
+      lastKnownLocation,
+    };
+  });
+
   return {
-    missions,
+    missions: missionsWithLocation,
     volunteers: Array.from(volunteerMap.values()),
     teams: teams.filter(Boolean),
   };

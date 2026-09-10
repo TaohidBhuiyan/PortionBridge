@@ -155,14 +155,14 @@ function registerTrackingHandlers(_io, socket) {
 
       const throttleKey = `${socket.user.id}:${donationId}`;
       const now = Date.now();
-      const last = lastUpdateAt.get(throttleKey) || 0;
-      if (now - last < MIN_UPDATE_INTERVAL_MS) {
+      const last = lastUpdateAt.get(throttleKey);
+      if (last && now - last.timestamp < MIN_UPDATE_INTERVAL_MS) {
         // Not an error — the client is just updating faster than the
         // server-side floor allows. Ack success without rebroadcasting,
         // so the client doesn't treat this as a failure.
         return ack(socketSuccess('Update throttled.', { donationId, throttled: true }));
       }
-      lastUpdateAt.set(throttleKey, now);
+      lastUpdateAt.set(throttleKey, { latitude, longitude, timestamp: now });
 
       const roomName = getDonationRoomName(donationId);
       const timestamp = new Date().toISOString();
@@ -226,7 +226,20 @@ function registerTrackingHandlers(_io, socket) {
  * @returns {number|null}
  */
 function getLastLocationUpdateAt(userId, donationId) {
+  const entry = lastUpdateAt.get(`${userId}:${donationId}`);
+  return entry ? entry.timestamp : null;
+}
+
+/**
+ * Returns the full last known location object for (userId, donationId),
+ * or null if none has been received this process's lifetime. Used by
+ * admin.service.js's Live Operations snapshot to seed initial positions.
+ * @param {number} userId
+ * @param {number} donationId
+ * @returns {{latitude, longitude, timestamp}|null}
+ */
+function getLastKnownLocation(userId, donationId) {
   return lastUpdateAt.get(`${userId}:${donationId}`) || null;
 }
 
-module.exports = { registerTrackingHandlers, getLastLocationUpdateAt };
+module.exports = { registerTrackingHandlers, getLastLocationUpdateAt, getLastKnownLocation };

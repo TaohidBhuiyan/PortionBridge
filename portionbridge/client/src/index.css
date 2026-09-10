@@ -11,37 +11,45 @@
 
 /* Dashboard Design System Tokens */
 :root {
-  /* Dashboard primary colors (sky blue) - separate from landing page purple */
-  --pb-primary: #0284c7;
-  --pb-primary-hover: #0369a1;
-  --pb-primary-soft: #f0f9ff;
-  --pb-page: #f8fafc;
-  --pb-surface: #ffffff;
-  --pb-surface-hover: #f1f5f9;
-  --pb-border: #e2e8f0;
-  --pb-text-primary: #0f172a;
-  --pb-text-secondary: #475569;
-  --pb-text-muted: #64748b;
-  --pb-success: #10b981;
-  --pb-success-soft: #ecfdf5;
-  --pb-warning: #f59e0b;
-  --pb-warning-soft: #fffbeb;
-  --pb-danger: #ef4444;
-  --pb-danger-soft: #fef2f2;
-  --pb-info: #0ea5e9;
-  --pb-info-soft: #f0f9ff;
+  /* Dashboard primary colors (violet-led, aligned with landing page brand) */
+  --pb-primary: oklch(60.6% 0.25 292.717);
+  --pb-primary-hover: oklch(55% 0.24 292.717);
+  --pb-primary-soft: oklch(96% 0.04 292.717);
+  --pb-page: oklch(98% 0.01 292.717);
+  --pb-surface: oklch(100% 0 0);
+  --pb-surface-hover: oklch(96% 0.01 292.717);
+  --pb-border: oklch(90% 0.01 292.717);
+  --pb-text-primary: oklch(20% 0.02 292.717);
+  --pb-text-secondary: oklch(45% 0.01 292.717);
+  --pb-text-muted: oklch(60% 0.01 292.717);
+  --pb-success: oklch(65% 0.18 145);
+  --pb-success-soft: oklch(96% 0.04 145);
+  --pb-warning: oklch(75% 0.15 85);
+  --pb-warning-soft: oklch(97% 0.03 85);
+  --pb-danger: oklch(60% 0.22 25);
+  --pb-danger-soft: oklch(96% 0.04 25);
+  --pb-info: oklch(65% 0.18 250);
+  --pb-info-soft: oklch(96% 0.04 250);
+
+  /* Per-role accent colors */
+  --pb-donor: oklch(65% 0.2 340);
+  --pb-donor-soft: oklch(96% 0.04 340);
+  --pb-volunteer: oklch(62% 0.18 250);
+  --pb-volunteer-soft: oklch(96% 0.04 250);
+  --pb-admin: oklch(60% 0.22 292.717);
+  --pb-admin-soft: oklch(95% 0.04 292.717);
 
   /* PHASE 7: additional surface/elevation tokens for the premium system.
      These extend (not replace) the tokens above — elevated/modal are for
      content that should sit visually above the base card layer (popovers,
      dropdowns, dialogs); sidebar/navbar let chrome differ subtly from
      page content if a theme ever wants that, while defaulting to --pb-surface. */
-  --pb-elevated: #ffffff;
-  --pb-modal: #ffffff;
-  --pb-sidebar: #ffffff;
-  --pb-navbar: #ffffff;
-  --pb-input: #ffffff;
-  --pb-border-focus: #0284c7;
+  --pb-elevated: oklch(100% 0 0);
+  --pb-modal: oklch(100% 0 0);
+  --pb-sidebar: oklch(99% 0.005 292.717);
+  --pb-navbar: oklch(99% 0.005 292.717);
+  --pb-input: oklch(100% 0 0);
+  --pb-border-focus: oklch(60.6% 0.25 292.717);
   --pb-radius-pill: 9999px;
   --pb-shadow-subtle: 0 1px 2px 0 rgb(15 23 42 / 0.04);
   --pb-shadow-card: 0 1px 3px 0 rgb(15 23 42 / 0.06), 0 1px 2px -1px rgb(15 23 42 / 0.06);
@@ -50,32 +58,40 @@
 }
 
 .dark {
-  --pb-primary: #38bdf8;
-  --pb-primary-hover: #0ea5e9;
-  --pb-primary-soft: rgba(56, 189, 248, 0.08);
-  --pb-page: #0b0f19;
-  --pb-surface: #151e2e;
-  --pb-surface-hover: #1f2a3f;
-  --pb-border: rgba(148, 163, 184, 0.08);
-  --pb-text-primary: #f8fafc;
-  --pb-text-secondary: #cbd5e1;
-  --pb-text-muted: #94a3b8;
-  --pb-success: #34d399;
-  --pb-success-soft: rgba(52, 211, 153, 0.08);
-  --pb-warning: #fbbf24;
-  --pb-warning-soft: rgba(251, 191, 36, 0.08);
-  --pb-danger: #f87171;
-  --pb-danger-soft: rgba(248, 113, 113, 0.08);
-  --pb-info: #38bdf8;
-  --pb-info-soft: rgba(56, 189, 248, 0.08);
+  --pb-primary: oklch(70% 0.22 292.717);
+  --pb-primary-hover: oklch(75% 0.23 292.717);
+  --pb-primary-soft: oklch(30% 0.08 292.717);
+  --pb-page: oklch(15% 0.02 292.717);
+  --pb-surface: oklch(20% 0.03 292.717);
+  --pb-surface-hover: oklch(25% 0.04 292.717);
+  --pb-border: oklch(35% 0.03 292.717);
+  --pb-text-primary: oklch(95% 0.01 292.717);
+  --pb-text-secondary: oklch(75% 0.01 292.717);
+  --pb-text-muted: oklch(60% 0.01 292.717);
+  --pb-success: oklch(70% 0.2 145);
+  --pb-success-soft: oklch(30% 0.08 145);
+  --pb-warning: oklch(75% 0.18 85);
+  --pb-warning-soft: oklch(30% 0.08 85);
+  --pb-danger: oklch(65% 0.24 25);
+  --pb-danger-soft: oklch(30% 0.08 25);
+  --pb-info: oklch(70% 0.2 250);
+  --pb-info-soft: oklch(30% 0.08 250);
+
+  /* Per-role accent colors in dark mode */
+  --pb-donor: oklch(70% 0.22 340);
+  --pb-donor-soft: oklch(30% 0.08 340);
+  --pb-volunteer: oklch(68% 0.2 250);
+  --pb-volunteer-soft: oklch(30% 0.08 250);
+  --pb-admin: oklch(65% 0.24 292.717);
+  --pb-admin-soft: oklch(30% 0.08 292.717);
 
   /* PHASE 7: dark-mode surface/elevation tokens */
-  --pb-elevated: #1c2637;
-  --pb-modal: #17202f;
-  --pb-sidebar: #10182a;
-  --pb-navbar: #10182a;
-  --pb-input: #131c2c;
-  --pb-border-focus: #38bdf8;
+  --pb-elevated: oklch(25% 0.04 292.717);
+  --pb-modal: oklch(22% 0.04 292.717);
+  --pb-sidebar: oklch(18% 0.03 292.717);
+  --pb-navbar: oklch(18% 0.03 292.717);
+  --pb-input: oklch(20% 0.03 292.717);
+  --pb-border-focus: oklch(70% 0.22 292.717);
   --pb-shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.2);
   --pb-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
   --pb-shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3);
@@ -112,6 +128,14 @@
   --color-danger-soft: var(--pb-danger-soft);
   --color-info: var(--pb-info);
   --color-info-soft: var(--pb-info-soft);
+
+  /* Per-role accent colors */
+  --color-donor: var(--pb-donor);
+  --color-donor-soft: var(--pb-donor-soft);
+  --color-volunteer: var(--pb-volunteer);
+  --color-volunteer-soft: var(--pb-volunteer-soft);
+  --color-admin: var(--pb-admin);
+  --color-admin-soft: var(--pb-admin-soft);
 
   /* PHASE 7: elevation/surface tokens mapped to Tailwind utilities
      (bg-elevated, bg-modal, bg-sidebar, bg-navbar, bg-input, border-focus,
@@ -461,6 +485,14 @@ html {
   --color-danger-soft: var(--pb-danger-soft);
   --color-info: var(--pb-info);
   --color-info-soft: var(--pb-info-soft);
+
+  /* Per-role accent colors in dark mode */
+  --color-donor: var(--pb-donor);
+  --color-donor-soft: var(--pb-donor-soft);
+  --color-volunteer: var(--pb-volunteer);
+  --color-volunteer-soft: var(--pb-volunteer-soft);
+  --color-admin: var(--pb-admin);
+  --color-admin-soft: var(--pb-admin-soft);
 }
 
 body {

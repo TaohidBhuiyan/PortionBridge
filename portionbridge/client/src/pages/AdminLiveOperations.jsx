@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
 import { SkeletonCard } from '../components/dashboard/skeletons';
-import VolunteerMap from '../components/dashboard/donor/VolunteerMap';
+import VolunteerMap, { escapeHtml } from '../components/dashboard/donor/VolunteerMap';
 import { StatusBadge } from '../components/donation/StatusBadge';
 import { useAuthSocket } from '../context/SocketContext';
 import { calculateETA, formatETA } from '../hooks/useDonationTracking';
@@ -61,13 +61,27 @@ export function AdminLiveOperations() {
     setError(null);
     const result = await adminApi.getLiveOperations();
     if (result.success) {
-      setMissions(result.data?.missions || []);
+      const missionsData = result.data?.missions || [];
+      setMissions(missionsData);
       const onlineMap = {};
       (result.data?.volunteers || []).forEach((v) => { onlineMap[v.id] = v.isOnline; });
       setVolunteerOnlineSnapshot(onlineMap);
       const rosterMap = {};
       (result.data?.teams || []).forEach((t) => { rosterMap[t.id] = t; });
       setTeamsRoster(rosterMap);
+
+      // Seed initial positions from mission lastKnownLocation
+      const initialPositions = {};
+      missionsData.forEach((mission) => {
+        if (mission.lastKnownLocation?.latitude && mission.lastKnownLocation?.longitude) {
+          initialPositions[mission.id] = {
+            latitude: mission.lastKnownLocation.latitude,
+            longitude: mission.lastKnownLocation.longitude,
+            timestamp: mission.lastKnownLocation.timestamp,
+          };
+        }
+      });
+      setPositions(initialPositions);
     } else {
       setError(result.error);
     }
@@ -154,7 +168,7 @@ export function AdminLiveOperations() {
           ? haversineDistanceKm(pos.latitude, pos.longitude, m.pickup_latitude, m.pickup_longitude).toFixed(1)
           : '—',
         donationId: m.id,
-        popupHtml: `<strong>${m.volunteer_name || 'Volunteer'}</strong><br/>${m.status.replace(/_/g, ' ')}`,
+        popupHtml: `<strong>${escapeHtml(m.volunteer_name || 'Volunteer')}</strong><br/>${escapeHtml(m.status.replace(/_/g, ' '))}`,
       };
     }), [individualMissions, positions, volunteerOnlineSnapshot]);
 
@@ -167,7 +181,7 @@ export function AdminLiveOperations() {
         ...pos,
         name: roster?.name || 'Team',
         donationId: m.id,
-        popupHtml: `<strong>${roster?.name || 'Team'}</strong><br/>${m.assigned_member_name || ''}`,
+        popupHtml: `<strong>${escapeHtml(roster?.name || 'Team')}</strong><br/>${escapeHtml(m.assigned_member_name || '')}`,
       };
     }), [teamMissions, positions, teamsRoster]);
 
@@ -183,7 +197,7 @@ export function AdminLiveOperations() {
         type: m.assignment_mode === 'team' ? 'team' : 'volunteer',
         donationId: m.id,
       }),
-      popupHtml: `<strong>Pickup — ${m.donor_name || 'Donor'}</strong><br/>${m.category}`,
+      popupHtml: `<strong>Pickup — ${escapeHtml(m.donor_name || 'Donor')}</strong><br/>${escapeHtml(m.category)}`,
     })), [missions]);
 
   const handleMarkerClick = (marker) => {

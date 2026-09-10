@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, History, Search, ChevronLeft, ChevronRight, Utensils, Shirt, Package, MapPin, Calendar } from 'lucide-react';
+import { History, Search, ChevronLeft, ChevronRight, Utensils, Shirt, Package, MapPin, Calendar } from 'lucide-react';
+import { DashboardLayout } from '../components/dashboard';
 import { donationApi } from '../services/donationApi';
 import { StatusBadge } from '../components/donation/StatusBadge';
 import { EmptyState } from '../components/dashboard/EmptyState';
@@ -114,26 +115,20 @@ export function VolunteerHistory() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-        >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-            <History size={20} className="text-dash-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Mission History</h1>
-            <p className="text-text-secondary text-sm mt-0.5">All the missions you've been assigned.</p>
+    <DashboardLayout>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+              <History size={20} className="text-dash-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">Mission History</h1>
+              <p className="text-text-secondary text-sm mt-0.5">All the missions you've been assigned.</p>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Summary */}
       {summaryLoading ? (
@@ -283,5 +278,6 @@ export function VolunteerHistory() {
         </>
       )}
     </div>
+    </DashboardLayout>
   );
 }

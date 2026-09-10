@@ -8,7 +8,7 @@ import { Maximize2, Navigation, Layers } from 'lucide-react';
  * user-controlled field (volunteer/team display names) going into a
  * popup string must go through this first.
  */
-function escapeHtml(value) {
+export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
     '<': '&lt;',
@@ -22,17 +22,20 @@ function escapeHtml(value) {
  * Volunteer Map Component
  * Displays volunteers and teams on an interactive map using Leaflet
  */
-const VolunteerMap = ({ 
-  userLocation, 
-  volunteers = [], 
-  teams = [], 
-  onVolunteerClick, 
+const VolunteerMap = ({
+  userLocation,
+  volunteers = [],
+  teams = [],
+  markers = [],
+  routeLine = null,
+  onVolunteerClick,
   onTeamClick,
-  className = '' 
+  className = ''
 }) => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
+  const routeLineRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
 
@@ -96,6 +99,12 @@ const VolunteerMap = ({
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
+
+    // Clear existing route line
+    if (routeLineRef.current) {
+      routeLineRef.current.remove();
+      routeLineRef.current = null;
+    }
 
     const L = window.L;
     const map = mapInstanceRef.current;
@@ -228,12 +237,68 @@ const VolunteerMap = ({
       }
     });
 
+    // Add custom markers (pickup pins)
+    markers.forEach(markerData => {
+      if (markerData.latitude && markerData.longitude) {
+        const pinColor = markerData.color || '#f59e0b';
+        const pinIcon = L.divIcon({
+          className: 'custom-pin-marker',
+          html: `
+            <div style="
+              width: 28px;
+              height: 28px;
+              background: ${pinColor};
+              border: 3px solid white;
+              border-radius: 50% 50% 50% 0;
+              transform: rotate(-45deg);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 12px;
+            ">
+              📍
+            </div>
+          `,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28],
+        });
+
+        const marker = L.marker([markerData.latitude, markerData.longitude], {
+          icon: pinIcon,
+        }).addTo(map);
+
+        if (markerData.popupHtml) {
+          marker.bindPopup(markerData.popupHtml);
+        }
+
+        if (markerData.onClick) {
+          marker.on('click', () => markerData.onClick(markerData));
+        }
+
+        markersRef.current.push(marker);
+      }
+    });
+
+    // Add route line if provided
+    if (routeLine && routeLine.length >= 2) {
+      const latLngs = routeLine.map(point => [point.latitude, point.longitude]);
+      const polyline = L.polyline(latLngs, {
+        color: '#3b82f6',
+        weight: 4,
+        opacity: 0.7,
+        dashArray: '10, 10',
+      }).addTo(map);
+
+      routeLineRef.current = polyline;
+    }
+
     // Fit bounds to show all markers
     if (markersRef.current.length > 0) {
       const group = L.featureGroup(markersRef.current);
       map.fitBounds(group.getBounds().pad(0.1));
     }
-  }, [mapLoaded, userLocation, volunteers, teams, onVolunteerClick, onTeamClick]);
+  }, [mapLoaded, userLocation, volunteers, teams, markers, routeLine, onVolunteerClick, onTeamClick]);
 
   const centerOnUser = () => {
     if (mapInstanceRef.current && userLocation?.latitude && userLocation?.longitude) {

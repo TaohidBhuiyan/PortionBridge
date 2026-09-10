@@ -38,7 +38,7 @@ export function Avatar({ item, className, tone = "brand" }) {
 
   return (
     <img
-      src={item.photo}
+      src={photoUrl}
       alt={item.name}
       onError={() => setBroken(true)}
       className={`${className} rounded-full object-cover shrink-0`}

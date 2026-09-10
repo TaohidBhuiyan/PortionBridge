@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Map as MapIcon, List } from 'lucide-react';
+import { Map as MapIcon, List } from 'lucide-react';
+import { DashboardLayout } from '../components/dashboard';
 import LocationPermission from '../components/dashboard/donor/LocationPermission';
 import CurrentLocation from '../components/dashboard/donor/CurrentLocation';
 import VolunteerCard from '../components/dashboard/donor/VolunteerCard';
@@ -25,7 +25,6 @@ const FILTER_DEBOUNCE_MS = 400;
  * Main page for donors to discover nearby volunteers and teams
  */
 const VolunteerDiscoveryPage = () => {
-  const navigate = useNavigate();
   
   // Location state
   const [location, setLocation] = useState(null);
@@ -265,7 +264,7 @@ const VolunteerDiscoveryPage = () => {
   // Show location permission modal if not granted
   if (locationPermission === 'unknown' || locationPermission === 'prompt') {
     return (
-      <div className="min-h-screen bg-page">
+      <DashboardLayout>
         <LocationPermission
           onLocationGranted={handleLocationGranted}
           onLocationDenied={handleLocationDenied}
@@ -277,31 +276,19 @@ const VolunteerDiscoveryPage = () => {
           onClose={() => setShowManualLocationModal(false)}
           onSubmit={handleManualLocationSubmit}
         />
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-page">
-      {/* Header */}
-      <div className="bg-surface border-b border-border sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-surface-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                <ArrowLeft className="w-5 h-5 text-text-secondary" />
-              </button>
-              <div>
-                <h1 className="text-xl font-semibold text-text-primary">
-                  Discover Volunteers
-                </h1>
-                <p className="text-xs text-text-secondary">
-                  Find nearby volunteers and teams
-                </p>
-              </div>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary mb-1">Discover Volunteers</h1>
+              <p className="text-text-secondary text-sm">Find nearby volunteers and teams</p>
             </div>
 
             {/* View Mode Toggle */}
@@ -348,10 +335,6 @@ const VolunteerDiscoveryPage = () => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Location Display */}
         <div className="mb-6">
           <CurrentLocation
@@ -378,7 +361,8 @@ const VolunteerDiscoveryPage = () => {
             viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
           }`}>
             {/* Left Column - Filters & List */}
-            <div className="space-y-6">
+            {viewMode !== 'map' && (
+              <div className="space-y-6">
               {/* Filters */}
               <DiscoveryFilters
                 filters={filters}
@@ -459,6 +443,30 @@ const VolunteerDiscoveryPage = () => {
                 </div>
               )}
             </div>
+            )}
+
+            {/* Map-only mode states */}
+            {viewMode === 'map' && (
+              <div className="space-y-6">
+                {/* Loading State */}
+                {loading && (
+                  <DiscoveryEmptyStates type="loading" />
+                )}
+
+                {/* Error State */}
+                {error && !loading && (
+                  <ErrorState error={error} onRetry={() => fetchDiscoveryData(location, debouncedFilters)} />
+                )}
+
+                {/* No Results State */}
+                {!loading && !error && volunteers.length === 0 && teams.length === 0 && (
+                  <NoVolunteersState
+                    onExpandRadius={handleExpandRadius}
+                    onResetFilters={handleResetFilters}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Right Column - Map */}
             {(viewMode === 'map' || viewMode === 'split') && (
@@ -482,7 +490,7 @@ const VolunteerDiscoveryPage = () => {
         onClose={() => setShowManualLocationModal(false)}
         onSubmit={handleManualLocationSubmit}
       />
-    </div>
+    </DashboardLayout>
   );
 };
 

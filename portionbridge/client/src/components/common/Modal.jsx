@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Icon } from "./Icon";
 
 /**
@@ -14,7 +15,7 @@ export function Modal({ title, onClose, children }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ background: "rgba(20,12,28,0.55)", animation: "fadeIn 0.2s ease" }}
@@ -35,6 +36,7 @@ export function Modal({ title, onClose, children }) {
         <h3 className="text-lg font-semibold text-text-primary mb-5 pr-8">{title}</h3>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

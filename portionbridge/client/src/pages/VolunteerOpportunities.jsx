@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Compass } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { DashboardLayout } from '../components/dashboard';
 import { donationApi } from '../services/donationApi';
 import { DonationCard } from '../components/donation/DonationCard';
 import { EmptyState } from '../components/dashboard/EmptyState';
@@ -38,7 +38,6 @@ const PAGE_SIZE = 9;
  * out of scope.
  */
 export function VolunteerOpportunities() {
-  const navigate = useNavigate();
 
   const [donations, setDonations] = useState([]);
   const [meta, setMeta] = useState(null);
@@ -150,30 +149,24 @@ export function VolunteerOpportunities() {
   const totalPages = meta?.totalPages || (meta?.totalItems ? Math.ceil(meta.totalItems / PAGE_SIZE) : 1);
 
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-4"
-        >
-          <ArrowLeft size={20} />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-            <Compass size={20} className="text-dash-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
-              Nearby Opportunities
-            </h1>
-            <p className="text-text-secondary text-sm mt-0.5">
-              Browse available donation requests and accept one to start a mission.
-            </p>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
+              <Compass size={20} className="text-dash-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">
+                Nearby Opportunities
+              </h1>
+              <p className="text-text-secondary text-sm mt-0.5">
+                Browse available donation requests and accept one to start a mission.
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Search and Filters */}
       <div className="bg-surface rounded-xl shadow-pb-card border border-border p-4 mb-6">
@@ -296,5 +289,6 @@ export function VolunteerOpportunities() {
         </>
       )}
     </div>
+    </DashboardLayout>
   );
 }

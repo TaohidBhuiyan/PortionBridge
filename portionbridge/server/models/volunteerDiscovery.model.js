@@ -278,8 +278,8 @@ async function findNearbyTeams({
     INNER JOIN team_members tm ON t.id = tm.team_id
     INNER JOIN users u ON t.leader_id = u.id
     WHERE ${whereClause}
-    HAVING distance <= :radius
     GROUP BY t.id
+    HAVING distance <= :radius
     ORDER BY distance ASC
     LIMIT :limit OFFSET :offset`,
     { ...params, limit, offset }

@@ -64,7 +64,7 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
 
 function GroupLabel({ children, collapsed }) {
   return !collapsed ? (
-    <p className="px-3 mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-text-secondary first:mt-0">
+    <p className="select-none cursor-default px-3 mt-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-muted/70 first:mt-0">
       {children}
     </p>
   ) : (
