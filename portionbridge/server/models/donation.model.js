@@ -589,8 +589,21 @@ function buildHistoryFilter({ ownerColumn, ownerId, status, category, search }) 
   const params = { ownerId };
 
   if (status) {
-    conditions.push(`status = :status`);
-    params.status = status;
+    const statuses = String(status)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (statuses.length === 1) {
+      conditions.push(`status = :status`);
+      params.status = statuses[0];
+    } else if (statuses.length > 1) {
+      const placeholders = statuses.map((_, i) => `:status_${i}`);
+      conditions.push(`status IN (${placeholders.join(', ')})`);
+      statuses.forEach((s, i) => {
+        params[`status_${i}`] = s;
+      });
+    }
   }
 
   if (category) {

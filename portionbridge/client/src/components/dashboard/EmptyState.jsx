@@ -46,7 +46,7 @@ export function EmptyState({
         {title}
       </h3>
 
-      <p className={`${classes.description} text-text-secondary max-w-sm mb-4`}>
+      <p className={`${classes.description} text-text-secondary max-w-[22rem] w-full mx-auto mb-4`}>
         {description}
       </p>
 

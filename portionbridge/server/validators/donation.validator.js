@@ -542,8 +542,14 @@ const historyQueryValidationRules = [
   query('status')
     .optional()
     .trim()
-    .isIn(Object.values(DONATION_STATUS))
-    .withMessage(`status must be one of: ${Object.values(DONATION_STATUS).join(', ')}.`),
+    .custom((value) => {
+      const allowed = Object.values(DONATION_STATUS);
+      const parts = value.split(',').map((s) => s.trim()).filter(Boolean);
+      if (parts.length === 0 || !parts.every((s) => allowed.includes(s))) {
+        throw new Error(`status must be one or more of: ${allowed.join(', ')}.`);
+      }
+      return true;
+    }),
 
   query('category')
     .optional()

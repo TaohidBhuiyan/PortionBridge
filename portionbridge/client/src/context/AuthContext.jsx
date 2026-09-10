@@ -236,9 +236,28 @@ export function AuthProvider({ children }) {
   const verifyEmail = async (token) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/verify-email`, { token });
-      return { success: true, message: res.data.message };
+      return {
+        success: true,
+        message: res.data.message,
+        alreadyVerified: Boolean(res.data.data?.alreadyVerified),
+      };
     } catch (error) {
       const message = error.response?.data?.message || "Email verification failed.";
+      const code = error.response?.data?.code || null;
+      return { success: false, error: message, code };
+    }
+  };
+
+  /**
+   * Resend email verification link
+   * @param {string} email - User email address
+   */
+  const resendVerification = async (email) => {
+    try {
+      const res = await axios.post(`${API_BASE}/auth/resend-verification`, { email });
+      return { success: true, message: res.data.message };
+    } catch (error) {
+      const message = error.response?.data?.message || "Failed to resend verification email.";
       return { success: false, error: message };
     }
   };
@@ -267,6 +286,7 @@ export function AuthProvider({ children }) {
     register,
     googleLogin,
     verifyEmail,
+    resendVerification,
     updateUser,
     isAuthenticated: !!user,
     userRole: user?.role,

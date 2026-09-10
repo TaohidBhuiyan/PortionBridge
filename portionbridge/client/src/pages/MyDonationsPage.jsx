@@ -16,6 +16,7 @@ import { DonationCard } from '../components/donation/DonationCard';
 import { DonationTable } from '../components/donation/DonationTable';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
+import { DashboardLayout } from '../components/dashboard';
 import { Button } from '../components/common/Button';
 import { Package } from 'lucide-react';
 
@@ -157,7 +158,8 @@ export function MyDonationsPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto pb-12">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -442,7 +444,8 @@ export function MyDonationsPage() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

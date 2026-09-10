@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  CheckCircle, 
+  XCircle, 
+  Loader2, 
+  Copy, 
+  Check, 
+  Utensils, 
+  Shirt, 
+  ChevronRight
+} from 'lucide-react';
+import { DashboardLayout } from '../components/dashboard';
 import { Stepper } from '../components/donation/Stepper';
 import { Step1BasicInfo } from '../components/donation/Step1BasicInfo';
 import { Step2DonationDetails } from '../components/donation/Step2DonationDetails';
@@ -10,46 +23,107 @@ import { Step5Review } from '../components/donation/Step5Review';
 import { Step6Assignment } from '../components/donation/Step6Assignment';
 import { donationApi, transformFormDataToApi } from '../services/donationApi';
 
+const stepVariants = {
+  enter: (dir) => ({
+    x: dir > 0 ? 25 : -25,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.26, ease: 'easeOut' },
+  },
+  exit: (dir) => ({
+    x: dir > 0 ? -25 : 25,
+    opacity: 0,
+    transition: { duration: 0.18, ease: 'easeIn' },
+  }),
+};
+
 /**
- * DonationFormPage - Multi-step donation form
- * Supports Food and Clothes donations with validation and auto-save
- * Supports both create and edit modes
+ * DonationFormPage - Multi-step donation creation & edit flow
+ * Ultra-premium design integrated with DashboardLayout, animated transitions,
+ * real-time auto-save indicator, and celebratory verification feedback.
  */
 export function DonationFormPage() {
   const [searchParams] = useSearchParams();
   const editId = searchParams.get('edit');
-  const isEditMode = !!editId;
+  const isEditMode = Boolean(editId);
 
   const STEPS = [
-    { id: 'basic', title: 'Basic Information' },
-    { id: 'details', title: 'Donation Details' },
-    { id: 'pickup', title: 'Pickup Information' },
-    { id: 'images', title: 'Images' },
+    { id: 'basic', title: 'Basic Info' },
+    { id: 'details', title: 'Details' },
+    { id: 'pickup', title: 'Pickup' },
+    { id: 'images', title: 'Photos' },
     { id: 'assignment', title: 'Assignment' },
     { id: 'review', title: isEditMode ? 'Review & Update' : 'Review & Submit' },
   ];
 
   const [currentStep, setCurrentStep] = useState(0);
-  // BUG FIX: the donor sidebar has separate "Donate Food" and "Donate
-  // Clothes" links that both pointed at this same route with no way to
-  // tell them apart — clicking either produced the identical blank form.
-  // They now carry ?category=food / ?category=clothes (see Sidebar.jsx),
-  // which just pre-fills Step1BasicInfo's existing category field.
+  const [direction, setDirection] = useState(1);
+
   const [formData, setFormData] = useState(() => {
     const initialCategory = searchParams.get('category');
     return initialCategory === 'food' || initialCategory === 'clothes'
       ? { category: initialCategory }
       : {};
   });
+
   const [stepValidation, setStepValidation] = useState([false, false, false, false, false, true]);
   const [errors, setErrors] = useState({});
-  const [, setIsSaving] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({});
   const [submissionResult, setSubmissionResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const navigate = useNavigate();
+
+  const categoryParam = searchParams.get('category');
+
+  // React to URL category param changes (e.g. from sidebar clicks or deep links)
+  useEffect(() => {
+    if (categoryParam === 'food' || categoryParam === 'clothes') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFormData((prev) => {
+        if (prev.category === categoryParam) return prev;
+
+        const updated = { ...prev, category: categoryParam };
+        if (categoryParam === 'clothes') {
+          if (!prev.quantityUnit || ['plate', 'kg', 'gram', 'liter'].includes(prev.quantityUnit)) {
+            updated.quantityUnit = 'piece';
+          }
+          delete updated.foodType;
+          delete updated.foodName;
+          delete updated.numberOfServings;
+          delete updated.ingredients;
+          delete updated.allergens;
+          delete updated.storageRequirement;
+          delete updated.isVegetarian;
+          delete updated.isHalal;
+          delete updated.expiryDate;
+        } else {
+          if (!prev.quantityUnit || ['piece'].includes(prev.quantityUnit)) {
+            updated.quantityUnit = 'plate';
+          }
+          delete updated.clothingCategory;
+          delete updated.gender;
+          delete updated.ageGroup;
+          delete updated.itemCondition;
+          delete updated.brand;
+          delete updated.size;
+          delete updated.color;
+          delete updated.season;
+        }
+        return updated;
+      });
+      setCurrentStep(0);
+      setStepValidation([false, false, false, false, false, true]);
+      setErrors({});
+    }
+  }, [categoryParam]);
 
   const loadDonationForEdit = useCallback(async () => {
     setLoading(true);
@@ -57,7 +131,6 @@ export function DonationFormPage() {
       const result = await donationApi.getDonationDetails(editId);
       if (result.success) {
         const donation = result.data.donation;
-        // Transform API data to form format
         const formInitialData = {
           title: donation.title,
           category: donation.category,
@@ -94,7 +167,7 @@ export function DonationFormPage() {
           images: donation.images || [],
         };
         setFormData(formInitialData);
-        setStepValidation([true, true, true, true, true]);
+        setStepValidation([true, true, true, true, true, true]);
       } else {
         alert(result.error || 'Failed to load donation');
         navigate('/donor/my-donations');
@@ -107,33 +180,60 @@ export function DonationFormPage() {
     }
   }, [editId, navigate]);
 
-  // Load donation data if in edit mode
+  // Load donation data if in edit mode, else load draft
   useEffect(() => {
     if (isEditMode && editId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadDonationForEdit();
     } else {
-      // Load saved form data from localStorage on mount (only for create mode)
       const savedData = localStorage.getItem('donationFormDraft');
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
+          if (categoryParam && (categoryParam === 'food' || categoryParam === 'clothes') && parsed.category !== categoryParam) {
+            parsed.category = categoryParam;
+            if (categoryParam === 'clothes') {
+              parsed.quantityUnit = 'piece';
+              delete parsed.foodType;
+              delete parsed.foodName;
+              delete parsed.numberOfServings;
+              delete parsed.ingredients;
+              delete parsed.allergens;
+              delete parsed.storageRequirement;
+              delete parsed.isVegetarian;
+              delete parsed.isHalal;
+              delete parsed.expiryDate;
+            } else {
+              parsed.quantityUnit = 'plate';
+              delete parsed.clothingCategory;
+              delete parsed.gender;
+              delete parsed.ageGroup;
+              delete parsed.itemCondition;
+              delete parsed.brand;
+              delete parsed.size;
+              delete parsed.color;
+              delete parsed.season;
+            }
+          }
           setFormData(parsed);
           setHasUnsavedChanges(true);
+          setLastSavedTime(new Date());
         } catch {
-          // Failed to load saved form data
+          // Ignore parse errors
         }
       }
     }
-  }, [isEditMode, editId, loadDonationForEdit]);
+  }, [isEditMode, editId, loadDonationForEdit, categoryParam]);
 
   // Auto-save form data to localStorage (only for create mode)
   useEffect(() => {
     if (hasUnsavedChanges && !isEditMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setIsSaving(true);
       const saveTimer = setTimeout(() => {
         localStorage.setItem('donationFormDraft', JSON.stringify(formData));
-        setIsSaving(true);
-        setTimeout(() => setIsSaving(false), 500);
+        setIsSaving(false);
+        setLastSavedTime(new Date());
       }, 1000);
 
       return () => clearTimeout(saveTimer);
@@ -153,12 +253,12 @@ export function DonationFormPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [hasUnsavedChanges]);
 
-  // Validate current step
+  // Validate step
   const validateStep = useCallback((stepIndex) => {
     const newErrors = {};
     const data = formData;
 
-    // Step 1 validation
+    // Step 1: Basic Info
     if (stepIndex === 0) {
       if (!data.title?.trim()) {
         newErrors.title = 'Title is required';
@@ -167,7 +267,7 @@ export function DonationFormPage() {
       }
 
       if (!data.category) {
-        newErrors.category = 'Category is required';
+        newErrors.category = 'Donation category is required';
       }
 
       if (!data.description?.trim()) {
@@ -182,38 +282,28 @@ export function DonationFormPage() {
 
       if (!data.quantityUnit) {
         newErrors.quantityUnit = 'Unit is required';
+      } else if (data.category === 'clothes' && !['piece', 'box', 'packet'].includes(data.quantityUnit)) {
+        newErrors.quantityUnit = 'Please select a clothing unit (Piece, Box, or Packet)';
       }
     }
 
-    // Step 2 validation
+    // Step 2: Details
     if (stepIndex === 1) {
       if (data.category === 'food') {
-        if (!data.foodType) {
-          newErrors.foodType = 'Food type is required';
-        }
-        if (!data.foodName?.trim()) {
-          newErrors.foodName = 'Food name is required';
-        }
-        if (!data.storageRequirement) {
-          newErrors.storageRequirement = 'Storage requirement is required';
-        }
+        if (!data.foodType) newErrors.foodType = 'Food type is required';
+        if (!data.foodName?.trim()) newErrors.foodName = 'Food name is required';
+        if (!data.storageRequirement) newErrors.storageRequirement = 'Storage requirement is required';
       } else if (data.category === 'clothes') {
-        if (!data.clothingCategory) {
-          newErrors.clothingCategory = 'Clothing category is required';
-        }
-        if (!data.gender) {
-          newErrors.gender = 'Gender is required';
-        }
-        if (!data.ageGroup) {
-          newErrors.ageGroup = 'Age group is required';
-        }
-        if (!data.itemCondition) {
-          newErrors.itemCondition = 'Item condition is required';
-        }
+        if (!data.clothingCategory) newErrors.clothingCategory = 'Garment category is required';
+        if (!data.gender) newErrors.gender = 'Target gender is required';
+        if (!data.ageGroup) newErrors.ageGroup = 'Age group is required';
+        if (!data.itemCondition) newErrors.itemCondition = 'Item condition is required';
+      } else {
+        newErrors.category = 'Please select either Food or Clothes in Step 1';
       }
     }
 
-    // Step 3 validation
+    // Step 3: Pickup Info
     if (stepIndex === 2) {
       if (!data.savedAddressId && !data.pickupAddress?.fullAddress?.trim()) {
         newErrors.fullAddress = 'Address is required';
@@ -243,8 +333,8 @@ export function DonationFormPage() {
 
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
-    
-    setStepValidation(prev => {
+
+    setStepValidation((prev) => {
       const updated = [...prev];
       updated[stepIndex] = isValid;
       return updated;
@@ -253,17 +343,19 @@ export function DonationFormPage() {
     return isValid;
   }, [formData]);
 
-  // Handle form field change
   const handleFieldChange = (field, value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
     setHasUnsavedChanges(true);
-    
-    // Clear error for this field
+
+    if (field === 'category' && (value === 'food' || value === 'clothes')) {
+      navigate(`/donation/create?category=${value}`, { replace: true });
+    }
+
     if (errors[field]) {
-      setErrors(prev => {
+      setErrors((prev) => {
         const updated = { ...prev };
         delete updated[field];
         return updated;
@@ -271,44 +363,61 @@ export function DonationFormPage() {
     }
   };
 
-  // Handle step validation change from child components
-  const handleStepValidation = (isValid) => {
-    setStepValidation(prev => {
+  const handleStepValidation = useCallback((isValid) => {
+    setStepValidation((prev) => {
+      if (prev[currentStep] === isValid) return prev;
       const updated = [...prev];
       updated[currentStep] = isValid;
       return updated;
     });
-  };
+  }, [currentStep]);
 
-  // Handle step navigation
   const handleNext = () => {
     const isValid = validateStep(currentStep);
     if (isValid) {
-      setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+      setDirection(1);
+      setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 0));
+    setDirection(-1);
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleStepClick = (stepIndex) => {
     if (stepIndex <= currentStep || stepValidation[stepIndex]) {
+      setDirection(stepIndex > currentStep ? 1 : -1);
       setCurrentStep(stepIndex);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const handleEditStep = (stepIndex) => {
+    setDirection(stepIndex > currentStep ? 1 : -1);
     setCurrentStep(stepIndex);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Handle form submission
+  const handleClearDraft = () => {
+    if (window.confirm('Are you sure you want to clear your saved draft? All unsaved inputs will be reset.')) {
+      localStorage.removeItem('donationFormDraft');
+      setFormData({});
+      setHasUnsavedChanges(false);
+      setLastSavedTime(null);
+      setCurrentStep(0);
+      setStepValidation([false, false, false, false, false, true]);
+      setErrors({});
+    }
+  };
+
   const handleSubmit = async () => {
-    // Validate all steps before submission
     const allValid = stepValidation.every(Boolean);
     if (!allValid) {
-      // Go to first invalid step
-      const firstInvalidStep = stepValidation.findIndex(v => !v);
+      const firstInvalidStep = stepValidation.findIndex((v) => !v);
+      setDirection(firstInvalidStep > currentStep ? 1 : -1);
       setCurrentStep(firstInvalidStep);
       return;
     }
@@ -317,18 +426,14 @@ export function DonationFormPage() {
     setErrors({});
 
     try {
-      // Transform form data to API format
       const apiData = transformFormDataToApi(formData);
 
       if (isEditMode) {
-        // Update existing donation
         const updateResult = await donationApi.updateDonation(editId, apiData);
-
         if (!updateResult.success) {
-          // Handle validation errors from backend
           if (updateResult.errors) {
             const backendErrors = {};
-            Object.keys(updateResult.errors).forEach(field => {
+            Object.keys(updateResult.errors).forEach((field) => {
               backendErrors[field] = updateResult.errors[field].join(', ');
             });
             setErrors(backendErrors);
@@ -339,7 +444,6 @@ export function DonationFormPage() {
           return;
         }
 
-        // Show success result
         setSubmissionResult({
           success: true,
           donationId: editId,
@@ -347,14 +451,11 @@ export function DonationFormPage() {
           isUpdate: true,
         });
       } else {
-        // Create new donation
         const createResult = await donationApi.createDonation(apiData);
-
         if (!createResult.success) {
-          // Handle validation errors from backend
           if (createResult.errors) {
             const backendErrors = {};
-            Object.keys(createResult.errors).forEach(field => {
+            Object.keys(createResult.errors).forEach((field) => {
               backendErrors[field] = createResult.errors[field].join(', ');
             });
             setErrors(backendErrors);
@@ -367,32 +468,30 @@ export function DonationFormPage() {
 
         const donationId = createResult.data.donation.id;
 
-        // Upload images if any
+        // Upload images if attached
         if (formData.images && formData.images.length > 0) {
           const uploadPromises = formData.images.map(async (image) => {
             const progressKey = image.id;
-            setUploadProgress(prev => ({ ...prev, [progressKey]: 0 }));
+            setUploadProgress((prev) => ({ ...prev, [progressKey]: 0 }));
 
             const uploadResult = await donationApi.uploadDonationImage(
               donationId,
               image.file,
               (percent) => {
-                setUploadProgress(prev => ({ ...prev, [progressKey]: percent }));
+                setUploadProgress((prev) => ({ ...prev, [progressKey]: percent }));
               }
             );
 
-            setUploadProgress(prev => ({ ...prev, [progressKey]: 100 }));
+            setUploadProgress((prev) => ({ ...prev, [progressKey]: 100 }));
             return uploadResult;
           });
 
           await Promise.all(uploadPromises);
         }
 
-        // Clear draft on successful submission
         localStorage.removeItem('donationFormDraft');
         setHasUnsavedChanges(false);
 
-        // Show success result
         setSubmissionResult({
           success: true,
           donationId,
@@ -408,22 +507,12 @@ export function DonationFormPage() {
     }
   };
 
-  // Clear draft
-  const handleClearDraft = () => {
-    if (window.confirm('Are you sure you want to clear the saved draft?')) {
-      localStorage.removeItem('donationFormDraft');
-      setFormData({});
-      setHasUnsavedChanges(false);
-      setCurrentStep(0);
-      setStepValidation([false, false, false, false, false, true]);
-      setErrors({});
-    }
+  const handleCopyId = (id) => {
+    navigator.clipboard.writeText(String(id));
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const canGoNext = stepValidation[currentStep];
-  const canSubmit = stepValidation.every(Boolean) && !isSubmitting;
-
-  // Handle success actions
   const handleViewDonation = () => {
     if (submissionResult?.donationId) {
       navigate(`/donations/${submissionResult.donationId}`);
@@ -440,295 +529,371 @@ export function DonationFormPage() {
   };
 
   const handleReturnDashboard = () => {
-    navigate('/dashboard');
+    navigate('/donor/dashboard');
   };
 
+  const canGoNext = stepValidation[currentStep];
+  const canSubmit = stepValidation.every(Boolean) && !isSubmitting;
+
+  // Skeleton Loader for Edit Fetch
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="h-8 w-32 bg-border rounded-lg animate-pulse mb-4" />
-          <div className="space-y-2">
-            <div className="h-10 w-48 bg-border rounded-lg animate-pulse" />
-            <div className="h-4 w-64 bg-border rounded-lg animate-pulse" />
-          </div>
+      <DashboardLayout>
+        <div className="max-w-4xl mx-auto space-y-6">
+          <div className="h-8 w-32 bg-border rounded-xl animate-pulse" />
+          <div className="h-12 w-64 bg-border rounded-xl animate-pulse" />
+          <div className="h-16 w-full bg-border rounded-2xl animate-pulse" />
+          <div className="h-96 w-full bg-surface border border-border rounded-3xl animate-pulse" />
         </div>
-
-        {/* Stepper Skeleton */}
-        <div className="flex items-center gap-2 mb-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="flex-1 h-2 bg-border rounded-lg animate-pulse" />
-          ))}
-        </div>
-
-        {/* Form Card Skeleton */}
-        <div className="bg-surface rounded-2xl border border-border p-6 md:p-8 animate-pulse">
-          <div className="min-h-[400px] space-y-4">
-            <div className="h-6 w-48 bg-border rounded-lg animate-pulse" />
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 w-24 bg-border rounded-lg animate-pulse" />
-                <div className="h-12 w-full bg-border rounded-lg animate-pulse" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => window.history.back()}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 rounded-lg px-2 py-1"
-        >
-          <ArrowLeft size={18} />
-          <span className="font-medium text-sm">Back</span>
-        </button>
-        <h1 className="text-2xl font-semibold text-text-primary mb-1">
-          {isEditMode ? 'Edit Donation' : 'Create Donation'}
-        </h1>
-        <p className="text-sm text-text-secondary">
-          {isEditMode 
-            ? 'Update the details of your donation request' 
-            : 'Fill in the details to create a new donation request'
-          }
-        </p>
-      </div>
+    <DashboardLayout>
+      <div className="max-w-4xl mx-auto pb-16">
+        {/* Top Breadcrumb & Auto-Save Pill Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+          {/* Breadcrumb Navigation */}
+          <div className="flex items-center gap-2 text-xs text-text-muted">
+            <Link to="/donor/dashboard" className="hover:text-text-primary transition-colors">
+              Dashboard
+            </Link>
+            <ChevronRight size={12} />
+            <Link to="/donor/my-donations" className="hover:text-text-primary transition-colors">
+              Donations
+            </Link>
+            <ChevronRight size={12} />
+            <span className="text-text-primary font-bold">
+              {isEditMode ? 'Edit Donation' : 'Create Donation'}
+            </span>
+          </div>
 
-      {/* Stepper */}
-      <nav aria-label="Donation form progress">
-        <Stepper
-          steps={STEPS}
-          currentStep={currentStep}
-          onStepClick={handleStepClick}
-        />
-      </nav>
+          {/* Auto-Save Status Pill */}
+          {!isEditMode && (
+            <div className="flex items-center gap-2 text-xs self-start sm:self-auto">
+              {isSaving ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold shadow-2xs">
+                  <Loader2 size={12} className="animate-spin" />
+                  Saving draft...
+                </span>
+              ) : lastSavedTime ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-2xs">
+                  <Check size={12} className="stroke-[3]" />
+                  Draft auto-saved
+                </span>
+              ) : null}
 
-      {/* Form Card */}
-      <div className="bg-surface rounded-xl border border-border p-5 md:p-6 shadow-pb-card">
-        {/* Step Content */}
-        <div className="min-h-[350px]" role="region" aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep]}`} aria-live="polite">
-          {currentStep === 0 && (
-            <Step1BasicInfo
-              formData={formData}
-              errors={errors}
-              onChange={handleFieldChange}
-              onValidationChange={handleStepValidation}
-            />
-          )}
-          {currentStep === 1 && (
-            <Step2DonationDetails
-              formData={formData}
-              errors={errors}
-              onChange={handleFieldChange}
-              onValidationChange={handleStepValidation}
-            />
-          )}
-          {currentStep === 2 && (
-            <Step3PickupInfo
-              formData={formData}
-              errors={errors}
-              onChange={handleFieldChange}
-              onValidationChange={handleStepValidation}
-            />
-          )}
-          {currentStep === 3 && (
-            <Step4Images
-              formData={formData}
-              errors={errors}
-              onChange={handleFieldChange}
-              onValidationChange={handleStepValidation}
-            />
-          )}
-          {currentStep === 4 && (
-            <Step6Assignment
-              formData={formData}
-              errors={errors}
-              onChange={handleFieldChange}
-              pickupLocation={formData.pickupAddress}
-            />
-          )}
-          {currentStep === 5 && (
-            <Step5Review
-              formData={formData}
-              onEditStep={handleEditStep}
-            />
+              {hasUnsavedChanges && (
+                <button
+                  type="button"
+                  onClick={handleClearDraft}
+                  className="text-text-muted hover:text-danger text-xs font-semibold px-2 py-1 rounded-lg transition-colors"
+                >
+                  Clear Draft
+                </button>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-          {/* Previous Button */}
-          <button
-            type="button"
-            onClick={handlePrevious}
-            disabled={currentStep === 0}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 text-sm
-              ${currentStep === 0
-                ? 'bg-page text-text-secondary cursor-not-allowed'
-                : 'bg-surface border border-border text-text-primary hover:bg-surface-hover'
-              }
-            `}
-          >
-            <ArrowLeft size={16} />
-            Previous
-          </button>
-
-          <div className="flex items-center gap-2">
-            {hasUnsavedChanges && (
-              <button
-                type="button"
-                onClick={handleClearDraft}
-                className="px-3 py-2 rounded-lg text-text-secondary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
-              >
-                Clear Draft
-              </button>
-            )}
-
-            {currentStep < STEPS.length - 1 ? (
-              <button
-                onClick={handleNext}
-                disabled={!canGoNext}
-                className="flex items-center gap-2 px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
-              >
-                Next
-                <ArrowRight size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                className="flex items-center gap-2 px-4 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 text-sm"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle size={16} />
-                    Submit Donation
-                  </>
+        {/* Hero Title & Motivation Banner */}
+        <div className="mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2.5 mb-1.5">
+                <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+                  {isEditMode ? 'Edit Donation Request' : 'Share a Portion, Empower a Community'}
+                </h1>
+                {formData.category && (
+                  <span className={`px-3 py-1 text-xs font-bold rounded-full inline-flex items-center gap-1.5 shadow-2xs ${
+                    formData.category === 'food'
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                      : 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20'
+                  }`}>
+                    {formData.category === 'food' ? <Utensils size={13} /> : <Shirt size={13} />}
+                    {formData.category === 'food' ? 'Food Initiative' : 'Clothing Initiative'}
+                  </span>
                 )}
-              </button>
-            )}
+              </div>
+              <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                {isEditMode 
+                  ? 'Update the details and logistics of your donation request' 
+                  : 'Fill in the details to connect with verified volunteers who ensure prompt, dignified collection and handover.'
+                }
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Clear Draft Button */}
-        {!isEditMode && hasUnsavedChanges && (
-          <button
-            type="button"
-            onClick={handleClearDraft}
-            className="w-full mt-3 text-xs text-danger hover:text-danger/80 transition-colors"
+        {/* Stepper Component */}
+        <nav aria-label="Donation form progress">
+          <Stepper
+            steps={STEPS}
+            currentStep={currentStep}
+            onStepClick={handleStepClick}
+            category={formData.category}
+          />
+        </nav>
+
+        {/* Main Step Card */}
+        <div className="bg-surface rounded-3xl border border-border/90 p-6 sm:p-8 shadow-pb-card relative overflow-hidden">
+          {/* Animated Step Container */}
+          <div 
+            className="min-h-[380px]" 
+            role="region" 
+            aria-label={`Donation form step ${currentStep + 1} of ${STEPS.length}: ${STEPS[currentStep].title}`} 
+            aria-live="polite"
           >
-            Clear Saved Draft
-          </button>
+            <AnimatePresence mode="wait" custom={direction}>
+              <motion.div
+                key={currentStep}
+                custom={direction}
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+              >
+                {currentStep === 0 && (
+                  <Step1BasicInfo
+                    formData={formData}
+                    errors={errors}
+                    onChange={handleFieldChange}
+                    onValidationChange={handleStepValidation}
+                  />
+                )}
+                {currentStep === 1 && (
+                  <Step2DonationDetails
+                    formData={formData}
+                    errors={errors}
+                    onChange={handleFieldChange}
+                    onValidationChange={handleStepValidation}
+                  />
+                )}
+                {currentStep === 2 && (
+                  <Step3PickupInfo
+                    formData={formData}
+                    errors={errors}
+                    onChange={handleFieldChange}
+                    onValidationChange={handleStepValidation}
+                  />
+                )}
+                {currentStep === 3 && (
+                  <Step4Images
+                    formData={formData}
+                    errors={errors}
+                    onChange={handleFieldChange}
+                    onValidationChange={handleStepValidation}
+                  />
+                )}
+                {currentStep === 4 && (
+                  <Step6Assignment
+                    formData={formData}
+                    errors={errors}
+                    onChange={handleFieldChange}
+                    onValidationChange={handleStepValidation}
+                    pickupLocation={formData.pickupAddress}
+                  />
+                )}
+                {currentStep === 5 && (
+                  <Step5Review
+                    formData={formData}
+                    onEditStep={handleEditStep}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Submission Error Alert */}
+          {errors.submit && (
+            <div className="mt-6 p-4 rounded-2xl bg-danger-soft/50 border border-danger/30 flex items-center gap-2.5 text-danger text-xs font-semibold">
+              <XCircle size={16} className="shrink-0" />
+              <span>{errors.submit}</span>
+            </div>
+          )}
+
+          {/* Navigation Controls Dock */}
+          <div className="flex items-center justify-between mt-8 pt-5 border-t border-border">
+            {/* Previous Button */}
+            <button
+              type="button"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
+              className={`
+                flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold transition-all duration-200 text-xs sm:text-sm
+                ${currentStep === 0
+                  ? 'bg-page text-text-muted cursor-not-allowed opacity-40'
+                  : 'bg-page border border-border text-text-primary hover:bg-surface-hover hover:border-dash-primary/40 shadow-2xs'
+                }
+              `}
+            >
+              <ArrowLeft size={16} />
+              <span>Back</span>
+            </button>
+
+            {/* Right Action Cluster */}
+            <div className="flex items-center gap-3">
+              {currentStep < STEPS.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!canGoNext}
+                  className="flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+                >
+                  <span>Continue</span>
+                  <ArrowRight size={16} />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={!canSubmit}
+                  className="flex items-center gap-2 px-6 sm:px-8 py-2.5 bg-gradient-to-r from-dash-primary to-emerald-600 hover:from-dash-primary-hover hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Transmitting Request...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle size={16} />
+                      <span>{isEditMode ? 'Update Donation' : 'Confirm & Submit Donation'}</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Celebratory Submission Result Modal */}
+        {submissionResult && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-[fadeIn_0.2s_ease]">
+            <div className="bg-surface rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-border animate-[modalIn_0.25s_ease]">
+              {submissionResult.success ? (
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/20 ring-4 ring-emerald-500/10">
+                    <CheckCircle size={32} className="stroke-[2.5]" />
+                  </div>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 inline-block mb-2">
+                    Submission Confirmed
+                  </span>
+                  <h3 className="text-2xl font-black text-text-primary mb-2 tracking-tight">
+                    {submissionResult.isUpdate ? 'Donation Updated!' : 'Thank You for Giving!'}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-text-secondary mb-5 leading-relaxed">
+                    {submissionResult.isUpdate 
+                      ? 'Your donation updates have been applied successfully and synchronized with the volunteer dispatch.'
+                      : 'Your donation request is live! Nearby verified volunteers have been alerted for pickup coordination.'
+                    }
+                  </p>
+
+                  {/* Reference ID copy chip */}
+                  <div className="p-3.5 rounded-2xl bg-page border border-border flex items-center justify-between gap-3 mb-6">
+                    <div className="text-left">
+                      <p className="text-[10px] uppercase font-bold text-text-muted">Tracking Reference</p>
+                      <p className="text-sm font-mono font-bold text-text-primary">
+                        #DON-{submissionResult.donationId}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyId(submissionResult.donationId)}
+                      className="px-3 py-1.5 rounded-xl bg-surface border border-border text-xs font-semibold hover:border-dash-primary text-text-secondary hover:text-dash-primary transition-all flex items-center gap-1.5 shadow-2xs"
+                    >
+                      {copiedId ? <Check size={13} className="text-emerald-500" /> : <Copy size={13} />}
+                      {copiedId ? 'Copied!' : 'Copy ID'}
+                    </button>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <button
+                      type="button"
+                      onClick={handleViewDonation}
+                      className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center justify-center gap-2 text-sm"
+                    >
+                      <span>Track Donation Status</span>
+                      <ArrowRight size={16} />
+                    </button>
+                    {!submissionResult.isUpdate && (
+                      <button
+                        type="button"
+                        onClick={handleCreateAnother}
+                        className="w-full px-4 py-2.5 bg-surface border border-border text-text-primary font-bold rounded-xl hover:bg-surface-hover transition-all text-xs"
+                      >
+                        Create Another Donation
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleReturnDashboard}
+                      className="w-full px-4 py-2 text-text-muted hover:text-text-primary text-xs font-semibold transition-colors"
+                    >
+                      Back to Dashboard
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-3xl bg-danger-soft text-danger flex items-center justify-center shadow-lg shadow-danger/20 ring-4 ring-danger/10">
+                    <XCircle size={32} />
+                  </div>
+                  <h3 className="text-xl font-black text-text-primary mb-2">
+                    Submission Encountered an Issue
+                  </h3>
+                  <p className="text-xs text-text-secondary mb-6 leading-relaxed">
+                    {submissionResult.error || 'An unexpected error occurred while transmitting your donation.'}
+                  </p>
+                  <div className="space-y-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setSubmissionResult(null)}
+                      className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-bold rounded-xl transition-all shadow-sm text-sm"
+                    >
+                      Try Again
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleReturnDashboard}
+                      className="w-full px-4 py-2 text-text-muted hover:text-text-primary text-xs font-semibold transition-colors"
+                    >
+                      Return to Dashboard
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Upload Progress Overlay */}
+        {isSubmitting && Object.keys(uploadProgress).length > 0 && (
+          <div className="fixed bottom-6 right-6 bg-surface rounded-2xl shadow-xl p-4 border border-border max-w-xs z-50">
+            <p className="text-xs font-bold text-text-primary mb-2 flex items-center gap-2">
+              <Loader2 size={14} className="animate-spin text-dash-primary" />
+              Uploading Photos...
+            </p>
+            <div className="space-y-2">
+              {Object.entries(uploadProgress).map(([id, progress]) => (
+                <div key={id} className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 bg-border rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-dash-primary transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span className="text-[10px] font-mono text-text-secondary w-8 text-right">
+                    {progress}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
-
-      {/* Submission Result Modal */}
-      {submissionResult && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-surface rounded-2xl max-w-md w-full p-6 md:p-8 shadow-2xl animate-[modalIn_0.25s_ease]">
-            {submissionResult.success ? (
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-success-soft flex items-center justify-center">
-                  <CheckCircle size={32} className="text-success" />
-                </div>
-                <h3 className="text-xl font-semibold text-text-primary mb-2">
-                  {submissionResult.isUpdate ? 'Donation Updated Successfully!' : 'Donation Created Successfully!'}
-                </h3>
-                <p className="text-text-secondary mb-6">
-                  {submissionResult.isUpdate 
-                    ? 'Your donation request has been updated successfully.'
-                    : 'Your donation request has been submitted and is now visible to volunteers.'
-                  }
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={handleViewDonation}
-                    className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    View Donation
-                  </button>
-                  {!submissionResult.isUpdate && (
-                    <button
-                      onClick={handleCreateAnother}
-                      className="w-full px-4 py-3 bg-surface border-2 border-border text-text-primary font-medium rounded-xl hover:bg-surface-hover transition-all duration-200"
-                    >
-                      Create Another Donation
-                    </button>
-                  )}
-                  <button
-                    onClick={handleReturnDashboard}
-                    className="w-full px-4 py-3 text-text-secondary font-medium hover:text-text-primary transition-colors"
-                  >
-                    Return to Dashboard
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-danger-soft flex items-center justify-center">
-                  <XCircle size={32} className="text-danger" />
-                </div>
-                <h3 className="text-xl font-semibold text-text-primary mb-2">
-                  Submission Failed
-                </h3>
-                <p className="text-text-secondary mb-6">
-                  {submissionResult.error || 'An error occurred while submitting your donation.'}
-                </p>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setSubmissionResult(null)}
-                    className="w-full px-4 py-3 bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-xl transition-all duration-200 shadow-sm hover:shadow-md"
-                  >
-                    Try Again
-                  </button>
-                  <button
-                    onClick={handleReturnDashboard}
-                    className="w-full px-4 py-3 text-text-secondary font-medium hover:text-text-primary transition-colors"
-                  >
-                    Return to Dashboard
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Upload Progress Indicator */}
-      {isSubmitting && Object.keys(uploadProgress).length > 0 && (
-        <div className="fixed bottom-4 right-4 bg-surface rounded-xl shadow-lg p-4 border border-border max-w-xs">
-          <p className="text-sm font-medium text-text-primary mb-2">
-            Uploading images...
-          </p>
-          <div className="space-y-2">
-            {Object.entries(uploadProgress).map(([id, progress]) => (
-              <div key={id} className="flex items-center gap-2">
-                <div className="flex-1 h-2 bg-border rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-dash-primary transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-                <span className="text-xs text-text-secondary w-10 text-right">
-                  {progress}%
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
+    </DashboardLayout>
   );
 }
+

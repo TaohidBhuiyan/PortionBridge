@@ -1,16 +1,19 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   Utensils,
   Shirt,
   Package,
   Search,
   Trophy,
-  HelpCircle,
-  BarChart3
+  BarChart3,
+  ArrowUpRight,
+  Zap
 } from 'lucide-react';
 
 /**
- * QuickActions component with 6 navigation cards
+ * QuickActions — Modern Interactive Action Hub
+ * Features gradient icon medallions, micro-tags, hover physics, and instant routing.
  */
 export function QuickActions() {
   const navigate = useNavigate();
@@ -19,60 +22,67 @@ export function QuickActions() {
     {
       icon: Utensils,
       label: 'Donate Food',
-      description: 'Share excess food with those in need',
+      description: 'Share freshly prepared or packaged food surplus',
       route: '/donation/create',
-      primary: true,
+      gradient: 'from-amber-500 to-orange-500',
+      shadowColor: 'shadow-amber-500/20',
+      badge: 'Popular',
+      badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
     },
     {
       icon: Shirt,
       label: 'Donate Clothes',
-      description: 'Give clothes a second life',
+      description: 'Give clean, wearable garments a second life',
       route: '/donation/create',
-      primary: true,
+      gradient: 'from-sky-500 to-blue-600',
+      shadowColor: 'shadow-sky-500/20',
+      badge: 'Needed',
+      badgeColor: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
     },
     {
       icon: Package,
       label: 'My Donations',
-      description: 'View and manage your donations',
+      description: 'Manage active requests and view past receipts',
       route: '/donor/my-donations',
-      tone: 'info',
+      gradient: 'from-violet-500 to-indigo-600',
+      shadowColor: 'shadow-violet-500/20',
+      badge: 'History',
+      badgeColor: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20',
     },
     {
       icon: Search,
-      label: 'Discover Volunteers',
-      description: 'Find nearby volunteers and teams',
+      label: 'Find Volunteers',
+      description: 'Discover verified couriers and local rescue teams',
       route: '/donor/discover-volunteers',
-      tone: 'success',
+      gradient: 'from-emerald-500 to-teal-600',
+      shadowColor: 'shadow-emerald-500/20',
+      badge: 'Live Map',
+      badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
     },
     {
       icon: Trophy,
       label: 'Leaderboard',
-      description: 'See top donors and volunteers',
+      description: 'See top community champions and donor ranks',
       route: '/#leaderboard',
-      tone: 'warning',
+      gradient: 'from-yellow-400 to-amber-500',
+      shadowColor: 'shadow-amber-500/20',
+      badge: 'Ranks',
+      badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
     },
     {
       icon: BarChart3,
-      label: 'Analytics',
-      description: 'View your donation impact and trends',
+      label: 'Impact Analytics',
+      description: 'Explore detailed trend charts and community footprints',
       route: '/donor/analytics',
-      tone: 'primary',
-    },
-    {
-      icon: HelpCircle,
-      label: 'Support Center',
-      description: 'Get help and support',
-      route: '/#roles',
-      tone: 'neutral',
+      gradient: 'from-rose-500 to-pink-600',
+      shadowColor: 'shadow-rose-500/20',
+      badge: 'Trends',
+      badgeColor: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20',
     },
   ];
 
   const handleActionClick = (route) => {
-    // If route starts with '#' it is a hash link for landing page
     if (route.startsWith('/#')) {
-      // Safe: this only runs inside a click handler (never during render),
-      // so it can't violate render purity; window.location.href is the
-      // correct way to navigate to a landing-page hash anchor from another route.
       // eslint-disable-next-line react-hooks/immutability
       window.location.href = route;
     } else {
@@ -81,40 +91,63 @@ export function QuickActions() {
   };
 
   return (
-    <div className="mb-5">
-      <h2 className="text-sm font-semibold text-text-primary mb-3">Quick Actions</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    <div className="mb-6">
+      {/* Section Header */}
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-dash-primary-soft flex items-center justify-center text-dash-primary">
+            <Zap size={15} />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-text-primary">Quick Actions Hub</h2>
+          </div>
+        </div>
+        <span className="text-xs text-text-secondary font-medium">Fast shortcuts</span>
+      </div>
+
+      {/* Action Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         {actions.map((action, index) => {
           const Icon = action.icon;
-          const toneClasses = {
-            info: 'bg-info-soft text-info',
-            success: 'bg-success-soft text-success',
-            warning: 'bg-warning-soft text-warning',
-            primary: 'bg-dash-primary-soft text-dash-primary',
-            neutral: 'bg-surface-hover text-text-secondary',
-          };
           return (
-            <button
-              key={index}
+            <motion.button
+              key={action.label}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.04, duration: 0.3 }}
+              whileHover={{ y: -3, transition: { duration: 0.15 } }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => handleActionClick(action.route)}
-              className="group bg-surface rounded-lg border border-border/50 p-3 text-left hover:border-dash-primary/30 hover:bg-surface-hover hover:-translate-y-0.5 hover:shadow-pb-card transition-[border-color,background-color,box-shadow,transform] duration-150 focus:outline-none focus:ring-2 focus:ring-dash-primary/50 focus:ring-offset-2 flex flex-col items-start gap-2"
+              className="group relative flex flex-col justify-between p-4 rounded-2xl bg-surface border border-border/60 hover:border-dash-primary/40 text-left shadow-pb-card hover:shadow-md transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
             >
-              <div
-                className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 transition-transform duration-150 group-hover:scale-105 ${
-                  action.primary ? 'bg-dash-primary text-white' : toneClasses[action.tone] || toneClasses.neutral
-                }`}
-              >
-                <Icon size={16} />
+              <div className="flex items-start justify-between gap-3 w-full mb-3">
+                {/* Gradient Medallion Icon */}
+                <div
+                  className={`w-11 h-11 rounded-xl bg-gradient-to-tr ${action.gradient} text-white flex items-center justify-center shadow-md ${action.shadowColor} group-hover:scale-110 transition-transform duration-200`}
+                >
+                  <Icon size={20} />
+                </div>
+
+                {/* Badge Tag and Arrow */}
+                <div className="flex items-center gap-1.5">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${action.badgeColor}`}>
+                    {action.badge}
+                  </span>
+                  <div className="w-7 h-7 rounded-full bg-surface-hover flex items-center justify-center text-text-secondary group-hover:text-dash-primary group-hover:bg-dash-primary-soft transition-colors">
+                    <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="text-xs font-semibold text-text-primary mb-0.5 truncate">
+
+              <div>
+                <h3 className="text-sm font-bold text-text-primary group-hover:text-dash-primary transition-colors mb-1">
                   {action.label}
                 </h3>
-                <p className="text-[11px] text-text-secondary line-clamp-2">
+                <p className="text-xs text-text-secondary leading-snug line-clamp-2">
                   {action.description}
                 </p>
               </div>
-            </button>
+            </motion.button>
           );
         })}
       </div>

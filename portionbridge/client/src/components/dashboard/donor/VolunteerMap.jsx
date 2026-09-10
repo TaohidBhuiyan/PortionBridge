@@ -8,6 +8,7 @@ import { Maximize2, Navigation, Layers } from 'lucide-react';
  * user-controlled field (volunteer/team display names) going into a
  * popup string must go through this first.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',

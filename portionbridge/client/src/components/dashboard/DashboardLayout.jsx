@@ -61,13 +61,13 @@ export function DashboardLayout({ children }) {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Close mobile sidebar when route changes
+  // Close mobile sidebar when route or query changes
   useEffect(() => {
     // Synchronizing local UI state with the router's current location is a
     // valid effect use case, not the data-fetching pattern this rule targets.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSidebarOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Handle logout
   const handleLogout = async () => {
@@ -93,6 +93,7 @@ export function DashboardLayout({ children }) {
         onMobileToggle={toggleMobileSidebar}
         userRole={user?.role}
         currentPath={location.pathname}
+        currentSearch={location.search}
         onLogout={handleLogout}
       />
 

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SkeletonCard } from '../skeletons';
-import { Phone, MapPin, Camera, CheckCircle } from 'lucide-react';
+import { Phone, MapPin, Camera, CheckCircle2, UserCheck, ArrowRight } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
- * ProfileCompletion card — encourages the donor to complete their profile.
+ * ProfileCompletion — Interactive Profile Health Card
+ * Features an SVG radial progress meter, missing fields checklist, and 1-click update buttons.
  */
 export function ProfileCompletion() {
   const navigate = useNavigate();
@@ -48,20 +49,21 @@ export function ProfileCompletion() {
       user.email,
       user.phone,
       user.address,
-      user.photo,
+      user.profile_photo || user.profile_picture || user.photo,
     ];
 
-    const completedFields = fields.filter(field => field && field.trim() !== '').length;
+    const completedFields = fields.filter(field => field && String(field).trim() !== '').length;
     return Math.round((completedFields / fields.length) * 100);
   };
 
   const getMissingFields = (user) => {
     if (!user) return [];
 
+    const hasPhoto = Boolean(user.profile_photo || user.profile_picture || user.photo);
     const missing = [];
-    if (!user.photo) missing.push({ field: 'Profile Photo', icon: Camera });
-    if (!user.phone) missing.push({ field: 'Phone Number', icon: Phone });
-    if (!user.address) missing.push({ field: 'Address', icon: MapPin });
+    if (!hasPhoto) missing.push({ field: 'Profile Photo', icon: Camera, path: '/donor/profile' });
+    if (!user.phone) missing.push({ field: 'Phone Number', icon: Phone, path: '/donor/profile' });
+    if (!user.address) missing.push({ field: 'Pickup Address', icon: MapPin, path: '/donor/addresses' });
 
     return missing;
   };
@@ -69,96 +71,116 @@ export function ProfileCompletion() {
   const completion = calculateCompletion(profile);
   const missingFields = getMissingFields(profile);
 
+  // Radial SVG calculation: radius 22, circumference = 2 * PI * 22 ≈ 138.2
+  const circumference = 2 * Math.PI * 22;
+  const strokeDashoffset = circumference - (completion / 100) * circumference;
+
   if (loading) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <SkeletonCard count={1} />
+      <div className="bg-surface rounded-3xl border border-border/50 p-5 shadow-pb-card h-full flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-5 w-32 bg-border/40 rounded-md animate-pulse" />
+          <div className="h-4 w-12 bg-border/30 rounded-md animate-pulse" />
+        </div>
+        <SkeletonCard count={2} />
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-4">
-      <div className="flex items-start justify-between mb-3 gap-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold text-text-primary mb-0.5">
-            Profile Completion
-          </h2>
-          <p className="text-[11px] text-text-secondary">
-            Complete your profile to get the most out of PortionBridge
-          </p>
-        </div>
-        <div className="relative w-12 h-12 shrink-0">
-          <svg className="w-full h-full -rotate-90">
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-              className="text-border/50"
-            />
-            <circle
-              cx="24"
-              cy="24"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-              strokeDasharray={`${2 * Math.PI * 20}`}
-              strokeDashoffset={`${2 * Math.PI * 20 * (1 - completion / 100)}`}
-              strokeLinecap="round"
-              className={`transition-all duration-700 ${
-                completion >= 100 ? 'text-success' : completion >= 50 ? 'text-dash-primary' : 'text-warning'
-              }`}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-xs font-semibold text-text-primary">
-              {completion}%
-            </span>
+    <div className="bg-surface rounded-3xl border border-border/50 p-5 sm:p-6 shadow-pb-card h-full flex flex-col justify-between">
+      <div>
+        {/* Header & Radial Meter */}
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-8 h-8 rounded-xl bg-dash-primary-soft flex items-center justify-center text-dash-primary">
+                <UserCheck size={16} />
+              </div>
+              <h3 className="text-base font-bold text-text-primary">Profile Health</h3>
+            </div>
+            <p className="text-xs text-text-secondary">
+              Verified info speeds up volunteer pickups
+            </p>
+          </div>
+
+          {/* Circular SVG Gauge */}
+          <div className="relative w-14 h-14 shrink-0 flex items-center justify-center">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 52 52">
+              {/* Background circle */}
+              <circle
+                cx="26"
+                cy="26"
+                r="22"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+                className="text-border/40"
+              />
+              {/* Animated Progress circle */}
+              <circle
+                cx="26"
+                cy="26"
+                r="22"
+                stroke="currentColor"
+                strokeWidth="4"
+                fill="none"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                className="text-dash-primary transition-all duration-1000 ease-out"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-black text-text-primary">{completion}%</span>
+            </div>
           </div>
         </div>
+
+        {/* Completion status */}
+        {completion === 100 ? (
+          <div className="p-3.5 rounded-2xl bg-success-soft/60 border border-success/30 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-success text-white flex items-center justify-center shrink-0">
+              <CheckCircle2 size={16} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-text-primary">Profile 100% Complete</p>
+              <p className="text-[11px] text-text-secondary">Your account is fully verified for priority service.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-text-secondary mb-1">Recommended actions:</p>
+            {missingFields.map((item) => {
+              const Icon = item.icon;
+              return (
+                <button
+                  key={item.field}
+                  onClick={() => navigate(item.path)}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl border border-border/50 bg-surface hover:bg-surface-hover transition-colors text-left group"
+                >
+                  <div className="flex items-center gap-2 text-xs font-medium text-text-primary">
+                    <Icon size={14} className="text-dash-primary" />
+                    <span>Add {item.field}</span>
+                  </div>
+                  <span className="text-[11px] font-semibold text-dash-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                    Fix <ArrowRight size={11} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {missingFields.length > 0 ? (
-        <div className="space-y-1">
-          <p className="text-[10px] font-medium text-text-secondary mb-1.5">
-            Missing Information
-          </p>
-          {missingFields.map((item, index) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={index}
-                className="flex items-center gap-2 p-1.5 rounded-md bg-page border border-border/50"
-              >
-                <Icon size={12} className="text-text-secondary" />
-                <span className="text-[10px] text-text-secondary">{item.field}</span>
-              </div>
-            );
-          })}
-          <button
-            onClick={() => navigate('/donor/profile')}
-            className="w-full mt-2.5 py-1.5 px-3 text-xs bg-dash-primary hover:bg-dash-primary-hover text-white font-medium rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 focus-visible:ring-offset-2"
-          >
-            Complete Profile
-          </button>
-        </div>
-      ) : (
-        <div className="flex items-center gap-2 p-2 rounded-md bg-success-soft">
-          <CheckCircle size={14} className="text-success shrink-0" />
-          <div>
-            <p className="text-xs font-medium text-success">
-              Profile Complete!
-            </p>
-            <p className="text-[10px] text-success">
-              Your profile is fully set up.
-            </p>
-          </div>
-        </div>
-      )}
+      <div className="pt-3 mt-3 border-t border-border/40">
+        <button
+          onClick={() => navigate('/donor/profile')}
+          className="w-full text-center text-xs font-semibold text-dash-primary hover:text-dash-primary-hover transition-colors"
+        >
+          Manage Profile Details
+        </button>
+      </div>
     </div>
   );
 }

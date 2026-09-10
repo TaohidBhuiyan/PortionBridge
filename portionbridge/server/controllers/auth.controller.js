@@ -91,11 +91,14 @@ const register = asyncHandler(async (req, res) => {
  */
 const verifyEmail = asyncHandler(async (req, res) => {
   const { token } = req.body;
-  await authService.verifyEmail(token);
+  const result = await authService.verifyEmail(token);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
-    message: 'Email verified successfully. You can now log in.',
+    message: result?.alreadyVerified
+      ? 'Your email is already verified. You can log in.'
+      : 'Email verified successfully. You can now log in.',
+    data: { alreadyVerified: Boolean(result?.alreadyVerified) },
   });
 });
 

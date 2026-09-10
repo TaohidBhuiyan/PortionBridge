@@ -62,6 +62,7 @@ const ACTIVE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_
  *   - DELETE /teams/my/leave   → leave team (Phase 5)
  */
 export function VolunteerTeam() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { socket } = useAuthSocket();
 

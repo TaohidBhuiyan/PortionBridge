@@ -8,7 +8,7 @@ const { error } = require('../utils/apiResponse');
  */
 const apiLimiter = rateLimit({
   windowMs: RATE_LIMIT.WINDOW_MS,
-  max: RATE_LIMIT.MAX_REQUESTS,
+  max: process.env.NODE_ENV === 'development' ? 5000 : RATE_LIMIT.MAX_REQUESTS,
   standardHeaders: true,
   legacyHeaders: false,
   handler: (req, res) => {

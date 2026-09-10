@@ -55,9 +55,13 @@ export function AchievementsPanel() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <div className="flex items-center justify-center gap-2 text-text-secondary">
-          <Loader2 size={16} className="animate-spin" />
+      <div className="bg-surface rounded-3xl border border-border/50 p-5 shadow-pb-card h-full flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-5 w-28 bg-border/40 rounded-md animate-pulse" />
+          <div className="h-4 w-14 bg-border/30 rounded-md animate-pulse" />
+        </div>
+        <div className="flex items-center justify-center gap-2 text-text-secondary py-6">
+          <Loader2 size={16} className="animate-spin text-dash-primary" />
           <p className="text-xs">Loading achievements...</p>
         </div>
       </div>
@@ -66,8 +70,8 @@ export function AchievementsPanel() {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <div className="flex items-center gap-2 text-danger">
+      <div className="bg-surface rounded-3xl border border-border/50 p-5 shadow-pb-card h-full flex flex-col justify-between">
+        <div className="flex items-center gap-2 text-danger py-6">
           <Award size={16} />
           <p className="text-xs">{error}</p>
         </div>
@@ -76,46 +80,55 @@ export function AchievementsPanel() {
   }
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
-          <Award size={14} className="text-dash-primary" />
-          Achievements
-        </h3>
-        <div className="flex items-center gap-3 text-[11px]">
-          <div className="flex items-center gap-1 text-text-secondary">
-            <Sparkles size={12} className="text-warning" />
-            <span className="font-medium text-text-primary">{summary.totalPoints}</span>
-            <span>Points</span>
+    <div className="bg-surface rounded-3xl border border-border/50 p-5 sm:p-6 shadow-pb-card h-full flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-dash-primary-soft flex items-center justify-center text-dash-primary">
+              <Award size={16} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-text-primary">Achievements</h3>
+              <p className="text-xs text-text-secondary">Earned Medals & Badges</p>
+            </div>
           </div>
-          <div className="flex items-center gap-1 text-text-secondary">
-            <Award size={12} className="text-dash-primary" />
-            <span className="font-medium text-text-primary">{summary.totalCount}</span>
-            <span>Badges</span>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px]">
+              <Sparkles size={11} />
+              {summary.totalPoints} pts
+            </span>
           </div>
         </div>
+
+        {achievements.length === 0 ? (
+          <div className="text-center py-6">
+            <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center mx-auto mb-2 text-dash-primary">
+              <Award size={24} className="opacity-60" />
+            </div>
+            <p className="text-xs font-bold text-text-primary">No badges unlocked yet</p>
+            <p className="text-[11px] text-text-secondary mt-0.5">
+              Complete your first donation to earn the Community Pioneer badge!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {achievements.map((achievement) => (
+              <div key={achievement.id} className="relative p-2 rounded-xl bg-surface hover:bg-surface-hover border border-border/40 transition-colors">
+                <AchievementBadge achievement={achievement} />
+                <p className="text-[10px] text-text-secondary mt-1 ml-11">
+                  Unlocked {formatDate(achievement.unlocked_at)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {achievements.length === 0 ? (
-        <div className="text-center py-4">
-          <Award size={32} className="text-text-secondary opacity-50 mx-auto mb-2" />
-          <p className="text-xs text-text-secondary">No achievements yet</p>
-          <p className="text-[10px] text-text-secondary opacity-70 mt-1">
-            Complete donations to unlock badges!
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {achievements.map((achievement) => (
-            <div key={achievement.id} className="relative">
-              <AchievementBadge achievement={achievement} />
-              <p className="text-[10px] text-text-secondary mt-1 ml-12">
-                Unlocked {formatDate(achievement.unlocked_at)}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="pt-3 mt-3 border-t border-border/40 text-center">
+        <p className="text-[11px] text-text-secondary">
+          {summary.totalCount} badges unlocked
+        </p>
+      </div>
     </div>
   );
 }

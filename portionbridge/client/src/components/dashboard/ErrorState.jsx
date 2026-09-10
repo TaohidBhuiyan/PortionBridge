@@ -42,7 +42,7 @@ export function ErrorState({
         {title}
       </h3>
 
-      <p className={`${classes.message} text-text-secondary max-w-sm mb-4`}>
+      <p className={`${classes.message} text-text-secondary max-w-[22rem] w-full mx-auto mb-4`}>
         {message}
       </p>
 
