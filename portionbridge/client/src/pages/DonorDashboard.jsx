@@ -54,7 +54,7 @@ export function DonorDashboard() {
 
   const stats = summary
     ? [
-        { label: 'Total Donations', value: summary.totalDonations || 0 },
+        { label: 'Total Donations', value: summary.total || 0 },
         { label: 'Completed', value: summary.completed || 0 },
         { label: 'Pending', value: summary.pending || 0 },
       ]

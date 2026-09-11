@@ -87,7 +87,7 @@ export function Step6Assignment({ onChange, onValidationChange, errors, pickupLo
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-dash-primary-soft text-dash-primary">
-          Step 5 of 6
+          Step 4 of 5
         </span>
       </div>
 

@@ -115,7 +115,7 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             </div>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-dash-primary-soft text-dash-primary">
-            Step 2 of 6
+            Step 2 of 5
           </span>
         </div>
 
@@ -504,7 +504,7 @@ export function Step2DonationDetails({ formData, errors, onChange, onValidationC
             </div>
           </div>
           <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-dash-primary-soft text-dash-primary">
-            Step 2 of 6
+            Step 2 of 5
           </span>
         </div>
 

@@ -14,7 +14,9 @@ import {
   Sun,
   Moon
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { donationApi } from '../../services/donationApi';
+import { reverseGeocode } from '../../utils/geocoding';
 
 const inputBase = 'w-full px-4 py-3 rounded-xl border transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-dash-primary/30 text-text-primary placeholder:text-text-muted text-sm shadow-xs';
 const inputOk = 'border-border bg-input hover:border-border-strong focus:border-dash-primary';
@@ -123,25 +125,31 @@ export function Step3PickupInfo({ formData, errors, onChange, onValidationChange
 
   const handleUseCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      toast.error('Geolocation is not supported by your browser.');
       return;
     }
 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
+      async ({ coords }) => {
+        const geoDetails = await reverseGeocode(coords.latitude, coords.longitude);
         setIsLocating(false);
         setLocationAcquired(true);
         onChange('pickupAddress', {
           ...pickupAddress,
           latitude: coords.latitude,
           longitude: coords.longitude,
+          area: geoDetails?.area || pickupAddress?.area || '',
+          district: geoDetails?.district || pickupAddress?.district || '',
+          division: geoDetails?.division || pickupAddress?.division || '',
+          postalCode: geoDetails?.postalCode || pickupAddress?.postalCode || '',
           landmark: pickupAddress?.landmark || 'GPS Location Detected'
         });
+        toast.success(geoDetails ? 'Location detected — area details filled in!' : 'GPS location acquired!');
       },
       () => {
         setIsLocating(false);
-        alert('Could not retrieve your location. Please enter your address manually.');
+        toast.error('Could not retrieve your location. Please enter your address manually.');
       },
       { timeout: 10000, enableHighAccuracy: true }
     );
@@ -211,7 +219,7 @@ export function Step3PickupInfo({ formData, errors, onChange, onValidationChange
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-dash-primary-soft text-dash-primary">
-          Step 3 of 6
+          Step 3 of 5
         </span>
       </div>
 

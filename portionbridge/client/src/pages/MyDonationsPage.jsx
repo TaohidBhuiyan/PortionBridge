@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { 
   Search, 
   LayoutGrid, 
@@ -18,6 +19,7 @@ import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { DashboardLayout } from '../components/dashboard';
 import { Button } from '../components/common/Button';
+import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 import { Package } from 'lucide-react';
 
 /**
@@ -51,6 +53,7 @@ export function MyDonationsPage() {
   // UI State
   const [showFilters, setShowFilters] = useState(false);
   const [, setCancellingId] = useState(null);
+  const [confirmCancelId, setConfirmCancelId] = useState(null);
 
   const activeFilterCount = [categoryFilter, statusFilter].filter(Boolean).length;
 
@@ -132,34 +135,39 @@ export function MyDonationsPage() {
   };
 
   const handleCancel = async (donationId) => {
-    if (!window.confirm('Are you sure you want to cancel this donation?')) {
-      return;
-    }
+    setConfirmCancelId(donationId);
+  };
 
-    setCancellingId(donationId);
+  const handleConfirmCancel = async () => {
+    if (!confirmCancelId) return;
+
+    setCancellingId(confirmCancelId);
 
     try {
-      const result = await donationApi.cancelDonation(donationId);
+      const result = await donationApi.cancelDonation(confirmCancelId);
 
       if (result.success) {
+        toast.success('Donation cancelled successfully');
         // Reload donations
         loadDonations();
         loadSummary();
       } else {
-        alert(result.error || 'Failed to cancel donation');
+        toast.error(result.error || 'Failed to cancel donation');
       }
     } catch {
-      alert('Failed to cancel donation. Please try again.');
+      toast.error('Failed to cancel donation. Please try again.');
     } finally {
       setCancellingId(null);
+      setConfirmCancelId(null);
     }
   };
 
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto pb-12">
+    <>
+      <DashboardLayout>
+        <div className="max-w-7xl mx-auto pb-12">
       {/* Header */}
       <div className="mb-6">
         <button
@@ -175,7 +183,7 @@ export function MyDonationsPage() {
               My Donations
             </h1>
             <p className="text-sm text-text-secondary mt-1">
-              {summary ? `${summary.totalDonations || 0} donation${summary.totalDonations === 1 ? '' : 's'} total` : 'Track and manage everything you\u2019ve given'}
+              {summary ? `${summary.total || 0} donation${summary.total === 1 ? '' : 's'} total` : 'Track and manage everything you\u2019ve given'}
             </p>
           </div>
           <Button onClick={() => navigate('/donation/create')} icon={Plus}>
@@ -189,7 +197,7 @@ export function MyDonationsPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           <StatCard
             label="Total"
-            value={summary.totalDonations || 0}
+            value={summary.total || 0}
             color="primary"
           />
           <StatCard
@@ -445,7 +453,18 @@ export function MyDonationsPage() {
         </>
       )}
       </div>
-    </DashboardLayout>
+      </DashboardLayout>
+
+      <ConfirmActionModal
+        isOpen={Boolean(confirmCancelId)}
+        onClose={() => setConfirmCancelId(null)}
+        onConfirm={handleConfirmCancel}
+        title="Cancel Donation"
+        message="Are you sure you want to cancel this donation? This action cannot be undone."
+        confirmLabel="Cancel Donation"
+        tone="danger"
+      />
+    </>
   );
 }
 

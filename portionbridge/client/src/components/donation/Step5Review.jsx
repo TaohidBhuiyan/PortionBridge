@@ -275,7 +275,7 @@ export function Step5Review({ formData, onEditStep }) {
         </SectionCard>
 
         {/* Volunteer Assignment Mode */}
-        <SectionCard icon={Users} title="Volunteer Assignment" stepIndex={4} onEditStep={onEditStep}>
+        <SectionCard icon={Users} title="Volunteer Assignment" stepIndex={3} onEditStep={onEditStep}>
           <Row label="Assignment Strategy">
             <span className="font-bold text-dash-primary">
               {assignmentMode === 'auto' ? 'Smart Auto-Assignment (Recommended)' : 'Manual Volunteer Selection'}
@@ -306,8 +306,8 @@ export function Step5Review({ formData, onEditStep }) {
           </h3>
           <button
             type="button"
-            onClick={() => onEditStep(3)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-dash-primary hover:text-dash-primary-hover px-2.5 py-1 rounded-lg hover:bg-dash-primary-soft transition-colors"
+            onClick={() => onEditStep(2)}
+            className="inline-flex items-center gap-1 text-xs font-bold text-dash-primary hover:text-dash-primary-hover px-2.5 py-1 rounded-lg hover:bg-dash-primary-soft transition-colors focus:outline-none"
           >
             <Edit2 size={12} />
             Edit Photos

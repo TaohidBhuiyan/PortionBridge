@@ -119,6 +119,14 @@ async function updateAddress(addressId, userId, updates) {
     updates.customLabel = null;
   }
 
+  // BUG FIX: same single-default invariant createAddress() already
+  // enforces (see its BUG FIX note) applies here too — explicitly setting
+  // isDefault=true through the edit form must clear the existing default
+  // first, or two rows can end up with is_default=1 at once.
+  if (updates.isDefault && !address.is_default) {
+    await savedAddressModel.clearDefaultForUser(userId);
+  }
+
   await savedAddressModel.updateById(addressId, updates);
 
   return savedAddressModel.findById(addressId);

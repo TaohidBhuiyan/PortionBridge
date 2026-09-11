@@ -35,6 +35,7 @@ const DONATION_STATUS = {
   ON_THE_WAY: 'on_the_way',
   PICKED_UP: 'picked_up',
   COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
 };
 
 const NOTIFICATION_TYPES = {

@@ -538,7 +538,7 @@ CREATE TABLE donation_requests (
   contact_phone     VARCHAR(20) NOT NULL,
   scheduled_at      DATETIME DEFAULT NULL,
   completed_at      DATETIME DEFAULT NULL,
-  status            ENUM('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed')
+  status            ENUM('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed', 'cancelled')
                        NOT NULL DEFAULT 'pending',
   is_deleted        TINYINT(1) NOT NULL DEFAULT 0,
   deleted_at        DATETIME DEFAULT NULL,

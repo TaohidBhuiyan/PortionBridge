@@ -638,14 +638,32 @@ async function getLiveOperations() {
     })
   );
 
-  const missionsWithLocation = missions.map((mission) => {
+  const missionsWithLocation = await Promise.all(missions.map(async (mission) => {
     const personId = mission.assignment_mode === 'team' ? mission.assigned_member_id : mission.volunteer_id;
-    const lastKnownLocation = personId ? getLastKnownLocation(personId, mission.id) : null;
+    let lastKnownLocation = personId ? getLastKnownLocation(personId, mission.id) : null;
+
+    // Fall back to the volunteer's last stored GPS fix (volunteer_profiles)
+    // when no live socket ping has landed yet this process's lifetime —
+    // e.g. right after a server restart, or right after the admin loads
+    // the page but before the volunteer's client has emitted its first
+    // location update for this specific mission. Without this, the map
+    // shows nothing at all until a fresh ping arrives.
+    if (!lastKnownLocation && personId) {
+      const profile = await volunteerProfileModel.findByUserId(personId);
+      if (profile && profile.latitude != null && profile.longitude != null) {
+        lastKnownLocation = {
+          latitude: profile.latitude,
+          longitude: profile.longitude,
+          timestamp: profile.last_location_update ? new Date(profile.last_location_update).getTime() : null,
+        };
+      }
+    }
+
     return {
       ...mission,
       lastKnownLocation,
     };
-  });
+  }));
 
   return {
     missions: missionsWithLocation,

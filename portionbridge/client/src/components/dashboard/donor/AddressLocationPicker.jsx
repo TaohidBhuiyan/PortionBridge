@@ -315,8 +315,7 @@ export function AddressLocationPicker({
     toast.success('Location allocated on map!');
   };
 
-  const handleSearchSubmit = async (e) => {
-    e.preventDefault();
+  const handleSearchSubmit = async () => {
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
@@ -336,7 +335,7 @@ export function AddressLocationPicker({
     <div className={`space-y-2 ${className}`}>
       {/* Search Bar & GPS Locate Button */}
       <div className="flex flex-col sm:flex-row gap-2 relative">
-        <form onSubmit={handleSearchSubmit} className="relative flex-1">
+        <div className="relative flex-1">
           <div className="relative">
             <input
               type="text"
@@ -344,6 +343,12 @@ export function AddressLocationPicker({
               onChange={handleSearchInput}
               onFocus={() => {
                 if (searchResults.length > 0) setShowResults(true);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearchSubmit();
+                }
               }}
               placeholder="Search area, road or landmark to allocate on map..."
               className="w-full pl-9 pr-8 py-2 rounded-lg border border-border bg-input text-xs sm:text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-dash-primary/20 focus:border-dash-primary"
@@ -389,7 +394,7 @@ export function AddressLocationPicker({
               ))}
             </div>
           )}
-        </form>
+        </div>
 
         {/* GPS Current Location button */}
         <button

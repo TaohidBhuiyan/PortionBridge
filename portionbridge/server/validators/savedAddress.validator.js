@@ -52,13 +52,13 @@ const createAddressValidationRules = [
     .isLength({ max: 20 }).withMessage('Postal code must not exceed 20 characters.'),
 
   body('buildingName')
-    .optional({ checkFalsy: true })
     .trim()
+    .notEmpty().withMessage('Building name / house no. is required for volunteer pickup.')
     .isLength({ max: 100 }).withMessage('Building name must not exceed 100 characters.'),
 
   body('floor')
-    .optional({ checkFalsy: true })
     .trim()
+    .notEmpty().withMessage('Apartment / flat / floor no. is required for volunteer pickup.')
     .isLength({ max: 20 }).withMessage('Floor must not exceed 20 characters.'),
 
   body('landmark')

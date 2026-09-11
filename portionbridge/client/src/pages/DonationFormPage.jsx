@@ -13,7 +13,9 @@ import {
   Shirt, 
   ChevronRight
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { DashboardLayout } from '../components/dashboard';
+import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 import { Stepper } from '../components/donation/Stepper';
 import { Step1BasicInfo } from '../components/donation/Step1BasicInfo';
 import { Step2DonationDetails } from '../components/donation/Step2DonationDetails';
@@ -53,8 +55,7 @@ export function DonationFormPage() {
   const STEPS = [
     { id: 'basic', title: 'Basic Info' },
     { id: 'details', title: 'Details' },
-    { id: 'pickup', title: 'Pickup' },
-    { id: 'images', title: 'Photos' },
+    { id: 'pickup', title: 'Pickup & Photos' },
     { id: 'assignment', title: 'Assignment' },
     { id: 'review', title: isEditMode ? 'Review & Update' : 'Review & Submit' },
   ];
@@ -69,7 +70,7 @@ export function DonationFormPage() {
       : {};
   });
 
-  const [stepValidation, setStepValidation] = useState([false, false, false, false, false, true]);
+  const [stepValidation, setStepValidation] = useState([false, false, false, false, true]);
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState(null);
@@ -79,6 +80,7 @@ export function DonationFormPage() {
   const [submissionResult, setSubmissionResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
+  const [confirmClearDraft, setConfirmClearDraft] = useState(false);
   const navigate = useNavigate();
 
   const categoryParam = searchParams.get('category');
@@ -120,7 +122,7 @@ export function DonationFormPage() {
         return updated;
       });
       setCurrentStep(0);
-      setStepValidation([false, false, false, false, false, true]);
+      setStepValidation([false, false, false, false, true]);
       setErrors({});
     }
   }, [categoryParam]);
@@ -167,13 +169,13 @@ export function DonationFormPage() {
           images: donation.images || [],
         };
         setFormData(formInitialData);
-        setStepValidation([true, true, true, true, true, true]);
+        setStepValidation([true, true, true, true, true]);
       } else {
-        alert(result.error || 'Failed to load donation');
+        toast.error(result.error || 'Failed to load donation');
         navigate('/donor/my-donations');
       }
     } catch {
-      alert('Failed to load donation. Please try again.');
+      toast.error('Failed to load donation. Please try again.');
       navigate('/donor/my-donations');
     } finally {
       setLoading(false);
@@ -402,15 +404,18 @@ export function DonationFormPage() {
   };
 
   const handleClearDraft = () => {
-    if (window.confirm('Are you sure you want to clear your saved draft? All unsaved inputs will be reset.')) {
-      localStorage.removeItem('donationFormDraft');
-      setFormData({});
-      setHasUnsavedChanges(false);
-      setLastSavedTime(null);
-      setCurrentStep(0);
-      setStepValidation([false, false, false, false, false, true]);
-      setErrors({});
-    }
+    setConfirmClearDraft(true);
+  };
+
+  const handleConfirmClearDraft = () => {
+    localStorage.removeItem('donationFormDraft');
+    setFormData({});
+    setHasUnsavedChanges(false);
+    setLastSavedTime(null);
+    setCurrentStep(0);
+    setStepValidation([false, false, false, false, true]);
+    setErrors({});
+    setConfirmClearDraft(false);
   };
 
   const handleSubmit = async () => {
@@ -522,7 +527,7 @@ export function DonationFormPage() {
   const handleCreateAnother = () => {
     setFormData({});
     setCurrentStep(0);
-    setStepValidation([false, false, false, false, false, true]);
+    setStepValidation([false, false, false, false, true]);
     setErrors({});
     setSubmissionResult(null);
     setUploadProgress({});
@@ -671,22 +676,24 @@ export function DonationFormPage() {
                   />
                 )}
                 {currentStep === 2 && (
-                  <Step3PickupInfo
-                    formData={formData}
-                    errors={errors}
-                    onChange={handleFieldChange}
-                    onValidationChange={handleStepValidation}
-                  />
+                  <div className="space-y-8">
+                    <Step3PickupInfo
+                      formData={formData}
+                      errors={errors}
+                      onChange={handleFieldChange}
+                      onValidationChange={handleStepValidation}
+                    />
+                    <div className="pt-2 border-t border-border/60">
+                      <Step4Images
+                        formData={formData}
+                        errors={errors}
+                        onChange={handleFieldChange}
+                        onValidationChange={() => {}}
+                      />
+                    </div>
+                  </div>
                 )}
                 {currentStep === 3 && (
-                  <Step4Images
-                    formData={formData}
-                    errors={errors}
-                    onChange={handleFieldChange}
-                    onValidationChange={handleStepValidation}
-                  />
-                )}
-                {currentStep === 4 && (
                   <Step6Assignment
                     formData={formData}
                     errors={errors}
@@ -695,7 +702,7 @@ export function DonationFormPage() {
                     pickupLocation={formData.pickupAddress}
                   />
                 )}
-                {currentStep === 5 && (
+                {currentStep === 4 && (
                   <Step5Review
                     formData={formData}
                     onEditStep={handleEditStep}
@@ -893,6 +900,16 @@ export function DonationFormPage() {
           </div>
         )}
       </div>
+
+      <ConfirmActionModal
+        isOpen={confirmClearDraft}
+        onClose={() => setConfirmClearDraft(false)}
+        onConfirm={handleConfirmClearDraft}
+        title="Clear Saved Draft"
+        message="Are you sure you want to clear your saved draft? All unsaved inputs will be reset."
+        confirmLabel="Clear Draft"
+        tone="danger"
+      />
     </DashboardLayout>
   );
 }

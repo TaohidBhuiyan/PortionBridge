@@ -133,7 +133,7 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
           </div>
         </div>
         <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-dash-primary-soft text-dash-primary">
-          Step 4 of 6
+          Step 3 of 5
         </span>
       </div>
 

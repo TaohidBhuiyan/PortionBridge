@@ -209,7 +209,7 @@ function parseJsonFields(row) {
  */
 async function findById(id) {
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests WHERE id = :id AND is_deleted = 0 LIMIT 1`,
+    `SELECT ${BASE_COLUMNS} FROM donation_requests WHERE id = :id AND (is_deleted = 0 OR status = 'cancelled') LIMIT 1`,
     { id }
   );
   return parseJsonFields(rows[0] || null);
@@ -255,7 +255,7 @@ async function updateById(id, fields, connection = pool) {
  */
 async function softDelete(id, connection = pool) {
   await connection.query(
-    `UPDATE donation_requests SET is_deleted = 1, deleted_at = NOW() WHERE id = :id`,
+    `UPDATE donation_requests SET is_deleted = 1, deleted_at = NOW(), status = 'cancelled' WHERE id = :id`,
     { id }
   );
 }
@@ -585,7 +585,7 @@ async function completeDonation(connection, id) {
  * @returns {Object} Object containing whereClause string and params object
  */
 function buildHistoryFilter({ ownerColumn, ownerId, status, category, search }) {
-  const conditions = [`is_deleted = 0`, `${ownerColumn} = :ownerId`];
+  const conditions = [`(is_deleted = 0 OR status = 'cancelled')`, `${ownerColumn} = :ownerId`];
   const params = { ownerId };
 
   if (status) {
@@ -753,7 +753,7 @@ async function getSummaryCounts(ownerColumn, ownerId, statuses) {
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS total, ${sumClauses}
      FROM donation_requests
-     WHERE ${ownerColumn} = :ownerId AND is_deleted = 0`,
+     WHERE ${ownerColumn} = :ownerId AND (is_deleted = 0 OR status = 'cancelled')`,
     params
   );
   return rows[0];
@@ -770,6 +770,7 @@ async function getDonorSummary(donorId) {
     DONATION_STATUS.ACCEPTED,
     DONATION_STATUS.SCHEDULED,
     DONATION_STATUS.COMPLETED,
+    DONATION_STATUS.CANCELLED,
   ]);
 }
 
