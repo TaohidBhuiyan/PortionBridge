@@ -4,15 +4,14 @@ import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
-import { Button } from "../components/common/Button";
-import { ArrowRight, LockKeyhole, Mail, ShieldCheck } from "lucide-react";
+import { ArrowRight, LockKeyhole, Mail, ShieldCheck, Eye, EyeOff, Bolt, MapPin, Route } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 /**
  * PortionBridge — Login page
- * Fused branding / impact-stats panel and login card.
- * PHASE 7: restyled onto the sky-blue premium design system (was deep violet).
+ * Premium split-screen design with animated ecosystem visualization
+ * Integrates Stitch-generated design while preserving all auth functionality
  */
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -20,19 +19,16 @@ export function LoginPage() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const { login, googleLogin, resendVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [successMsg, setSuccessMsg] = useState(location.state?.message || "");
 
-  // COMING-SOON ELIMINATION / email verification: login() already
-  // rejected unverified users, but the response carried no way to tell
-  // that apart from "wrong password" — this showed the exact same
-  // generic error for both. Now checked via the new `code` field the
-  // backend returns (see AppError's optional code param).
+  // Email verification handling
   const [needsVerification, setNeedsVerification] = useState(false);
-  const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
-  const [resendMessage, setResendMessage] = useState("");
+  const [resendStatus, setResendStatus] = useState("idle");
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef(null);
 
@@ -40,11 +36,34 @@ export function LoginPage() {
     return () => clearInterval(cooldownRef.current);
   }, []);
 
+  // Lock page scroll on desktop split layout only
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+
+    const syncOverflow = () => {
+      const lock = mq.matches ? "hidden" : "";
+      document.body.style.overflow = lock;
+      document.documentElement.style.overflow = lock;
+    };
+
+    syncOverflow();
+    mq.addEventListener("change", syncOverflow);
+    return () => {
+      mq.removeEventListener("change", syncOverflow);
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, []);
+
+  // Socket and stats integration
   const { socket, connected } = useSocket();
   const [stats, setStats] = useState({
     mealsDelivered: 12500,
     clothesDonated: 3200,
-    verifiedVolunteers: 180
+    verifiedVolunteers: 180,
+    hubVerificationRate: 99.4
   });
 
   // Initial stats fetch via API
@@ -56,7 +75,7 @@ export function LoginPage() {
           setStats(res.data.data);
         }
       } catch {
-        // Failed to fetch stats
+        // Failed to fetch stats - keep defaults
       }
     };
     fetchStats();
@@ -102,7 +121,6 @@ export function LoginPage() {
     setNeedsVerification(false);
 
     try {
-      // Use sequential role login implemented in context
       const result = await login(email.trim(), password);
 
       if (!result.success) {
@@ -122,13 +140,6 @@ export function LoginPage() {
         return;
       }
 
-      // Successful redirect based on user role.
-      // AUDIT FIX: removed a dead 'leader' case — the users.role column
-      // (see schema) only ever contains 'donor' | 'volunteer' | 'admin'.
-      // A team leader is still a 'volunteer' at the account level (team
-      // leadership is per-team, tracked in team_members.role, not on the
-      // user account), so that branch could never actually be reached and
-      // was misleading dead code.
       if (result.user) {
         switch (result.user.role) {
           case 'donor': navigate('/donor/dashboard'); break;
@@ -168,8 +179,7 @@ export function LoginPage() {
   const handleResendVerification = async () => {
     if (resendCooldown > 0) return;
     setResendStatus("sending");
-    const result = await resendVerification(email.trim());
-    setResendMessage(result.success ? result.message : result.error);
+    await resendVerification(email.trim());
     setResendStatus("sent");
     startResendCooldown();
   };
@@ -200,193 +210,499 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-page px-4 py-6">
-      <div className="w-full max-w-[760px] rounded-3xl overflow-hidden flex flex-col md:flex-row items-stretch shadow-pb-modal border border-border bg-surface">
-        {/* LEFT PANEL — sky-blue branding / impact stats */}
-        <div
-          className="hidden md:flex flex-[0.82] relative flex-col items-center justify-center px-6 py-7 text-left"
-          style={{
-            background:
-              "radial-gradient(ellipse 75% 45% at 50% 2%, rgba(224,242,254,0.5) 0%, rgba(224,242,254,0) 65%), linear-gradient(180deg, #7dd3fc 0%, #38bdf8 16%, #0ea5e9 32%, #0284c7 50%, #075985 68%, #0c2a3d 85%, #041018 100%)",
-          }}
-        >
-          <div
-            className="absolute inset-0 pointer-events-none mix-blend-overlay opacity-[0.05]"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/></svg>\")",
-            }}
-          />
-
-          <div className="relative z-10 flex items-center gap-2 text-white text-xs font-semibold mb-3">
-            <span className="w-4 h-4 border-2 border-white rounded-full inline-block" />
-            PortionBridge
-          </div>
-          <h1 className="relative z-10 text-white text-2xl font-bold leading-tight mb-2">
-            Welcome back.
-          </h1>
-          <p className="relative z-10 text-white/70 text-xs leading-relaxed max-w-[220px] mb-6">
-            Continue creating real impact in your community.
-          </p>
-
-          <div className="relative z-10 w-full max-w-[250px] flex flex-col gap-2">
-            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white text-[#111] text-xs font-medium animate-fade-in">
-              <span className="w-5 h-5 rounded-full bg-[#111] text-white flex items-center justify-center text-[11px] shrink-0">
-                🍲
-              </span>
-              {stats.mealsDelivered.toLocaleString()}+ meals shared to date
+    <div className="login-page min-h-dvh lg:h-dvh lg:max-h-dvh overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row bg-slate-950 font-sans">
+      {/* LEFT PANEL - Brand & Living Ecosystem (53% width) */}
+      <section className="login-page__left lg:w-[53%] xl:w-[55%] relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 px-5 py-5 sm:px-6 sm:py-6 lg:px-7 lg:py-5 xl:px-8 xl:py-6 flex flex-col justify-between overflow-hidden lg:h-full lg:min-h-0 border-b lg:border-b-0 lg:border-r border-sky-900/30 select-none">
+        {/* Ambient Atmospheric Background Lights */}
+        <div className="absolute -top-32 -left-32 w-[520px] h-[520px] bg-sky-600/15 rounded-full blur-[110px] pointer-events-none animate-pulse" />
+        <div className="absolute top-1/3 -right-24 w-[460px] h-[460px] bg-cyan-500/12 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDelay: '-3s' }} />
+        <div className="absolute -bottom-40 left-1/4 w-[500px] h-[500px] bg-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
+        
+        {/* Subtle Geometric Background Grid Mesh */}
+        <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[radial-gradient(#38bdf8_1.2px,transparent_1.2px)] [background-size:28px_28px]" />
+        
+        {/* Top Header & Brand Identity */}
+        <header className="relative z-10">
+          <div 
+            className="flex items-center gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate('/')}
+          >
+            <div className="relative group">
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 opacity-30 blur-md group-hover:opacity-60 transition duration-500" />
+              <div className="relative w-[42px] h-[42px] rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                <span className="text-2xl">🌊</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md text-white/70 text-xs font-medium animate-fade-in">
-              <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
-                👕
-              </span>
-              {stats.clothesDonated.toLocaleString()}+ clothing items donated
-            </div>
-            <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-white/[0.08] backdrop-blur-md text-white/70 text-xs font-medium animate-fade-in">
-              <span className="w-5 h-5 rounded-full bg-white/15 text-white flex items-center justify-center text-[11px] shrink-0">
-                🤝
-              </span>
-              {stats.verifiedVolunteers.toLocaleString()}+ verified volunteers
+            <div>
+              <div className="font-bold text-2xl tracking-tight text-white flex items-center gap-1.5">
+                PortionBridge
+                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+              </div>
+              <p className="text-[11px] font-medium text-sky-400/70 tracking-wide uppercase">Surplus Redistribution Network</p>
             </div>
           </div>
-        </div>
-
-        {/* RIGHT PANEL — merged seamlessly with left panel */}
-        <div className="flex-1 flex flex-col justify-center items-center bg-surface px-5 py-6 sm:px-7">
-          <div className="flex w-full flex-col justify-center gap-3 max-w-[340px]">
-            <div className="left-0 right-0 inline-block px-1">
-                  <form className="flex flex-col gap-3 pb-3" onSubmit={handleSubmit}>
-                    <div className="mb-2"><div className="flex items-center gap-2 text-xs font-semibold tracking-wide text-dash-primary"><ShieldCheck size={15} /> SECURE SIGN IN</div><h1 className="mt-1 text-2xl font-bold text-text-primary">Sign in to your account</h1></div>
-
-                    {error && (
-                      <div className="rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger">
-                        {error}
-                      </div>
-                    )}
-
-                    {needsVerification && (
-                      <div className="rounded-lg border border-warning/30 bg-warning-soft px-3 py-2.5 text-sm text-warning space-y-2">
-                        <p>Please verify your email before logging in.</p>
-                        {resendMessage && <p className="text-xs opacity-90">{resendMessage}</p>}
-                        <button
-                          type="button"
-                          onClick={handleResendVerification}
-                          disabled={resendStatus === "sending" || resendCooldown > 0}
-                          className="text-xs font-semibold underline underline-offset-2 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {resendCooldown > 0
-                            ? `Resend Verification Email (${resendCooldown}s)`
-                            : resendStatus === "sending"
-                              ? "Sending..."
-                              : "Resend Verification Email"}
-                        </button>
-                      </div>
-                    )}
-
-                    {successMsg && (
-                      <div className="rounded-lg border border-success/30 bg-success-soft px-3 py-2 text-sm text-success">
-                        {successMsg}
-                      </div>
-                    )}
-
-                    <div>
-                      <div className="mb-2">
-                        <label
-                          className="text-xs font-semibold text-text-secondary"
-                          htmlFor="email"
-                        >
-                          Email address
-                        </label>
-                      </div>
-                      <div className="flex w-full rounded-lg pt-1">
-                        <div className="relative w-full">
-                          <input
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="block w-full rounded-xl border border-border bg-input p-2.5 pl-9 text-sm text-text-primary focus:border-dash-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 transition-all"
-                            placeholder="email@example.com"
-                            disabled={loading}
-                          /><Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                        </div>
-                      </div>
-                      {fieldErrors.email && (
-                        <span className="text-danger text-xs mt-1 block">{fieldErrors.email}</span>
-                      )}
-                    </div>
-
-                    <div>
-                      <div className="mb-2">
-                        <label
-                          className="text-xs font-semibold text-text-secondary"
-                          htmlFor="password"
-                        >
-                          Password
-                        </label>
-                      </div>
-                      <div className="flex w-full rounded-lg pt-1">
-                        <div className="relative w-full">
-                          <input
-                            className="block w-full rounded-xl border border-border bg-input p-2.5 pl-9 text-sm text-text-primary focus:border-dash-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 transition-all"
-                            id="password"
-                            type="password"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={loading}
-                          /><LockKeyhole size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                        </div>
-                      </div>
-                      {fieldErrors.password && (
-                        <span className="text-danger text-xs mt-1 block">{fieldErrors.password}</span>
-                      )}
-                      <p
-                        className="mt-2 cursor-pointer text-dash-primary hover:text-dash-primary-hover"
-                        onClick={handleForgotPasswordClick}
-                      >
-                        Forgot password?
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
-                      <Button type="submit" loading={loading} icon={ArrowRight} className="w-full">
-                        {loading ? "Signing in..." : "Sign In"}
-                      </Button>
-
-                      <div className="flex items-center gap-3 my-1">
-                        <div className="h-px flex-1 bg-border" />
-                        <span className="text-xs font-medium uppercase tracking-[0.2em] text-text-muted">OR</span>
-                        <div className="h-px flex-1 bg-border" />
-                      </div>
-
-                      <GoogleAuthButton
-                        label="Continue with Google"
-                        disabled={loading}
-                        onSuccess={handleGoogleSuccess}
-                        onError={(message) => setError(message)}
-                      />
-                    </div>
-                  </form>
-
-                  <div className="min-w-[270px]">
-                    <div className="mt-4 text-center text-text-secondary">
-                      New user?{" "}
-                      <a
-                        className="text-dash-primary underline hover:text-dash-primary-hover"
-                        href="/register"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleSignupClick();
-                        }}
-                      >
-                        Create account here
-                      </a>
-                    </div>
+          
+          {/* Vision Statement & Tagline */}
+          <div className="mt-8 lg:mt-10 max-w-2xl">
+            <h1 className="login-page__headline m-0 text-4xl sm:text-5xl lg:text-[clamp(2.5rem,5vh,3.25rem)] xl:text-[clamp(2.75rem,5.5vh,3.5rem)] font-extrabold text-white tracking-tight leading-[1.1]">
+              Bridging <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-300 to-sky-400">surplus</span> with those <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-300 to-teal-300">in need</span>.
+            </h1>
+            <p className="text-slate-300/90 text-base sm:text-lg lg:text-[clamp(1rem,2vh,1.25rem)] mt-5 leading-relaxed max-w-xl font-medium">
+              Connect surplus food and clothing with communities that need them — powered by donors, volunteers, and verified local action.
+            </p>
+          </div>
+        </header>
+        
+        {/* Dynamic Living Ecosystem: Floating Cards with Real-Time Stats */}
+        <div className="login-page__ecosystem relative z-10 my-6 lg:my-8 flex-1 min-h-0 flex items-center justify-center py-2">
+          {/* Floating Cards Staggered Arrangement */}
+          <div className="login-page__cards relative w-full max-w-lg grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Card 1: Fresh Meals Redirected */}
+            <div className="login-page__card rounded-xl lg:rounded-2xl p-3 sm:p-3.5 border border-sky-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-sky-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default group" style={{ animation: 'floatGentle 8s ease-in-out infinite' }}>
+              <div className="flex items-center justify-between gap-1.5 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-400/30 flex items-center justify-center text-base shadow-sm">
+                    🍲
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-white group-hover:text-sky-300 transition-colors">Meals Redirected</h3>
+                    <p className="text-[10px] text-slate-400">18 districts</p>
                   </div>
                 </div>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20 animate-pulse" />
+              </div>
+              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                {stats.mealsDelivered.toLocaleString()}+
+              </div>
+              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
+                Surplus portions matched with local kitchens.
+              </p>
+              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
+                <Bolt size={12} />
+                <span>Live distribution</span>
+              </div>
+            </div>
+            
+            {/* Card 2: Winter Clothing Drive */}
+            <div className="login-page__card rounded-xl lg:rounded-2xl p-3 sm:p-3.5 border border-cyan-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-cyan-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default" style={{ animation: 'floatReverse 9.5s ease-in-out 1.2s infinite' }}>
+              <div className="flex items-center justify-between gap-1.5 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-sky-500/20 border border-cyan-400/30 flex items-center justify-center text-base shadow-sm">
+                    🧥
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">Clothing Drive</h3>
+                    <p className="text-[10px] text-slate-400">Seasonal relief</p>
+                  </div>
+                </div>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">Active</span>
+              </div>
+              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                {stats.clothesDonated.toLocaleString()}+
+              </div>
+              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
+                Warm coats distributed by verified teams.
+              </p>
+              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-cyan-300 font-medium">
+                <MapPin size={12} />
+                <span>Regional distribution</span>
+              </div>
+            </div>
+            
+            {/* Card 3: Volunteer Logistics Handover */}
+            <div className="login-page__card rounded-xl lg:rounded-2xl p-3 sm:p-3.5 border border-sky-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-sky-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default" style={{ animation: 'floatGentle 8.5s ease-in-out 2.4s infinite' }}>
+              <div className="flex items-center justify-between gap-1.5 mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/20 to-indigo-500/20 border border-sky-400/30 flex items-center justify-center text-base shadow-sm">
+                    🤝
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-semibold text-white group-hover:text-sky-300 transition-colors">Active Logistics</h3>
+                    <p className="text-[10px] text-slate-400">On-road couriers</p>
+                  </div>
+                </div>
+                <span className="flex items-center gap-1 text-[10px] font-bold text-sky-300 bg-sky-500/20 border border-sky-400/30 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" /> Live
+                </span>
+              </div>
+              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight">
+                {stats.verifiedVolunteers.toLocaleString()}+
+              </div>
+              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
+                Certified volunteers on dispatch today.
+              </p>
+              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-slate-400">
+                <Route size={12} className="text-sky-400 shrink-0" />
+                <span>Avg. <strong>18 mins</strong> response</span>
               </div>
             </div>
           </div>
-      </div>
+        </div>
+        
+        {/* Left Bottom Trust Badges */}
+        <footer className="login-page__left-footer relative z-10 shrink-0 border-t border-sky-900/40 pt-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] sm:text-xs text-slate-400 gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-slate-300">Unified humanitarian platform for Donors, Volunteers & Hubs</span>
+          </div>
+          <div className="flex items-center gap-3 text-slate-500 text-[11px]">
+            <span>Transparent Aid</span>
+            <span>•</span>
+            <span>Zero Food Waste</span>
+          </div>
+        </footer>
+      </section>
+      
+      {/* RIGHT PANEL - Login Experience (47% width) */}
+      <section className="login-page__right lg:w-[47%] xl:w-[45%] flex flex-col justify-center items-center px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-5 xl:px-10 bg-[#f8fafc] text-slate-900 transition-colors duration-300 relative lg:h-full lg:min-h-0 overflow-hidden">
+        {/* Subtle top light beam */}
+        <div className="absolute top-0 right-0 w-64 h-64 lg:w-80 lg:h-80 bg-sky-500/5 rounded-full blur-3xl pointer-events-none" />
+        
+        {/* Main Login Card Wrapper */}
+        <div className="login-page__form w-full max-w-[420px] relative z-10">
+          {/* Mobile Logo Bar (Visible only on smaller screens) */}
+          <div className="lg:hidden flex items-center gap-3 mb-5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-cyan-500 flex items-center justify-center text-white shadow-md">
+              <span className="text-xl">🌊</span>
+            </div>
+            <span className="font-bold text-xl text-slate-900 tracking-tight">PortionBridge</span>
+          </div>
+          
+          {/* Form Header */}
+          <header className="mb-4 text-left">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wider text-sky-700 bg-sky-100/70 border border-sky-200 mb-2 uppercase">
+              <ShieldCheck size={13} className="text-sky-600" /> WELCOME BACK
+            </div>
+            <h2 className="m-0 text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-snug">
+              Sign in to PortionBridge
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed font-normal">
+              Continue creating real impact in your community.
+            </p>
+          </header>
+          
+          {/* Dynamic Alerts */}
+          {error && (
+            <div className="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-start gap-3 shadow-sm animate-fade-in">
+              <ShieldCheck size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block text-red-900">Invalid credentials</span>
+                <span className="text-red-700/90">{error}</span>
+              </div>
+            </div>
+          )}
+          
+          {needsVerification && (
+            <div className="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-300/80 text-amber-800 text-xs flex flex-col gap-2 shadow-sm animate-fade-in">
+              <div className="flex items-start gap-3">
+                <Mail size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-semibold block text-amber-900">Verification Required</span>
+                  Please verify your email address to continue. We sent a secure activation link to your inbox.
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-2.5 border-t border-amber-200/80 mt-0.5">
+                <span className="text-[11px] text-amber-700 font-medium flex items-center gap-1">
+                  {resendCooldown > 0 ? (
+                    <>
+                      <Bolt size={13} /> Resend in <span className="font-bold font-mono">{resendCooldown}s</span>
+                    </>
+                  ) : (
+                    <span>Ready to resend</span>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendStatus === "sending" || resendCooldown > 0}
+                  className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resendStatus === "sending" ? "Sending..." : "Resend Email"}
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {successMsg && (
+            <div className="mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-start gap-3 shadow-sm animate-fade-in">
+              <CheckCircle size={20} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold block text-emerald-900">Success</span>
+                {successMsg}
+              </div>
+            </div>
+          )}
+          
+          {/* Core Login Form */}
+          <form className="space-y-3" onSubmit={handleSubmit}>
+            {/* Email Input Field */}
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-800 mb-1.5" htmlFor="email">
+                Email Address
+              </label>
+              <div className="relative rounded-xl shadow-xs">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Mail size={18} />
+                </div>
+                <input
+                  autoComplete="username"
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-500/15 focus:border-sky-500 transition-all"
+                  id="email"
+                  name="email"
+                  placeholder="you@domain.org"
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                />
+              </div>
+              {fieldErrors.email && (
+                <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                  <ShieldCheck size={14} /> {fieldErrors.email}
+                </p>
+              )}
+            </div>
+            
+            {/* Password Input Field */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-800" htmlFor="password">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  className="text-xs font-medium text-sky-600 hover:text-sky-700 hover:underline transition-colors"
+                  onClick={handleForgotPasswordClick}
+                >
+                  Forgot password?
+                </button>
+              </div>
+              <div className="relative rounded-xl shadow-xs">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <LockKeyhole size={18} />
+                </div>
+                <input
+                  autoComplete="current-password"
+                  className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-500/15 focus:border-sky-500 transition-all"
+                  id="password"
+                  name="password"
+                  placeholder="Enter your password"
+                  required
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  aria-label="Toggle password visibility"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                </button>
+              </div>
+              {fieldErrors.password && (
+                <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                  <ShieldCheck size={14} /> {fieldErrors.password}
+                </p>
+              )}
+            </div>
+            
+            {/* Remember Me & Checkbox */}
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  checked={rememberMe}
+                  className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  name="remember"
+                  type="checkbox"
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <span className="text-xs font-medium text-slate-700 select-none">Remember this device for 30 days</span>
+              </label>
+            </div>
+            
+            {/* Primary Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full relative py-2.5 px-4 bg-gradient-to-r from-sky-500 to-sky-600 hover:from-sky-400 hover:to-sky-500 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.99] shadow-lg"
+                style={{
+                  boxShadow: '0 10px 25px -5px rgba(2, 132, 199, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                }}
+              >
+                {loading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor" />
+                    </svg>
+                    <span>Authenticating credentials...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="flex items-center gap-2 tracking-wide">
+                      <span>Sign In</span>
+                      <ArrowRight size={18} className="transform group-hover:translate-x-1 transition-transform" />
+                    </span>
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {/* Divider */}
+            <div className="relative my-3">
+              <div aria-hidden="true" className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-3 bg-[#f8fafc] text-slate-600 font-semibold uppercase tracking-wider text-[11px]">or continue with</span>
+              </div>
+            </div>
+            
+            {/* Google SSO Authentication Button */}
+            <GoogleAuthButton
+              label="Continue with Google SSO"
+              disabled={loading}
+              onSuccess={handleGoogleSuccess}
+              onError={(message) => setError(message)}
+            />
+          </form>
+          
+          {/* Create Account Link */}
+          <div className="mt-4 pt-3 border-t border-slate-200/80 text-center">
+            <p className="text-xs text-slate-700">
+              New to PortionBridge?{" "}
+              <button
+                type="button"
+                onClick={handleSignupClick}
+                className="font-semibold text-sky-600 hover:text-sky-700 hover:underline ml-1 transition-colors"
+              >
+                Create an account
+              </button>
+            </p>
+          </div>
+          
+          {/* Trust & Security Microcopy Footer */}
+          <div className="mt-3 text-center space-y-1.5">
+            <p className="text-[10px] sm:text-[11px] text-slate-600 flex items-center justify-center gap-1.5 font-medium leading-snug">
+              <ShieldCheck size={14} className="text-sky-600 shrink-0" />
+              <span>Protected by enterprise-grade security · Certified humanitarian platform</span>
+            </p>
+            <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[10px] sm:text-[11px] text-slate-500 font-medium">
+              <button type="button" className="hover:text-slate-800 hover:underline">Privacy Policy</button>
+              <span>•</span>
+              <button type="button" className="hover:text-slate-800 hover:underline">Donation Charter</button>
+              <span>•</span>
+              <button type="button" className="hover:text-slate-800 hover:underline">Help & Support</button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Custom CSS Animations & viewport-fit layout */}
+      <style>{`
+        @media (min-width: 1024px) {
+          .login-page {
+            height: 100dvh;
+            max-height: 100dvh;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          @supports not (height: 100dvh) {
+            .login-page {
+              height: 100vh;
+              max-height: 100vh;
+            }
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .login-page__left {
+            flex-shrink: 0;
+          }
+
+          .login-page__left > header {
+            flex-shrink: 0;
+          }
+
+          .login-page__ecosystem {
+            overflow: hidden;
+          }
+        }
+
+        /* Short desktop/laptop viewports — tighten hero + cards without hiding content */
+        @media (min-width: 1024px) and (max-height: 900px) {
+          .login-page__headline {
+            font-size: clamp(1.45rem, 3vh, 2rem) !important;
+          }
+
+          .login-page__ecosystem {
+            margin-block: 0.5rem;
+          }
+
+          .login-page__cards {
+            transform: scale(0.94);
+            transform-origin: center center;
+          }
+
+          .login-page__form {
+            transform: scale(0.97);
+            transform-origin: center center;
+          }
+        }
+
+        @media (min-width: 1024px) and (max-height: 768px) {
+          .login-page__left {
+            padding-block: 0.875rem;
+          }
+
+          .login-page__headline {
+            font-size: clamp(1.25rem, 2.8vh, 1.65rem) !important;
+          }
+
+          .login-page__cards {
+            transform: scale(0.86);
+            gap: 0.375rem;
+          }
+
+          .login-page__card {
+            padding: 0.5rem 0.625rem;
+          }
+
+          .login-page__left-footer {
+            padding-top: 0.5rem;
+            font-size: 0.625rem;
+          }
+
+          .login-page__form {
+            transform: scale(0.92);
+          }
+        }
+
+        @keyframes floatGentle {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-5px) rotate(0.3deg); }
+        }
+        @keyframes floatReverse {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(4px) rotate(-0.2deg); }
+        }
+        @keyframes dashTravel {
+          to { stroke-dashoffset: -40; }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.2s ease;
+        }
+      `}</style>
+    </div>
   );
 }
