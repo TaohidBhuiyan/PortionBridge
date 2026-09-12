@@ -75,6 +75,7 @@ CREATE TABLE users (
   provider          VARCHAR(20)  DEFAULT NULL,             -- NULL for password accounts, 'google' for OAuth-linked accounts
   google_id         VARCHAR(64)  DEFAULT NULL,             -- Google 'sub' claim, unique per Google account
   profile_picture   VARCHAR(500) DEFAULT NULL,             -- Profile picture URL from Google OAuth
+  show_on_leaderboard TINYINT(1) NOT NULL DEFAULT 1, -- Privacy opt-out for leaderboard visibility
   is_banned         TINYINT(1)   NOT NULL DEFAULT 0,
   failed_login_attempts TINYINT UNSIGNED NOT NULL DEFAULT 0,
   lock_until        DATETIME     DEFAULT NULL,
@@ -871,7 +872,7 @@ LEFT JOIN (
   FROM ratings
   GROUP BY rated_user
 ) rstats ON rstats.rated_user = u.id
-WHERE u.role = 'donor' AND u.is_deleted = 0
+WHERE u.role = 'donor' AND u.is_deleted = 0 AND u.is_banned = 0 AND u.show_on_leaderboard = 1
 ORDER BY completed_count DESC, total_quantity_donated DESC;
 
 
@@ -903,5 +904,5 @@ LEFT JOIN (
   FROM ratings
   GROUP BY rated_user
 ) rstats ON rstats.rated_user = u.id
-WHERE u.role = 'volunteer' AND u.is_deleted = 0
+WHERE u.role = 'volunteer' AND u.is_deleted = 0 AND u.is_banned = 0 AND u.show_on_leaderboard = 1
 ORDER BY completed_count DESC, average_rating DESC;

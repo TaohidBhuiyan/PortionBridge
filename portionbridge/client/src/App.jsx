@@ -16,6 +16,8 @@ const DonorDashboard = lazy(() => import("./pages/DonorDashboard").then(m => ({ 
 const DonorAnalyticsPage = lazy(() => import("./pages/DonorAnalyticsPage").then(m => ({ default: m.DonorAnalyticsPage })));
 const DonorProfilePage = lazy(() => import("./pages/DonorProfilePage").then(m => ({ default: m.DonorProfilePage })));
 const DonorSettingsPage = lazy(() => import("./pages/DonorSettingsPage").then(m => ({ default: m.DonorSettingsPage })));
+const DonorLeaderboardPage = lazy(() => import("./pages/DonorLeaderboardPage").then(m => ({ default: m.DonorLeaderboardPage })));
+const DonorHelpPage = lazy(() => import("./pages/DonorHelpPage").then(m => ({ default: m.DonorHelpPage })));
 const SavedAddressesPage = lazy(() => import("./pages/SavedAddressesPage").then(m => ({ default: m.SavedAddressesPage })));
 const DonationFormPage = lazy(() => import("./pages/DonationFormPage").then(m => ({ default: m.DonationFormPage })));
 const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => ({ default: m.MyDonationsPage })));
@@ -108,15 +110,35 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/donor/settings" 
+              <Route
+                path="/donor/settings"
                 element={
                   <ProtectedRoute requiredRole="donor">
                     <AuthSocketProvider>
                       <DonorSettingsPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
-                } 
+                }
+              />
+              <Route
+                path="/donor/leaderboard"
+                element={
+                  <ProtectedRoute requiredRole="donor">
+                    <AuthSocketProvider>
+                      <DonorLeaderboardPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/donor/help"
+                element={
+                  <ProtectedRoute requiredRole="donor">
+                    <AuthSocketProvider>
+                      <DonorHelpPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
               />
               <Route
                 path="/donor/addresses"

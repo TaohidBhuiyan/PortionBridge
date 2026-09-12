@@ -8,7 +8,7 @@ const { pool } = require('../config/db');
 
 const BASE_SAFE_COLUMNS = `
   id, name, email, role, phone, address, profile_photo, provider, google_id, profile_picture,
-  is_banned, is_deleted, email_verified, phone_verified, failed_login_attempts, lock_until,
+  show_on_leaderboard, is_banned, is_deleted, email_verified, phone_verified, failed_login_attempts, lock_until,
   last_login_at, last_login_ip, last_user_agent, date_of_birth, gender, created_at, updated_at
 `;
 
@@ -215,6 +215,7 @@ async function updateProfile(userId, fields) {
     address: 'address',
     dateOfBirth: 'date_of_birth',
     gender: 'gender',
+    showOnLeaderboard: 'show_on_leaderboard',
   };
 
   Object.keys(fields).forEach((camelKey) => {

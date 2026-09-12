@@ -121,7 +121,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
   if (userRole === 'admin') {
     insightItems.push({ title: 'Analytics', icon: BarChart3, path: '/admin/analytics' });
   } else {
-    insightItems.push({ title: 'Leaderboard', icon: Trophy, path: '/#leaderboard' });
+    insightItems.push({ title: 'Leaderboard', icon: Trophy, path: userRole === 'donor' ? '/donor/leaderboard' : '/#leaderboard' });
     if (userRole === 'donor') {
       insightItems.push({ title: 'Analytics', icon: BarChart3, path: '/donor/analytics' });
     }
@@ -136,7 +136,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     : [
         { title: 'Messages', icon: MessageSquare, path: '/messages', badge: unreadMessageCount > 0 ? (unreadMessageCount > 99 ? '99+' : unreadMessageCount) : null },
         { title: 'Notifications', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
-        { title: 'Help', icon: HelpCircle, path: '/#roles' },
+        { title: 'Help', icon: HelpCircle, path: userRole === 'donor' ? '/donor/help' : '/#roles' },
       ];
 
   const accountItems = [];

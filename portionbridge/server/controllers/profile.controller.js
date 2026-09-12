@@ -38,7 +38,7 @@ const getProfile = asyncHandler(async (req, res) => {
  * Update the authenticated user's profile information
  */
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone, address, dateOfBirth, gender } = req.body;
+  const { name, phone, address, dateOfBirth, gender, showOnLeaderboard } = req.body;
 
   const updatedUser = await profileService.updateProfile(req.user.id, {
     name,
@@ -46,6 +46,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     address,
     dateOfBirth,
     gender,
+    showOnLeaderboard,
   });
 
   return success(res, {

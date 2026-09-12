@@ -62,8 +62,8 @@ export function QuickActions() {
     {
       icon: Trophy,
       label: 'Leaderboard',
-      description: 'See top community champions and donor ranks',
-      route: '/#leaderboard',
+      description: 'View top donors',
+      route: '/donor/leaderboard',
       gradient: 'from-yellow-400 to-amber-500',
       shadowColor: 'shadow-amber-500/20',
       badge: 'Ranks',

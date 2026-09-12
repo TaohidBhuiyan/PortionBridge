@@ -57,6 +57,10 @@ const updateProfileValidationRules = [
     .optional()
     .trim()
     .isIn(Object.values(GENDER)).withMessage(`Gender must be one of: ${Object.values(GENDER).join(', ')}.`),
+
+  body('showOnLeaderboard')
+    .optional()
+    .isBoolean().withMessage('Show on leaderboard must be a boolean.'),
 ];
 
 const changePasswordValidationRules = [

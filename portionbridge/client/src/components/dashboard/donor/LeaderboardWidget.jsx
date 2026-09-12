@@ -22,7 +22,11 @@ export function LeaderboardWidget() {
     const fetchTopDonors = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`${API_BASE}/leaderboard/donors?limit=5`);
+        const token = localStorage.getItem('accessToken');
+        const response = await axios.get(`${API_BASE}/leaderboard/donors?limit=5`, {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
         if (response.data?.success) {
           setTopDonors(response.data.data.donors || []);
@@ -102,11 +106,10 @@ export function LeaderboardWidget() {
             </div>
           </div>
           <button
-            onClick={() => navigate('/#leaderboard')}
-            className="text-xs font-semibold text-dash-primary hover:text-dash-primary-hover inline-flex items-center gap-1 transition-colors"
+            onClick={() => navigate('/donor/leaderboard')}
+            className="text-sm font-medium text-dash-primary hover:text-dash-primary-hover transition-colors"
           >
-            <span>View All</span>
-            <ArrowRight size={12} />
+            View All
           </button>
         </div>
 

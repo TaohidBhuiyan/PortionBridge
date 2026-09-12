@@ -1,9 +1,10 @@
-import { ArrowLeft, Lock, Bell, Moon } from 'lucide-react';
+import { ArrowLeft, Lock, Bell, Moon, Shield } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { SecuritySettings } from '../components/dashboard/settings/SecuritySettings';
 import { NotificationSettings } from '../components/dashboard/settings/NotificationSettings';
 import { AppearanceSettings } from '../components/dashboard/settings/AppearanceSettings';
+import { PrivacySettings } from '../components/dashboard/settings/PrivacySettings';
 
 /**
  * Account Settings Page — password, notifications, appearance, and logout.
@@ -21,7 +22,7 @@ export function DonorSettingsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam && ['security', 'notifications', 'appearance'].includes(tabParam)
+  const activeTab = tabParam && ['security', 'notifications', 'appearance', 'privacy'].includes(tabParam)
     ? tabParam
     : 'security';
 
@@ -33,6 +34,7 @@ export function DonorSettingsPage() {
     { id: 'security', label: 'Security', icon: Lock },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Moon },
+    { id: 'privacy', label: 'Privacy', icon: Shield },
   ];
 
   return (
@@ -88,6 +90,7 @@ export function DonorSettingsPage() {
             {activeTab === 'security' && <SecuritySettings />}
             {activeTab === 'notifications' && <NotificationSettings />}
             {activeTab === 'appearance' && <AppearanceSettings />}
+            {activeTab === 'privacy' && <PrivacySettings />}
           </div>
         </div>
       </div>
