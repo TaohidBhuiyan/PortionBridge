@@ -50,6 +50,8 @@ export function DonationDetailsPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [volunteerLocation, setVolunteerLocation] = useState(null);
   const [existingRating, setExistingRating] = useState(null);
+  const [activityHistory, setActivityHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
 
   // PHASE 3 — volunteer mission-action state. A single `actionInProgress`
   // flag (rather than one per action) is enough since only one of these
@@ -82,6 +84,21 @@ export function DonationDetailsPage() {
     }
   }, [id]);
 
+  const loadDonationHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const result = await donationApi.getDonationHistory(id);
+      if (result.success) {
+        setActivityHistory(result.data || []);
+      }
+    } catch {
+      // History loading failure should not block the page
+      setActivityHistory([]);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     // loadDonationDetails is also called from real-time update handlers and
     // post-action callbacks below, so it can't be inlined into this effect
@@ -90,7 +107,8 @@ export function DonationDetailsPage() {
     // every other call site without causing extra re-runs.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDonationDetails();
-  }, [id, loadDonationDetails]);
+    loadDonationHistory();
+  }, [id, loadDonationDetails, loadDonationHistory]);
 
   // Real-time tracking
   useDonationTracking(id, {
@@ -314,10 +332,9 @@ export function DonationDetailsPage() {
 
   // A real, sparse timeline built only from timestamp columns the backend
   // actually stores (created_at, accepted_at, scheduled_at, completed_at).
-  // Intermediate statuses (on_the_way, picked_up) have no dedicated
-  // timestamp column, so no entry is fabricated for them — the status
-  // timeline above already conveys current stage.
-  const activities = generateRealTimeline(donation);
+  // Use the activity history fetched from backend (donation_status_history table)
+  // instead of generating it from timestamp columns
+  const activities = activityHistory;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'Not set';

@@ -30,6 +30,7 @@ const {
   getTeamDonations,
   getMyAssignments,
   getTeamAssignments,
+  getDonationHistory,
 } = require('../../controllers/donation.controller');
 const {
   createDonationValidationRules,
@@ -91,6 +92,13 @@ router.get(
  * Accessible by donor (own donations), volunteer (assigned/pending), and admin.
  */
 router.get('/:id', protect, loadDonation, getDonationDetails);
+
+/**
+ * GET /api/v1/donations/:id/history
+ * Get donation status history (activity trail).
+ * Accessible by donor (own donations), volunteer (assigned/pending), and admin.
+ */
+router.get('/:id/history', protect, loadDonation, getDonationHistory);
 
 // Only donors can create/edit/cancel donation requests.
 router.post('/', protect, authorize('donor'), createDonationValidationRules, validateRequest, createDonation);

@@ -945,6 +945,89 @@ async function findSentAnnouncements(limit) {
 }
 
 /* ============================================================
+ * Notification Templates (Group 1)
+ * ============================================================ */
+
+/**
+ * Validates that a hand-picked list of user IDs are real, active donor/volunteer
+ * accounts — excludes admins, banned users, and deleted accounts. Used by the
+ * 'specific' audience option in admin announcements.
+ * @param {number[]} userIds - Array of user IDs to validate
+ * @returns {Promise<number[]>} Array of valid user IDs
+ */
+async function findExistingUserIds(userIds) {
+  if (!userIds || userIds.length === 0) return [];
+
+  const [rows] = await pool.query(
+    `SELECT id FROM users
+     WHERE id IN (:userIds)
+       AND role IN (:donorRole, :volunteerRole)
+       AND is_banned = 0
+       AND is_deleted = 0`,
+    {
+      userIds,
+      donorRole: USER_ROLES.DONOR,
+      volunteerRole: USER_ROLES.VOLUNTEER,
+    }
+  );
+  return rows.map((r) => r.id);
+}
+
+/**
+ * Creates a new notification template.
+ * @param {Object} template - Template data { title, message, createdBy }
+ * @returns {Promise<Object>} Created template object
+ */
+async function createNotificationTemplate({ title, message, createdBy }) {
+  const [result] = await pool.query(
+    `INSERT INTO notification_templates (title, message, created_by)
+     VALUES (:title, :message, :createdBy)`,
+    { title, message, createdBy }
+  );
+  return { id: result.insertId, title, message, created_by: createdBy };
+}
+
+/**
+ * Lists all notification templates.
+ * @returns {Promise<Array>} Array of template objects
+ */
+async function findAllNotificationTemplates() {
+  const [rows] = await pool.query(
+    `SELECT id, title, message, created_by, created_at, updated_at
+     FROM notification_templates
+     ORDER BY created_at DESC`
+  );
+  return rows;
+}
+
+/**
+ * Finds a notification template by ID.
+ * @param {number} id - Template ID
+ * @returns {Promise<Object|null>} Template object or null
+ */
+async function findNotificationTemplateById(id) {
+  const [rows] = await pool.query(
+    `SELECT id, title, message, created_by, created_at, updated_at
+     FROM notification_templates
+     WHERE id = :id LIMIT 1`,
+    { id }
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Deletes a notification template by ID.
+ * @param {number} id - Template ID
+ * @returns {Promise<void>}
+ */
+async function deleteNotificationTemplate(id) {
+  await pool.query(
+    `DELETE FROM notification_templates WHERE id = :id`,
+    { id }
+  );
+}
+
+/* ============================================================
  * Attention Center (Phase 7)
  * ============================================================ */
 
@@ -1114,6 +1197,11 @@ module.exports = {
   findTeamAuditActivity,
   findTeamAnnouncements,
   findSentAnnouncements,
+  findExistingUserIds,
+  createNotificationTemplate,
+  findAllNotificationTemplates,
+  findNotificationTemplateById,
+  deleteNotificationTemplate,
   findDonationsForAttentionCenter,
   findPendingReportsForAttentionCenter,
   findAreaDonationStats,

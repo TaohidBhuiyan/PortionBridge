@@ -161,6 +161,8 @@ const AUDIT_ACTIONS = {
   REPORT_RESOLVED: 'report_resolved',
   REPORT_DISMISSED: 'report_dismissed',
   ADMIN_ANNOUNCEMENT_SENT: 'admin_announcement_sent',
+  NOTIFICATION_TEMPLATE_CREATED: 'notification_template_created',
+  NOTIFICATION_TEMPLATE_DELETED: 'notification_template_deleted',
 };
 
 // --- Donation Form Enums ---

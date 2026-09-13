@@ -11,7 +11,7 @@ const REPORT_STATUS_VALUES = ['pending', 'reviewed', 'resolved', 'dismissed'];
 const ALLOWED_REPORT_SORT_FIELDS = ['created_at', 'status'];
 const REPORT_TARGET_TYPE_VALUES = ['donation', 'user'];
 // Matches VALID_AUDIENCES in services/admin.service.js.
-const ANNOUNCEMENT_AUDIENCE_VALUES = ['all', 'donors', 'volunteers', 'team'];
+const ANNOUNCEMENT_AUDIENCE_VALUES = ['all', 'donors', 'volunteers', 'team', 'specific'];
 
 const paginationValidationRules = [
   query('page')
@@ -232,6 +232,18 @@ const sendAnnouncementValidationRules = [
     .bail()
     .isInt({ min: 1 }).withMessage('A valid teamId is required when audience is "team".'),
 
+  body('userIds')
+    .if(body('audience').equals('specific'))
+    .notEmpty().withMessage('userIds is required when audience is "specific".')
+    .bail()
+    .isArray({ min: 1 }).withMessage('userIds must be a non-empty array.')
+    .custom((value) => {
+      if (!Array.isArray(value) || !value.every((id) => Number.isInteger(Number(id)) && Number(id) > 0)) {
+        throw new Error('userIds must be an array of positive integers.');
+      }
+      return true;
+    }),
+
   body('title')
     .if(body('audience').not().equals('team'))
     .notEmpty().withMessage('title is required.')
@@ -242,7 +254,27 @@ const sendAnnouncementValidationRules = [
   body('message')
     .trim()
     .notEmpty().withMessage('message is required.')
-    .isLength({ max: 1000 }).withMessage('message must not exceed 1000 characters.'),
+    .isLength({ max: 500 }).withMessage('message must not exceed 500 characters.'),
+];
+
+/* ============================================================
+ * Notification Templates (Group 1)
+ * ============================================================ */
+
+const createNotificationTemplateValidationRules = [
+  body('title')
+    .trim()
+    .notEmpty().withMessage('title is required.')
+    .isLength({ max: 150 }).withMessage('title must not exceed 150 characters.'),
+
+  body('message')
+    .trim()
+    .notEmpty().withMessage('message is required.')
+    .isLength({ max: 500 }).withMessage('message must not exceed 500 characters.'),
+];
+
+const deleteNotificationTemplateValidationRules = [
+  param('id').isInt({ min: 1 }).withMessage('A valid template id is required.'),
 ];
 
 // --- Area Intelligence (Phase 9) ---
@@ -294,6 +326,8 @@ module.exports = {
   getReportValidationRules,
   reportModerationNotesValidationRules,
   sendAnnouncementValidationRules,
+  createNotificationTemplateValidationRules,
+  deleteNotificationTemplateValidationRules,
   areaIntelligenceValidationRules,
   listAuditLogsValidationRules,
 };

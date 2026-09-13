@@ -428,6 +428,24 @@ const getTeamAssignments = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/v1/donations/:id/history
+ * Get donation status history (activity trail)
+ */
+const getDonationHistory = asyncHandler(async (req, res) => {
+  const history = await donationService.getDonationHistory(
+    req.params.id,
+    req.user.id,
+    req.user.role
+  );
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Donation history retrieved successfully.',
+    data: { history },
+  });
+});
+
 module.exports = {
   getDonationDetails,
   createDonation,
@@ -448,4 +466,5 @@ module.exports = {
   getTeamDonations,
   getMyAssignments,
   getTeamAssignments,
+  getDonationHistory,
 };

@@ -1,14 +1,15 @@
 import React, { useRef } from 'react';
-import { 
-  Upload, 
-  X, 
-  Image as ImageIcon, 
-  AlertCircle, 
-  Star, 
-  Sparkles, 
-  Camera, 
+import {
+  Upload,
+  X,
+  Image as ImageIcon,
+  AlertCircle,
+  Star,
+  Sparkles,
+  Camera,
   Info
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const MAX_IMAGES = 6;
 
@@ -62,18 +63,18 @@ export function Step4Images({ formData, errors, onChange, onValidationChange }) 
   const handleFiles = (files) => {
     const remainingSlots = MAX_IMAGES - images.length;
     if (remainingSlots <= 0) {
-      alert(`You can upload a maximum of ${MAX_IMAGES} photos.`);
+      toast.error(`You can upload a maximum of ${MAX_IMAGES} photos.`);
       return;
     }
 
     const validFiles = files.slice(0, remainingSlots).filter((file) => {
       const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
       if (!validTypes.includes(file.type)) {
-        alert('Only JPEG, PNG, and WebP images are supported');
+        toast.error('Only JPEG, PNG, and WebP images are supported');
         return false;
       }
       if (file.size > 5 * 1024 * 1024) {
-        alert('Each image file size must be less than 5MB');
+        toast.error('Each image file size must be less than 5MB');
         return false;
       }
       return true;

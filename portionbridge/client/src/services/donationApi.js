@@ -108,7 +108,7 @@ export const donationApi = {
   getDonationDetails: async (donationId) => {
     try {
       const token = getAuthToken();
-      
+
       const response = await axios.get(
         `${API_BASE}/donations/${donationId}`,
         {
@@ -117,8 +117,10 @@ export const donationApi = {
           },
         }
       );
-      
-      return { success: true, data: response.data.data };
+
+      // Backend returns { data: { donation: {...} } }, unwrap to { donation: {...} }
+      const donation = response.data.data?.donation || response.data.data;
+      return { success: true, data: donation };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch donation details';
       return { success: false, error: message };
@@ -500,6 +502,24 @@ export const donationApi = {
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch mission history summary';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Get donation status history (activity trail).
+   * @param {number} donationId - Donation ID
+   * @returns {Promise<Object>} Status history array
+   */
+  getDonationHistory: async (donationId) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/donations/${donationId}/history`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.history || [] };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch donation history';
       return { success: false, error: message, status: error.response?.status || null };
     }
   },

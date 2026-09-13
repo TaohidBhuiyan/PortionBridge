@@ -24,6 +24,9 @@ const {
   dismissReport,
   sendAnnouncement,
   listAnnouncementHistory,
+  createNotificationTemplate,
+  listNotificationTemplates,
+  deleteNotificationTemplate,
   getAreaIntelligence,
   listAuditLogs,
 } = require('../../controllers/admin.controller');
@@ -48,6 +51,8 @@ const {
   getReportValidationRules,
   reportModerationNotesValidationRules,
   sendAnnouncementValidationRules,
+  createNotificationTemplateValidationRules,
+  deleteNotificationTemplateValidationRules,
   areaIntelligenceValidationRules,
   listAuditLogsValidationRules,
 } = require('../../validators/admin.validator');
@@ -261,6 +266,32 @@ router.get(
   protect,
   authorize('admin'),
   listAnnouncementHistory
+);
+
+// --- Notification Templates (Group 1) ---
+router.post(
+  '/notification-templates',
+  protect,
+  authorize('admin'),
+  createNotificationTemplateValidationRules,
+  validateRequest,
+  createNotificationTemplate
+);
+
+router.get(
+  '/notification-templates',
+  protect,
+  authorize('admin'),
+  listNotificationTemplates
+);
+
+router.delete(
+  '/notification-templates/:id',
+  protect,
+  authorize('admin'),
+  deleteNotificationTemplateValidationRules,
+  validateRequest,
+  deleteNotificationTemplate
 );
 
 // --- Area Intelligence (Phase 9) ---

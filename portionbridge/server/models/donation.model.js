@@ -898,6 +898,25 @@ async function findByTeamId(teamId, status = null) {
  * @param {string} [status] - Optional status filter
  * @returns {Promise<Array>} Array of donation objects
  */
+
+/**
+ * Finds status history for a donation.
+ * @param {number} donationId - Donation ID
+ * @returns {Promise<Array>} Array of status history rows
+ */
+async function findDonationStatusHistory(donationId) {
+  const [rows] = await pool.query(
+    `SELECT dsh.id, dsh.donation_request_id, dsh.old_status, dsh.new_status,
+            dsh.changed_by, dsh.changed_at,
+            u.name AS changed_by_name, u.role AS changed_by_role
+     FROM donation_status_history dsh
+     LEFT JOIN users u ON u.id = dsh.changed_by
+     WHERE dsh.donation_request_id = :donationId
+     ORDER BY dsh.changed_at ASC`,
+    { donationId }
+  );
+  return rows;
+}
 async function findByAssignedMember(memberId, status = null) {
   let query = `SELECT ${BASE_COLUMNS} FROM donation_requests WHERE assigned_member_id = :memberId AND is_deleted = 0`;
   const params = { memberId };
@@ -958,6 +977,7 @@ module.exports = {
   acceptDonation,
   acceptDonationForTeam,
   assignTeamMember,
+  findDonationStatusHistory,
   schedulePickup,
   markOnTheWay,
   markPickedUp,

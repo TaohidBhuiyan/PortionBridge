@@ -269,6 +269,19 @@ async function markPhoneVerified(userId) {
   );
 }
 
+/**
+ * Updates a user's role (for self-service role switching).
+ * @param {number} userId - User ID
+ * @param {string} newRole - New role ('donor' or 'volunteer')
+ * @returns {Promise<void>}
+ */
+async function updateRole(userId, newRole) {
+  await pool.query(
+    `UPDATE users SET role = :newRole WHERE id = :id`,
+    { newRole, id: userId }
+  );
+}
+
 module.exports = {
   findByEmail,
   findById,
@@ -285,4 +298,5 @@ module.exports = {
   updateEmail,
   updatePhone,
   markPhoneVerified,
+  updateRole,
 };

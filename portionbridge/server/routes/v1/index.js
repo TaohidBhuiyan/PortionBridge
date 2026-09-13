@@ -19,6 +19,7 @@ const publicRoutes = require('./public.routes');
 const uploadRoutes = require('./upload.routes');
 const volunteerDiscoveryRoutes = require('./volunteerDiscovery.routes');
 const achievementRoutes = require('./achievement.routes');
+const recurringDonationRoutes = require('./recurringDonation.routes');
 
 // Root endpoint for API v1
 router.get('/', (req, res) => {
@@ -44,7 +45,8 @@ router.get('/', (req, res) => {
       public: '/public',
       uploads: '/uploads',
       'volunteer-discovery': '/volunteer-discovery',
-      achievements: '/achievements'
+      achievements: '/achievements',
+      'recurring-donations': '/recurring-donations'
     }
   });
 });
@@ -68,5 +70,6 @@ router.use('/public', publicRoutes);
 router.use('/uploads', uploadRoutes);
 router.use('/volunteer-discovery', volunteerDiscoveryRoutes);
 router.use('/achievements', achievementRoutes);
+router.use('/recurring-donations', recurringDonationRoutes);
 
 module.exports = router;

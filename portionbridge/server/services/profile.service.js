@@ -77,6 +77,56 @@ async function updateProfile(userId, profileData) {
 }
 
 /**
+ * Switches a user's role between donor and volunteer (self-service).
+ * @param {number} userId - User ID
+ * @param {string} newRole - New role ('donor' or 'volunteer')
+ * @param {Object} metadata - Audit metadata
+ * @returns {Promise<Object>} Updated user
+ */
+async function switchRole(userId, newRole, { ipAddress, userAgent }) {
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (!['donor', 'volunteer'].includes(newRole)) {
+    throw new AppError('Invalid role. Must be either donor or volunteer.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (user.role === newRole) {
+    throw new AppError(`You are already a ${newRole}.`, HTTP_STATUS.BAD_REQUEST);
+  }
+
+  // Update user role
+  await userModel.updateRole(userId, newRole);
+
+  // If switching to volunteer, create volunteer profile if it doesn't exist
+  if (newRole === USER_ROLES.VOLUNTEER) {
+    const existingProfile = await volunteerProfileModel.findByUserId(userId);
+    if (!existingProfile) {
+      await volunteerProfileModel.create({
+        userId,
+        vehicleType: null,
+        availability: null,
+        serviceAreas: null,
+      });
+    }
+  }
+
+  // Log audit
+  await auditService.record({
+    userId,
+    action: AUDIT_ACTIONS.PROFILE_UPDATED,
+    ipAddress,
+    userAgent,
+    metadata: { roleChange: { from: user.role, to: newRole } },
+  });
+
+  const updatedUser = await userModel.findById(userId);
+  return updatedUser;
+}
+
+/**
  * Changes a user's password.
  * @param {number} userId - User ID
  * @param {string} currentPassword - Current password
@@ -537,6 +587,7 @@ module.exports = {
   changePassword,
   updateEmail,
   updatePhone,
+  switchRole,
 
   // Donor operations
   updatePreferences,

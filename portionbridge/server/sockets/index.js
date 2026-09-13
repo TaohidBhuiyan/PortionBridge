@@ -60,12 +60,23 @@ function initializeSocket(io) {
   const publicNamespace = io.of('/public');
   publicNamespace.on('connection', (socket) => {
     console.log(`[Public Socket] Connected: ${socket.id}`);
-    
+
     registerPublicHandlers(io, socket);
 
-    socket.on('disconnect', () => {
-      console.log(`[Public Socket] Disconnected: ${socket.id}`);
+    socket.on('disconnect', (reason) => {
+      console.log(`[Public Socket] Disconnected: ${socket.id}, reason: ${reason}`);
     });
+
+    socket.on('error', (err) => {
+      console.error(`[Public Socket] Error on socket ${socket.id}:`, err.message);
+    });
+  });
+
+  // Handle connection errors at the namespace level
+  publicNamespace.use((socket, next) => {
+    const error = new Error('Unauthorized');
+    // Public namespace allows all connections, so we just pass through
+    next();
   });
 }
 

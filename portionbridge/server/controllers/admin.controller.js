@@ -325,6 +325,48 @@ const listAuditLogs = asyncHandler(async (req, res) => {
   });
 });
 
+/* ============================================================
+ * Notification Templates (Group 1)
+ * ============================================================ */
+
+/**
+ * POST /api/v1/admin/notification-templates
+ */
+const createNotificationTemplate = asyncHandler(async (req, res) => {
+  const template = await adminService.createNotificationTemplate(req.body, req.user.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.CREATED,
+    message: 'Notification template created successfully.',
+    data: { template },
+  });
+});
+
+/**
+ * GET /api/v1/admin/notification-templates
+ */
+const listNotificationTemplates = asyncHandler(async (req, res) => {
+  const templates = await adminService.listNotificationTemplates();
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Notification templates retrieved successfully.',
+    data: { templates },
+  });
+});
+
+/**
+ * DELETE /api/v1/admin/notification-templates/:id
+ */
+const deleteNotificationTemplate = asyncHandler(async (req, res) => {
+  await adminService.deleteNotificationTemplate(req.params.id, req.user.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Notification template deleted successfully.',
+  });
+});
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -348,6 +390,9 @@ module.exports = {
   dismissReport,
   sendAnnouncement,
   listAnnouncementHistory,
+  createNotificationTemplate,
+  listNotificationTemplates,
+  deleteNotificationTemplate,
   getAreaIntelligence,
   listAuditLogs,
 };

@@ -821,6 +821,17 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     // inserting duplicates.
     await notificationService.deliverLatestForRelated(updatedDonation.donor_id, updatedDonation.id);
 
+    // Create a rating reminder notification for the donor (Group 6)
+    // This is separate from the completion notification to encourage rating
+    const reminderNotificationId = await notificationModel.create({
+      userId: updatedDonation.donor_id,
+      type: NOTIFICATION_TYPES.STATUS_UPDATED,
+      title: 'Rate your volunteer',
+      message: `Your donation request #${updatedDonation.id} has been completed. Please take a moment to rate the volunteer's service.`,
+      relatedId: updatedDonation.id,
+    });
+    await notificationService.deliverById(updatedDonation.donor_id, reminderNotificationId);
+
     // If team mode, broadcast to team
     if (updatedDonation.assignment_mode === 'team' && updatedDonation.team_id) {
       const io = getIO();
@@ -1195,6 +1206,37 @@ async function getDonationDetails(donationId, userId, userRole) {
   return donation;
 }
 
+/**
+ * Get donation status history (activity trail).
+ * @param {number} donationId - Donation ID
+ * @param {number} userId - User ID requesting the history
+ * @param {string} userRole - User role (donor, volunteer, admin)
+ * @returns {Promise<Array>} Array of status history entries
+ */
+async function getDonationHistory(donationId, userId, userRole) {
+  const donation = await donationModel.findById(donationId);
+
+  if (!donation) {
+    throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  // Role-based access control
+  if (userRole === 'donor') {
+    if (donation.donor_id !== userId) {
+      throw new AppError('You are not allowed to view this donation request.', HTTP_STATUS.FORBIDDEN);
+    }
+  } else if (userRole === 'volunteer') {
+    const isAssigned = donation.volunteer_id === userId || donation.assigned_member_id === userId;
+    const isPending = donation.status === DONATION_STATUS.PENDING;
+
+    if (!isAssigned && !isPending) {
+      throw new AppError('You are not allowed to view this donation request.', HTTP_STATUS.FORBIDDEN);
+    }
+  }
+
+  return await donationModel.findDonationStatusHistory(donationId);
+}
+
 module.exports = {
   createDonation,
   updateDonation,
@@ -1215,4 +1257,5 @@ module.exports = {
   getMemberAssignments,
   getTeamAssignments,
   getDonationDetails,
+  getDonationHistory,
 };

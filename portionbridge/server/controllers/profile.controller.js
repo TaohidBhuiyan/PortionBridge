@@ -107,6 +107,24 @@ const updatePhone = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/v1/profile/switch-role
+ * Switch user role between donor and volunteer (self-service)
+ */
+const switchRole = asyncHandler(async (req, res) => {
+  const { newRole } = req.body;
+  const ipAddress = getClientIp(req);
+  const userAgent = getUserAgent(req);
+
+  const updatedUser = await profileService.switchRole(req.user.id, newRole, { ipAddress, userAgent });
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: `Role switched to ${newRole} successfully. Please log in again.`,
+    data: { user: sanitizeUser(updatedUser) },
+  });
+});
+
 // ============================================================
 // Donor-Specific Operations
 // ============================================================
@@ -238,6 +256,7 @@ module.exports = {
   changePassword,
   updateEmail,
   updatePhone,
+  switchRole,
 
   // Donor operations
   updatePreferences,

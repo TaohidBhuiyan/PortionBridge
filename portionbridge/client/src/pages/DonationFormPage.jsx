@@ -722,22 +722,37 @@ export function DonationFormPage() {
 
           {/* Navigation Controls Dock */}
           <div className="flex items-center justify-between mt-8 pt-5 border-t border-border">
-            {/* Previous Button */}
-            <button
-              type="button"
-              onClick={handlePrevious}
-              disabled={currentStep === 0}
-              className={`
-                flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold transition-all duration-200 text-xs sm:text-sm
-                ${currentStep === 0
-                  ? 'bg-page text-text-muted cursor-not-allowed opacity-40'
-                  : 'bg-page border border-border text-text-primary hover:bg-surface-hover hover:border-dash-primary/40 shadow-2xs'
-                }
-              `}
-            >
-              <ArrowLeft size={16} />
-              <span>Back</span>
-            </button>
+            {/* Left Action Cluster */}
+            <div className="flex items-center gap-3">
+              {/* Previous Button */}
+              <button
+                type="button"
+                onClick={handlePrevious}
+                disabled={currentStep === 0}
+                className={`
+                  flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold transition-all duration-200 text-xs sm:text-sm
+                  ${currentStep === 0
+                    ? 'bg-page text-text-muted cursor-not-allowed opacity-40'
+                    : 'bg-page border border-border text-text-primary hover:bg-surface-hover hover:border-dash-primary/40 shadow-2xs'
+                  }
+                `}
+              >
+                <ArrowLeft size={16} />
+                <span>Back</span>
+              </button>
+
+              {/* Cancel Button (Edit Mode Only) */}
+              {isEditMode && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/donations/my-donations')}
+                  className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl font-bold transition-all duration-200 text-xs sm:text-sm bg-page border border-danger/50 text-danger hover:bg-danger-soft/30 hover:border-danger shadow-2xs"
+                >
+                  <XCircle size={16} />
+                  <span>Cancel</span>
+                </button>
+              )}
+            </div>
 
             {/* Right Action Cluster */}
             <div className="flex items-center gap-3">

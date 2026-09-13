@@ -64,6 +64,18 @@ router.post(
   profileController.updatePhone
 );
 
+/**
+ * POST /api/v1/profile/switch-role
+ * Switch user role between donor and volunteer (self-service)
+ */
+router.post(
+  '/switch-role',
+  protect,
+  profileValidator.switchRoleValidationRules,
+  validateRequest,
+  profileController.switchRole
+);
+
 // ============================================================
 // Donor-Specific Routes
 // ============================================================

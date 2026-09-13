@@ -1,16 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { 
-  Search, 
-  LayoutGrid, 
-  List, 
-  Plus, 
+import {
+  Search,
+  LayoutGrid,
+  List,
+  Plus,
   ArrowLeft,
   ChevronLeft,
   ChevronRight,
   SlidersHorizontal,
   X,
+  Download,
+  FileSpreadsheet,
+  FileText,
 } from 'lucide-react';
 import { donationApi } from '../services/donationApi';
 import { DonationCard } from '../components/donation/DonationCard';
@@ -21,6 +24,8 @@ import { DashboardLayout } from '../components/dashboard';
 import { Button } from '../components/common/Button';
 import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 import { Package } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 /**
  * MyDonationsPage - Donation Management Center
@@ -162,6 +167,82 @@ export function MyDonationsPage() {
     }
   };
 
+  // Export to CSV
+  const handleExportCSV = () => {
+    if (donations.length === 0) {
+      toast.error('No donations to export');
+      return;
+    }
+
+    const headers = ['Title', 'Category', 'Status', 'Quantity', 'Unit', 'Pickup Date', 'Created At'];
+    const rows = donations.map(d => [
+      d.title,
+      d.category,
+      d.status,
+      d.quantity,
+      d.quantity_unit,
+      d.pickup_date ? new Date(d.pickup_date).toLocaleDateString() : 'N/A',
+      d.created_at ? new Date(d.created_at).toLocaleDateString() : 'N/A',
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `donation-history-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('CSV exported successfully');
+  };
+
+  // Export to PDF
+  const handleExportPDF = () => {
+    if (donations.length === 0) {
+      toast.error('No donations to export');
+      return;
+    }
+
+    const doc = new jsPDF();
+    const tableColumn = ['Title', 'Category', 'Status', 'Quantity', 'Unit', 'Pickup Date'];
+    const tableRows = donations.map(d => [
+      d.title,
+      d.category,
+      d.status,
+      d.quantity,
+      d.quantity_unit,
+      d.pickup_date ? new Date(d.pickup_date).toLocaleDateString() : 'N/A',
+    ]);
+
+    doc.setFontSize(18);
+    doc.text('Donation History', 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Exported on ${new Date().toLocaleDateString()}`, 14, 30);
+
+    doc.autoTable({
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      styles: {
+        fontSize: 9,
+        cellPadding: 3,
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+      },
+    });
+
+    doc.save(`donation-history-${new Date().toISOString().split('T')[0]}.pdf`);
+    toast.success('PDF exported successfully');
+  };
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -186,9 +267,29 @@ export function MyDonationsPage() {
               {summary ? `${summary.total || 0} donation${summary.total === 1 ? '' : 's'} total` : 'Track and manage everything you\u2019ve given'}
             </p>
           </div>
-          <Button onClick={() => navigate('/donation/create')} icon={Plus}>
-            Create Donation
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCSV}
+              disabled={donations.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to CSV"
+            >
+              <FileSpreadsheet size={16} />
+              <span className="hidden sm:inline">CSV</span>
+            </button>
+            <button
+              onClick={handleExportPDF}
+              disabled={donations.length === 0}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Export to PDF"
+            >
+              <FileText size={16} />
+              <span className="hidden sm:inline">PDF</span>
+            </button>
+            <Button onClick={() => navigate('/donation/create')} icon={Plus}>
+              Create Donation
+            </Button>
+          </div>
         </div>
       </div>
 

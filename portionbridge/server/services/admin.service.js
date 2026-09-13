@@ -986,7 +986,7 @@ async function dismissReport(reportId, adminId, notes) {
  * Admin Notifications (Phase 8)
  * ============================================================ */
 
-const VALID_AUDIENCES = new Set(['all', 'donors', 'volunteers', 'team']);
+const VALID_AUDIENCES = new Set(['all', 'donors', 'volunteers', 'team', 'specific']);
 const AUDIENCE_TO_ROLE = { donors: USER_ROLES.DONOR, volunteers: USER_ROLES.VOLUNTEER, all: null };
 
 /**
@@ -1009,7 +1009,7 @@ const AUDIENCE_TO_ROLE = { donors: USER_ROLES.DONOR, volunteers: USER_ROLES.VOLU
  * @returns {Promise<Object>} { audience, recipientCount, sent, failed }
  * @throws {AppError} 400 invalid audience/missing teamId/empty message, 404 team not found
  */
-async function sendAnnouncement({ audience, teamId, title, message }, adminId) {
+async function sendAnnouncement({ audience, teamId, userIds, title, message }, adminId) {
   if (!VALID_AUDIENCES.has(audience)) {
     throw new AppError(`audience must be one of: ${Array.from(VALID_AUDIENCES).join(', ')}.`, HTTP_STATUS.BAD_REQUEST);
   }
@@ -1037,20 +1037,44 @@ async function sendAnnouncement({ audience, teamId, title, message }, adminId) {
     return { audience, recipientCount: members.length, sent: members.length, failed: 0 };
   }
 
+  if (audience === 'specific') {
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      throw new AppError('userIds is required when audience is "specific".', HTTP_STATUS.BAD_REQUEST);
+    }
+    const validUserIds = await adminModel.findExistingUserIds(userIds);
+    if (validUserIds.length === 0) {
+      throw new AppError('No valid donor or volunteer IDs provided.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    if (!title || !title.trim()) {
+      throw new AppError('title is required.', HTTP_STATUS.BAD_REQUEST);
+    }
+
+    const { sent, failed } = await notificationService.sendAdminAnnouncement(validUserIds, adminId, { title, message });
+
+    await auditService.record({
+      userId: adminId,
+      action: AUDIT_ACTIONS.ADMIN_ANNOUNCEMENT_SENT,
+      metadata: { audience, recipientCount: validUserIds.length, sent, failed },
+    });
+
+    return { audience, recipientCount: validUserIds.length, sent, failed };
+  }
+
   if (!title || !title.trim()) {
     throw new AppError('title is required.', HTTP_STATUS.BAD_REQUEST);
   }
 
-  const userIds = await adminModel.findUserIdsByRole(AUDIENCE_TO_ROLE[audience]);
-  const { sent, failed } = await notificationService.sendAdminAnnouncement(userIds, adminId, { title, message });
+  const roleUserIds = await adminModel.findUserIdsByRole(AUDIENCE_TO_ROLE[audience]);
+  const { sent, failed } = await notificationService.sendAdminAnnouncement(roleUserIds, adminId, { title, message });
 
   await auditService.record({
     userId: adminId,
     action: AUDIT_ACTIONS.ADMIN_ANNOUNCEMENT_SENT,
-    metadata: { audience, recipientCount: userIds.length, sent, failed },
+    metadata: { audience, recipientCount: roleUserIds.length, sent, failed },
   });
 
-  return { audience, recipientCount: userIds.length, sent, failed };
+  return { audience, recipientCount: roleUserIds.length, sent, failed };
 }
 
 /**
@@ -1065,6 +1089,61 @@ async function listAnnouncementHistory() {
     recipientCount: toInt(r.recipientCount),
     readCount: toInt(r.readCount),
   }));
+}
+
+/* ============================================================
+ * Notification Templates (Group 1)
+ * ============================================================ */
+
+/**
+ * Creates a new notification template.
+ * @param {Object} data - Template data { title, message }
+ * @param {number} adminId - Creating admin's user ID
+ * @returns {Promise<Object>} Created template
+ */
+async function createNotificationTemplate(data, adminId) {
+  const template = await adminModel.createNotificationTemplate({
+    ...data,
+    createdBy: adminId,
+  });
+
+  await auditService.record({
+    userId: adminId,
+    action: AUDIT_ACTIONS.NOTIFICATION_TEMPLATE_CREATED,
+    metadata: { templateId: template.id },
+  });
+
+  return template;
+}
+
+/**
+ * Lists all notification templates.
+ * @returns {Promise<Array>} Array of templates
+ */
+async function listNotificationTemplates() {
+  return await adminModel.findAllNotificationTemplates();
+}
+
+/**
+ * Deletes a notification template.
+ * @param {number} templateId - Template ID
+ * @param {number} adminId - Deleting admin's user ID
+ * @returns {Promise<void>}
+ * @throws {AppError} 404 if template not found
+ */
+async function deleteNotificationTemplate(templateId, adminId) {
+  const template = await adminModel.findNotificationTemplateById(templateId);
+  if (!template) {
+    throw new AppError('Template not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  await adminModel.deleteNotificationTemplate(templateId);
+
+  await auditService.record({
+    userId: adminId,
+    action: AUDIT_ACTIONS.NOTIFICATION_TEMPLATE_DELETED,
+    metadata: { templateId },
+  });
 }
 
 /* ============================================================
@@ -1225,6 +1304,9 @@ module.exports = {
   dismissReport,
   sendAnnouncement,
   listAnnouncementHistory,
+  createNotificationTemplate,
+  listNotificationTemplates,
+  deleteNotificationTemplate,
   getAreaIntelligence,
   getUserActivity,
   listAuditLogs,

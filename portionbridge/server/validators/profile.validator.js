@@ -124,6 +124,13 @@ const updatePhoneValidationRules = [
     .notEmpty().withMessage('Current password is required to change phone number.'),
 ];
 
+const switchRoleValidationRules = [
+  body('newRole')
+    .trim()
+    .notEmpty().withMessage('New role is required.')
+    .isIn(['donor', 'volunteer']).withMessage('Role must be either donor or volunteer.'),
+];
+
 // ============================================================
 // Donor Preference Validators
 // ============================================================
@@ -236,15 +243,16 @@ module.exports = {
   changePasswordValidationRules,
   updateEmailValidationRules,
   updatePhoneValidationRules,
-  
+  switchRoleValidationRules,
+
   // Donor validators
   updatePreferencesValidationRules,
   getDonationStatisticsValidationRules,
-  
+
   // Volunteer validators
   updateVolunteerProfileValidationRules,
   getVolunteerStatisticsValidationRules,
-  
+
   // Notification validators
   updateNotificationSettingsValidationRules,
 };

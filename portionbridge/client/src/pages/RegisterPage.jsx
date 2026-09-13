@@ -650,6 +650,7 @@ export function RegisterPage() {
                         onChange={(e) => setName(e.target.value)}
                         disabled={loading}
                         placeholder="e.g., Marcus Vance"
+                        autoComplete="name"
                         className="w-full pl-10 pr-3 py-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition disabled:opacity-50"
                       />
                     </div>
@@ -668,6 +669,7 @@ export function RegisterPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         disabled={loading}
                         placeholder="you@example.com"
+                        autoComplete="email"
                         className="w-full pl-10 pr-3 py-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition disabled:opacity-50"
                       />
                     </div>
@@ -689,6 +691,7 @@ export function RegisterPage() {
                       onChange={(e) => setPhone(e.target.value)}
                       disabled={loading}
                       placeholder="+880 1712-345678"
+                      autoComplete="tel"
                       className="w-full pl-10 pr-3 py-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition disabled:opacity-50"
                     />
                   </div>
@@ -710,6 +713,7 @@ export function RegisterPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
                         placeholder="Create strong password"
+                        autoComplete="new-password"
                         className="w-full pl-10 pr-10 py-2.5 bg-slate-900/80 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition disabled:opacity-50"
                       />
                       <button

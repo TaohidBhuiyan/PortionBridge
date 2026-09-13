@@ -503,6 +503,65 @@ export const adminApi = {
     }
   },
 
+  /**
+   * List all notification templates.
+   * GET /admin/notification-templates
+   */
+  listNotificationTemplates: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/notification-templates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.templates };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch notification templates';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Create a new notification template.
+   * POST /admin/notification-templates
+   */
+  createNotificationTemplate: async (data) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/admin/notification-templates`,
+        data,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data?.template };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to create notification template';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Delete a notification template.
+   * DELETE /admin/notification-templates/:id
+   */
+  deleteNotificationTemplate: async (templateId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(
+        `${API_BASE}/admin/notification-templates/${templateId}`,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete notification template';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
   /* ============================================================
    * Area Intelligence (Phase 9)
    * ============================================================ */
