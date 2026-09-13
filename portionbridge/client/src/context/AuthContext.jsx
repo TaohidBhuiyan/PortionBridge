@@ -204,7 +204,11 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/register`, userData);
-      return { success: true, data: res.data.data };
+      return {
+        success: true,
+        data: res.data.data,
+        verificationEmailSent: res.data.data?.verificationEmailSent !== false,
+      };
     } catch (error) {
       const message = error.response?.data?.message || "Registration failed. Please try again.";
       const errors = error.response?.data?.errors || null;
@@ -255,7 +259,10 @@ export function AuthProvider({ children }) {
   const resendVerification = async (email) => {
     try {
       const res = await axios.post(`${API_BASE}/auth/resend-verification`, { email });
-      return { success: true, message: res.data.message };
+      // The endpoint intentionally does not disclose whether the address
+      // exists or delivery succeeded. Do not turn this generic acceptance
+      // response into a misleading "email sent" claim in the UI.
+      return { success: true, message: 'Resend request received. Please check your inbox and spam folder shortly.' };
     } catch (error) {
       const message = error.response?.data?.message || "Failed to resend verification email.";
       return { success: false, error: message };

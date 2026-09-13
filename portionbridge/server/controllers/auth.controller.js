@@ -54,7 +54,7 @@ const register = asyncHandler(async (req, res) => {
     : null;
 
   try {
-    const { user, devVerificationToken } = await authService.register({
+    const { user, devVerificationToken, verificationEmailSent } = await authService.register({
       name,
       email,
       password,
@@ -68,9 +68,12 @@ const register = asyncHandler(async (req, res) => {
 
     return success(res, {
       statusCode: HTTP_STATUS.CREATED,
-      message: 'Account created successfully. Please check your email to verify your account before logging in.',
+      message: verificationEmailSent
+        ? 'Account created successfully. Please check your email to verify your account before logging in.'
+        : 'Account created, but we could not send the verification email. Please use the resend option.',
       data: {
         user: sanitizeUser(user),
+        verificationEmailSent,
         ...(devVerificationToken && { devVerificationToken }),
       },
     });

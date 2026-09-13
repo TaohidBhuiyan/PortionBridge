@@ -132,11 +132,13 @@ async function register({ name, email, password, role, phone, address, profilePh
   // already the correct recovery path if the first send didn't go out —
   // exactly as it is for a normal successful send that the user simply
   // didn't receive.
+  let verificationEmailSent = true;
   try {
-    await emailService.sendVerificationEmail({ email, name, rawToken });
+    verificationEmailSent = (await emailService.sendVerificationEmail({ email, name, rawToken })) !== false;
   } catch (emailError) {
     // Never log the token/password/API key — only that sending failed.
     console.error(`[Auth] Failed to send verification email to a new registrant: ${emailError.message}`);
+    verificationEmailSent = false;
   }
 
   await auditService.record({
@@ -151,6 +153,9 @@ async function register({ name, email, password, role, phone, address, profilePh
 
   return {
     user,
+    // The account was created even if delivery failed.  Surface this to the
+    // registration UI so it never falsely claims that an email was sent.
+    verificationEmailSent,
     // Returned only so the dev/test flow can verify without a real mailbox.
     devVerificationToken: process.env.NODE_ENV === 'development' ? rawToken : undefined,
   };

@@ -1,170 +1,51 @@
 import { useState, useEffect } from 'react';
-import { Trophy, Medal, Award, TrendingUp, ArrowLeft } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ArrowLeft, Award, ChevronLeft, ChevronRight, Crown, Heart, Medal, Sparkles, Target, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import leaderboardApi from '../services/leaderboardApi';
 
 const PAGE_SIZE = 10;
+const podiumStyles = {
+  1: { label: 'Community champion', accent: 'from-indigo-500 to-violet-500', surface: 'border-indigo-200 bg-surface dark:border-indigo-400/30', icon: Crown, iconClass: 'text-indigo-600 dark:text-indigo-300', rankClass: 'bg-indigo-600 text-white shadow-indigo-300/50' },
+  2: { label: 'Impact leader', accent: 'from-slate-400 to-slate-500', surface: 'border-slate-200 bg-surface dark:border-slate-400/30', icon: Medal, iconClass: 'text-slate-500 dark:text-slate-300', rankClass: 'bg-slate-500 text-white shadow-slate-300/50' },
+  3: { label: 'Difference maker', accent: 'from-violet-400 to-fuchsia-500', surface: 'border-violet-200 bg-surface dark:border-violet-400/30', icon: Award, iconClass: 'text-violet-600 dark:text-violet-300', rankClass: 'bg-violet-500 text-white shadow-violet-300/50' },
+};
 
-/**
- * DonorLeaderboardPage - Public leaderboard showing top donors
- * Displays paginated list with badges for top 3 ranks
- */
+function Avatar({ donor, className = '' }) {
+  const initial = (donor.name || '?').charAt(0).toUpperCase();
+  return <div className={`overflow-hidden rounded-full bg-gradient-to-br from-donor to-violet-500 p-[2px] ${className}`}><div className="h-full w-full overflow-hidden rounded-full bg-surface">{donor.photo ? <img src={donor.photo} alt={donor.name || 'Donor'} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center bg-donor-soft text-lg font-bold text-donor">{initial}</div>}</div></div>;
+}
+
+function PodiumCard({ donor, rank, reducedMotion }) {
+  const style = podiumStyles[rank];
+  const Icon = style.icon;
+  return <motion.article initial={reducedMotion ? false : { opacity: 0, y: 22, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.45, delay: rank === 1 ? 0.12 : rank === 2 ? 0.22 : 0.32, ease: 'easeOut' }} whileHover={reducedMotion ? undefined : { y: -5 }} className={`relative overflow-hidden rounded-3xl border p-5 shadow-pb-card transition-shadow hover:shadow-pb-elevated ${style.surface} ${rank === 1 ? 'md:-mt-4 md:pb-7' : ''}`}>
+    <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${style.accent}`} />
+    <div className="relative flex items-center justify-between"><span className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow-lg ${style.rankClass}`}>#{rank}</span><Icon className={`h-6 w-6 ${style.iconClass}`} /></div>
+    <div className="relative mt-5 flex flex-col items-center text-center"><Avatar donor={donor} className="h-16 w-16 shadow-lg" /><p className="mt-3 truncate text-base font-bold text-text-primary">{donor.name || 'Anonymous Donor'}</p><p className="mt-1 text-xs font-medium text-text-muted">{style.label}</p><div className="mt-4 flex items-baseline gap-1"><span className="text-2xl font-black tracking-tight text-text-primary">{donor.points || 0}</span><span className="text-xs font-semibold text-text-muted">pts</span></div><div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-text-secondary ring-1 ring-black/[0.04] dark:bg-white/5 dark:ring-white/10"><Heart className="h-3.5 w-3.5 text-donor" fill="currentColor" />{donor.donationsCount || 0} donations</div></div>
+  </motion.article>;
+}
+
 export function DonorLeaderboardPage() {
   const navigate = useNavigate();
-  const [donors, setDonors] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [page, setPage] = useState(1);
-  const [meta, setMeta] = useState(null);
+  const reducedMotion = useReducedMotion();
+  const [donors, setDonors] = useState([]); const [loading, setLoading] = useState(true); const [error, setError] = useState(''); const [page, setPage] = useState(1); const [meta, setMeta] = useState(null);
+  async function fetchLeaderboard() { setLoading(true); setError(''); try { const response = await leaderboardApi.getTopDonors({ page, limit: PAGE_SIZE }); if (response.success) { setDonors(response.data?.donors || []); setMeta(response.meta || null); } else setError(response.message || 'Failed to load leaderboard'); } catch (err) { setError(err.response?.data?.message || err.message || 'Failed to load leaderboard'); } finally { setLoading(false); } }
+  useEffect(() => { fetchLeaderboard(); }, [page]);
+  const totalPoints = donors.reduce((total, donor) => total + Number(donor.points || 0), 0); const totalDonations = donors.reduce((total, donor) => total + Number(donor.donationsCount || 0), 0); const podiumDonors = page === 1 ? donors.slice(0, 3) : []; const listDonors = page === 1 ? donors.slice(3) : donors;
 
-  useEffect(() => {
-    fetchLeaderboard();
-  }, [page]);
-
-  const fetchLeaderboard = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await leaderboardApi.getTopDonors({ page, limit: PAGE_SIZE });
-      if (response.success) {
-        setDonors(response.data?.donors || []);
-        setMeta(response.meta || null);
-      } else {
-        setError(response.message || 'Failed to load leaderboard');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to load leaderboard');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getRankBadge = (rank) => {
-    if (rank === 1) return <Trophy className="w-6 h-6 text-yellow-500" />;
-    if (rank === 2) return <Medal className="w-6 h-6 text-gray-400" />;
-    if (rank === 3) return <Award className="w-6 h-6 text-amber-700" />;
-    return <span className="text-lg font-bold text-text-muted">#{rank}</span>;
-  };
-
-  return (
-    <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => navigate('/donor/dashboard')}
-            className="p-2 hover:bg-surface-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-            aria-label="Back to dashboard"
-          >
-            <ArrowLeft className="w-5 h-5 text-text-secondary" />
-          </button>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary flex items-center gap-3">
-              <TrendingUp className="w-7 h-7 text-dash-primary" />
-              Donor Leaderboard
-            </h1>
-            <p className="text-text-secondary mt-1 text-sm">
-              Top donors making the biggest impact in our community
-            </p>
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-dash-primary mx-auto"></div>
-              <p className="mt-4 text-text-secondary">Loading leaderboard...</p>
-            </div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <div className="text-center">
-              <p className="text-danger">{error}</p>
-              <button
-                onClick={fetchLeaderboard}
-                className="mt-4 px-4 py-2 bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
-            {donors.length === 0 ? (
-              <div className="text-center py-16 px-6">
-                <Trophy className="w-10 h-10 text-text-muted mx-auto mb-3" />
-                <p className="text-text-secondary">No leaderboard data yet.</p>
-                <p className="text-sm text-text-muted mt-1">Complete a donation to start earning impact points.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {donors.map((donor, index) => {
-                  const rank = (page - 1) * PAGE_SIZE + index + 1;
-                  const initial = (donor.name || '?').charAt(0).toUpperCase();
-                  return (
-                    <div
-                      key={donor.id || rank}
-                      className="flex items-center gap-4 p-4 hover:bg-surface-hover transition-colors"
-                    >
-                      <div className="flex items-center justify-center w-12 h-12 shrink-0">
-                        {getRankBadge(rank)}
-                      </div>
-
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-surface-hover shrink-0">
-                        {donor.photo ? (
-                          <img
-                            src={donor.photo}
-                            alt={donor.name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-dash-primary-soft text-dash-primary font-semibold text-lg">
-                            {initial}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-text-primary truncate">{donor.name || 'Anonymous Donor'}</h3>
-                        <p className="text-sm text-text-secondary">
-                          {donor.donationsCount || 0} donation{(donor.donationsCount || 0) !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-
-                      <div className="text-right shrink-0">
-                        <div className="text-lg font-bold text-dash-primary">{donor.points || 0}</div>
-                        <div className="text-xs text-text-muted">points</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {meta && meta.totalPages > 1 && (
-              <div className="flex items-center justify-between p-4 border-t border-border">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-4 py-2 rounded-lg border border-border hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="text-text-secondary">
-                  Page {page} of {meta.totalPages}
-                </span>
-                <button
-                  onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
-                  disabled={page === meta.totalPages}
-                  className="px-4 py-2 rounded-lg border border-border hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </DashboardLayout>
-  );
+  return <DashboardLayout><main className="mx-auto max-w-6xl pb-8">
+    <motion.section initial={reducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} style={{ background: 'linear-gradient(135deg, #312e81 0%, #4338ca 54%, #6d28d9 100%)' }} className="relative isolate overflow-hidden rounded-[2rem] px-5 py-7 text-white shadow-xl shadow-indigo-950/20 sm:px-8 sm:py-9">
+      <div className="absolute inset-y-0 right-0 w-2/5 bg-[linear-gradient(135deg,transparent_35%,rgba(255,255,255,0.07)_35%,rgba(255,255,255,0.07)_50%,transparent_50%)]" />
+      <div className="relative"><div className="flex items-start justify-between gap-4"><button onClick={() => navigate('/donor/dashboard')} className="group inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 !text-white transition hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-indigo-800" aria-label="Back to dashboard"><ArrowLeft className="h-5 w-5 transition-transform group-hover:-translate-x-0.5" /></button><div className="hidden rounded-xl border border-white/20 bg-indigo-950/20 px-3 py-2 text-right sm:block"><div className="flex items-center justify-end gap-1.5 text-xs font-semibold !text-indigo-100"><span className="h-2 w-2 animate-pulse rounded-full bg-emerald-300" />LIVE COMMUNITY IMPACT</div><p className="mt-0.5 text-sm font-bold !text-white">Updated in real time</p></div></div>
+      <div className="mt-8 max-w-2xl"><div className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-bold tracking-[0.14em] !text-indigo-50"><Sparkles className="h-3.5 w-3.5 text-indigo-200" /> COMMUNITY CHANGEMAKERS</div><h1 className="mt-4 !text-3xl !font-black !tracking-tight !text-white sm:!text-4xl">Donor Leaderboard</h1><p className="mt-2 max-w-xl text-sm leading-6 !text-indigo-100 sm:text-base">Every completed donation creates a visible ripple of good. Celebrate the people moving our community forward.</p></div>
+      <div className="mt-7 grid max-w-2xl grid-cols-3 gap-2 sm:gap-3">{[{ label: 'Donors ranked', value: meta?.total ?? donors.length, icon: Users }, { label: 'Donations', value: totalDonations, icon: Heart }, { label: 'Impact points', value: totalPoints, icon: Target }].map(({ label, value, icon: Icon }) => <div key={label} className="rounded-xl border border-white/20 bg-indigo-950/20 p-3 sm:p-4"><Icon className="h-4 w-4 text-indigo-200" /><p className="mt-2 !text-lg !font-black !text-white sm:!text-xl">{value.toLocaleString()}</p><p className="mt-0.5 !text-[10px] !font-semibold uppercase tracking-wide !text-indigo-100 sm:!text-xs">{label}</p></div>)}</div></div>
+    </motion.section>
+    {loading ? <div className="mt-6 grid gap-4 md:grid-cols-3">{[0, 1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-3xl bg-surface shadow-pb-card" />)}</div> : error ? <section className="mt-6 rounded-3xl border border-danger/20 bg-danger-soft px-6 py-14 text-center shadow-pb-card"><Trophy className="mx-auto h-10 w-10 text-danger" /><h2 className="mt-4 text-lg font-bold text-text-primary">Leaderboard unavailable</h2><p className="mt-1 text-sm text-text-secondary">{error}</p><button onClick={fetchLeaderboard} className="mt-5 rounded-xl bg-dash-primary px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition hover:bg-dash-primary-hover focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2">Try again</button></section> : donors.length === 0 ? <section className="mt-6 rounded-3xl border border-border bg-surface px-6 py-16 text-center shadow-pb-card"><div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-donor-soft"><Trophy className="h-8 w-8 text-donor" /></div><h2 className="mt-5 text-xl font-bold text-text-primary">The first impact story starts here</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-text-secondary">Complete a donation to earn points and join the community leaderboard.</p></section> : <>
+      {podiumDonors.length > 0 && <section className="mt-7"><div className="mb-4 flex items-center gap-2"><Crown className="h-5 w-5 text-amber-500" /><h2 className="text-lg font-bold text-text-primary">This month&apos;s standouts</h2></div><div className="grid gap-4 md:grid-cols-3 md:items-end">{[2, 1, 3].map((rank) => podiumDonors[rank - 1] && <PodiumCard key={rank} donor={podiumDonors[rank - 1]} rank={rank} reducedMotion={reducedMotion} />)}</div></section>}
+      {listDonors.length > 0 && <section className="mt-7 overflow-hidden rounded-3xl border border-border bg-surface shadow-pb-card"><div className="flex items-center justify-between border-b border-border px-5 py-4 sm:px-6"><div><h2 className="font-bold text-text-primary">Impact rankings</h2><p className="mt-0.5 text-xs text-text-muted">Honouring every contribution</p></div><span className="rounded-full bg-donor-soft px-3 py-1 text-xs font-bold text-donor">{meta?.total ?? donors.length} donors</span></div><div className="p-2 sm:p-3">{listDonors.map((donor, index) => { const rank = (page - 1) * PAGE_SIZE + index + 1 + (page === 1 ? 3 : 0); return <motion.article key={donor.id || rank} initial={reducedMotion ? false : { opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.3, delay: Math.min(index * 0.055, 0.35) }} whileHover={reducedMotion ? undefined : { x: 3 }} className="group flex items-center gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-donor-soft/65 sm:gap-4 sm:px-4"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-surface-hover text-sm font-black text-text-secondary group-hover:bg-white group-hover:text-donor group-hover:shadow-sm dark:group-hover:bg-surface">#{rank}</span><Avatar donor={donor} className="h-11 w-11 shrink-0" /><div className="min-w-0 flex-1"><h3 className="truncate font-bold text-text-primary">{donor.name || 'Anonymous Donor'}</h3><p className="mt-0.5 text-xs font-medium text-text-muted">{donor.donationsCount || 0} donation{(donor.donationsCount || 0) === 1 ? '' : 's'} made</p></div><div className="text-right"><p className="text-lg font-black tracking-tight text-donor">{(donor.points || 0).toLocaleString()}</p><p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">points</p></div></motion.article>; })}</div></section>}
+      {meta && meta.totalPages > 1 && <nav className="mt-6 flex items-center justify-between rounded-2xl border border-border bg-surface p-2 shadow-pb-subtle" aria-label="Leaderboard pagination"><button onClick={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-text-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40"><ChevronLeft className="h-4 w-4" />Previous</button><span className="text-xs font-semibold text-text-muted sm:text-sm">Page <span className="text-text-primary">{page}</span> of {meta.totalPages}</span><button onClick={() => setPage((current) => Math.min(meta.totalPages, current + 1))} disabled={page === meta.totalPages} className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-text-secondary transition hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-40">Next<ChevronRight className="h-4 w-4" /></button></nav>}
+    </>}
+  </main></DashboardLayout>;
 }

@@ -99,7 +99,9 @@ async function sendEmail({ to, subject, html, text }) {
     // Development mode: log that email would be sent
     if (isDevelopment) {
       console.log(`[Email Service] Brevo not configured (BREVO_API_KEY missing). Would send to: ${to}, Subject: ${subject}`);
-      return;
+      // The caller needs to distinguish a console-only development preview
+      // from a message accepted for external delivery.
+      return false;
     }
     throw new Error('Email service is not configured. Please set BREVO_API_KEY, BREVO_SENDER_EMAIL, and BREVO_SENDER_NAME environment variables.');
   }
@@ -112,6 +114,7 @@ async function sendEmail({ to, subject, html, text }) {
       htmlContent: html,
       textContent: text || html.replace(/<[^>]*>/g, ''), // Strip HTML for plain text fallback
     });
+    return true;
   } catch (error) {
     // Log only the message — never the full error object, which could
     // echo request details — and never the API key (which isn't part of
@@ -146,7 +149,7 @@ async function sendVerificationEmail({ email, name, rawToken }) {
   logEmailDevelopment('Verify your PortionBridge account', email, verifyUrl, rawToken);
 
   // Send actual email if configured
-  await sendEmail({
+  return sendEmail({
     to: email,
     subject: 'Verify your PortionBridge account',
     html,

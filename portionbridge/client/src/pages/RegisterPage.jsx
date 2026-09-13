@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   Circle,
   MailCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { GoogleAuthButton } from "../components/auth/GoogleAuthButton";
@@ -87,6 +88,7 @@ export function RegisterPage() {
   // showing them where the email went or giving them a way to resend it.
   const [registered, setRegistered] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [verificationEmailSent, setVerificationEmailSent] = useState(true);
   const [resendStatus, setResendStatus] = useState("idle"); // idle | sending | sent
   const [resendMessage, setResendMessage] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -215,6 +217,7 @@ export function RegisterPage() {
       }
 
       setRegisteredEmail(email.trim());
+      setVerificationEmailSent(result.verificationEmailSent);
       setRegistered(true);
     } catch (err) {
       setError(err.message || "Something went wrong.");
@@ -344,14 +347,11 @@ export function RegisterPage() {
         <div className="fixed top-[-10%] left-[-10%] w-[650px] h-[650px] rounded-full bg-cyan-500/10 blur-[140px] pointer-events-none" />
         <div className="fixed bottom-[-15%] right-[-10%] w-[700px] h-[700px] rounded-full bg-sky-500/10 blur-[150px] pointer-events-none" />
         <div className="w-full max-w-md bg-[#071527] border border-cyan-500/30 rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 text-center">
-          <div className="w-16 h-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mx-auto mb-4">
-            <MailCheck size={28} />
+          <div className={`w-16 h-16 rounded-full border flex items-center justify-center mx-auto mb-4 ${verificationEmailSent ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400' : 'bg-amber-500/10 border-amber-500/30 text-amber-300'}`}>
+            {verificationEmailSent ? <MailCheck size={28} /> : <AlertTriangle size={28} />}
           </div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Check your email</h1>
-          <p className="text-sm text-slate-400 mt-2">
-            We sent a verification link to <span className="font-medium text-cyan-300">{registeredEmail}</span>.
-            Click the link inside to verify your account before logging in.
-          </p>
+          <h1 className="text-xl font-bold text-white tracking-tight">{verificationEmailSent ? 'Check your email' : 'Verification email needs a retry'}</h1>
+          {verificationEmailSent ? <p className="text-sm text-slate-400 mt-2">We sent a verification link to <span className="font-medium text-cyan-300">{registeredEmail}</span>. Click the link inside to verify your account before logging in.</p> : <div className="mt-3 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-3 text-left text-sm text-amber-100"><div className="flex gap-2"><AlertTriangle size={17} className="mt-0.5 shrink-0 text-amber-300" /><p>Your account was created, but the verification email could not be delivered. Use the button below to try again; do not try to register with this email a second time.</p></div></div>}
 
           <div className="mt-6 p-3 rounded-xl bg-slate-900/70 border border-slate-800 text-left text-xs text-slate-300 flex items-center gap-3">
             <ShieldCheck size={18} className="text-emerald-400 shrink-0" />
