@@ -34,6 +34,7 @@ import { SkeletonCard } from '../components/dashboard/skeletons';
 import { AnnouncementComposer } from '../components/team/AnnouncementComposer';
 import { InviteMemberModal } from '../components/team/InviteMemberModal';
 import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
+import { BaseLocationCard } from '../components/dashboard/volunteer';
 
 // Buckets purely for display grouping — no invented metrics, just a
 // client-side partition of the real donation.status values already
@@ -249,6 +250,16 @@ export function VolunteerTeam() {
 
   // Real-time team room — join when on a team, leave when not
   const isLeader = team?.leader_id === user?.id;
+
+  const handleSaveTeamLocation = async (data) => {
+    const result = await teamApi.updateTeam(team.id, data);
+    if (result.success) {
+      setTeam((prev) => ({ ...prev, ...result.data.team }));
+      return { success: true };
+    }
+    return { success: false, error: result.error };
+  };
+
   useTeamRoom(team?.id, {
     onAnnouncement: () => {
       // Refresh donations/activity when an announcement arrives
@@ -442,6 +453,16 @@ export function VolunteerTeam() {
             )}
           </div>
         </div>
+
+        {isLeader && (
+          <div className="mb-6">
+            <BaseLocationCard
+              savedLocation={{ baseAddress: team.base_address, coverageRadius: team.coverage_radius }}
+              onSave={handleSaveTeamLocation}
+              title="Team Base Location"
+            />
+          </div>
+        )}
 
       {/* Team stats — real, derived from the already-loaded members + team donations, no invented numbers */}
       <div className="grid grid-cols-2 sm:grid-cols-4 bg-surface rounded-lg border border-border/50 divide-x divide-y sm:divide-y-0 divide-border/50 overflow-hidden mb-6">

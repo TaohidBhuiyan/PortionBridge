@@ -127,4 +127,15 @@ async function getRatingByDonation(donationId, requestingUserId) {
   return rating;
 }
 
-module.exports = { createRating, getRatingByDonation };
+/**
+ * Gets a donor's completed-but-not-yet-rated donations, for the
+ * dashboard's rating reminder widget. No role/ownership check needed
+ * beyond the donorId itself since the query is already scoped to it.
+ * @param {number} donorId
+ * @returns {Promise<Array>}
+ */
+async function getPendingReminders(donorId) {
+  return ratingModel.findPendingReminders(donorId);
+}
+
+module.exports = { createRating, getRatingByDonation, getPendingReminders };

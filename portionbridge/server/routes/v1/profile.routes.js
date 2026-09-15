@@ -121,6 +121,21 @@ router.patch(
 );
 
 /**
+ * PATCH /api/v1/profile/volunteer/location
+ * Volunteer sets/updates their own base location (self-service address —
+ * the fallback VolunteerOpportunities.jsx uses when live GPS isn't
+ * granted, and the same coordinates volunteerDiscovery already searches
+ * for donor-side "find nearby volunteers").
+ */
+router.patch(
+  '/volunteer/location',
+  protect,
+  profileValidator.updateVolunteerLocationValidationRules,
+  validateRequest,
+  profileController.updateVolunteerLocation
+);
+
+/**
  * GET /api/v1/profile/volunteer/statistics
  * Get volunteer statistics
  */

@@ -30,6 +30,36 @@ const updateTeamValidationRules = [
     .optional()
     .trim()
     .isLength({ max: 500 }).withMessage('Description must not exceed 500 characters.'),
+
+  // Team base location — self-service "set our address" (leader-only,
+  // enforced in teamService.updateTeam). latitude/longitude must arrive
+  // together; coverageRadius/baseAddress are independent optional extras.
+  body('latitude')
+    .optional()
+    .isFloat({ min: -90, max: 90 }).withMessage('latitude must be between -90 and 90.')
+    .toFloat(),
+
+  body('longitude')
+    .optional()
+    .isFloat({ min: -180, max: 180 }).withMessage('longitude must be between -180 and 180.')
+    .toFloat()
+    .custom((value, { req }) => {
+      const hasLat = req.body.latitude !== undefined;
+      if (hasLat !== (value !== undefined)) {
+        throw new Error('latitude and longitude must be provided together.');
+      }
+      return true;
+    }),
+
+  body('coverageRadius')
+    .optional()
+    .isFloat({ min: 1, max: 50 }).withMessage('coverageRadius must be between 1 and 50 km.')
+    .toFloat(),
+
+  body('baseAddress')
+    .optional()
+    .trim()
+    .isLength({ max: 255 }).withMessage('baseAddress must not exceed 255 characters.'),
 ];
 
 /**

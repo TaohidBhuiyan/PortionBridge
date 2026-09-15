@@ -40,7 +40,17 @@ const ALLOWED_ASSIGNMENT_SORT_COLUMNS = ['created_at', 'pickup_time', 'scheduled
  * @returns {Object} Object containing whereClause string and params object
  */
 function buildAssignmentFilter({ volunteerId, status, category, search }) {
-  const conditions = ['is_deleted = 0', 'volunteer_id = :volunteerId'];
+  // A team-assigned donation keeps volunteer_id = the team leader (set by
+  // acceptDonationForTeam) — the individual member actually doing the
+  // pickup is only recorded in assigned_member_id. Without this OR, an
+  // assigned member's own "My Mission" view (ActiveMissionCard.jsx /
+  // VolunteerMission.jsx, both built on this same findAssignments query)
+  // would show nothing for a team-assigned mission even though
+  // assertAssignedVolunteer() already correctly lets them act on it —
+  // they just couldn't discover it here in the first place. Matches the
+  // same volunteer_id-or-assigned_member_id check getAssignmentDetail
+  // already uses (volunteer.service.js).
+  const conditions = ['is_deleted = 0', '(volunteer_id = :volunteerId OR assigned_member_id = :volunteerId)'];
   const params = { volunteerId };
 
   if (status) {
@@ -201,7 +211,7 @@ async function getUpcomingCounts(volunteerId) {
        SUM(scheduled_at >= NOW() AND scheduled_at < (CURDATE() + INTERVAL 1 DAY)) AS upcomingToday,
        SUM(scheduled_at >= NOW() AND scheduled_at < DATE_ADD(NOW(), INTERVAL 7 DAY)) AS upcomingThisWeek
      FROM donation_requests
-     WHERE volunteer_id = :volunteerId AND is_deleted = 0 AND status = :scheduledStatus`,
+     WHERE (volunteer_id = :volunteerId OR assigned_member_id = :volunteerId) AND is_deleted = 0 AND status = :scheduledStatus`,
     { volunteerId, scheduledStatus: DONATION_STATUS.SCHEDULED }
   );
   return rows[0];

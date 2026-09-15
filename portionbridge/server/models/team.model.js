@@ -6,7 +6,7 @@ const { pool } = require('../config/db');
  */
 
 const BASE_COLUMNS = `
-  id, name, description, leader_id, created_at, updated_at
+  id, name, description, leader_id, latitude, longitude, coverage_radius, base_address, created_at, updated_at
 `;
 
 /**
@@ -69,6 +69,10 @@ async function update(id, fields) {
   const fieldMap = {
     name: 'name',
     description: 'description',
+    latitude: 'latitude',
+    longitude: 'longitude',
+    coverageRadius: 'coverage_radius',
+    baseAddress: 'base_address',
   };
 
   Object.keys(fields).forEach((camelKey) => {

@@ -226,6 +226,40 @@ const updateVolunteerProfileValidationRules = [
 ];
 
 // ============================================================
+// Volunteer Location Validator
+// ============================================================
+
+/**
+ * PATCH /api/v1/profile/volunteer/location
+ * Volunteer sets/updates their own base location (self-service address).
+ * latitude/longitude are required together (this is a "set my address"
+ * action, not a partial patch — coverageRadius/baseAddress are optional
+ * extras on top of a location that must always be present).
+ */
+const updateVolunteerLocationValidationRules = [
+  body('latitude')
+    .isFloat({ min: -90, max: 90 }).withMessage('latitude must be between -90 and 90.')
+    .toFloat(),
+
+  body('longitude')
+    .isFloat({ min: -180, max: 180 }).withMessage('longitude must be between -180 and 180.')
+    .toFloat(),
+
+  // Same 1-50 km bounds as the volunteer opportunity radius filter
+  // (donation.validator.js) — this coverage_radius doubles as both "how
+  // far donors can find me" and the default opportunity-browsing radius.
+  body('coverageRadius')
+    .optional()
+    .isFloat({ min: 1, max: 50 }).withMessage('coverageRadius must be between 1 and 50 km.')
+    .toFloat(),
+
+  body('baseAddress')
+    .optional()
+    .trim()
+    .isLength({ max: 255 }).withMessage('baseAddress must not exceed 255 characters.'),
+];
+
+// ============================================================
 // Statistics Validators
 // ============================================================
 
@@ -251,6 +285,7 @@ module.exports = {
 
   // Volunteer validators
   updateVolunteerProfileValidationRules,
+  updateVolunteerLocationValidationRules,
   getVolunteerStatisticsValidationRules,
 
   // Notification validators

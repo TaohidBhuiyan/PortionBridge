@@ -298,8 +298,8 @@ export const donationApi = {
    * Backed by the existing GET /donations endpoint (donationService.browseDonations),
    * which already supports category/location/search/sort/pagination — reused
    * as-is, no new discovery API.
-   * @param {Object} filters - category, location, search, sortBy, sortOrder, page, limit
-   * @returns {Promise<Object>} { success, data: { donations, meta } }
+   * @param {Object} filters - category, location, search, sortBy, sortOrder, page, limit, latitude, longitude, radius
+   * @returns {Promise<Object>} { success, data: { donations, radius }, meta }
    */
   browseDonations: async (filters = {}) => {
     try {
@@ -313,6 +313,13 @@ export const donationApi = {
       if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('limit', filters.limit);
+      // Nearby-opportunity radius filter — only sent once the volunteer's
+      // location is known; latitude/longitude/radius travel together.
+      if (filters.latitude !== undefined && filters.longitude !== undefined) {
+        params.append('latitude', filters.latitude);
+        params.append('longitude', filters.longitude);
+        if (filters.radius !== undefined) params.append('radius', filters.radius);
+      }
 
       const response = await axios.get(
         `${API_BASE}/donations${params.toString() ? '?' + params.toString() : ''}`,

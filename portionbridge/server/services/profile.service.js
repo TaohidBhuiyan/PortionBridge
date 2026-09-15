@@ -460,6 +460,33 @@ async function updateVolunteerProfile(userId, profileData) {
 }
 
 /**
+ * Sets a volunteer's base location (self-service "set my address").
+ * This is what a volunteer can fall back on when live GPS isn't
+ * available/granted (VolunteerOpportunities.jsx), and it's the same
+ * latitude/longitude/coverage_radius donors already search against in
+ * volunteerDiscovery — so setting it once makes a volunteer both
+ * findable by donors AND able to browse nearby opportunities without
+ * needing to grant location every visit.
+ * @param {number} userId - User ID
+ * @param {Object} locationData - { latitude, longitude, coverageRadius, baseAddress }
+ * @returns {Promise<Object>} Updated volunteer profile
+ */
+async function updateVolunteerLocation(userId, locationData) {
+  const user = await userModel.findById(userId);
+  if (!user) {
+    throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (user.role !== USER_ROLES.VOLUNTEER) {
+    throw new AppError('Only volunteers can set a volunteer base location.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  await volunteerProfileModel.upsertLocation({ userId, ...locationData });
+
+  return await volunteerProfileModel.findByUserId(userId);
+}
+
+/**
  * Gets volunteer statistics dynamically from donation and rating data.
  * @param {number} userId - User ID
  * @returns {Promise<Object>} Volunteer statistics
@@ -595,6 +622,7 @@ module.exports = {
 
   // Volunteer operations
   updateVolunteerProfile,
+  updateVolunteerLocation,
   getVolunteerStatistics,
 
   // Notification settings

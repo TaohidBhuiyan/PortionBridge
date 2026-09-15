@@ -40,4 +40,19 @@ const getRatingByDonation = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { createRating, getRatingByDonation };
+/**
+ * GET /api/v1/ratings/pending/reminders
+ * Donor's completed-but-not-yet-rated donations — powers the dashboard's
+ * RatingReminders widget.
+ */
+const getPendingReminders = asyncHandler(async (req, res) => {
+  const reminders = await ratingService.getPendingReminders(req.user.id);
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Pending reminders retrieved successfully.',
+    data: { reminders },
+  });
+});
+
+module.exports = { createRating, getRatingByDonation, getPendingReminders };

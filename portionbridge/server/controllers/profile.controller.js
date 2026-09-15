@@ -188,6 +188,29 @@ const updateVolunteerProfile = asyncHandler(async (req, res) => {
 });
 
 /**
+ * PATCH /api/v1/profile/volunteer/location
+ * Set/update the volunteer's own base location — the self-service
+ * "set my address" step, separate from updateVolunteerProfile (vehicle/
+ * availability/service areas) above so this never touches those fields.
+ */
+const updateVolunteerLocation = asyncHandler(async (req, res) => {
+  const { latitude, longitude, coverageRadius, baseAddress } = req.body;
+
+  const updatedProfile = await profileService.updateVolunteerLocation(req.user.id, {
+    latitude,
+    longitude,
+    coverageRadius,
+    baseAddress,
+  });
+
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Volunteer location updated successfully.',
+    data: { volunteerProfile: updatedProfile },
+  });
+});
+
+/**
  * GET /api/v1/profile/volunteer/statistics
  * Get volunteer statistics
  */
@@ -264,6 +287,7 @@ module.exports = {
 
   // Volunteer operations
   updateVolunteerProfile,
+  updateVolunteerLocation,
   getVolunteerStatistics,
 
   // Notification settings

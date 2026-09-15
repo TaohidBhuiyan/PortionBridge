@@ -37,7 +37,30 @@ const UPDATEABLE_COLUMNS = [
  * Whitelisted sort columns to prevent SQL injection via ORDER BY.
  * Never interpolate sortBy directly into SQL.
  */
-const ALLOWED_SORT_COLUMNS = ['created_at', 'pickup_time', 'quantity'];
+const ALLOWED_SORT_COLUMNS = ['created_at', 'pickup_time', 'quantity', 'distance'];
+
+/**
+ * Haversine distance formula for nearby-donation filtering.
+ *
+ * Pickup coordinates come from the `pickup_address_details` JSON column,
+ * which donation.service.js#createDonation always populates with
+ * latitude/longitude — both for a one-time address (straight from the
+ * map picker) and for a saved address (copied into the snapshot at
+ * creation time). So no join to saved_addresses is needed; every
+ * donation created through the normal flow already carries its own
+ * coordinates. Donations with no coordinates on file (legacy rows, or a
+ * geocode that never resolved) simply can't produce a distance and are
+ * excluded by the HAVING clause below rather than guessed at.
+ */
+const PICKUP_LAT_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.latitude')) AS DECIMAL(10,8))`;
+const PICKUP_LNG_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.longitude')) AS DECIMAL(11,8))`;
+const DISTANCE_FORMULA = `
+  (6371 * ACOS(
+    COS(RADIANS(:lat)) * COS(RADIANS(${PICKUP_LAT_EXPR})) *
+    COS(RADIANS(${PICKUP_LNG_EXPR}) - RADIANS(:lng)) +
+    SIN(RADIANS(:lat)) * SIN(RADIANS(${PICKUP_LAT_EXPR}))
+  ))
+`;
 
 /**
  * Separate whitelist for history listings, which additionally allow sorting
@@ -303,35 +326,77 @@ function buildBrowseFilter({ category, location, search }) {
  * @param {string} [options.sortOrder] - Sort direction (asc/desc)
  * @param {number} options.limit - Result limit
  * @param {number} options.offset - Result offset
+ * @param {number} [options.latitude] - Volunteer's current latitude — when present (with longitude), results are restricted to `radius` km and get a `distance` field
+ * @param {number} [options.longitude] - Volunteer's current longitude
+ * @param {number} [options.radius] - Search radius in km (only applied when latitude/longitude are present)
  * @returns {Promise<Array>} Array of donation objects
  */
-async function findPendingList({ category, location, search, sortBy, sortOrder, limit, offset }) {
+async function findPendingList({ category, location, search, sortBy, sortOrder, limit, offset, latitude, longitude, radius }) {
   const { whereClause, params } = buildBrowseFilter({ category, location, search });
+  const hasGeoFilter = latitude !== undefined && longitude !== undefined;
 
-  const orderColumn = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'created_at';
-  const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  let selectColumns = BASE_COLUMNS;
+  let havingClause = '';
+  let orderColumn = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : (hasGeoFilter ? 'distance' : 'created_at');
+  if (orderColumn === 'distance' && !hasGeoFilter) {
+    orderColumn = 'created_at'; // 'distance' doesn't exist in this SELECT without a location
+  }
+  const orderDirection = sortOrder === 'asc' ? 'ASC' : sortOrder === 'desc' ? 'DESC' : (orderColumn === 'distance' ? 'ASC' : 'DESC');
+
+  if (hasGeoFilter) {
+    params.lat = latitude;
+    params.lng = longitude;
+    params.radius = radius;
+    selectColumns = `${BASE_COLUMNS}, ${DISTANCE_FORMULA} AS distance`;
+    havingClause = 'HAVING distance <= :radius';
+  }
 
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests
+    `SELECT ${selectColumns} FROM donation_requests
      WHERE ${whereClause}
+     ${havingClause}
      ORDER BY ${orderColumn} ${orderDirection}
      LIMIT :limit OFFSET :offset`,
     { ...params, limit, offset }
   );
-  return rows.map(parseJsonFields);
+  return rows.map((row) => {
+    const parsed = parseJsonFields(row);
+    if (hasGeoFilter && parsed.distance !== undefined && parsed.distance !== null) {
+      parsed.distance = Number(parsed.distance).toFixed(2);
+    }
+    return parsed;
+  });
 }
 
 /**
  * Total count matching the same filters as findPendingList.
  * Powers pagination meta.
- * @param {Object} filters - Filter options (same as buildBrowseFilter)
+ * @param {Object} filters - Filter options (same as buildBrowseFilter, plus optional latitude/longitude/radius)
  * @returns {Promise<number>} Total count of matching donations
  */
-async function countPendingList({ category, location, search }) {
+async function countPendingList({ category, location, search, latitude, longitude, radius }) {
   const { whereClause, params } = buildBrowseFilter({ category, location, search });
+  const hasGeoFilter = latitude !== undefined && longitude !== undefined;
+
+  if (!hasGeoFilter) {
+    const [rows] = await pool.query(
+      `SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`,
+      params
+    );
+    return rows[0].total;
+  }
+
+  params.lat = latitude;
+  params.lng = longitude;
+  params.radius = radius;
 
   const [rows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`,
+    `SELECT COUNT(*) AS total FROM (
+      SELECT ${DISTANCE_FORMULA} AS distance
+      FROM donation_requests
+      WHERE ${whereClause}
+      HAVING distance <= :radius
+    ) AS nearby`,
     params
   );
   return rows[0].total;

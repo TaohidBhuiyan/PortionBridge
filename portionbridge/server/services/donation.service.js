@@ -384,16 +384,40 @@ async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}
   });
 }
 
+// Volunteer nearby-opportunity radius defaults — validator.js already
+// rejects anything outside [MIN, MAX] before this ever runs, so the only
+// job left here is filling in the default when a volunteer sends
+// latitude/longitude but no explicit radius.
+const DEFAULT_OPPORTUNITY_RADIUS_KM = 10;
+
 /**
  * Lists pending donations for volunteers to browse, with search/filter/sort/pagination.
+ *
+ * Optional latitude/longitude/radius add a nearby-donations distance filter
+ * on top of the existing category/location/search filters (never replacing
+ * them) — enforced in donationModel via the same Haversine-in-SQL pattern
+ * already used for volunteer discovery (volunteerDiscovery.model.js), so a
+ * volunteer can't bypass it by only filtering client-side. Omitting
+ * latitude/longitude keeps the old unfiltered-by-distance behavior exactly
+ * as before.
  * @param {Object} query - Query parameters from request
- * @returns {Promise<Object>} Object containing donations array and pagination meta
+ * @returns {Promise<Object>} Object containing donations array, pagination meta, and the effective radius (null when no location was sent)
  */
 async function browseDonations(query) {
   const { page, limit, offset } = getPaginationParams(query);
-  const { category, location, search, sortBy, sortOrder } = query;
+  const { category, location, search, sortBy, sortOrder, latitude, longitude, radius } = query;
 
-  const filters = { category, location, search };
+  const hasGeoFilter = latitude !== undefined && longitude !== undefined;
+  const effectiveRadius = hasGeoFilter
+    ? (radius !== undefined ? radius : DEFAULT_OPPORTUNITY_RADIUS_KM)
+    : undefined;
+
+  const filters = {
+    category,
+    location,
+    search,
+    ...(hasGeoFilter && { latitude, longitude, radius: effectiveRadius }),
+  };
 
   const [donations, totalItems] = await Promise.all([
     donationModel.findPendingList({ ...filters, sortBy, sortOrder, limit, offset }),
@@ -401,7 +425,7 @@ async function browseDonations(query) {
   ]);
 
   const meta = buildPaginationMeta({ page, limit, totalItems });
-  return { donations, meta };
+  return { donations, meta, radius: hasGeoFilter ? effectiveRadius : null };
 }
 
 /**

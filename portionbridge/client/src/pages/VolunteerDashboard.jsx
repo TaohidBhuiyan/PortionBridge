@@ -6,8 +6,10 @@ import {
   ActiveMissionCard,
   UpcomingMissions,
   VolunteerQuickLinks,
+  BaseLocationCard,
 } from '../components/dashboard/volunteer';
 import { donationApi } from '../services/donationApi';
+import { profileApi } from '../services/profileApi';
 
 /**
  * Volunteer Dashboard Home — production-ready overview page.
@@ -24,14 +26,33 @@ import { donationApi } from '../services/donationApi';
 export function VolunteerDashboard() {
   const { user } = useAuth();
   const [summary, setSummary] = useState(null);
+  const [volunteerProfile, setVolunteerProfile] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     donationApi.getVolunteerHistorySummary().then((result) => {
       if (!cancelled && result.success) setSummary(result.data);
     });
+    profileApi.getProfile().then((result) => {
+      if (!cancelled && result?.data?.volunteerProfile) {
+        setVolunteerProfile(result.data.volunteerProfile);
+      }
+    }).catch(() => {});
     return () => { cancelled = true; };
   }, []);
+
+  const handleSaveLocation = async (data) => {
+    try {
+      const result = await profileApi.updateVolunteerLocation(data);
+      if (result?.data?.volunteerProfile) {
+        setVolunteerProfile(result.data.volunteerProfile);
+        return { success: true };
+      }
+      return { success: false, error: result?.message || 'Failed to save location.' };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message || 'Failed to save location.' };
+    }
+  };
 
   const stats = summary
     ? [
@@ -56,6 +77,16 @@ export function VolunteerDashboard() {
 
         {/* Statistics Cards */}
         <VolunteerStatisticsCards />
+
+        {/* Base location — self-service address (falls back for
+            VolunteerOpportunities.jsx when live GPS isn't granted, and
+            makes this volunteer findable in donor-side "Discover
+            Volunteers"). */}
+        <BaseLocationCard
+          savedLocation={volunteerProfile ? { baseAddress: volunteerProfile.base_address, coverageRadius: volunteerProfile.coverage_radius } : null}
+          onSave={handleSaveLocation}
+          title="My Base Location"
+        />
 
         {/* Upcoming Missions */}
         <UpcomingMissions />

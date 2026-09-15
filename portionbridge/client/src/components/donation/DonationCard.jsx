@@ -29,6 +29,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
     number_of_servings,
     photo,
     images,
+    distance,
   } = donation;
 
   const coverImage = photo || (images && images.length > 0 ? images[0] : null);
@@ -147,15 +148,22 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
               {formatDate(pickup_date)}
             </span>
           </div>
-          {/* pickup_location — real backend field, no fabricated distance.
-              Shown whenever present, most relevant for volunteers deciding
-              whether to accept, but harmless/useful for donor view too. */}
+          {/* pickup_location — real backend field. `distance` is likewise
+              real now (not fabricated): it's only ever present when the
+              caller (VolunteerOpportunities.jsx) sent its own
+              latitude/longitude, in which case the backend computed it
+              server-side and already filtered by radius. */}
           {pickup_location && (
             <div className="flex items-center gap-2 text-sm col-span-2">
               <MapPin size={16} className="text-text-secondary shrink-0" />
               <span className="text-text-primary truncate">
                 {pickup_location}
               </span>
+              {distance !== undefined && distance !== null && (
+                <span className="ml-auto shrink-0 text-xs font-medium text-dash-primary bg-dash-primary-soft px-2 py-0.5 rounded-full">
+                  {distance} km away
+                </span>
+              )}
             </div>
           )}
           {volunteer_name && (

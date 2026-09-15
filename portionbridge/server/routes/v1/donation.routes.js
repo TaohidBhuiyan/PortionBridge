@@ -52,7 +52,11 @@ const {
 
 // Volunteers (and admins) browse pending requests.
 // MUST be registered before /:id to avoid route conflict
-router.get('/', protect, browseDonations);
+// NOTE: browseDonationsValidationRules existed but was never actually
+// attached here before — category/location/search/sortBy/page/limit were
+// all reaching the service unvalidated. Wiring it up now, since the new
+// latitude/longitude/radius params below need that same validation.
+router.get('/', protect, browseDonationsValidationRules, validateRequest, browseDonations);
 
 // --- Static history routes MUST be registered before '/:id' below,
 // otherwise Express matches '/my-history' or '/assigned-history' as :id parameter.
@@ -141,10 +145,22 @@ router.patch(
 // either — that middleware checks donor_id, but this route's ownership
 // check is against volunteer_id, which is a different rule handled inside
 // donationService.schedulePickup (403 if not the assigned volunteer).
+//
+// NOTE (Phase 2): schedulePickupValidationRules/onTheWayValidationRules/
+// pickedUpValidationRules were imported at the top of this file but never
+// actually attached to their routes below — same dead-import pattern
+// Phase 1 found and fixed for browseDonationsValidationRules. Not a
+// user-facing bug (donationService.schedulePickup already does its own
+// inline date validation as a fallback — see its "MODULE 8 FINAL AUDIT"
+// comment, which assumed this wiring existed), but wiring them in now for
+// a consistent 400 response shape and because Phase 2 depends on this
+// exact endpoint.
 router.patch(
   '/:id/schedule',
   protect,
   authorize('volunteer'),
+  schedulePickupValidationRules,
+  validateRequest,
   loadDonation,
   schedulePickup
 );
@@ -156,6 +172,8 @@ router.patch(
   '/:id/on-the-way',
   protect,
   authorize('volunteer'),
+  onTheWayValidationRules,
+  validateRequest,
   loadDonation,
   markOnTheWay
 );
@@ -165,6 +183,8 @@ router.patch(
   '/:id/picked-up',
   protect,
   authorize('volunteer'),
+  pickedUpValidationRules,
+  validateRequest,
   loadDonation,
   markPickedUp
 );

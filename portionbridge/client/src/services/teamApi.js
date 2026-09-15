@@ -56,6 +56,28 @@ export const teamApi = {
   },
 
   /**
+   * Update team info — name/description, and (new) base location
+   * (latitude, longitude, coverageRadius, baseAddress). Leader-only,
+   * enforced server-side. PATCH /teams/:id — this route already existed
+   * but had no frontend caller anywhere before now.
+   */
+  updateTeam: async (teamId, data) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.patch(
+        `${API_BASE}/teams/${teamId}`,
+        data,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken, 'Content-Type': 'application/json' } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update team';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
    * Get the current user's pending team invitations.
    * GET /teams/my/invitations
    */

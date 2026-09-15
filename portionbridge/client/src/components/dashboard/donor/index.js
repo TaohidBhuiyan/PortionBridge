@@ -7,6 +7,7 @@ export { LeaderboardWidget } from './LeaderboardWidget';
 export { ProfileCompletion } from './ProfileCompletion';
 export { ImpactSummary } from './ImpactSummary';
 export { NotificationPreview } from './NotificationPreview';
+export { RatingReminders } from './RatingReminders';
 
 // Volunteer Discovery Components
 export { default as LocationPermission } from './LocationPermission';

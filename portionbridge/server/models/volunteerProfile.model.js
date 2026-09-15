@@ -6,7 +6,7 @@ const { pool } = require('../config/db');
  */
 
 const BASE_COLUMNS = `
-  id, user_id, vehicle_type, availability, service_areas, latitude, longitude, is_online, last_location_update, coverage_radius, created_at, updated_at
+  id, user_id, vehicle_type, availability, service_areas, latitude, longitude, is_online, last_location_update, coverage_radius, base_address, created_at, updated_at
 `;
 
 /**
@@ -38,6 +38,43 @@ async function upsert({ userId, vehicleType, availability, serviceAreas }) {
     }
   );
   return result.insertId || result.affectedRows > 0 ? userId : null;
+}
+
+/**
+ * Upserts only the location fields (latitude, longitude, coverage_radius, base_address).
+ * Kept separate from `upsert` (vehicle/availability/service areas) so this
+ * never has to resend those fields (or risk nulling them — `upsert`
+ * always overwrites every column it knows about, which is safe today
+ * only because its one caller always sends all three of its fields
+ * together). INSERT ... ON DUPLICATE KEY UPDATE so it works whether or
+ * not a volunteer_profiles row already exists for this user (same
+ * pattern as `upsert`).
+ * @param {Object} data
+ * @param {number} data.userId
+ * @param {number} data.latitude
+ * @param {number} data.longitude
+ * @param {number} [data.coverageRadius]
+ * @param {string} [data.baseAddress] - Human-readable label, e.g. "Mirpur, Dhaka"
+ * @returns {Promise<void>}
+ */
+async function upsertLocation({ userId, latitude, longitude, coverageRadius, baseAddress }) {
+  await pool.query(
+    `INSERT INTO volunteer_profiles (user_id, latitude, longitude, coverage_radius, base_address, last_location_update)
+     VALUES (:userId, :latitude, :longitude, :coverageRadius, :baseAddress, NOW())
+     ON DUPLICATE KEY UPDATE
+       latitude = VALUES(latitude),
+       longitude = VALUES(longitude),
+       coverage_radius = COALESCE(VALUES(coverage_radius), coverage_radius),
+       base_address = VALUES(base_address),
+       last_location_update = NOW()`,
+    {
+      userId,
+      latitude,
+      longitude,
+      coverageRadius: coverageRadius !== undefined ? coverageRadius : null,
+      baseAddress: baseAddress || null,
+    }
+  );
 }
 
 /**
@@ -114,6 +151,7 @@ async function deleteByUserId(userId) {
 
 module.exports = {
   upsert,
+  upsertLocation,
   findByUserId,
   updateByUserId,
   deleteByUserId,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import axios from 'axios';
@@ -11,17 +11,17 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000
  */
 export function PrivacySettings() {
   const { user } = useAuth();
-  const [showOnLeaderboard, setShowOnLeaderboard] = useState(true);
-  const [loading, setLoading] = useState(false);
+  // `overridden` tracks a local toggle before the next full user refresh —
+  // null means "no local override yet, read straight from context".
+  // Deriving this way (rather than syncing into its own state via an
+  // effect) avoids both a setState-in-effect and mutating the `user`
+  // object the hook returned (neither is allowed by this project's lint
+  // config).
+  const [overridden, setOverridden] = useState(null);
+  const showOnLeaderboard = overridden !== null ? overridden : (user?.show_on_leaderboard !== false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  useEffect(() => {
-    if (user) {
-      setShowOnLeaderboard(user.show_on_leaderboard !== false);
-    }
-  }, [user]);
 
   const handleToggle = async () => {
     setSaving(true);
@@ -34,18 +34,14 @@ export function PrivacySettings() {
         { showOnLeaderboard: !showOnLeaderboard },
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           },
         }
       );
 
       if (response.data.success) {
-        setShowOnLeaderboard(!showOnLeaderboard);
+        setOverridden(!showOnLeaderboard);
         setSuccess(true);
-        // Update local user context
-        if (user) {
-          user.show_on_leaderboard = !showOnLeaderboard;
-        }
         setTimeout(() => setSuccess(false), 3000);
       } else {
         setError(response.data.message || 'Failed to update privacy settings');

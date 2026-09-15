@@ -72,4 +72,35 @@ async function findByRatedUserId(ratedUserId) {
   return rows;
 }
 
-module.exports = { findByDonationId, findById, create, findByRatedUserId };
+/**
+ * Finds a donor's completed donations that don't have a rating from them
+ * yet — powers the "Rate your volunteers" dashboard reminder
+ * (RatingReminders.jsx). Only ever needs the donor's own perspective
+ * (rated_by = donorId), matching the fact that only donors can rate at
+ * all (see rating.routes.js).
+ * @param {number} donorId
+ * @returns {Promise<Array>} Array of { donationId, title, completedAt, volunteerId, volunteerName }
+ */
+async function findPendingReminders(donorId) {
+  const [rows] = await pool.query(
+    `SELECT
+       dr.id AS donation_id,
+       dr.title,
+       dr.completed_at,
+       dr.volunteer_id,
+       u.name AS volunteer_name
+     FROM donation_requests dr
+     JOIN users u ON u.id = dr.volunteer_id
+     LEFT JOIN ratings r ON r.donation_request_id = dr.id AND r.rated_by = dr.donor_id
+     WHERE dr.donor_id = :donorId
+       AND dr.status = 'completed'
+       AND dr.volunteer_id IS NOT NULL
+       AND dr.is_deleted = 0
+       AND r.id IS NULL
+     ORDER BY dr.completed_at DESC`,
+    { donorId }
+  );
+  return rows;
+}
+
+module.exports = { findByDonationId, findById, create, findByRatedUserId, findPendingReminders };

@@ -19,7 +19,14 @@ const {
   TIME_SLOT,
 } = require('../constants');
 
-const ALLOWED_SORT_FIELDS = ['created_at', 'pickup_time', 'quantity'];
+const ALLOWED_SORT_FIELDS = ['created_at', 'pickup_time', 'quantity', 'distance'];
+
+// Volunteer nearby-opportunity radius bounds — kept in sync with
+// donation.service.js's OPPORTUNITY_RADIUS_KM defaults and
+// VolunteerOpportunities.jsx's radius slider (client mirrors these same
+// numbers so the UI never offers a value the backend would reject).
+const MIN_OPPORTUNITY_RADIUS_KM = 1;
+const MAX_OPPORTUNITY_RADIUS_KM = 50;
 const ALLOWED_HISTORY_SORT_FIELDS = ['created_at', 'pickup_time', 'scheduled_at', 'completed_at'];
 
 /**
@@ -530,6 +537,35 @@ const browseDonationsValidationRules = [
     .isInt({ min: 1, max: PAGINATION_DEFAULTS.MAX_LIMIT })
     .withMessage(`limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}.`)
     .toInt(),
+
+  // Nearby-opportunity radius filter — all three are optional (browsing
+  // without location still works, unfiltered by distance, same as before).
+  // But latitude/longitude must arrive together, since a radius filter is
+  // meaningless with only one of them.
+  query('latitude')
+    .optional()
+    .isFloat({ min: -90, max: 90 }).withMessage('latitude must be between -90 and 90.')
+    .toFloat(),
+
+  query('longitude')
+    .optional()
+    .isFloat({ min: -180, max: 180 }).withMessage('longitude must be between -180 and 180.')
+    .toFloat(),
+
+  query('radius')
+    .optional()
+    .isFloat({ min: MIN_OPPORTUNITY_RADIUS_KM, max: MAX_OPPORTUNITY_RADIUS_KM })
+    .withMessage(`radius must be between ${MIN_OPPORTUNITY_RADIUS_KM} and ${MAX_OPPORTUNITY_RADIUS_KM} km.`)
+    .toFloat(),
+
+  query('longitude').custom((value, { req }) => {
+    const hasLat = req.query.latitude !== undefined && req.query.latitude !== '';
+    const hasLng = value !== undefined && value !== '';
+    if (hasLat !== hasLng) {
+      throw new Error('latitude and longitude must be provided together.');
+    }
+    return true;
+  }),
 ];
 
 /**

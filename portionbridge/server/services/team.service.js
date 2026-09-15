@@ -1,12 +1,47 @@
-const { HTTP_STATUS, TEAM_MEMBER_ROLE, TEAM_INVITATION_STATUS, USER_ROLES, NOTIFICATION_TYPES } = require('../constants');
+const { HTTP_STATUS, TEAM_MEMBER_ROLE, TEAM_INVITATION_STATUS, USER_ROLES, NOTIFICATION_TYPES, DONATION_STATUS } = require('../constants');
 const AppError = require('../utils/AppError');
 const teamModel = require('../models/team.model');
 const teamMemberModel = require('../models/teamMember.model');
 const teamInvitationModel = require('../models/teamInvitation.model');
 const userModel = require('../models/user.model');
+const donationModel = require('../models/donation.model');
 const auditService = require('./audit.service');
 const notificationService = require('./notification.service');
 const { broadcastTeamActivity, getIO } = require('../sockets/ioInstance');
+
+// Donation statuses that represent a mission still in progress for
+// whoever it's assigned to — used by removeMember/leaveTeam below to
+// block a member from disappearing out from under an active pickup they
+// were actually doing (Phase 3: neither check existed before, so removing
+// or leaving mid-mission silently orphaned the assignment — the donation
+// kept assigned_member_id pointing at someone no longer on the team, with
+// no volunteer able to act on it).
+const ACTIVE_DONATION_STATUSES = [
+  DONATION_STATUS.ACCEPTED,
+  DONATION_STATUS.SCHEDULED,
+  DONATION_STATUS.ON_THE_WAY,
+  DONATION_STATUS.PICKED_UP,
+];
+
+/**
+ * Throws if the given user currently has any team donation assigned to
+ * them (as assigned_member_id) that's still in progress. Used before
+ * removing or letting a member leave a team.
+ * @param {number} userId
+ * @param {string} [action] - 'removed' or 'leave', for the error wording
+ * @returns {Promise<void>}
+ */
+async function assertNoActiveAssignment(userId, action = 'removed') {
+  const assignments = await donationModel.findByAssignedMember(userId);
+  const active = assignments.filter((d) => ACTIVE_DONATION_STATUSES.includes(d.status));
+  if (active.length > 0) {
+    const verb = action === 'leave' ? 'leave the team' : 'be removed from the team';
+    throw new AppError(
+      `This member has ${active.length} active donation assignment${active.length > 1 ? 's' : ''} in progress and can't ${verb} yet. Reassign or wait for completion first.`,
+      HTTP_STATUS.CONFLICT
+    );
+  }
+}
 
 /**
  * Creates a new team.
@@ -434,6 +469,9 @@ async function removeMember(teamId, memberId, userId) {
     throw new AppError('Cannot remove the team leader. Transfer leadership first.', HTTP_STATUS.FORBIDDEN);
   }
 
+  // Phase 3: Block removal if the member has active team assignments
+  await assertNoActiveAssignment(memberId, 'removed');
+
   await teamMemberModel.deleteByUserId(memberId);
 
   // Notify the removed member
@@ -616,6 +654,9 @@ async function leaveTeam(userId) {
   if (membership.role === TEAM_MEMBER_ROLE.LEADER) {
     throw new AppError('Team leaders cannot leave the team. Transfer leadership first.', HTTP_STATUS.FORBIDDEN);
   }
+
+  // Phase 3: Block leaving if the member has active team assignments
+  await assertNoActiveAssignment(userId, 'leave');
 
   const team = await teamModel.findById(membership.team_id);
 

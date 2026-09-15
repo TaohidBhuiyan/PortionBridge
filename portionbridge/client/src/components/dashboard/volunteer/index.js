@@ -3,3 +3,4 @@ export { VolunteerStatisticsCards } from './VolunteerStatisticsCards';
 export { ActiveMissionCard } from './ActiveMissionCard';
 export { UpcomingMissions } from './UpcomingMissions';
 export { VolunteerQuickLinks } from './VolunteerQuickLinks';
+export { BaseLocationCard } from './BaseLocationCard';

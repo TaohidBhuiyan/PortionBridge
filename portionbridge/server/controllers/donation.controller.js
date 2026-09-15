@@ -203,12 +203,12 @@ const cancelDonation = asyncHandler(async (req, res) => {
  * Browse pending donation requests — search, filter, sort, paginate.
  */
 const browseDonations = asyncHandler(async (req, res) => {
-  const { donations, meta } = await donationService.browseDonations(req.query);
+  const { donations, meta, radius } = await donationService.browseDonations(req.query);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,
     message: 'Donation requests retrieved successfully.',
-    data: { donations },
+    data: { donations, radius },
     meta,
   });
 });

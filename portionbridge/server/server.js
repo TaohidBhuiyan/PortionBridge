@@ -1,6 +1,13 @@
 const http = require('http');
 const { Server } = require('socket.io');
-require('dotenv').config();
+
+// Load custom .env file if provided as command line argument
+const envFile = process.argv[2];
+if (envFile) {
+  require('dotenv').config({ path: envFile });
+} else {
+  require('dotenv').config();
+}
 
 const { validateEnvironment } = require('./config/environment');
 validateEnvironment();

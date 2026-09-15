@@ -41,4 +41,16 @@ export const ratingApi = {
     });
     return response.data;
   },
+
+  /**
+   * Get the donor's completed-but-not-yet-rated donations, for the
+   * dashboard's RatingReminders widget.
+   */
+  async getPendingReminders() {
+    const response = await axios.get(`${API_BASE_URL}/ratings/pending/reminders`, {
+      withCredentials: true,
+      headers: authHeaders(),
+    });
+    return response.data;
+  },
 };

@@ -12,6 +12,7 @@ import {
   ProfileCompletion,
   ImpactSummary,
   NotificationPreview,
+  RatingReminders,
 } from '../components/dashboard/donor';
 import { AchievementsPanel } from '../components/common/AchievementsPanel';
 import { donationApi } from '../services/donationApi';
@@ -73,7 +74,12 @@ export function DonorDashboard() {
           <WelcomeHeader user={user} summary={summary} />
         </motion.div>
 
-        {/* 2. Hero Row — ProfileCard (exact size from screenshot) + Active Donations */}
+        {/* 2. Rating Reminders — nudges donors to rate completed donations */}
+        <motion.div variants={itemVariants}>
+          <RatingReminders />
+        </motion.div>
+
+        {/* 3. Hero Row — ProfileCard (exact size from screenshot) + Active Donations */}
         <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"

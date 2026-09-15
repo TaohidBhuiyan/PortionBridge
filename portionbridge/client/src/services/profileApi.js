@@ -37,6 +37,23 @@ export const profileApi = {
   },
 
   /**
+   * Set/update a volunteer's own base location (self-service address).
+   * Backend: PATCH /profile/volunteer/location.
+   * @param {Object} data
+   * @param {number} data.latitude
+   * @param {number} data.longitude
+   * @param {number} [data.coverageRadius] - 1-50 km
+   * @param {string} [data.baseAddress] - Human-readable label, e.g. "Mirpur, Dhaka"
+   */
+  async updateVolunteerLocation(data) {
+    const response = await axios.patch(`${API_BASE_URL}/profile/volunteer/location`, data, {
+      withCredentials: true,
+      headers: authHeaders(),
+    });
+    return response.data;
+  },
+
+  /**
    * Update profile information
    * @param {Object} data - Profile data
    * @param {string} data.name - Full name
