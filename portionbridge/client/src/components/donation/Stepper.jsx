@@ -1,23 +1,20 @@
 import { Check, Sparkles } from 'lucide-react';
 
 const getStepSubtitle = (stepId, category) => {
-  if (stepId === 'details') {
-    if (category === 'food') return 'Food & Dietary Specs';
-    if (category === 'clothes') return 'Clothing & Condition';
-    return 'Item specifications';
+  if (stepId === 'details' || stepId === 'item') {
+    if (category === 'food') return 'Food type, quantity & servings';
+    if (category === 'clothes') return 'Clothing type & condition';
+    return 'Category, title & quantity';
   }
-  if (stepId === 'pickup') {
-    return category === 'food' ? 'Perishable pickup timing' : 'Pickup & scheduling';
+  if (stepId === 'logistics' || stepId === 'pickup') {
+    return category === 'food' ? 'Address, photos & volunteer' : 'Address, timing & volunteer';
   }
-  if (stepId === 'images') {
-    return category === 'food' ? 'Food & packing photos' : 'Garment condition photos';
+  if (stepId === 'review') {
+    return 'Summary & final submission';
   }
   const defaultSubtitles = {
-    basic: 'Category & basics',
-    details: 'Item specifications',
-    pickup: 'Location & time slot',
-    images: 'Visual verification',
-    assignment: 'Volunteer match',
+    details: 'Item, quantity & specs',
+    logistics: 'Address, timing & volunteer',
     review: 'Final review receipt',
   };
   return defaultSubtitles[stepId] || 'Step details';

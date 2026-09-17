@@ -1,25 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Mail, Smartphone, Radio, Package, MessageSquare, Save, CheckCircle2, SlidersHorizontal, Check } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { profileApi } from '../../../services/profileApi';
 
-const NOTIFICATION_ITEMS = [
-  { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
-  { key: 'smsNotifications', label: 'SMS Notifications', desc: 'Receive notifications via SMS' },
-  { key: 'pushNotifications', label: 'Push Notifications', desc: 'Receive push notifications (coming soon)' },
-  { key: 'donationUpdates', label: 'Donation Updates', desc: 'Updates about your donations' },
-  { key: 'chatNotifications', label: 'Chat Notifications', desc: 'New message notifications' },
+const NOTIFICATION_GROUPS = [
+  {
+    title: 'Communication Channels',
+    description: 'Choose how you would like to receive notifications from PortionBridge.',
+    items: [
+      { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive important updates and receipts via email', icon: Mail },
+      { key: 'smsNotifications', label: 'SMS Alerts', desc: 'Receive urgent pickup alerts via SMS', icon: Smartphone },
+      { key: 'pushNotifications', label: 'Browser Push Notifications', desc: 'Real-time desktop alerts when on PortionBridge', icon: Radio },
+    ],
+  },
+  {
+    title: 'Donation & Impact Activity',
+    description: 'Stay updated when food donations are claimed, picked up, or completed.',
+    items: [
+      { key: 'donationUpdates', label: 'Donation & Mission Updates', desc: 'Alerts when volunteers claim or pick up your donation', icon: Package },
+    ],
+  },
+  {
+    title: 'Messaging & Social',
+    description: 'Direct communication alerts between you and assigned volunteers or admins.',
+    items: [
+      { key: 'chatNotifications', label: 'Direct Messages & Chat', desc: 'Instant notifications when a volunteer messages you', icon: MessageSquare },
+    ],
+  },
 ];
 
-/**
- * NotificationSettings — the notification-preferences toggles.
- *
- * Extracted out of DonorSettingsPage.jsx (COMING-SOON ELIMINATION pass) so
- * it can be reused as-is by the volunteer settings route and by Admin
- * Settings — GET/PATCH /profile/notifications are both "all protected
- * users" backend routes (see server/routes/v1/profile.routes.js), never
- * donor-specific. Fully self-contained: fetches its own data and owns its
- * own loading/error/success state.
- */
 export function NotificationSettings() {
   const [notificationSettings, setNotificationSettings] = useState({
     emailNotifications: true,
@@ -30,58 +39,61 @@ export function NotificationSettings() {
   });
   const [pageLoading, setPageLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
 
   const loadNotificationSettings = useCallback(async () => {
     setPageLoading(true);
     try {
       const result = await profileApi.getNotificationSettings();
-      if (result.success) {
-        // The API returns the raw DB row (snake_case columns); this
-        // component's state/toggle keys are camelCase.
+      if (result.success && result.data?.notificationSettings) {
         const s = result.data.notificationSettings;
-        setNotificationSettings((prev) => ({
-          ...prev,
+        setNotificationSettings({
           emailNotifications: !!s.email_notifications,
           smsNotifications: !!s.sms_notifications,
           pushNotifications: !!s.push_notifications,
           donationUpdates: !!s.donation_updates,
           chatNotifications: !!s.chat_messages,
-        }));
+        });
       }
     } catch {
-      // Failed to load notification settings
+      // Keep defaults gracefully if API call fails
     } finally {
       setPageLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadNotificationSettings();
   }, [loadNotificationSettings]);
 
-  const handleNotificationChange = (e) => {
-    const { name, checked } = e.target;
-    setNotificationSettings(prev => ({ ...prev, [name]: checked }));
+  const handleToggle = (key) => {
+    setNotificationSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleBatchToggle = (enableAll) => {
+    setNotificationSettings({
+      emailNotifications: enableAll,
+      smsNotifications: enableAll,
+      pushNotifications: enableAll,
+      donationUpdates: enableAll,
+      chatNotifications: enableAll,
+    });
+    toast.success(enableAll ? 'All notifications enabled' : 'All notifications muted');
   };
 
   const handleSaveNotifications = async () => {
     setActionLoading(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const result = await profileApi.updateNotificationSettings(notificationSettings);
 
       if (result.success) {
-        setSuccess('Notification settings updated successfully!');
+        toast.success('Notification preferences updated successfully!');
       } else {
-        setError(result.error || 'Failed to update notification settings');
+        toast.error(result.error || 'Failed to update notification settings');
       }
     } catch {
-      setError('Failed to update notification settings. Please try again.');
+      toast.error('Failed to update notification settings. Please try again.');
     } finally {
       setActionLoading(false);
     }
@@ -89,60 +101,114 @@ export function NotificationSettings() {
 
   if (pageLoading) {
     return (
-      <div className="bg-surface rounded-xl border border-border p-6 animate-pulse space-y-4">
-        <div className="h-6 w-56 bg-border rounded-lg" />
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="h-10 w-full bg-border rounded-lg" />
+      <div className="bg-surface rounded-2xl border border-border p-6 animate-pulse space-y-6">
+        <div className="h-7 w-64 bg-border rounded-lg" />
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-3">
+            <div className="h-5 w-40 bg-border rounded-md" />
+            <div className="h-16 w-full bg-border rounded-xl" />
+          </div>
         ))}
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-6">
-      {success && (
-        <div className="mb-4 p-4 bg-success-soft border border-success rounded-lg" role="alert" aria-live="polite">
-          <p className="text-sm text-success">{success}</p>
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 p-4 bg-danger-soft border border-danger rounded-lg" role="alert" aria-live="assertive">
-          <p className="text-sm text-danger">{error}</p>
-        </div>
-      )}
-      <h2 className="text-lg font-semibold text-text-primary mb-4 flex items-center gap-2">
-        <Bell size={20} className="text-dash-primary" />
-        Notification Preferences
-      </h2>
-      <div className="space-y-4">
-        {NOTIFICATION_ITEMS.map((item) => (
-          <div key={item.key} className="flex items-center justify-between py-3 border-b border-border last:border-0">
-            <div>
-              <p className="font-medium text-text-primary">{item.label}</p>
-              <p className="text-sm text-text-secondary">{item.desc}</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                name={item.key}
-                checked={notificationSettings[item.key]}
-                onChange={handleNotificationChange}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-border peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-dash-primary/40 rounded-full peer dark:bg-border peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-border peer-checked:bg-dash-primary"></div>
-            </label>
+    <div className="space-y-6">
+      {/* Header & Controls */}
+      <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-dash-primary-soft text-dash-primary rounded-xl">
+            <Bell size={22} />
           </div>
-        ))}
+          <div>
+            <h2 className="text-lg font-bold text-text-primary">Notification Preferences</h2>
+            <p className="text-xs text-text-secondary mt-0.5">Control how and when you receive real-time alerts</p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => handleBatchToggle(true)}
+            className="px-3 py-1.5 text-xs font-medium text-dash-primary bg-dash-primary-soft hover:bg-dash-primary/20 rounded-lg transition-colors"
+          >
+            Enable All
+          </button>
+          <button
+            onClick={() => handleBatchToggle(false)}
+            className="px-3 py-1.5 text-xs font-medium text-text-secondary hover:text-text-primary bg-page hover:bg-surface-hover border border-border rounded-lg transition-colors"
+          >
+            Mute All
+          </button>
+          <button
+            onClick={handleSaveNotifications}
+            disabled={actionLoading}
+            className="flex items-center gap-2 px-5 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white text-sm font-medium rounded-xl shadow-sm transition-all disabled:opacity-50 ml-2"
+          >
+            {actionLoading ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
+            <span>{actionLoading ? 'Saving...' : 'Save Settings'}</span>
+          </button>
+        </div>
       </div>
-      <div className="mt-6 flex justify-end">
-        <button
-          onClick={handleSaveNotifications}
-          disabled={actionLoading}
-          className="px-6 py-2 bg-dash-primary text-white rounded-lg hover:bg-dash-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {actionLoading ? 'Saving...' : 'Save Changes'}
-        </button>
-      </div>
+
+      {/* Notification Category Groups */}
+      {NOTIFICATION_GROUPS.map((group, groupIdx) => (
+        <div key={groupIdx} className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+          <div className="mb-4 pb-3 border-b border-border">
+            <h3 className="text-base font-semibold text-text-primary">{group.title}</h3>
+            <p className="text-xs text-text-secondary mt-0.5">{group.description}</p>
+          </div>
+
+          <div className="space-y-4">
+            {group.items.map((item) => {
+              const Icon = item.icon;
+              const isChecked = !!notificationSettings[item.key];
+              return (
+                <div
+                  key={item.key}
+                  onClick={() => handleToggle(item.key)}
+                  className="cursor-pointer p-4 rounded-xl border border-border hover:border-dash-primary/40 bg-page/40 hover:bg-page transition-all flex items-center justify-between gap-4"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className={`p-2.5 rounded-xl shrink-0 transition-colors ${isChecked ? 'bg-dash-primary-soft text-dash-primary' : 'bg-surface text-text-muted border border-border'}`}>
+                      <Icon size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-text-primary truncate">{item.label}</p>
+                        {isChecked && (
+                          <span className="px-2 py-0.5 text-[10px] font-medium bg-success-soft text-success rounded-full shrink-0">
+                            Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-text-secondary mt-0.5">{item.desc}</p>
+                    </div>
+                  </div>
+
+                  {/* Toggle Switch */}
+                  <div
+                    className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                      isChecked ? 'bg-dash-primary' : 'bg-border'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ease-in-out shadow-xs ${
+                        isChecked ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
+

@@ -418,7 +418,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#fdfbfe] text-[#1A1523] relative overflow-x-hidden selection:bg-[#6d45bd]/20 selection:text-[#35206f]" style={FONT_FAMILY}>
+    <div className="h-screen w-full bg-[#fdfbfe] text-[#1A1523] flex items-center justify-center p-2.5 sm:p-4 lg:p-6 relative selection:bg-[#6d45bd]/20 selection:text-[#35206f] overflow-hidden" style={FONT_FAMILY}>
       {/* Floating editorial background ambient lighting */}
       <div className="absolute -top-32 right-[8%] w-[500px] h-[400px] rounded-full blur-3xl opacity-40 pointer-events-none" style={{ background: "#e8c6ed", animation: "float 9s ease-in-out infinite" }} />
       <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full blur-3xl opacity-30 pointer-events-none" style={{ background: "#d9c8f1", animation: "float 7s ease-in-out infinite reverse" }} />
@@ -433,73 +433,72 @@ export function RegisterPage() {
         }}
       />
 
-      <main className="min-h-screen flex items-center justify-center p-3 sm:p-5 lg:p-8 relative z-10">
-        <div className="w-full max-w-5xl rounded-3xl bg-white/95 border border-[#6d45bd]/15 shadow-[0_25px_60px_-15px_rgba(53,32,111,0.1)] backdrop-blur-xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 lg:min-h-[620px]">
+      {/* Master Compact Container — No Outer Window Scrollbar */}
+      <div className="w-full max-w-4xl lg:max-w-5xl rounded-3xl bg-white border border-[#6d45bd]/15 shadow-[0_20px_60px_-15px_rgba(53,32,111,0.12)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 h-full max-h-[min(660px,94vh)] relative z-10">
 
-          {/* LEFT: Brand, story & verified impact journey */}
-          <section className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-r border-[#6d45bd]/15 bg-gradient-to-br from-[#f8effb]/90 via-white/80 to-[#f3eaf9]/90 backdrop-blur-md">
-            <div className="relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-[#35206f] to-[#6d45bd] p-0.5 shadow-md shadow-[#6d45bd]/20 flex items-center justify-center shrink-0">
-                  <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-                    <Logo className="w-7 h-7" rounded={false} />
-                  </div>
+        {/* LEFT: Brand, story & verified impact journey */}
+        <section className="lg:col-span-5 p-4 sm:p-5 lg:p-6 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-r border-white/10 bg-gradient-to-br from-[#241246] via-[#35206f] to-[#1c0e39] text-white h-full overflow-hidden">
+          <div className="relative z-10 flex flex-col justify-between h-full">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-white/10 border border-white/20 p-1 flex items-center justify-center shrink-0 shadow-md">
+                  <Logo className="w-5 h-5" rounded={false} />
                 </div>
                 <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl font-bold tracking-tight text-[#35206f] font-serif">
-                      Portion<span className="text-[#6d45bd]">Bridge</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-lg font-bold tracking-tight text-white font-serif">
+                      Portion<span className="text-[#e8c6ed]">Bridge</span>
                     </span>
                   </div>
-                  <span className="text-[11px] text-[#6d45bd] font-semibold font-mono tracking-wider uppercase">Food &amp; Clothes Donation Network</span>
+                  <span className="text-[9px] text-[#d9c8f1] font-semibold font-mono tracking-wider uppercase">Donation Network</span>
                 </div>
               </div>
 
-              <div className="mt-6 space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1A1523] leading-tight tracking-tight font-serif">
+              <div className="mt-3 sm:mt-4 space-y-1">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-white leading-tight tracking-tight font-serif">
                   Give what you can.
                   <br />
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#35206f] via-[#6d45bd] to-[#35206f]">
+                  <span className="text-[#e8c6ed]">
                     Connect with those who need it.
                   </span>
                 </h1>
-                <p className="text-[#35206f]/75 text-xs sm:text-sm leading-relaxed font-normal">
-                  Every surplus item becomes real relief. Join verified donors and volunteer couriers coordinating pickups and deliveries in real time.
+                <p className="text-white/75 text-xs leading-relaxed font-normal">
+                  Every surplus item becomes real relief. Join verified donors and volunteer couriers coordinating pickups in real time.
                 </p>
               </div>
 
-              <div className="mt-6 pt-5 border-t border-[#6d45bd]/15">
-                <div className="flex items-center justify-between mb-3.5">
-                  <span className="text-xs font-bold tracking-wider text-[#35206f] uppercase font-mono">Verified Impact Journey</span>
-                  <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Active Ecosystem
+              <div className="mt-3.5 pt-3 border-t border-white/15">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-[10px] font-bold tracking-wider text-[#d9c8f1] uppercase font-mono">Verified Impact Journey</span>
+                  <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                    Active Network
                   </span>
                 </div>
-                <div className="space-y-3 relative before:absolute before:left-[17px] before:top-3 before:bottom-3 before:w-0.5 before:bg-[#6d45bd]/20">
+                <div className="space-y-2 relative before:absolute before:left-[15px] before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-white/20">
                   {JOURNEY_STEPS.map((step) => {
                     const StepIcon = step.icon;
                     return (
-                      <div key={step.title} className="relative flex items-start gap-3.5 group">
+                      <div key={step.title} className="relative flex items-start gap-2.5 group">
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 z-10 transition-all duration-300 ${
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 z-10 transition-all duration-300 ${
                             step.emphasized
-                              ? "bg-gradient-to-tr from-[#35206f] to-[#6d45bd] text-white shadow-md shadow-[#6d45bd]/30 ring-2 ring-[#6d45bd]/20 scale-105"
-                              : "bg-white border border-[#6d45bd]/20 text-[#6d45bd] shadow-xs group-hover:border-[#6d45bd] group-hover:shadow-md group-hover:-translate-y-0.5"
+                              ? "bg-white text-[#35206f] shadow-md ring-2 ring-white/30 scale-105"
+                              : "bg-white/10 border border-white/20 text-[#d9c8f1] shadow-xs group-hover:bg-white/20"
                           }`}
                         >
-                          <StepIcon size={16} className={step.emphasized ? "text-white" : step.iconColor} />
+                          <StepIcon size={14} className={step.emphasized ? "text-[#35206f]" : "text-[#e8c6ed]"} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h2 className={`text-xs sm:text-sm font-bold ${step.emphasized ? "text-[#35206f]" : "text-[#1A1523]"}`}>{step.title}</h2>
+                          <div className="flex items-center gap-1.5">
+                            <h2 className="text-xs font-bold text-white">{step.title}</h2>
                             {step.badge && (
-                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#f6effb] text-[#6d45bd] border border-[#6d45bd]/25 font-mono font-semibold">
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-white/15 text-[#e8c6ed] border border-white/20 font-mono font-semibold">
                                 {step.badge}
                               </span>
                             )}
                           </div>
-                          <p className="text-[11px] text-slate-500 leading-snug mt-0.5">{step.description}</p>
+                          <p className="text-[10px] text-white/70 leading-snug mt-0.5">{step.description}</p>
                         </div>
                       </div>
                     );
@@ -508,74 +507,76 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-[#6d45bd]/15 relative z-10">
-              <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/80 border border-[#6d45bd]/15 shadow-xs">
-                <div className="w-9 h-9 rounded-xl bg-[#f6effb] border border-[#6d45bd]/20 text-[#6d45bd] flex items-center justify-center shrink-0">
-                  <Users size={17} />
+            <div className="mt-3 pt-2.5 border-t border-white/15 relative z-10">
+              <div className="flex items-center gap-2.5 p-2 rounded-xl bg-white/10 border border-white/15 shadow-xs">
+                <div className="w-7 h-7 rounded-lg bg-white/15 border border-white/20 text-[#e8c6ed] flex items-center justify-center shrink-0">
+                  <Users size={14} />
                 </div>
-                <div className="text-xs text-slate-600">
-                  <span className="font-bold text-[#35206f]">Join 10,000+ changemakers</span> — food donors, pantries &amp; volunteer couriers making direct community impact.
+                <div className="text-[11px] text-white/80 leading-snug">
+                  <span className="font-bold text-white">Join 10,000+ changemakers</span> — donors &amp; volunteers.
                 </div>
               </div>
             </div>
-          </section>
+          </div>
+        </section>
 
-          {/* RIGHT: Create account form */}
-          <section className="lg:col-span-7 p-5 sm:p-7 lg:p-8 flex flex-col justify-between overflow-y-auto max-h-[85vh] lg:max-h-none custom-scrollbar bg-white">
+        {/* RIGHT: Create account form with Single Smooth Inner Scrollbar */}
+        <section className="lg:col-span-7 p-4 sm:p-5 lg:p-6 flex flex-col justify-between overflow-y-auto h-full custom-scrollbar bg-white">
+          <div className="flex flex-col justify-between h-full">
             <div>
-              <div className="mb-4 flex items-center justify-between">
+              <div className="mb-3 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={handleLoginClick}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6d45bd] hover:text-[#35206f] transition-colors group cursor-pointer"
                 >
-                  <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
+                  <ArrowLeft size={15} className="group-hover:-translate-x-1 transition-transform" />
                   Back to Login
                 </button>
               </div>
 
-              <div className="pb-4 border-b border-[#6d45bd]/15">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider text-[#6d45bd] bg-[#f6effb] border border-[#6d45bd]/20 mb-2 font-mono">
+              <div className="pb-3 border-b border-[#6d45bd]/15">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider text-[#6d45bd] bg-[#f6effb] border border-[#6d45bd]/20 mb-1 font-mono">
                   <Lock size={12} className="text-[#6d45bd]" />
                   Secure Registration
                 </div>
-                <h2 className="text-2xl font-bold text-[#1A1523] tracking-tight font-serif">Create your account</h2>
-                <p className="text-xs text-slate-500 mt-1">Start contributing as a donor or volunteer in minutes.</p>
+                <h2 className="text-xl sm:text-2xl font-bold text-[#1A1523] tracking-tight font-serif">Create your account</h2>
+                <p className="text-xs text-slate-500 mt-0.5">Start contributing as a donor or volunteer in minutes.</p>
               </div>
 
               {/* Role Selector */}
-              <div className="mt-5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">I want to join as</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="mt-3.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">I want to join as</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <button
                     type="button"
                     onClick={() => setRole("donor")}
                     disabled={loading}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                    className={`p-2.5 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
                       role === "donor"
-                        ? "bg-[#f0fbf5] border-emerald-400 ring-2 ring-emerald-400/20 shadow-md shadow-emerald-500/10"
+                        ? "bg-[#f0fbf5] border-emerald-400 ring-2 ring-emerald-400/20 shadow-sm"
                         : "border-slate-200 bg-white hover:border-[#6d45bd]/40 hover:bg-[#fbf9fe]"
                     }`}
                   >
                     <div className="flex items-start justify-between w-full">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                         role === "donor" ? "bg-emerald-100 text-emerald-700 border-emerald-300" : "bg-slate-100 text-slate-500 border-slate-200"
                       }`}>
-                        <HandHeart size={20} />
+                        <HandHeart size={16} />
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight border ${
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight border ${
                         role === "donor" ? "bg-emerald-100 text-emerald-800 border-emerald-300 font-semibold" : "text-slate-500 border-slate-200 bg-slate-50 font-medium"
                       }`}>
-                        {role === "donor" && <CheckCircle2 size={12} />}
+                        {role === "donor" && <CheckCircle2 size={10} />}
                         {role === "donor" ? "Selected" : "Select"}
                       </span>
                     </div>
                     <div className="w-full">
                       <div className="flex items-center justify-between">
-                        <span className={`text-base font-bold tracking-tight ${role === "donor" ? "text-emerald-950" : "text-[#1A1523]"}`}>Donor</span>
-                        <span className={`text-[10px] uppercase font-bold tracking-wider ${role === "donor" ? "text-emerald-700" : "text-slate-400"}`}>Give Surplus</span>
+                        <span className={`text-sm font-bold tracking-tight ${role === "donor" ? "text-emerald-950" : "text-[#1A1523]"}`}>Donor</span>
+                        <span className={`text-[9px] uppercase font-bold tracking-wider ${role === "donor" ? "text-emerald-700" : "text-slate-400"}`}>Give Surplus</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1 leading-snug">Share surplus food, meals, or clothing donations</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Share surplus food, meals, or clothing</p>
                     </div>
                   </button>
 
@@ -583,31 +584,31 @@ export function RegisterPage() {
                     type="button"
                     onClick={() => setRole("volunteer")}
                     disabled={loading}
-                    className={`p-3.5 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between gap-2.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
+                    className={`p-2.5 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer ${
                       role === "volunteer"
-                        ? "bg-[#f8f2fd] border-[#6d45bd] ring-2 ring-[#6d45bd]/20 shadow-md shadow-[#6d45bd]/15"
+                        ? "bg-[#f8f2fd] border-[#6d45bd] ring-2 ring-[#6d45bd]/20 shadow-sm"
                         : "border-slate-200 bg-white hover:border-[#6d45bd]/40 hover:bg-[#fbf9fe]"
                     }`}
                   >
                     <div className="flex items-start justify-between w-full">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border ${
                         role === "volunteer" ? "bg-[#efe8fa] text-[#6d45bd] border-[#6d45bd]/30" : "bg-slate-100 text-slate-500 border-slate-200"
                       }`}>
-                        <Truck size={20} />
+                        <Truck size={16} />
                       </div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight border ${
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-tight border ${
                         role === "volunteer" ? "bg-[#f6effb] text-[#6d45bd] border-[#6d45bd]/30 font-semibold" : "text-slate-500 border-slate-200 bg-slate-50 font-medium"
                       }`}>
-                        {role === "volunteer" && <CheckCircle2 size={12} />}
+                        {role === "volunteer" && <CheckCircle2 size={10} />}
                         {role === "volunteer" ? "Selected" : "Select"}
                       </span>
                     </div>
                     <div className="w-full">
                       <div className="flex items-center justify-between">
-                        <span className={`text-base font-bold tracking-tight ${role === "volunteer" ? "text-[#35206f]" : "text-[#1A1523]"}`}>Volunteer</span>
-                        <span className={`text-[10px] uppercase font-bold tracking-wider ${role === "volunteer" ? "text-[#6d45bd]" : "text-slate-400"}`}>Hands-on Relief</span>
+                        <span className={`text-sm font-bold tracking-tight ${role === "volunteer" ? "text-[#35206f]" : "text-[#1A1523]"}`}>Volunteer</span>
+                        <span className={`text-[9px] uppercase font-bold tracking-wider ${role === "volunteer" ? "text-[#6d45bd]" : "text-slate-400"}`}>Hands-on Relief</span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1 leading-snug">Pick up, transport &amp; deliver donations</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">Pick up &amp; deliver donations</p>
                     </div>
                   </button>
                 </div>
@@ -615,34 +616,34 @@ export function RegisterPage() {
 
               {/* Error banner */}
               {error && (
-                <div className="mt-4 bg-red-50 border border-red-200 rounded-2xl p-3.5 flex items-start gap-2.5 text-red-700">
-                  <AlertCircle size={17} className="text-red-500 shrink-0 mt-0.5" />
+                <div className="mt-3 bg-red-50 border border-red-200 rounded-xl p-2.5 flex items-start gap-2 text-red-700">
+                  <AlertCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
                   <p className="text-xs font-medium leading-relaxed">{error}</p>
                 </div>
               )}
 
-              <form className="mt-5 space-y-4" onSubmit={handleSubmit}>
+              <form className="mt-3 space-y-2.5" onSubmit={handleSubmit}>
                 {/* Profile photo upload */}
-                <div className="p-3.5 rounded-2xl bg-[#faf6fe] border border-dashed border-[#6d45bd]/30 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-xl bg-[#faf6fe] border border-dashed border-[#6d45bd]/30 flex items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
                     <button
                       type="button"
                       onClick={handleProfilePhotoClick}
                       disabled={loading}
-                      className="w-11 h-11 rounded-full bg-white border border-[#6d45bd]/25 flex items-center justify-center text-[#6d45bd] overflow-hidden shrink-0 hover:border-[#6d45bd] shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
+                      className="w-9 h-9 rounded-full bg-white border border-[#6d45bd]/25 flex items-center justify-center text-[#6d45bd] overflow-hidden shrink-0 hover:border-[#6d45bd] shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
                     >
                       {profilePhotoPreview ? (
                         <img src={profilePhotoPreview} alt="Profile preview" className="w-full h-full object-cover" />
                       ) : (
-                        <Upload size={18} strokeWidth={1.75} />
+                        <Upload size={16} strokeWidth={1.75} />
                       )}
                     </button>
                     <div className="min-w-0">
                       <p className="text-xs font-bold text-[#1A1523]">
                         Profile Photo <span className="text-slate-400 font-normal">(Optional)</span>
                       </p>
-                      <p className="text-[11px] text-slate-500">JPG, PNG or WEBP up to 5MB</p>
-                      {profilePhoto && <p className="text-[11px] text-[#6d45bd] font-medium mt-0.5 truncate">{profilePhoto.name}</p>}
+                      <p className="text-[10px] text-slate-500">JPG, PNG or WEBP up to 5MB</p>
+                      {profilePhoto && <p className="text-[10px] text-[#6d45bd] font-medium truncate">{profilePhoto.name}</p>}
                     </div>
                   </div>
                   {profilePhoto ? (
@@ -661,7 +662,7 @@ export function RegisterPage() {
                   ) : (
                     <label
                       htmlFor="avatarInput"
-                      className="cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white hover:bg-[#f6effb] text-[#6d45bd] border border-[#6d45bd]/30 shadow-xs transition-colors shrink-0"
+                      className="cursor-pointer px-2.5 py-1 rounded-lg text-xs font-semibold bg-white hover:bg-[#f6effb] text-[#6d45bd] border border-[#6d45bd]/30 shadow-xs transition-colors shrink-0"
                     >
                       Browse
                     </label>
@@ -677,17 +678,17 @@ export function RegisterPage() {
                   />
                 </div>
                 {fieldErrors.profilePhoto && (
-                  <span className="block -mt-2 text-red-600 text-[11px] ml-1 leading-tight font-medium">{fieldErrors.profilePhoto}</span>
+                  <span className="block -mt-1.5 text-red-600 text-[10px] ml-1 leading-tight font-medium">{fieldErrors.profilePhoto}</span>
                 )}
 
                 {/* Name & Email */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="fullName">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="fullName">
                       Full Name <span className="text-[#6d45bd]">*</span>
                     </label>
                     <div className="relative">
-                      <User size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
+                      <User size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
                       <input
                         id="fullName"
                         type="text"
@@ -696,21 +697,21 @@ export function RegisterPage() {
                         disabled={loading}
                         placeholder="e.g., Marcus Vance"
                         autoComplete="name"
-                        className={`w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-4 ${
+                        className={`w-full pl-9 pr-3 py-2 bg-slate-50 border-2 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:bg-white ${
                           fieldErrors.name
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/15"
-                            : "border-slate-200 focus:border-[#6d45bd] focus:ring-[#6d45bd]/12"
+                            ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : "border-slate-200 hover:border-slate-300 focus:border-[#6d45bd] focus:ring-4 focus:ring-[#6d45bd]/15"
                         }`}
                       />
                     </div>
-                    {fieldErrors.name && <span className="block mt-1 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.name}</span>}
+                    {fieldErrors.name && <span className="block mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.name}</span>}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="email">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="email">
                       Email Address <span className="text-[#6d45bd]">*</span>
                     </label>
                     <div className="relative">
-                      <Mail size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
+                      <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
                       <input
                         id="email"
                         type="email"
@@ -719,24 +720,24 @@ export function RegisterPage() {
                         disabled={loading}
                         placeholder="you@example.com"
                         autoComplete="email"
-                        className={`w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-4 ${
+                        className={`w-full pl-9 pr-3 py-2 bg-slate-50 border-2 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:bg-white ${
                           fieldErrors.email
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/15"
-                            : "border-slate-200 focus:border-[#6d45bd] focus:ring-[#6d45bd]/12"
+                            ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : "border-slate-200 hover:border-slate-300 focus:border-[#6d45bd] focus:ring-4 focus:ring-[#6d45bd]/15"
                         }`}
                       />
                     </div>
-                    {fieldErrors.email && <span className="block mt-1 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.email}</span>}
+                    {fieldErrors.email && <span className="block mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.email}</span>}
                   </div>
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="phone">
-                    Phone Number <span className="text-slate-400 font-normal lowercase">(optional, for SMS alerts)</span>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="phone">
+                    Phone Number <span className="text-slate-400 font-normal lowercase">(optional, for SMS)</span>
                   </label>
                   <div className="relative">
-                    <Phone size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
+                    <Phone size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
                     <input
                       id="phone"
                       type="tel"
@@ -745,36 +746,36 @@ export function RegisterPage() {
                       disabled={loading}
                       placeholder="+880 1712-345678"
                       autoComplete="tel"
-                      className={`w-full pl-10 pr-3 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-4 ${
+                      className={`w-full pl-9 pr-3 py-2 bg-slate-50 border-2 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:bg-white ${
                         fieldErrors.phone
-                          ? "border-red-300 focus:border-red-500 focus:ring-red-500/15"
-                          : "border-slate-200 focus:border-[#6d45bd] focus:ring-[#6d45bd]/12"
+                          ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                          : "border-slate-200 hover:border-slate-300 focus:border-[#6d45bd] focus:ring-4 focus:ring-[#6d45bd]/15"
                       }`}
                     />
                   </div>
-                  {fieldErrors.phone && <span className="block mt-1 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.phone}</span>}
+                  {fieldErrors.phone && <span className="block mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.phone}</span>}
                 </div>
 
                 {/* Password & Confirm */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="password">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="password">
                       Password <span className="text-[#6d45bd]">*</span>
                     </label>
                     <div className="relative">
-                      <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
+                      <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
                       <input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
-                        placeholder="Create strong password"
+                        placeholder="Strong password"
                         autoComplete="new-password"
-                        className={`w-full pl-10 pr-10 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-4 ${
+                        className={`w-full pl-9 pr-9 py-2 bg-slate-50 border-2 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:bg-white ${
                           fieldErrors.password
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/15"
-                            : "border-slate-200 focus:border-[#6d45bd] focus:ring-[#6d45bd]/12"
+                            ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : "border-slate-200 hover:border-slate-300 focus:border-[#6d45bd] focus:ring-4 focus:ring-[#6d45bd]/15"
                         }`}
                       />
                       <button
@@ -783,17 +784,17 @@ export function RegisterPage() {
                         disabled={loading}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer"
                       >
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
-                    {fieldErrors.password && <span className="block mt-1 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.password}</span>}
+                    {fieldErrors.password && <span className="block mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.password}</span>}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="confirmPassword">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1" htmlFor="confirmPassword">
                       Confirm Password <span className="text-[#6d45bd]">*</span>
                     </label>
                     <div className="relative">
-                      <Lock size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
+                      <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d45bd]/60 pointer-events-none" />
                       <input
                         id="confirmPassword"
                         type={showConfirm ? "text" : "password"}
@@ -801,10 +802,10 @@ export function RegisterPage() {
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         disabled={loading}
                         placeholder="Re-type password"
-                        className={`w-full pl-10 pr-10 py-2.5 bg-white border rounded-xl text-sm text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:ring-4 ${
+                        className={`w-full pl-9 pr-9 py-2 bg-slate-50 border-2 rounded-xl text-xs font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-50 focus:outline-none focus:bg-white ${
                           fieldErrors.confirmPassword
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500/15"
-                            : "border-slate-200 focus:border-[#6d45bd] focus:ring-[#6d45bd]/12"
+                            ? "border-red-300 focus:border-red-500 focus:ring-4 focus:ring-red-500/15"
+                            : "border-slate-200 hover:border-slate-300 focus:border-[#6d45bd] focus:ring-4 focus:ring-[#6d45bd]/15"
                         }`}
                       />
                       <button
@@ -813,26 +814,26 @@ export function RegisterPage() {
                         disabled={loading}
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition cursor-pointer"
                       >
-                        {showConfirm ? <EyeOff size={16} /> : <Eye size={16} />}
+                        {showConfirm ? <EyeOff size={15} /> : <Eye size={15} />}
                       </button>
                     </div>
-                    {fieldErrors.confirmPassword && <span className="block mt-1 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.confirmPassword}</span>}
+                    {fieldErrors.confirmPassword && <span className="block mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.confirmPassword}</span>}
                   </div>
                 </div>
 
                 {/* Password strength & checklist */}
                 {password && (
-                  <div className="p-3.5 rounded-2xl bg-[#faf6fe] border border-[#6d45bd]/20 space-y-2.5">
-                    <div className="flex items-center justify-between text-xs">
+                  <div className="p-2.5 rounded-xl bg-[#faf6fe] border border-[#6d45bd]/20 space-y-1.5">
+                    <div className="flex items-center justify-between text-[11px]">
                       <span className="text-slate-500 font-medium">Security Score:</span>
                       <span className={`font-semibold ${strength.textClass}`}>{strength.text}</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden flex gap-1">
+                    <div className="w-full h-1 bg-slate-200 rounded-full overflow-hidden flex gap-1">
                       {[0, 1, 2, 3].map((i) => (
                         <div key={i} className={`h-full w-1/4 rounded-full transition-all duration-300 ${segmentColor(i)}`} />
                       ))}
                     </div>
-                    <div className="grid grid-cols-2 gap-1.5 text-[11px] pt-1">
+                    <div className="grid grid-cols-2 gap-1 text-[10px] pt-0.5">
                       {[
                         { label: "8-64 characters", valid: password.length >= 8 && password.length <= 64 },
                         { label: "Uppercase letter", valid: /[A-Z]/.test(password) },
@@ -841,8 +842,8 @@ export function RegisterPage() {
                         { label: "Special char (recommended)", valid: /[^A-Za-z0-9]/.test(password) },
                         { label: "No outer spaces", valid: password === password.trim() },
                       ].map((req) => (
-                        <div key={req.label} className={`flex items-center gap-1.5 transition-colors ${req.valid ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
-                          {req.valid ? <CheckCircle2 size={12} className="text-emerald-600 shrink-0" /> : <Circle size={12} className="shrink-0" />}
+                        <div key={req.label} className={`flex items-center gap-1 transition-colors ${req.valid ? "text-emerald-700 font-medium" : "text-slate-400"}`}>
+                          {req.valid ? <CheckCircle2 size={11} className="text-emerald-600 shrink-0" /> : <Circle size={11} className="shrink-0" />}
                           <span>{req.label}</span>
                         </div>
                       ))}
@@ -851,28 +852,28 @@ export function RegisterPage() {
                 )}
 
                 {/* Terms */}
-                <div className="flex flex-col pt-1">
-                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <div className="flex flex-col pt-0.5">
+                  <label className="flex items-start gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={agree}
                       onChange={(e) => setAgree(e.target.checked)}
                       disabled={loading}
-                      className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#6d45bd] focus:ring-[#6d45bd]/20 cursor-pointer"
+                      className="mt-0.5 w-3.5 h-3.5 rounded border-2 border-slate-300 text-[#6d45bd] focus:ring-[#6d45bd]/20 cursor-pointer"
                     />
                     <span className="text-xs text-slate-600 leading-normal">
-                      I agree to the <span className="text-[#6d45bd] font-medium hover:underline">Terms of Service</span> and <span className="text-[#6d45bd] font-medium hover:underline">Privacy Policy</span>.
+                      I agree to the <span className="text-[#6d45bd] font-semibold hover:underline">Terms of Service</span> and <span className="text-[#6d45bd] font-semibold hover:underline">Privacy Policy</span>.
                     </span>
                   </label>
-                  {fieldErrors.agree && <span className="mt-0.5 ml-1 text-red-600 text-[11px] leading-tight font-medium">{fieldErrors.agree}</span>}
+                  {fieldErrors.agree && <span className="mt-0.5 ml-1 text-red-600 text-[10px] leading-tight font-medium">{fieldErrors.agree}</span>}
                 </div>
 
                 {/* Submit button with shimmer sweep */}
-                <div className="pt-2">
+                <div className="pt-1">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full min-h-12 relative py-3 px-4 bg-gradient-to-r from-[#35206f] via-[#54309a] to-[#6d45bd] hover:from-[#2a1758] hover:to-[#57319e] text-white font-semibold rounded-xl text-sm transition-all duration-300 shadow-md shadow-[#6d45bd]/25 hover:shadow-xl hover:shadow-[#6d45bd]/40 active:scale-[0.99] flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
+                    className="w-full min-h-10 relative py-2.5 px-4 bg-gradient-to-r from-[#35206f] via-[#54309a] to-[#6d45bd] hover:from-[#2a1758] hover:to-[#57319e] text-white font-bold rounded-xl text-xs sm:text-sm transition-all duration-300 shadow-md shadow-[#6d45bd]/25 hover:shadow-lg active:scale-[0.99] flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed overflow-hidden"
                   >
                     <span
                       className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
@@ -882,7 +883,7 @@ export function RegisterPage() {
                         animation: "shimmerSweep 1.6s ease-in-out infinite",
                       }}
                     />
-                    <span className="relative z-10 flex items-center gap-2 font-semibold">
+                    <span className="relative z-10 flex items-center gap-2 font-bold">
                       {loading ? (
                         <>
                           <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -894,7 +895,7 @@ export function RegisterPage() {
                       ) : (
                         <>
                           <span>Create PortionBridge Account</span>
-                          <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight size={15} className="transform group-hover:translate-x-1 transition-transform" />
                         </>
                       )}
                     </span>
@@ -903,11 +904,11 @@ export function RegisterPage() {
               </form>
 
               {/* Divider */}
-              <div className="relative my-5 text-center">
+              <div className="relative my-3 text-center">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-200" />
                 </div>
-                <span className="relative px-3 bg-white text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">Or continue with</span>
+                <span className="relative px-2.5 bg-white text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">Or continue with</span>
               </div>
 
               <div className="flex justify-center [&>button]:w-full">
@@ -920,21 +921,21 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+            <div className="mt-3 pt-2.5 border-t border-slate-100 text-center">
               <p className="text-xs text-slate-600">
                 Already have an account?{" "}
                 <button
                   type="button"
                   onClick={handleLoginClick}
-                  className="font-semibold text-[#6d45bd] hover:text-[#35206f] hover:underline cursor-pointer ml-1"
+                  className="font-bold text-[#6d45bd] hover:text-[#35206f] hover:underline cursor-pointer ml-1"
                 >
                   Sign in here
                 </button>
               </p>
             </div>
-          </section>
-        </div>
-      </main>
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

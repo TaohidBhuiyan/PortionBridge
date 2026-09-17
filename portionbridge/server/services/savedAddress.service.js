@@ -50,12 +50,35 @@ async function createAddress(userId, data) {
     );
   }
 
+const userModel = require('../models/user.model');
+
+async function syncAddressToUserProfile(userId, fullAddress) {
+  if (!fullAddress) return;
+  try {
+    await userModel.updateProfile(userId, { address: fullAddress });
+  } catch (err) {
+    console.error('Error syncing saved address to user profile:', err);
+  }
+}
+
+  const user = await userModel.findById(userId);
+
   const insertId = await savedAddressModel.create({
     userId,
+    division: data.division || 'Dhaka',
+    district: data.district || 'Dhaka',
+    area: data.area || 'Central',
+    contactPersonName: data.contactPersonName || (user ? user.name : 'Donor'),
+    contactPhone: data.contactPhone || (user ? user.phone || 'N/A' : 'N/A'),
     ...data,
   });
 
-  return savedAddressModel.findById(insertId);
+  const createdAddress = await savedAddressModel.findById(insertId);
+  if (createdAddress && (createdAddress.is_default || currentCount === 0)) {
+    await syncAddressToUserProfile(userId, createdAddress.full_address);
+  }
+
+  return createdAddress;
 }
 
 /**
@@ -129,7 +152,12 @@ async function updateAddress(addressId, userId, updates) {
 
   await savedAddressModel.updateById(addressId, updates);
 
-  return savedAddressModel.findById(addressId);
+  const updatedAddress = await savedAddressModel.findById(addressId);
+  if (updatedAddress && updatedAddress.is_default) {
+    await syncAddressToUserProfile(userId, updatedAddress.full_address);
+  }
+
+  return updatedAddress;
 }
 
 /**
@@ -157,6 +185,7 @@ async function deleteAddress(addressId, userId) {
     const remainingAddresses = await savedAddressModel.findByUserId(userId);
     if (remainingAddresses.length > 0) {
       await savedAddressModel.setDefault(remainingAddresses[0].id, userId);
+      await syncAddressToUserProfile(userId, remainingAddresses[0].full_address);
     }
   }
 }
@@ -190,7 +219,12 @@ async function setDefaultAddress(addressId, userId) {
     throw new AppError('Failed to set default address.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 
-  return savedAddressModel.findById(addressId);
+  const defaultAddr = await savedAddressModel.findById(addressId);
+  if (defaultAddr) {
+    await syncAddressToUserProfile(userId, defaultAddr.full_address);
+  }
+
+  return defaultAddr;
 }
 
 /**

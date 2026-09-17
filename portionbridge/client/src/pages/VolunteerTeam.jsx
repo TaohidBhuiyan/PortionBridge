@@ -271,37 +271,6 @@ export function VolunteerTeam() {
     },
   });
 
-  const activeDonations = donations.filter(d => ACTIVE_STATUSES.has(d.status));
-  const completedDonations = donations.filter(d => d.status === 'completed');
-
-  // Real, existing data only: donation_requests.assigned_member_id stores
-  // the assigned volunteer's user_id (same convention as donor_id/
-  // volunteer_id elsewhere), so this is a genuine cross-reference — not a
-  // fabricated "current mission" — built from the team's own active
-  // donations, keyed by member user_id for O(1) lookup per card.
-  const missionByUserId = new Map();
-  activeDonations.forEach((d) => {
-    const assignedTo = d.assigned_member_id || d.volunteer_id;
-    if (assignedTo) missionByUserId.set(assignedTo, d);
-  });
-
-  const totalMembers = team.members?.length || 0;
-  const onMissionCount = (team.members || []).filter((m) => missionByUserId.has(m.user_id)).length;
-  const availableCount = totalMembers - onMissionCount;
-
-  const filteredMembers = (team.members || []).filter((member) => {
-    const q = memberSearch.trim().toLowerCase();
-    const matchesSearch = !q
-      || member.name?.toLowerCase().includes(q)
-      || String(member.user_id).includes(q);
-    if (!matchesSearch) return false;
-
-    if (memberFilter === 'leader') return member.role === 'leader';
-    if (memberFilter === 'mission') return missionByUserId.has(member.user_id);
-    if (memberFilter === 'available') return !missionByUserId.has(member.user_id);
-    return true;
-  });
-
   if (loading) {
     return (
       <DashboardLayout>
@@ -422,6 +391,32 @@ export function VolunteerTeam() {
       </DashboardLayout>
     );
   }
+
+  const activeDonations = donations.filter(d => ACTIVE_STATUSES.has(d.status));
+  const completedDonations = donations.filter(d => d.status === 'completed');
+
+  const missionByUserId = new Map();
+  activeDonations.forEach((d) => {
+    const assignedTo = d.assigned_member_id || d.volunteer_id;
+    if (assignedTo) missionByUserId.set(assignedTo, d);
+  });
+
+  const totalMembers = team.members?.length || 0;
+  const onMissionCount = (team.members || []).filter((m) => missionByUserId.has(m.user_id)).length;
+  const availableCount = totalMembers - onMissionCount;
+
+  const filteredMembers = (team.members || []).filter((member) => {
+    const q = memberSearch.trim().toLowerCase();
+    const matchesSearch = !q
+      || member.name?.toLowerCase().includes(q)
+      || String(member.user_id).includes(q);
+    if (!matchesSearch) return false;
+
+    if (memberFilter === 'leader') return member.role === 'leader';
+    if (memberFilter === 'mission') return missionByUserId.has(member.user_id);
+    if (memberFilter === 'available') return !missionByUserId.has(member.user_id);
+    return true;
+  });
 
   return (
     <DashboardLayout>

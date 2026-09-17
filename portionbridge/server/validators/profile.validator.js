@@ -15,25 +15,26 @@ const { isCommonWeakPassword } = require('../utils/commonPasswords');
 
 const updateProfileValidationRules = [
   body('name')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .notEmpty().withMessage('Name cannot be empty.')
     .isLength({ min: 2, max: 100 }).withMessage('Name must be between 2 and 100 characters.'),
 
   body('phone')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ min: 7, max: 20 }).withMessage('Phone number must be between 7 and 20 characters.'),
 
   body('address')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 255 }).withMessage('Address must not exceed 255 characters.'),
 
   body('dateOfBirth')
-    .optional()
+    .optional({ checkFalsy: true })
     .isISO8601().withMessage('Date of birth must be a valid date.')
     .custom((value) => {
+      if (!value) return true;
       const dob = new Date(value);
       const today = new Date();
       const minAge = 13;
@@ -54,7 +55,7 @@ const updateProfileValidationRules = [
     }),
 
   body('gender')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(Object.values(GENDER)).withMessage(`Gender must be one of: ${Object.values(GENDER).join(', ')}.`),
 

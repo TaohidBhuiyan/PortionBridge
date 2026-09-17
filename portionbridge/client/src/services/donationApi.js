@@ -150,7 +150,7 @@ export const donationApi = {
       const token = getAuthToken();
       
       const response = await axios.get(
-        `${API_BASE}/addresses`,
+        `${API_BASE}/saved-addresses`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -528,6 +528,35 @@ export const donationApi = {
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch donation history';
       return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Complete a donation (Donor only, when status is picked_up)
+   * @param {number} donationId - Donation ID
+   * @returns {Promise<Object>} Completion result
+   */
+  completeDonation: async (donationId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      
+      const response = await axios.patch(
+        `${API_BASE}/donations/${donationId}/complete`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+          },
+        }
+      );
+      
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to complete donation';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
     }
   },
 };

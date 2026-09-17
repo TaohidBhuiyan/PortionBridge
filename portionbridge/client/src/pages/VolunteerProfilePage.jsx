@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle, UserCheck } from 'lucide-react';
 import VolunteerProfileHeader from '../components/dashboard/donor/VolunteerProfileHeader';
 import VolunteerProfileInfo from '../components/dashboard/donor/VolunteerProfileInfo';
 import VolunteerStatistics from '../components/dashboard/donor/VolunteerStatistics';
@@ -12,10 +12,6 @@ import { AchievementsPanel } from '../components/common/AchievementsPanel';
 import { volunteerProfileApi } from '../services/volunteerProfileApi';
 import { useAuth } from '../context/AuthContext';
 
-/**
- * Volunteer Profile Page
- * Displays complete volunteer profile with all components
- */
 const VolunteerProfilePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -34,7 +30,6 @@ const VolunteerProfilePage = () => {
 
     if (result.success) {
       setVolunteer(result.data.volunteer);
-      // Calculate distance if user location is available (from discovery page)
       const savedDistance = sessionStorage.getItem('volunteer_distance');
       if (savedDistance) {
         setDistance(parseFloat(savedDistance));
@@ -48,51 +43,40 @@ const VolunteerProfilePage = () => {
   }, [id]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
     fetchVolunteerProfile();
   }, [fetchVolunteerProfile]);
 
   const handleRequestPickup = (volunteerData) => {
-    // Pickup requests are created through the donation form so that required
-    // pickup details and lifecycle state are captured consistently.
     navigate('/donation/create', { state: { preferredVolunteerId: volunteerData.id } });
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-page">
-        {/* Header */}
-        <div className="bg-surface border-b border-border sticky top-0 z-40">
+        <div className="bg-surface/90 backdrop-blur-md border-b border-border/80 sticky top-0 z-40">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16">
               <button
                 onClick={() => navigate(-1)}
-                aria-label="Go back"
-                className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
+                className="p-2 hover:bg-surface-hover rounded-xl transition-colors text-text-secondary"
               >
-                <ArrowLeft className="w-5 h-5 text-text-secondary" />
+                <ArrowLeft className="w-5 h-5" />
               </button>
-              <div className="ml-4">
-                <h1 className="text-xl font-semibold text-text-primary">
-                  Volunteer Profile
-                </h1>
-              </div>
+              <h1 className="ml-4 text-lg font-bold text-text-primary">Loading Volunteer Profile...</h1>
             </div>
           </div>
         </div>
 
-        {/* Loading Skeleton */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-          <div className="animate-pulse bg-surface-hover rounded-xl h-48" />
+          <div className="animate-pulse pb-glass-card rounded-3xl h-56" />
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
-              <div className="animate-pulse bg-surface-hover rounded-xl h-48" />
-              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
+              <div className="animate-pulse pb-glass-card rounded-2xl h-64" />
+              <div className="animate-pulse pb-glass-card rounded-2xl h-48" />
             </div>
             <div className="space-y-6">
-              <div className="animate-pulse bg-surface-hover rounded-xl h-48" />
-              <div className="animate-pulse bg-surface-hover rounded-xl h-64" />
+              <div className="animate-pulse pb-glass-card rounded-2xl h-48" />
+              <div className="animate-pulse pb-glass-card rounded-2xl h-64" />
             </div>
           </div>
         </div>
@@ -102,16 +86,14 @@ const VolunteerProfilePage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center">
-        <div className="bg-surface border border-border rounded-xl p-8 max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-danger mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
-            Error Loading Profile
-          </h2>
-          <p className="text-text-secondary mb-6">{error}</p>
+      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+        <div className="pb-glass-card rounded-3xl p-8 max-w-md text-center border border-danger/30 shadow-md">
+          <AlertCircle className="w-14 h-14 text-danger mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-text-primary mb-1">Error Loading Profile</h2>
+          <p className="text-xs text-text-secondary mb-5">{error}</p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
+            className="px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-bold text-xs transition-colors shadow-sm"
           >
             Go Back
           </button>
@@ -122,18 +104,16 @@ const VolunteerProfilePage = () => {
 
   if (!volunteer) {
     return (
-      <div className="min-h-screen bg-page flex items-center justify-center">
-        <div className="bg-surface border border-border rounded-xl p-8 max-w-md text-center">
-          <AlertCircle className="w-16 h-16 text-text-secondary mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-text-primary mb-2">
-            Volunteer Not Found
-          </h2>
-          <p className="text-text-secondary mb-6">
+      <div className="min-h-screen bg-page flex items-center justify-center p-4">
+        <div className="pb-glass-card rounded-3xl p-8 max-w-md text-center border border-border/80 shadow-md">
+          <AlertCircle className="w-14 h-14 text-text-muted mx-auto mb-3" />
+          <h2 className="text-xl font-bold text-text-primary mb-1">Volunteer Not Found</h2>
+          <p className="text-xs text-text-secondary mb-5">
             The volunteer profile you're looking for doesn't exist or has been removed.
           </p>
           <button
             onClick={() => navigate(-1)}
-            className="px-6 py-2 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors font-medium"
+            className="px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-bold text-xs transition-colors shadow-sm"
           >
             Go Back
           </button>
@@ -144,22 +124,28 @@ const VolunteerProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-page">
-      {/* Header */}
-      <div className="bg-surface border-b border-border sticky top-0 z-40">
+      {/* Top Sticky Header */}
+      <div className="bg-surface/90 backdrop-blur-md border-b border-border/80 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center h-16">
-            <button
-              onClick={() => navigate(-1)}
-              aria-label="Go back"
-              className="p-2 hover:bg-surface-hover rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-text-secondary" />
-            </button>
-            <div className="ml-4">
-              <h1 className="text-xl font-semibold text-text-primary">
-                Volunteer Profile
-              </h1>
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+                className="p-2 hover:bg-surface-hover rounded-xl transition-colors text-text-secondary"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h1 className="text-base sm:text-lg font-extrabold text-text-primary flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-dash-primary" /> {volunteer.name}'s Profile
+                </h1>
+              </div>
             </div>
+
+            <span className="text-xs font-semibold px-3 py-1 rounded-full bg-dash-primary-soft text-dash-primary border border-dash-primary/20">
+              Verified Volunteer
+            </span>
           </div>
         </div>
       </div>
@@ -175,34 +161,22 @@ const VolunteerProfilePage = () => {
             onPhotoUpdated={(updatedUser) => setVolunteer((prev) => ({ ...prev, profile_photo: updatedUser.profile_photo }))}
           />
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
             {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Profile Information */}
               <VolunteerProfileInfo volunteer={volunteer} />
-
-              {/* Statistics */}
               <VolunteerStatistics statistics={volunteer.statistics} />
-
-              {/* Reviews */}
               <VolunteerReviews
                 volunteerId={volunteer.id}
                 ratingSummary={volunteer.rating_summary}
               />
-
-              {/* Photo Gallery */}
               <VolunteerGallery volunteer={volunteer} />
             </div>
 
             {/* Right Column - Sidebar */}
             <div className="space-y-6">
-              {/* Team Information */}
               <VolunteerTeamInfo team={volunteer.team} />
-
-              {/* Achievements */}
               <AchievementsPanel userId={volunteer.id} userRole="volunteer" />
-
-              {/* Quick Actions */}
               <VolunteerQuickActions
                 volunteer={volunteer}
                 onRequestPickup={handleRequestPickup}
@@ -214,5 +188,6 @@ const VolunteerProfilePage = () => {
     </div>
   );
 };
+
 export { VolunteerProfilePage };
 export default VolunteerProfilePage;

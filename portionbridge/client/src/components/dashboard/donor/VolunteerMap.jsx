@@ -1,14 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
-import { Maximize2, Navigation, Layers, ChevronDown, ChevronUp, User, Users, MapPin } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Maximize2, Navigation, Layers, ChevronDown, ChevronUp, User, Users, MapPin, Radio } from 'lucide-react';
 
 /**
- * Escapes a value for safe interpolation into an HTML string. Needed
- * because Leaflet's bindPopup() renders its string argument as raw HTML
- * (no built-in escaping) — unlike JSX, which escapes by default. Every
- * user-controlled field (volunteer/team display names) going into a
- * popup string must go through this first.
+ * Escapes a value for safe interpolation into Leaflet HTML popup strings.
  */
-// eslint-disable-next-line react-refresh/only-export-components
 export function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;',
@@ -23,7 +18,7 @@ const EMPTY_ARRAY = [];
 
 /**
  * Volunteer Map Component
- * Displays volunteers and teams on an interactive map using Leaflet
+ * Displays volunteers and teams on an interactive Leaflet map with custom animated markers.
  */
 const VolunteerMap = ({
   userLocation,
@@ -45,10 +40,9 @@ const VolunteerMap = ({
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
   useEffect(() => {
-    // Load Leaflet dynamically
+    // Load Leaflet dynamically if not already loaded
     const loadLeaflet = async () => {
       if (typeof window !== 'undefined' && !window.L) {
-        // Load CSS if not already present
         if (!document.querySelector('link[href*="leaflet.css"]')) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
@@ -56,7 +50,6 @@ const VolunteerMap = ({
           document.head.appendChild(link);
         }
 
-        // Load JS
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
         script.onload = () => {
@@ -84,7 +77,6 @@ const VolunteerMap = ({
     const L = window.L;
 
     if (!mapInstanceRef.current) {
-      // Initialize map
       const map = L.map(mapRef.current, {
         center: [userLocation?.latitude || 23.8103, userLocation?.longitude || 90.4125],
         zoom: 13,
@@ -98,18 +90,13 @@ const VolunteerMap = ({
         keyboard: true,
       });
 
-      // Add OpenStreetMap tiles
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         maxZoom: 19,
       }).addTo(map);
 
-      // Add zoom control to bottom right
-      L.control.zoom({
-        position: 'bottomright'
-      }).addTo(map);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-      // Explicitly ensure dragging is enabled
       if (map.dragging) {
         map.dragging.enable();
       }
@@ -118,60 +105,62 @@ const VolunteerMap = ({
     }
 
     const map = mapInstanceRef.current;
-
-    // Invalidate size immediately so dragging bounds calculate correctly
     map.invalidateSize();
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
 
-    // Clear existing route line
     if (routeLineRef.current) {
       routeLineRef.current.remove();
       routeLineRef.current = null;
     }
 
-    // Add user location marker
+    // Add user donor location marker with radar wave aura
     if (userLocation?.latitude && userLocation?.longitude) {
       const userIcon = L.divIcon({
         className: 'custom-user-marker',
         html: `
-          <div style="
-            width: 26px;
-            height: 26px;
-            background: #2563eb;
-            border: 3px solid white;
-            border-radius: 50%;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          ">
+          <div style="position: relative; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;">
             <div style="
-              width: 8px;
-              height: 8px;
-              background: white;
+              position: absolute;
+              inset: 0;
+              background: rgba(37, 99, 235, 0.35);
               border-radius: 50%;
+              animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
             "></div>
+            <div style="
+              width: 24px;
+              height: 24px;
+              background: #2563eb;
+              border: 3px solid white;
+              border-radius: 50%;
+              box-shadow: 0 4px 12px rgba(37, 99, 235, 0.5);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              z-index: 10;
+            ">
+              <div style="width: 8px; height: 8px; background: white; border-radius: 50%;"></div>
+            </div>
           </div>
         `,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
       });
 
       const userMarker = L.marker([userLocation.latitude, userLocation.longitude], {
         icon: userIcon,
       }).addTo(map);
 
-      userMarker.bindTooltip('<strong>Your Location</strong> (Donor)', { direction: 'top', offset: [0, -13] });
+      userMarker.bindTooltip('<strong>Your Location</strong> (Donor)', { direction: 'top', offset: [0, -17] });
       userMarker.bindPopup(`
-        <div style="font-family: inherit; padding: 4px; min-width: 140px;">
+        <div style="font-family: inherit; padding: 6px; min-width: 150px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
             <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></span>
-            <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #2563eb;">Current Location</span>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; tracking: 0.5px; color: #2563eb;">Your Radar Pin</span>
           </div>
-          <div style="font-size: 13px; font-weight: 700; color: #111827;">You (Donor)</div>
+          <div style="font-size: 13px; font-weight: 700; color: #111827;">Pickup Zone (Donor)</div>
         </div>
       `);
       markersRef.current.push(userMarker);
@@ -181,31 +170,43 @@ const VolunteerMap = ({
     volunteers.forEach(volunteer => {
       if (volunteer.latitude && volunteer.longitude) {
         const isOnline = volunteer.is_online === 1 || volunteer.is_online === true;
-        const markerColor = isOnline ? '#16a34a' : '#6b7280';
+        const markerColor = isOnline ? '#10b981' : '#6b7280';
         
         const volunteerIcon = L.divIcon({
           className: 'custom-volunteer-marker',
           html: `
-            <div style="
-              width: 32px;
-              height: 32px;
-              background: ${markerColor};
-              border: 2.5px solid white;
-              border-radius: 50%;
-              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              cursor: pointer;
-            ">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
+            <div style="position: relative; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+              ${isOnline ? `
+                <div style="
+                  position: absolute;
+                  inset: 0;
+                  background: rgba(16, 185, 129, 0.3);
+                  border-radius: 50%;
+                  animation: ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+                "></div>
+              ` : ''}
+              <div style="
+                width: 32px;
+                height: 32px;
+                background: ${markerColor};
+                border: 2.5px solid white;
+                border-radius: 50%;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                z-index: 5;
+              ">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
             </div>
           `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
 
         const marker = L.marker([volunteer.latitude, volunteer.longitude], {
@@ -215,26 +216,26 @@ const VolunteerMap = ({
         marker.bindTooltip(`
           <div style="font-size: 12px; line-height: 1.3;">
             <strong>${escapeHtml(volunteer.name)}</strong><br/>
-            <span style="font-size: 11px; color: ${markerColor}; font-weight: 600;">
-              ${isOnline ? '🟢 Available Volunteer' : '⚪ Offline Volunteer'}
+            <span style="font-size: 11px; color: ${markerColor}; font-weight: 700;">
+              ${isOnline ? '🟢 Online Volunteer' : '⚪ Offline Volunteer'}
             </span>
           </div>
-        `, { direction: 'top', offset: [0, -16] });
+        `, { direction: 'top', offset: [0, -18] });
 
         marker.bindPopup(`
-          <div style="font-family: inherit; padding: 4px; min-width: 160px;">
+          <div style="font-family: inherit; padding: 6px; min-width: 170px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${markerColor};"></span>
-              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: ${markerColor};">
+              <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: ${markerColor};">
                 ${isOnline ? 'Available Volunteer' : 'Offline Volunteer'}
               </span>
             </div>
-            <div style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px;">
+            <div style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 4px;">
               ${escapeHtml(volunteer.name)}
             </div>
             <div style="font-size: 12px; color: #4b5563; line-height: 1.4;">
               📍 <strong>${volunteer.distance ?? 0} km</strong> away
-              ${volunteer.phone ? `<br>📞 ${escapeHtml(volunteer.phone)}` : ''}
+              ${volunteer.total_pickups ? `<br>📦 <strong>${volunteer.total_pickups}</strong> pickups` : ''}
             </div>
           </div>
         `);
@@ -251,18 +252,18 @@ const VolunteerMap = ({
           className: 'custom-team-marker',
           html: `
             <div style="
-              width: 36px;
-              height: 36px;
+              width: 38px;
+              height: 38px;
               background: #9333ea;
               border: 2.5px solid white;
-              border-radius: 8px;
-              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgba(147, 51, 234, 0.4);
               display: flex;
               align-items: center;
               justify-content: center;
               cursor: pointer;
             ">
-              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                 <circle cx="9" cy="7" r="4"></circle>
                 <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
@@ -270,8 +271,8 @@ const VolunteerMap = ({
               </svg>
             </div>
           `,
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
+          iconSize: [38, 38],
+          iconAnchor: [19, 19],
         });
 
         const marker = L.marker([team.latitude, team.longitude], {
@@ -281,19 +282,19 @@ const VolunteerMap = ({
         marker.bindTooltip(`
           <div style="font-size: 12px; line-height: 1.3;">
             <strong>${escapeHtml(team.name)}</strong><br/>
-            <span style="font-size: 11px; color: #9333ea; font-weight: 600;">👥 Volunteer Team (${team.member_count || 1} members)</span>
+            <span style="font-size: 11px; color: #9333ea; font-weight: 700;">👥 Volunteer Squad (${team.member_count || 1} members)</span>
           </div>
-        `, { direction: 'top', offset: [0, -18] });
+        `, { direction: 'top', offset: [0, -19] });
 
         marker.bindPopup(`
-          <div style="font-family: inherit; padding: 4px; min-width: 160px;">
+          <div style="font-family: inherit; padding: 6px; min-width: 170px;">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: #9333ea;"></span>
-              <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #9333ea;">
-                Volunteer Team
+              <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #9333ea;">
+                Volunteer Squad
               </span>
             </div>
-            <div style="font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 4px;">
+            <div style="font-size: 14px; font-weight: 800; color: #111827; margin-bottom: 4px;">
               ${escapeHtml(team.name)}
             </div>
             <div style="font-size: 12px; color: #4b5563; line-height: 1.4;">
@@ -308,67 +309,6 @@ const VolunteerMap = ({
       }
     });
 
-    // Add custom markers (pickup pins)
-    markers.forEach(markerData => {
-      if (markerData.latitude && markerData.longitude) {
-        const pinColor = markerData.color || '#f59e0b';
-        const pinIcon = L.divIcon({
-          className: 'custom-pin-marker',
-          html: `
-            <div style="
-              width: 30px;
-              height: 30px;
-              background: ${pinColor};
-              border: 2.5px solid white;
-              border-radius: 50% 50% 50% 0;
-              transform: rotate(-45deg);
-              box-shadow: 0 2px 8px rgba(0,0,0,0.35);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">
-              <div style="transform: rotate(45deg); display: flex; align-items: center; justify-content: center;">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
-              </div>
-            </div>
-          `,
-          iconSize: [30, 30],
-          iconAnchor: [15, 30],
-        });
-
-        const marker = L.marker([markerData.latitude, markerData.longitude], {
-          icon: pinIcon,
-        }).addTo(map);
-
-        if (markerData.popupHtml) {
-          marker.bindPopup(markerData.popupHtml);
-        }
-
-        if (markerData.onClick) {
-          marker.on('click', () => markerData.onClick(markerData));
-        }
-
-        markersRef.current.push(marker);
-      }
-    });
-
-    // Add route line if provided
-    if (routeLine && routeLine.length >= 2) {
-      const latLngs = routeLine.map(point => [point.latitude, point.longitude]);
-      const polyline = L.polyline(latLngs, {
-        color: '#3b82f6',
-        weight: 4,
-        opacity: 0.7,
-        dashArray: '10, 10',
-      }).addTo(map);
-
-      routeLineRef.current = polyline;
-    }
-
-    // Fit bounds or center only on initial load so user panning/dragging is not reset
     if (!hasCenteredRef.current) {
       if (markersRef.current.length > 0) {
         const group = L.featureGroup(markersRef.current);
@@ -380,7 +320,6 @@ const VolunteerMap = ({
       }
     }
 
-    // Auto-update map dimensions on container resize or layout mode switches
     const resizeObserver = new ResizeObserver(() => {
       mapInstanceRef.current?.invalidateSize();
     });
@@ -411,118 +350,93 @@ const VolunteerMap = ({
   };
 
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50' : ''} ${className}`}>
+    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 p-4 bg-black/80 backdrop-blur-md' : ''} ${className}`}>
       <div
         ref={mapRef}
-        className="w-full h-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800"
-        style={{ minHeight: isFullscreen ? '100vh' : '400px' }}
+        className="w-full h-full rounded-2xl overflow-hidden bg-page border border-border shadow-pb-card"
+        style={{ minHeight: isFullscreen ? 'calc(100vh - 32px)' : '480px' }}
       />
 
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2">
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
         <button
           onClick={centerOnUser}
-          className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          title="Center on my location"
+          className="p-2.5 bg-surface border border-border rounded-xl shadow-md hover:bg-surface-hover text-text-primary transition-all cursor-pointer"
+          title="Center radar on my location"
         >
-          <Navigation className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <Navigation className="w-4 h-4 text-dash-primary" />
         </button>
         
         <button
           onClick={toggleFullscreen}
-          className="p-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          className="p-2.5 bg-surface border border-border rounded-xl shadow-md hover:bg-surface-hover text-text-primary transition-all cursor-pointer"
+          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen Map'}
         >
-          <Maximize2 className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+          <Maximize2 className="w-4 h-4 text-text-secondary" />
         </button>
       </div>
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-3 z-[1000] min-w-[210px] transition-all">
+      <div className="absolute bottom-4 left-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-pb-elevated border border-border p-3.5 z-[1000] min-w-[210px] transition-all">
         <button
           type="button"
           onClick={() => setIsLegendOpen(!isLegendOpen)}
-          className="flex items-center justify-between w-full gap-2 text-xs font-semibold text-gray-800 dark:text-gray-200 cursor-pointer"
+          className="flex items-center justify-between w-full gap-2 text-xs font-bold text-text-primary cursor-pointer"
         >
           <div className="flex items-center gap-1.5">
-            <Layers className="w-3.5 h-3.5 text-dash-primary" />
+            <Layers className="w-4 h-4 text-dash-primary" />
             <span>Map Indicators</span>
           </div>
           {isLegendOpen ? (
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
           ) : (
-            <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
+            <ChevronUp className="w-3.5 h-3.5 text-text-muted" />
           )}
         </button>
 
         {isLegendOpen && (
-          <div className="mt-2.5 space-y-2 border-t border-gray-100 dark:border-gray-700 pt-2 text-xs">
-            {/* You */}
+          <div className="mt-3 space-y-2 border-t border-border/50 pt-2.5 text-xs animate-fadeIn">
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-blue-600 border-2 border-white shadow-xs flex items-center justify-center shrink-0">
-                <div className="w-1.5 h-1.5 bg-white rounded-full" />
-              </div>
+              <div className="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-2xs shrink-0" />
               <div className="leading-tight">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">You</span>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">Current Location (Donor)</p>
+                <span className="font-bold text-text-primary">You (Donor)</span>
+                <p className="text-[10px] text-text-muted">Radar Origin</p>
               </div>
             </div>
 
-            {/* Available Volunteer */}
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-green-600 border-2 border-white shadow-xs flex items-center justify-center text-white shrink-0">
-                <User className="w-3 h-3" />
-              </div>
+              <div className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-2xs shrink-0" />
               <div className="leading-tight">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Available Volunteer</span>
-                <p className="text-[10px] text-green-600 dark:text-green-400">Online & ready</p>
+                <span className="font-bold text-text-primary">Online Volunteer</span>
+                <p className="text-[10px] text-emerald-600 font-semibold">Ready for pickup</p>
               </div>
             </div>
 
-            {/* Offline Volunteer */}
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-full bg-gray-500 border-2 border-white shadow-xs flex items-center justify-center text-white shrink-0">
-                <User className="w-3 h-3" />
-              </div>
+              <div className="w-4 h-4 rounded-full bg-gray-500 border-2 border-white shadow-2xs shrink-0" />
               <div className="leading-tight">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Offline Volunteer</span>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">Currently inactive</p>
+                <span className="font-bold text-text-primary">Offline Volunteer</span>
+                <p className="text-[10px] text-text-muted">Inactive</p>
               </div>
             </div>
 
-            {/* Volunteer Team */}
             <div className="flex items-center gap-2.5">
-              <div className="w-5 h-5 rounded-md bg-purple-600 border-2 border-white shadow-xs flex items-center justify-center text-white shrink-0">
-                <Users className="w-3 h-3" />
-              </div>
+              <div className="w-4 h-4 rounded-md bg-purple-600 border-2 border-white shadow-2xs shrink-0" />
               <div className="leading-tight">
-                <span className="font-semibold text-gray-900 dark:text-gray-100">Volunteer Team</span>
-                <p className="text-[10px] text-purple-600 dark:text-purple-400">Squad / Group</p>
+                <span className="font-bold text-text-primary">Volunteer Squad</span>
+                <p className="text-[10px] text-purple-600 font-semibold">Team Squad</p>
               </div>
             </div>
-
-            {/* Pickup Marker if markers exist */}
-            {markers.length > 0 && (
-              <div className="flex items-center gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-amber-500 border-2 border-white shadow-xs flex items-center justify-center text-white shrink-0">
-                  <MapPin className="w-3 h-3" />
-                </div>
-                <div className="leading-tight">
-                  <span className="font-semibold text-gray-900 dark:text-gray-100">Pickup Location</span>
-                  <p className="text-[10px] text-amber-600 dark:text-amber-400">Donation point</p>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {/* Loading State */}
+      {/* Loading State Overlay */}
       {!mapLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-surface/80 backdrop-blur-xs rounded-2xl z-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-dash-primary mx-auto mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading map...</p>
+            <div className="w-8 h-8 border-3 border-dash-primary/30 border-t-dash-primary rounded-full animate-spin mx-auto mb-2" />
+            <p className="text-xs font-semibold text-text-secondary">Loading Map Tiles...</p>
           </div>
         </div>
       )}

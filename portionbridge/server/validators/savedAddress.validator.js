@@ -32,18 +32,18 @@ const createAddressValidationRules = [
     .isLength({ max: 500 }).withMessage('Full address must not exceed 500 characters.'),
 
   body('division')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Division is required.')
     .isLength({ max: 100 }).withMessage('Division must not exceed 100 characters.'),
 
   body('district')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('District is required.')
     .isLength({ max: 100 }).withMessage('District must not exceed 100 characters.'),
 
   body('area')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Area is required.')
     .isLength({ max: 100 }).withMessage('Area must not exceed 100 characters.'),
 
   body('postalCode')
@@ -52,13 +52,13 @@ const createAddressValidationRules = [
     .isLength({ max: 20 }).withMessage('Postal code must not exceed 20 characters.'),
 
   body('buildingName')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Building name / house no. is required for volunteer pickup.')
     .isLength({ max: 100 }).withMessage('Building name must not exceed 100 characters.'),
 
   body('floor')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Apartment / flat / floor no. is required for volunteer pickup.')
     .isLength({ max: 20 }).withMessage('Floor must not exceed 20 characters.'),
 
   body('landmark')
@@ -80,15 +80,14 @@ const createAddressValidationRules = [
     .isFloat({ min: -180, max: 180 }).withMessage('Longitude must be between -180 and 180.'),
 
   body('contactPersonName')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Contact person name is required.')
     .isLength({ max: 100 }).withMessage('Contact person name must not exceed 100 characters.'),
 
   body('contactPhone')
+    .optional({ checkFalsy: true })
     .trim()
-    .notEmpty().withMessage('Contact phone is required.')
-    .isLength({ max: 20 }).withMessage('Contact phone must not exceed 20 characters.')
-    .matches(/^[+]?[\d\s-()]+$/).withMessage('Contact phone must be a valid phone number.'),
+    .isLength({ max: 20 }).withMessage('Contact phone must not exceed 20 characters.'),
 
   body('isDefault')
     .optional()

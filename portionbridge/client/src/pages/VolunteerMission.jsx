@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Compass, MapPin } from 'lucide-react';
 import { DashboardLayout } from '../components/dashboard';
 import { ActiveMissionCard } from '../components/dashboard/volunteer';
 import { MissionMap } from '../components/dashboard/volunteer/MissionMap';
@@ -7,17 +8,6 @@ import { volunteerApi } from '../services/volunteerApi';
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 const TRACKABLE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_up']);
 
-/**
- * VolunteerMission — "My Mission" (Phase 1 foundation, Phase 5 adds the
- * live mission map).
- *
- * Reuses ActiveMissionCard as-is for the summary card at the top. Below
- * it, when there's an active assignment, fetches the richer mission
- * detail (donor contact, pickup coordinates, team info) via
- * volunteerApi.getAssignmentDetail — the same GET
- * /volunteer/assignments/:id endpoint that existed but had no frontend
- * caller before this phase — and renders MissionMap.
- */
 export function VolunteerMission() {
   const [mission, setMission] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,9 +18,6 @@ export function VolunteerMission() {
     const loadActiveMission = async () => {
       setLoading(true);
       try {
-        // Same lightweight "give me my one active mission" call
-        // ActiveMissionCard already makes — reused here just to learn the
-        // donation ID, then the richer detail call below fills in the rest.
         const token = localStorage.getItem('accessToken');
         const response = await fetch(`${API_BASE}/volunteer/assignments?limit=1`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -66,24 +53,50 @@ export function VolunteerMission() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">My Mission</h1>
-          <p className="text-text-secondary text-sm">
-            Your current active pickup, if you have one.
-          </p>
-        </div>
-
-        <div className="max-w-2xl">
-          <ActiveMissionCard />
-        </div>
-
-        {showMap && (
-          <div className="max-w-3xl">
-            <h2 className="text-lg font-semibold text-text-primary mb-3">Mission Map</h2>
-            <MissionMap mission={mission} onStatusChange={handleStatusChange} />
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Hero Header */}
+        <div className="pb-volunteer-hero rounded-2xl p-6 sm:p-7 relative overflow-hidden flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-dash-primary via-indigo-600 to-emerald-500 text-white flex items-center justify-center shrink-0 shadow-md">
+              <Compass size={24} />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+                Current Active Mission
+              </h1>
+              <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
+                Track pickup details, update status steps, and view route map.
+              </p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Content Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="lg:col-span-1">
+            <ActiveMissionCard />
+          </div>
+
+          <div className="lg:col-span-2">
+            {showMap ? (
+              <div className="pb-glass-card rounded-2xl p-5 border border-border/60 shadow-sm space-y-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin size={18} className="text-emerald-500" />
+                  <h2 className="text-base font-bold text-text-primary">Live Navigation & Route Map</h2>
+                </div>
+                <MissionMap mission={mission} onStatusChange={handleStatusChange} />
+              </div>
+            ) : (
+              <div className="pb-glass-card rounded-2xl p-8 border border-border/60 text-center text-text-muted">
+                <Compass size={32} className="mx-auto mb-2 opacity-40 text-dash-primary" />
+                <p className="text-sm font-semibold text-text-primary">No Active Navigation Route</p>
+                <p className="text-xs text-text-secondary mt-1">
+                  Once you accept an active donation mission, your interactive route map and step controls will appear here.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );

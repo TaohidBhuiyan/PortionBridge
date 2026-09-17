@@ -221,8 +221,12 @@ async function updateProfile(userId, fields) {
   Object.keys(fields).forEach((camelKey) => {
     if (fields[camelKey] !== undefined && fieldMap[camelKey]) {
       const snakeKey = fieldMap[camelKey];
+      let val = fields[camelKey];
+      if (typeof val === 'string' && val.trim() === '') {
+        val = null;
+      }
       setClauses.push(`${snakeKey} = :${camelKey}`);
-      params[camelKey] = fields[camelKey];
+      params[camelKey] = val;
     }
   });
 

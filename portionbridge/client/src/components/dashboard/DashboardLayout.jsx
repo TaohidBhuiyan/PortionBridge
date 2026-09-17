@@ -13,26 +13,21 @@ import { useAuth } from '../../context/AuthContext';
 export function DashboardLayout({ children }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Initialize dark mode from localStorage, default to light mode
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode');
-    // Synchronizing with an external system (localStorage) on mount is a
-    // textbook valid effect use case.
-    if (savedDarkMode !== null) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDarkMode(JSON.parse(savedDarkMode));
-    } else {
-      // Default to light mode
-      setDarkMode(false);
+  // Lazy initializer ensures initial state reads saved value directly on first render
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      const saved = localStorage.getItem('darkMode');
+      return saved !== null ? JSON.parse(saved) : false;
+    } catch {
+      return false;
     }
-  }, []);
+  });
 
-  // Apply dark mode to document
+  // Synchronize document <html> class and localStorage whenever darkMode changes
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -42,11 +37,13 @@ export function DashboardLayout({ children }) {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
   }, [darkMode]);
 
-  // Stay in sync if dark mode is changed elsewhere in the same tab (e.g. the
-  // theme selector on the Settings page), since the `storage` event only
-  // fires in *other* tabs, not this one.
+  // Stay in sync if dark mode is changed elsewhere in the same tab
   useEffect(() => {
-    const handleExternalChange = (e) => setDarkMode(!!e.detail);
+    const handleExternalChange = (e) => {
+      if (typeof e.detail === 'boolean') {
+        setDarkMode(e.detail);
+      }
+    };
     window.addEventListener('portionbridge:darkmode', handleExternalChange);
     return () => window.removeEventListener('portionbridge:darkmode', handleExternalChange);
   }, []);

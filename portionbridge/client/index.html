@@ -9,6 +9,20 @@
     <title>PortionBridge | Food & Clothes Donation Coordination</title>
     <meta name="description" content="PortionBridge connects food and clothes donors with verified volunteers to deliver support directly to active zones, tracked from pledge to delivery." />
 
+    <!-- Synchronous Dark Mode Boot Script (Prevents Theme Flash) -->
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('darkMode');
+          if (saved !== null && JSON.parse(saved)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,3 +38,4 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+

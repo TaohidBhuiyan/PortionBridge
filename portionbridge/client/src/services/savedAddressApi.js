@@ -8,36 +8,66 @@ function authHeaders() {
 }
 
 /**
- * Saved Address API — the backend (server/routes/v1/savedAddress.routes.js)
- * has full CRUD + set-default support; this is the first frontend client
- * for it. Previously the only saved-address UI anywhere was the read-only
- * dropdown inside donation creation (components/donation/Step3PickupInfo.jsx)
- * — there was no way for a donor to add, edit, delete, or manage a default
- * address outside of that flow.
+ * Saved Address API Client
  */
 export const savedAddressApi = {
   async getAll() {
-    const response = await axios.get(`${API_BASE}/saved-addresses`, { headers: authHeaders() });
-    return response.data;
+    try {
+      const response = await axios.get(`${API_BASE}/saved-addresses`, { headers: authHeaders() });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to fetch saved addresses',
+      };
+    }
   },
 
   async create(data) {
-    const response = await axios.post(`${API_BASE}/saved-addresses`, data, { headers: authHeaders() });
-    return response.data;
+    try {
+      const response = await axios.post(`${API_BASE}/saved-addresses`, data, { headers: authHeaders() });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to create address',
+      };
+    }
   },
 
   async update(id, data) {
-    const response = await axios.patch(`${API_BASE}/saved-addresses/${id}`, data, { headers: authHeaders() });
-    return response.data;
+    try {
+      const response = await axios.patch(`${API_BASE}/saved-addresses/${id}`, data, { headers: authHeaders() });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to update address',
+      };
+    }
   },
 
   async remove(id) {
-    const response = await axios.delete(`${API_BASE}/saved-addresses/${id}`, { headers: authHeaders() });
-    return response.data;
+    try {
+      const response = await axios.delete(`${API_BASE}/saved-addresses/${id}`, { headers: authHeaders() });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to delete address',
+      };
+    }
   },
 
   async setDefault(id) {
-    const response = await axios.patch(`${API_BASE}/saved-addresses/${id}/set-default`, {}, { headers: authHeaders() });
-    return response.data;
+    try {
+      const response = await axios.patch(`${API_BASE}/saved-addresses/${id}/set-default`, {}, { headers: authHeaders() });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        message: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to set default address',
+      };
+    }
   },
 };

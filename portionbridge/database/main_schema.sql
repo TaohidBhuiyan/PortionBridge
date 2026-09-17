@@ -901,6 +901,7 @@ ORDER BY completed_count DESC, total_quantity_donated DESC;
 -- VIEW: top_volunteers
 -- Leaderboard: ranks volunteers by completed pickup count.
 -- Migration 007: Fixed to avoid Cartesian product bug
+-- Migration 021: Fixed to credit team-assigned members via COALESCE(assigned_member_id, volunteer_id)
 -- ============================================================================
 CREATE VIEW top_volunteers AS
 SELECT
@@ -913,12 +914,13 @@ SELECT
 FROM users u
 JOIN (
   SELECT
-    volunteer_id,
+    COALESCE(assigned_member_id, volunteer_id) AS volunteer_id,
     COUNT(*)                                              AS total_pickups,
     SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_count
   FROM donation_requests
-  WHERE is_deleted = 0 AND volunteer_id IS NOT NULL
-  GROUP BY volunteer_id
+  WHERE is_deleted = 0
+    AND (volunteer_id IS NOT NULL OR assigned_member_id IS NOT NULL)
+  GROUP BY COALESCE(assigned_member_id, volunteer_id)
 ) dstats ON dstats.volunteer_id = u.id
 LEFT JOIN (
   SELECT rated_user, ROUND(AVG(stars), 2) AS average_rating

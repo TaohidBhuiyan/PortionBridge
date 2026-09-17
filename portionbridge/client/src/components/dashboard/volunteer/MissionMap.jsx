@@ -148,6 +148,11 @@ export function MissionMap({ mission, onStatusChange }) {
                 <AlertCircle size={12} /> Location permission was denied. Enable it in your browser settings to share your position.
               </p>
             )}
+            {permission === 'unsupported' && (
+              <p className="text-xs text-danger mt-1 flex items-center gap-1">
+                <AlertCircle size={12} /> Your browser doesn't support location sharing.
+              </p>
+            )}
             {locationError && <p className="text-xs text-danger mt-1">{locationError}</p>}
           </div>
           {permission !== 'denied' && (
@@ -207,7 +212,7 @@ export function MissionMap({ mission, onStatusChange }) {
             <h3 className="text-sm font-semibold text-text-primary">Team</h3>
           </div>
           <ul className="space-y-2">
-            {mission.team.members.map((m) => (
+            {(mission?.team?.members || []).map((m) => (
               <li key={m.id} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                   {m.role === 'leader' ? <Crown size={13} className="text-warning" /> : <Users size={13} className="text-text-secondary" />}

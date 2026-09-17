@@ -177,25 +177,31 @@ export function SavedAddressesPage() {
     e.preventDefault();
     setSaving(true);
 
-    const payload = {
-      ...form,
-      latitude: typeof form.latitude === 'number' ? form.latitude : null,
-      longitude: typeof form.longitude === 'number' ? form.longitude : null,
-      customLabel: form.label === 'custom' ? form.customLabel : undefined,
-    };
+    try {
+      const payload = {
+        ...form,
+        latitude: typeof form.latitude === 'number' ? form.latitude : null,
+        longitude: typeof form.longitude === 'number' ? form.longitude : null,
+        customLabel: form.label === 'custom' ? form.customLabel : undefined,
+      };
 
-    const result = editingId
-      ? await savedAddressApi.update(editingId, payload)
-      : await savedAddressApi.create(payload);
+      const result = editingId
+        ? await savedAddressApi.update(editingId, payload)
+        : await savedAddressApi.create(payload);
 
-    if (result.success) {
-      toast.success(editingId ? 'Address updated.' : 'Address saved.');
-      setModalOpen(false);
-      load();
-    } else {
-      toast.error(result.message || 'Failed to save address.');
+      if (result.success) {
+        toast.success(editingId ? 'Address updated.' : 'Address saved.');
+        setModalOpen(false);
+        load();
+      } else {
+        toast.error(result.message || 'Failed to save address.');
+      }
+    } catch (err) {
+      console.error('Error submitting address:', err);
+      toast.error('Failed to save address. Please check inputs and try again.');
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleDelete = async () => {
@@ -218,8 +224,6 @@ export function SavedAddressesPage() {
     if (result.success) {
       toast.success('Default address updated.');
       load();
-    } else {
-      toast.error(result.message || 'Failed to set default address.');
     }
     setSettingDefaultId(null);
   };
@@ -228,29 +232,43 @@ export function SavedAddressesPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-5xl mx-auto">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-3"
-        >
-          <ArrowLeft size={16} />
-          <span className="font-medium">Back</span>
-        </button>
+      <div className="max-w-5xl mx-auto pb-12 space-y-6">
+        {/* Hero Header Card */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-dash-primary via-indigo-600 to-purple-600 p-6 sm:p-8 text-white shadow-xl">
+          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">Saved Addresses</h1>
-            <p className="text-sm text-text-secondary mt-1">
-              Manage your pickup addresses with exact map coordinates and building details.
-            </p>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <button
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium backdrop-blur-md transition-colors mb-3"
+              >
+                <ArrowLeft size={14} />
+                <span>Back</span>
+              </button>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
+                <MapPin className="w-8 h-8 text-amber-300 shrink-0" />
+                Saved Pickup Locations
+              </h1>
+              <p className="text-white/80 text-sm mt-1 max-w-xl">
+                Manage your pickup addresses with exact map coordinates, building numbers, and contact details for smooth volunteer pickups.
+              </p>
+            </div>
+
+            <button
+              onClick={openAddModal}
+              className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-dash-primary hover:bg-white/90 font-bold text-xs shadow-lg hover:shadow-white/20 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+            >
+              <Plus size={16} />
+              <span>Add New Address</span>
+            </button>
           </div>
-          <Button onClick={openAddModal} icon={Plus}>Add Address</Button>
         </div>
 
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[1, 2].map((i) => (
-              <div key={i} className="bg-surface rounded-xl border border-border p-5 h-48 animate-pulse" />
+              <div key={i} className="bg-surface rounded-2xl border border-border p-5 h-48 animate-pulse shadow-pb-card" />
             ))}
           </div>
         ) : error ? (
@@ -258,114 +276,159 @@ export function SavedAddressesPage() {
         ) : addresses.length === 0 ? (
           <EmptyState
             icon={MapPin}
-            title="No saved addresses yet"
-            description="Save a pickup address here with pinpoint map accuracy so volunteers can reach your pickup location effortlessly."
-            actionLabel="Add Address"
+            title="No saved pickup addresses"
+            description="Save your address with pinpoint map accuracy so volunteers can navigate straight to your pickup point without any hassle."
+            actionLabel="Add First Address"
             onAction={openAddModal}
           />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {addresses.map((addr, index) => (
-              <Card
-                key={addr.id}
-                interactive
-                style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${index * 40}ms` }}
-                className={addr.is_default ? 'border-dash-primary/40 bg-dash-primary-soft/30' : ''}
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-dash-primary-soft text-dash-primary">
-                      {labelText(addr)}
-                    </span>
-                    {!!addr.is_default && (
-                      <span className="inline-flex items-center gap-1 text-[11px] font-medium text-warning">
-                        <Star size={11} className="fill-warning" /> Default
-                      </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {addresses.map((addr, index) => {
+              const label = addr.label;
+              const isDefault = !!addr.is_default;
+
+              // Color coding per label type
+              const labelStyles = {
+                home: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+                office: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20',
+                other: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+                custom: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+              }[label] || 'bg-dash-primary-soft text-dash-primary border-dash-primary/20';
+
+              const handleCopyAddress = () => {
+                const fullText = `${addr.full_address} (${addr.contact_person_name}: ${addr.contact_phone})`;
+                navigator.clipboard.writeText(fullText);
+                toast.success('Address copied to clipboard!');
+              };
+
+              return (
+                <div
+                  key={addr.id}
+                  style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${index * 40}ms` }}
+                  className={`bg-surface rounded-2xl p-5 border transition-all duration-200 hover:-translate-y-1 shadow-pb-card hover:shadow-pb-modal flex flex-col justify-between ${
+                    isDefault
+                      ? 'border-dash-primary/50 ring-2 ring-dash-primary/20 bg-gradient-to-b from-dash-primary-soft/10 to-transparent'
+                      : 'border-border hover:border-border/80'
+                  }`}
+                >
+                  <div>
+                    {/* Header Strip inside Card */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${labelStyles}`}>
+                          {labelText(addr)}
+                        </span>
+                        {isDefault && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                            <Star size={12} className="fill-amber-500" /> Default Pickup
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => openEditModal(addr)}
+                          aria-label={`Edit ${labelText(addr)} address`}
+                          className="p-1.5 rounded-lg hover:bg-surface-hover text-text-secondary hover:text-text-primary transition-colors"
+                          title="Edit Address"
+                        >
+                          <Pencil size={15} />
+                        </button>
+                        <button
+                          onClick={() => setDeleteTarget(addr)}
+                          aria-label={`Delete ${labelText(addr)} address`}
+                          className="p-1.5 rounded-lg hover:bg-rose-500/10 text-text-secondary hover:text-rose-500 transition-colors"
+                          title="Delete Address"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Address Text */}
+                    <p className="text-sm text-text-primary font-bold leading-snug">{addr.full_address}</p>
+                    <p className="text-xs text-text-muted mt-1">
+                      {[addr.area, addr.district, addr.division].filter(Boolean).join(', ')}
+                    </p>
+
+                    {/* Building / Flat / Landmark Badges */}
+                    {(addr.building_name || addr.floor || addr.landmark) && (
+                      <div className="flex flex-wrap items-center gap-1.5 mt-3 text-[11px] text-text-secondary">
+                        {addr.building_name && (
+                          <span className="inline-flex items-center gap-1 bg-surface-hover px-2.5 py-1 rounded-lg border border-border/60">
+                            <Building size={12} className="text-dash-primary" />
+                            <span className="font-semibold text-text-primary">{addr.building_name}</span>
+                          </span>
+                        )}
+                        {addr.floor && (
+                          <span className="inline-flex items-center gap-1 bg-surface-hover px-2.5 py-1 rounded-lg border border-border/60">
+                            <Layers size={12} className="text-dash-primary" />
+                            <span>{addr.floor}</span>
+                          </span>
+                        )}
+                        {addr.landmark && (
+                          <span className="inline-flex items-center gap-1 bg-surface-hover px-2.5 py-1 rounded-lg border border-border/60">
+                            <Compass size={12} className="text-text-muted" />
+                            <span>{addr.landmark}</span>
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* GPS Coordinates pill & Map link */}
+                    {typeof addr.latitude === 'number' && typeof addr.longitude === 'number' && (
+                      <div className="mt-3 flex items-center justify-between text-[11px] bg-surface-hover/60 p-2 rounded-xl border border-border/50">
+                        <span className="inline-flex items-center gap-1 text-text-secondary font-mono">
+                          <MapPin size={12} className="text-emerald-500 shrink-0" />
+                          {Number(addr.latitude).toFixed(4)}, {Number(addr.longitude).toFixed(4)}
+                        </span>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${addr.latitude},${addr.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-dash-primary font-semibold hover:underline"
+                        >
+                          <span>Open Map</span>
+                          <ExternalLink size={11} />
+                        </a>
+                      </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditModal(addr)}
-                      aria-label={`Edit ${labelText(addr)} address`}
-                      className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors"
-                    >
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteTarget(addr)}
-                      aria-label={`Delete ${labelText(addr)} address`}
-                      className="p-1.5 rounded-md hover:bg-danger-soft text-text-secondary hover:text-danger transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+
+                  {/* Card Footer: Contact details & Default button */}
+                  <div className="mt-4 pt-3 border-t border-border/60 flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-xs text-text-secondary">
+                      <span className="flex items-center gap-1.5 font-medium text-text-primary">
+                        <User size={13} className="text-text-muted" /> {addr.contact_person_name}
+                      </span>
+                      <span className="flex items-center gap-1.5 font-mono">
+                        <Phone size={13} className="text-text-muted" /> {addr.contact_phone}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-1">
+                      <button
+                        onClick={handleCopyAddress}
+                        className="text-[11px] font-semibold text-text-muted hover:text-text-primary transition-colors flex items-center gap-1"
+                      >
+                        <span>Copy Details</span>
+                      </button>
+
+                      {!isDefault && (
+                        <button
+                          onClick={() => handleSetDefault(addr.id)}
+                          disabled={settingDefaultId === addr.id}
+                          className="text-xs font-bold text-dash-primary hover:text-dash-primary-hover disabled:opacity-60 flex items-center gap-1 px-2.5 py-1 rounded-lg hover:bg-dash-primary-soft transition-all"
+                        >
+                          {settingDefaultId === addr.id && <Loader2 size={12} className="animate-spin" />}
+                          Set as Default Location
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-
-                <p className="text-sm text-text-primary font-medium">{addr.full_address}</p>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {[addr.area, addr.district, addr.division].filter(Boolean).join(', ')}
-                </p>
-
-                {/* Building / Flat / Landmark pills */}
-                {(addr.building_name || addr.floor || addr.landmark) && (
-                  <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[11px] text-text-secondary">
-                    {addr.building_name && (
-                      <span className="inline-flex items-center gap-1 bg-surface-hover px-2 py-0.5 rounded border border-border/50">
-                        <Building size={11} className="text-dash-primary" />
-                        <span className="font-medium text-text-primary">{addr.building_name}</span>
-                      </span>
-                    )}
-                    {addr.floor && (
-                      <span className="inline-flex items-center gap-1 bg-surface-hover px-2 py-0.5 rounded border border-border/50">
-                        <Layers size={11} className="text-dash-primary" />
-                        <span>{addr.floor}</span>
-                      </span>
-                    )}
-                    {addr.landmark && (
-                      <span className="inline-flex items-center gap-1 bg-surface-hover px-2 py-0.5 rounded border border-border/50">
-                        <Compass size={11} className="text-text-secondary" />
-                        <span>{addr.landmark}</span>
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {/* GPS Coordinates pill */}
-                {typeof addr.latitude === 'number' && typeof addr.longitude === 'number' && (
-                  <div className="mt-2.5 flex items-center justify-between text-[11px]">
-                    <span className="inline-flex items-center gap-1 text-text-secondary bg-surface-hover/80 px-2 py-0.5 rounded border border-border/50 font-mono">
-                      <MapPin size={11} className="text-emerald-500" />
-                      {Number(addr.latitude).toFixed(4)}, {Number(addr.longitude).toFixed(4)}
-                    </span>
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${addr.latitude},${addr.longitude}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-dash-primary hover:underline text-[11px]"
-                    >
-                      <span>View Map</span>
-                      <ExternalLink size={10} />
-                    </a>
-                  </div>
-                )}
-
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50 text-xs text-text-secondary">
-                  <span className="flex items-center gap-1"><User size={11} /> {addr.contact_person_name}</span>
-                  <span className="flex items-center gap-1"><Phone size={11} /> {addr.contact_phone}</span>
-                </div>
-
-                {!addr.is_default && (
-                  <button
-                    onClick={() => handleSetDefault(addr.id)}
-                    disabled={settingDefaultId === addr.id}
-                    className="mt-3 text-xs font-medium text-dash-primary hover:text-dash-primary-hover disabled:opacity-60 flex items-center gap-1.5"
-                  >
-                    {settingDefaultId === addr.id && <Loader2 size={11} className="animate-spin" />}
-                    Set as default
-                  </button>
-                )}
-              </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

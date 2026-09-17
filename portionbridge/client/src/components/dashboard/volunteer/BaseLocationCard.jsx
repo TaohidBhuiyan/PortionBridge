@@ -1,35 +1,15 @@
 import { useState } from 'react';
-import { MapPin, LocateFixed, Loader2, Check } from 'lucide-react';
+import { MapPin, LocateFixed, Loader2, Check, Navigation, ShieldCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { reverseGeocode } from '../../../utils/geocoding';
 
 const MIN_RADIUS_KM = 1;
 const MAX_RADIUS_KM = 50;
 
-/**
- * BaseLocationCard — lets a volunteer (or a team leader, on behalf of the
- * team) set/update a saved base location: latitude/longitude + a
- * human-readable label (via reverse geocoding) + a coverage radius.
- *
- * Shared between VolunteerProfilePage.jsx and VolunteerTeam.jsx rather
- * than duplicated, since the two only differ in what they save the
- * result to (profileApi.updateVolunteerLocation vs teamApi.updateTeam).
- *
- * This is what backs volunteer_profiles.latitude/longitude/coverage_radius
- * and teams.latitude/longitude/coverage_radius — columns that already
- * existed (donor-side "Discover Volunteers/Teams" reads them) but had no
- * write path anywhere in the app before this. Saving here also means
- * VolunteerOpportunities.jsx has a location to fall back on when live GPS
- * isn't granted.
- *
- * Location is only requested on an explicit button press (never
- * automatically in an effect), matching the donor Discovery page's
- * LocationPermission pattern elsewhere in this codebase.
- */
 export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location' }) {
   const [locating, setLocating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [pending, setPending] = useState(null); // { latitude, longitude, baseAddress }
+  const [pending, setPending] = useState(null);
   const [radius, setRadius] = useState(savedLocation?.coverageRadius || 10);
 
   const handleDetect = () => {
@@ -68,7 +48,7 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
     });
     setSaving(false);
     if (result?.success) {
-      toast.success('Location saved.');
+      toast.success('Location saved successfully.');
       setPending(null);
     } else {
       toast.error(result?.error || 'Failed to save location.');
@@ -79,26 +59,48 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
   const displayRadius = pending ? radius : (savedLocation?.coverageRadius || null);
 
   return (
-    <div className="bg-surface rounded-xl border border-border p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <MapPin size={16} className="text-dash-primary" />
-        <h3 className="text-sm font-semibold text-text-primary">{title}</h3>
+    <div className="pb-glass-card rounded-2xl p-5 border border-border/60 shadow-sm relative overflow-hidden">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-dash-primary-soft text-dash-primary flex items-center justify-center shrink-0 border border-dash-primary/20">
+            <MapPin size={18} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-text-primary tracking-tight">{title}</h3>
+            <p className="text-[11px] text-text-muted">Serves nearby donation opportunity matching</p>
+          </div>
+        </div>
+        {displayAddress && (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <ShieldCheck size={12} /> Active Base
+          </span>
+        )}
       </div>
 
       {displayAddress ? (
-        <p className="text-sm text-text-secondary mb-1">
-          {displayAddress}
-          {displayRadius && ` · ${displayRadius} km radius`}
-        </p>
+        <div className="p-3 rounded-xl bg-surface/80 border border-border/70 mb-3">
+          <p className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+            <Navigation size={13} className="text-dash-primary shrink-0" />
+            {displayAddress}
+          </p>
+          {displayRadius && (
+            <p className="text-[11px] font-medium text-text-secondary mt-1 ml-4.5">
+              Coverage Radius: <span className="text-dash-primary font-bold">{displayRadius} km</span>
+            </p>
+          )}
+        </div>
       ) : (
-        <p className="text-sm text-text-muted mb-1">Not set yet — nearby opportunities can't be prioritized without it.</p>
+        <p className="text-xs text-text-muted mb-3 italic">
+          No base location set yet — set your location to prioritize nearby food rescue missions.
+        </p>
       )}
 
       {pending && (
-        <div className="mt-3">
-          <label htmlFor="base-location-radius" className="block text-xs font-semibold text-text-secondary uppercase tracking-wide mb-2">
-            Coverage Radius: {radius} km
-          </label>
+        <div className="mt-3 p-3.5 rounded-xl bg-dash-primary-soft/30 border border-dash-primary/20 mb-3">
+          <div className="flex items-center justify-between text-xs font-semibold text-text-primary mb-2">
+            <span>Coverage Radius</span>
+            <span className="text-dash-primary font-bold">{radius} km</span>
+          </div>
           <input
             id="base-location-radius"
             type="range"
@@ -107,29 +109,29 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
             step={1}
             value={radius}
             onChange={(e) => setRadius(parseInt(e.target.value, 10))}
-            className="w-full max-w-sm accent-dash-primary"
+            className="w-full accent-dash-primary cursor-pointer"
           />
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-3">
+      <div className="flex items-center gap-2 mt-2">
         <button
           onClick={handleDetect}
           disabled={locating}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-surface text-xs font-semibold text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-50"
         >
-          {locating ? <Loader2 size={14} className="animate-spin" /> : <LocateFixed size={14} />}
-          {savedLocation?.baseAddress ? 'Update to My Current Location' : 'Use My Current Location'}
+          {locating ? <Loader2 size={14} className="animate-spin text-dash-primary" /> : <LocateFixed size={14} className="text-dash-primary" />}
+          {savedLocation?.baseAddress ? 'Update Location' : 'Use Current GPS Location'}
         </button>
 
         {pending && (
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dash-primary text-white text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-dash-primary text-white text-xs font-bold hover:bg-dash-primary-hover shadow-sm transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-            Save
+            Confirm & Save
           </button>
         )}
       </div>

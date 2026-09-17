@@ -63,11 +63,18 @@ export const profileApi = {
    * @param {string} data.gender - Gender
    */
   async updateProfile(data) {
-    const response = await axios.patch(`${API_BASE_URL}/profile`, data, {
-      withCredentials: true,
-      headers: authHeaders(),
-    });
-    return response.data;
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/profile`, data, {
+        withCredentials: true,
+        headers: authHeaders(),
+      });
+      return response.data;
+    } catch (err) {
+      return {
+        success: false,
+        error: err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Failed to update profile',
+      };
+    }
   },
 
   /**

@@ -72,6 +72,48 @@ async function updateProfile(userId, profileData) {
 
   await userModel.updateProfile(userId, profileData);
 
+  // Synchronize profile address to saved_addresses table if address is provided
+  if (profileData.address !== undefined && profileData.address !== null) {
+    const trimmedAddress = String(profileData.address).trim();
+    if (trimmedAddress.length > 0) {
+      try {
+        const savedAddressModel = require('../models/savedAddress.model');
+        const existingAddresses = await savedAddressModel.findByUserId(userId);
+        const defaultAddress = existingAddresses.find(a => a.is_default === 1) || existingAddresses[0];
+
+        if (defaultAddress) {
+          await savedAddressModel.updateById(defaultAddress.id, {
+            fullAddress: trimmedAddress,
+            contactPersonName: profileData.name || user.name,
+            contactPhone: profileData.phone || user.phone || '',
+          });
+        } else {
+          await savedAddressModel.create({
+            userId,
+            label: 'home',
+            customLabel: null,
+            fullAddress: trimmedAddress,
+            division: 'Dhaka',
+            district: 'Dhaka',
+            area: 'Central',
+            postalCode: null,
+            buildingName: null,
+            floor: null,
+            landmark: null,
+            deliveryInstructions: null,
+            latitude: null,
+            longitude: null,
+            contactPersonName: profileData.name || user.name,
+            contactPhone: profileData.phone || user.phone || '',
+            isDefault: true,
+          });
+        }
+      } catch (syncErr) {
+        console.error('Error syncing profile address to saved_addresses:', syncErr);
+      }
+    }
+  }
+
   const updatedUser = await userModel.findById(userId);
   return updatedUser;
 }
@@ -508,7 +550,13 @@ async function getVolunteerStatistics(userId) {
   const ratings = await ratingModel.findByRatedUserId(userId);
 
   // Calculate statistics dynamically
-  const acceptedDonations = donations.filter(d => d.status === DONATION_STATUS.ACCEPTED || d.status === DONATION_STATUS.SCHEDULED).length;
+  // Active Pickups includes all 4 active statuses (accepted, scheduled, on_the_way, picked_up)
+  const acceptedDonations = donations.filter(d =>
+    d.status === DONATION_STATUS.ACCEPTED ||
+    d.status === DONATION_STATUS.SCHEDULED ||
+    d.status === DONATION_STATUS.ON_THE_WAY ||
+    d.status === DONATION_STATUS.PICKED_UP
+  ).length;
   const completedPickups = donations.filter(d => d.status === DONATION_STATUS.COMPLETED && d.is_deleted === 0).length;
   const cancelledPickups = donations.filter(d => d.is_deleted === 1).length;
 

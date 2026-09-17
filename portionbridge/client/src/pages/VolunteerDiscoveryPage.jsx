@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Map as MapIcon, List } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Map as MapIcon, List, Users, User, Compass, Zap, ShieldCheck, Clock, MapPin, Sparkles } from 'lucide-react';
 import { DashboardLayout } from '../components/dashboard';
 import LocationPermission from '../components/dashboard/donor/LocationPermission';
 import CurrentLocation from '../components/dashboard/donor/CurrentLocation';
@@ -9,23 +9,26 @@ import VolunteerMap from '../components/dashboard/donor/VolunteerMap';
 import DiscoveryFilters from '../components/dashboard/donor/DiscoveryFilters';
 import DiscoveryEmptyStates, { NoVolunteersState, LocationDeniedState, ErrorState } from '../components/dashboard/donor/DiscoveryEmptyStates';
 import ManualLocationModal from '../components/dashboard/donor/ManualLocationModal';
+import VolunteerDetailModal from '../components/dashboard/donor/VolunteerDetailModal';
 import { volunteerDiscoveryApi } from '../services/volunteerDiscoveryApi';
 
-// Keep this in sync with DiscoveryFilters.jsx's radius <input type="range">
-// max — the slider is the single source of truth for how far "expand
-// radius" is allowed to go, so the two never disagree.
 const MAX_RADIUS_KM = 50;
-
-// How long to wait after the user stops changing filters (e.g. dragging
-// the radius slider) before actually firing the API request.
 const FILTER_DEBOUNCE_MS = 400;
+
+// Quick location presets for 1-click area switching
+const QUICK_LOCATION_PRESETS = [
+  { name: 'Dhaka Central', lat: 23.7561, lng: 90.3872 },
+  { name: 'Gulshan 2', lat: 23.7949, lng: 90.4143 },
+  { name: 'Dhanmondi', lat: 23.7508, lng: 90.3776 },
+  { name: 'Uttara', lat: 23.8687, lng: 90.3996 },
+  { name: 'Mirpur', lat: 23.8069, lng: 90.3687 },
+];
 
 /**
  * Volunteer Discovery Page
- * Main page for donors to discover nearby volunteers and teams
+ * Main page for donors to discover nearby volunteers and teams.
  */
 const VolunteerDiscoveryPage = () => {
-  
   // Location state
   const [location, setLocation] = useState(null);
   const [locationPermission, setLocationPermission] = useState('unknown');
@@ -39,9 +42,14 @@ const VolunteerDiscoveryPage = () => {
   const [error, setError] = useState(null);
   
   // View state
-  const [viewMode, setViewMode] = useState('list'); // list, map, split
+  const [viewMode, setViewMode] = useState('split'); // list, map, split
   const [showTeams, setShowTeams] = useState(false);
-  
+
+  // Detail Modal state
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDetailItemTeam, setIsDetailItemTeam] = useState(false);
+
   // Filters
   const [filters, setFilters] = useState({
     search: '',
@@ -55,11 +63,6 @@ const VolunteerDiscoveryPage = () => {
     limit: 20,
   });
 
-  // BUG FIX: `filters` updates immediately so the slider itself stays
-  // responsive, but the actual API call now fires off this debounced copy
-  // instead — dragging the radius slider used to send one request per
-  // "onChange" tick. `debouncedFilters` only catches up FILTER_DEBOUNCE_MS
-  // after the user stops moving it.
   const [debouncedFilters, setDebouncedFilters] = useState(filters);
 
   useEffect(() => {
@@ -69,13 +72,6 @@ const VolunteerDiscoveryPage = () => {
     return () => clearTimeout(timeoutId);
   }, [filters]);
 
-  // BUG FIX: previously two separate un-coordinated fetches (volunteers had
-  // its own loading/error state; teams had none at all, so switching to the
-  // Teams tab while data was mid-flight could show a stale/empty list with
-  // no loading indicator). Combined into one request pair sharing one
-  // AbortController, so a newer request (e.g. radius changed again before
-  // the last one resolved) always cancels the in-flight one — an older,
-  // slower response can never overwrite a newer result.
   const abortControllerRef = useRef(null);
 
   const fetchDiscoveryData = useCallback(async (locationData, filtersToUse) => {
@@ -118,9 +114,6 @@ const VolunteerDiscoveryPage = () => {
       ),
     ]);
 
-    // This exact request pair was superseded by a newer one (or the
-    // component unmounted) while it was in flight — its response is stale,
-    // so it's dropped silently instead of touching state.
     if (controller.signal.aborted) return;
 
     if (volunteersResult.success) {
@@ -136,52 +129,44 @@ const VolunteerDiscoveryPage = () => {
     setLoading(false);
   }, []);
 
-  // Cancel any in-flight discovery request on unmount.
   useEffect(() => {
     return () => {
       abortControllerRef.current?.abort();
     };
   }, []);
 
-  // Handle location permission granted
+  // Location Handlers
   const handleLocationGranted = useCallback((locationData) => {
     setLocation(locationData);
     setLocationPermission('granted');
-    // Fetching itself is handled by the effect below, keyed off `location`
-    // + `locationPermission` — avoids firing the request twice (once here,
-    // once from the effect) the way the previous version did.
   }, []);
 
-  // Handle location permission denied
   const handleLocationDenied = useCallback(() => {
     setLocationPermission('denied');
   }, []);
 
-  // BUG FIX: this used to land on locationPermission = 'blocked', a state
-  // VolunteerDiscoveryPage's render logic never actually handled — every
-  // exit from the LocationPermission modal (the X button, "Cancel", and
-  // "Use Manual Location") funneled here and produced a blank page with no
-  // way forward except a manual location button that also opens the modal
-  // now. There's no separate 'blocked' UI to keep in sync, so this now
-  // reuses the existing, already-actionable "denied" state instead.
   const handleLocationBlocked = useCallback(() => {
     setLocationPermission('denied');
   }, []);
 
-  // Opens the real manual-location flow (address input + geocoding) rather
-  // than re-triggering the browser GPS prompt.
   const handleOpenManualLocation = useCallback(() => {
     setShowManualLocationModal(true);
   }, []);
 
   const handleManualLocationSubmit = useCallback((locationData) => {
     setShowManualLocationModal(false);
-    // Reuses the exact same path a granted GPS permission takes — no
-    // separate manual-location discovery logic.
     handleLocationGranted(locationData);
   }, [handleLocationGranted]);
 
-  // Refresh location
+  const handleSelectPresetLocation = useCallback((preset) => {
+    handleLocationGranted({
+      latitude: preset.lat,
+      longitude: preset.lng,
+      address: preset.name,
+      accuracy: 10,
+    });
+  }, [handleLocationGranted]);
+
   const handleRefreshLocation = useCallback(() => {
     if (!navigator.geolocation) return;
     
@@ -206,12 +191,11 @@ const VolunteerDiscoveryPage = () => {
     );
   }, []);
 
-  // Handle filter changes
+  // Filter Handlers
   const handleFiltersChange = useCallback((newFilters) => {
     setFilters(newFilters);
   }, []);
 
-  // Reset filters
   const handleResetFilters = useCallback(() => {
     setFilters({
       search: '',
@@ -226,42 +210,36 @@ const VolunteerDiscoveryPage = () => {
     });
   }, []);
 
-  // Handle volunteer click
-  const handleVolunteerClick = useCallback(() => {
-    // Navigate to volunteer profile or show modal
+  // Detail Modal Handlers
+  const handleVolunteerClick = useCallback((volunteer) => {
+    setSelectedItem(volunteer);
+    setIsDetailItemTeam(false);
+    setIsDetailModalOpen(true);
   }, []);
 
-  // Handle team click
-  const handleTeamClick = useCallback(() => {
-    // Navigate to team profile or show modal
+  const handleTeamClick = useCallback((team) => {
+    setSelectedItem(team);
+    setIsDetailItemTeam(true);
+    setIsDetailModalOpen(true);
   }, []);
 
-  // Handle request pickup — the button calling this is always disabled
-  // (VolunteerCard.jsx/TeamCard.jsx now show "(Coming Soon)" on it
-  // directly), since there's no preferred-volunteer field anywhere in the
-  // donation schema/API yet. Kept as a real, wired-up handler rather than
-  // removed so implementing the feature later is a one-line change here.
-  const handleRequestPickup = useCallback(() => {}, []);
+  const handleRequestPickup = useCallback((item) => {
+    // Open pickup request flow or modal
+    setSelectedItem(item);
+    setIsDetailModalOpen(true);
+  }, []);
 
-  // Expand search radius
-  // BUG FIX: this used to add +10 with no ceiling, so repeated clicks could
-  // push the value past DiscoveryFilters.jsx's slider max (50) — the label
-  // would read e.g. "60 km" while the slider itself stayed visually pinned
-  // at 50, an impossible-to-represent state. Capped at MAX_RADIUS_KM so the
-  // slider can always faithfully represent whatever radius is active.
   const handleExpandRadius = useCallback(() => {
     setFilters(prev => ({ ...prev, radius: Math.min(prev.radius + 10, MAX_RADIUS_KM) }));
   }, []);
 
-  // Fetch data whenever location or the (debounced) filters change.
   useEffect(() => {
     if (location && locationPermission === 'granted') {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch pattern used throughout this codebase
       fetchDiscoveryData(location, debouncedFilters);
     }
   }, [location, locationPermission, debouncedFilters, fetchDiscoveryData]);
 
-  // Show location permission modal if not granted
+  // If permission is unasked or prompting, display permission modal
   if (locationPermission === 'unknown' || locationPermission === 'prompt') {
     return (
       <DashboardLayout>
@@ -280,63 +258,86 @@ const VolunteerDiscoveryPage = () => {
     );
   }
 
+  const onlineVolunteersCount = volunteers.filter(v => v.is_online === 1 || v.is_online === true).length;
+
   return (
     <DashboardLayout>
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-text-primary mb-1">Discover Volunteers</h1>
-              <p className="text-text-secondary text-sm">Find nearby volunteers and teams</p>
+      <div className="max-w-7xl mx-auto space-y-6">
+        
+        {/* Modern Hero Banner Header */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-violet-900 via-indigo-900 to-purple-900 text-white p-6 sm:p-8 shadow-pb-modal border border-white/10">
+          <div className="absolute top-0 right-0 -mt-12 -mr-12 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/3 -mb-12 w-48 h-48 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            
+            {/* Title & Subtitle */}
+            <div className="max-w-xl space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-violet-200 text-xs font-semibold tracking-wider uppercase border border-white/10">
+                <Compass className="w-3.5 h-3.5 text-violet-400 animate-spin-slow" />
+                Live Volunteer Network
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+                Discover Nearby Volunteers & Squads
+              </h1>
+              <p className="text-violet-200/80 text-sm leading-relaxed">
+                Connect directly with verified logistics volunteers in your area for immediate, zero-waste food and relief pickups.
+              </p>
             </div>
 
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2 bg-page border border-border rounded-xl p-1" role="group" aria-label="View mode">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === 'list'
-                    ? 'bg-surface text-text-primary shadow-sm'
-                    : 'text-text-secondary'
-                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
-                aria-label="List view"
-                aria-pressed={viewMode === 'list'}
-              >
-                <List className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === 'map'
-                    ? 'bg-surface text-text-primary shadow-sm'
-                    : 'text-text-secondary'
-                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
-                aria-label="Map view"
-                aria-pressed={viewMode === 'map'}
-              >
-                <MapIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('split')}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === 'split'
-                    ? 'bg-surface text-text-primary shadow-sm'
-                    : 'text-text-secondary'
-                } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
-                aria-label="Split view"
-                aria-pressed={viewMode === 'split'}
-              >
-                <div className="w-4 h-4 flex gap-0.5">
-                  <div className="w-1.5 h-4 bg-current rounded-sm" />
-                  <div className="w-1.5 h-4 bg-current rounded-sm" />
-                </div>
-              </button>
+            {/* Live Statistics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-center min-w-[95px]">
+                <p className="text-[10px] font-bold text-violet-200 uppercase tracking-wider">Volunteers</p>
+                <p className="text-xl font-extrabold text-white mt-0.5">{volunteers.length}</p>
+                <span className="text-[10px] text-emerald-400 font-semibold">{onlineVolunteersCount} online</span>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-center min-w-[95px]">
+                <p className="text-[10px] font-bold text-violet-200 uppercase tracking-wider">Squads</p>
+                <p className="text-xl font-extrabold text-white mt-0.5">{teams.length}</p>
+                <span className="text-[10px] text-purple-300 font-semibold">Active Teams</span>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-center min-w-[95px]">
+                <p className="text-[10px] font-bold text-violet-200 uppercase tracking-wider">Avg. ETA</p>
+                <p className="text-xl font-extrabold text-white mt-0.5">~15m</p>
+                <span className="text-[10px] text-violet-300 font-semibold">Fast Pickup</span>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-3 text-center min-w-[95px]">
+                <p className="text-[10px] font-bold text-violet-200 uppercase tracking-wider">Radius</p>
+                <p className="text-xl font-extrabold text-white mt-0.5">{filters.radius}km</p>
+                <span className="text-[10px] text-indigo-300 font-semibold">Search Range</span>
+              </div>
             </div>
+
           </div>
+
+          {/* Quick Location Presets Bar */}
+          <div className="mt-6 pt-4 border-t border-white/10 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-bold text-violet-200 flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Quick Areas:
+            </span>
+            {QUICK_LOCATION_PRESETS.map((preset, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSelectPresetLocation(preset)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all backdrop-blur-md border cursor-pointer ${
+                  location?.address === preset.name
+                    ? 'bg-white text-violet-900 border-white font-bold shadow-sm'
+                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}
+              >
+                {preset.name}
+              </button>
+            ))}
+          </div>
+
         </div>
-        {/* Location Display */}
-        <div className="mb-6">
+
+        {/* Top Control Toolbar (View Mode Switcher + Location Bar) */}
+        <div className="space-y-4">
           <CurrentLocation
             location={location}
             onRefresh={handleRefreshLocation}
@@ -347,152 +348,213 @@ const VolunteerDiscoveryPage = () => {
 
         {/* Location Denied State */}
         {locationPermission === 'denied' && (
-          <div className="mb-6">
-            <LocationDeniedState
-              onEnableLocation={() => setLocationPermission('prompt')}
-              onManualLocation={handleOpenManualLocation}
-            />
-          </div>
+          <LocationDeniedState
+            onEnableLocation={() => setLocationPermission('prompt')}
+            onManualLocation={handleOpenManualLocation}
+          />
         )}
 
-        {/* Content */}
+        {/* Main Content Layout */}
         {locationPermission === 'granted' && location && (
-          <div className={`grid gap-6 ${
-            viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
-          }`}>
-            {/* Left Column - Filters & List */}
-            {viewMode !== 'map' && (
-              <div className="space-y-6">
-              {/* Filters */}
-              <DiscoveryFilters
-                filters={filters}
-                onFiltersChange={handleFiltersChange}
-                onReset={handleResetFilters}
-                totalCount={volunteers.length}
-              />
-
-              {/* Toggle between Volunteers/Teams */}
-              <div className="flex gap-2">
+          <div className="space-y-4">
+            
+            {/* View Mode Bar */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-surface border border-border rounded-2xl p-2 shadow-pb-card">
+              
+              {/* Volunteers / Teams Tab Switcher */}
+              <div className="flex items-center gap-1 bg-page p-1 rounded-xl border border-border">
                 <button
                   onClick={() => setShowTeams(false)}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                     !showTeams
-                      ? 'bg-dash-primary text-white'
-                      : 'bg-page border border-border text-text-primary'
+                      ? 'bg-dash-primary text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
-                  Volunteers
+                  <User className="w-3.5 h-3.5" />
+                  <span>Volunteers</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                    !showTeams ? 'bg-white/20 text-white' : 'bg-surface text-text-secondary'
+                  }`}>
+                    {volunteers.length}
+                  </span>
                 </button>
+
                 <button
                   onClick={() => setShowTeams(true)}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
                     showTeams
-                      ? 'bg-dash-primary text-white'
-                      : 'bg-page border border-border text-text-primary'
+                      ? 'bg-purple-600 text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary'
                   }`}
                 >
-                  Teams
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Squad Teams</span>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                    showTeams ? 'bg-white/20 text-white' : 'bg-surface text-text-secondary'
+                  }`}>
+                    {teams.length}
+                  </span>
                 </button>
               </div>
 
-              {/* Loading State */}
-              {loading && (
-                <DiscoveryEmptyStates type="loading" />
-              )}
+              {/* View Layout Mode (List, Map, Split) */}
+              <div className="flex items-center gap-1 bg-page p-1 rounded-xl border border-border self-end sm:self-auto" role="group" aria-label="View mode">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    viewMode === 'list'
+                      ? 'bg-surface text-text-primary shadow-2xs border border-border'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                  aria-label="List view"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">List</span>
+                </button>
 
-              {/* Error State */}
-              {error && !loading && (
-                <ErrorState error={error} onRetry={() => fetchDiscoveryData(location, debouncedFilters)} />
-              )}
+                <button
+                  onClick={() => setViewMode('split')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    viewMode === 'split'
+                      ? 'bg-surface text-text-primary shadow-2xs border border-border'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                  aria-label="Split view"
+                >
+                  <div className="w-3.5 h-3.5 flex gap-0.5 items-center">
+                    <div className="w-1.5 h-3 bg-current rounded-xs" />
+                    <div className="w-1.5 h-3 bg-current rounded-xs" />
+                  </div>
+                  <span className="hidden sm:inline">Split</span>
+                </button>
 
-              {/* No Results State */}
-              {!loading && !error && volunteers.length === 0 && teams.length === 0 && (
-                <NoVolunteersState
-                  onExpandRadius={handleExpandRadius}
-                  onResetFilters={handleResetFilters}
-                />
-              )}
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                    viewMode === 'map'
+                      ? 'bg-surface text-text-primary shadow-2xs border border-border'
+                      : 'text-text-secondary hover:text-text-primary'
+                  }`}
+                  aria-label="Map view"
+                >
+                  <MapIcon className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Map</span>
+                </button>
+              </div>
 
-              {/* Volunteers List */}
-              {!loading && !error && !showTeams && volunteers.length > 0 && (
-                <div className="grid gap-4">
-                  {volunteers.map((volunteer) => (
-                    <VolunteerCard
-                      key={volunteer.id}
-                      volunteer={volunteer}
-                      onViewDetails={handleVolunteerClick}
-                      onRequestPickup={handleRequestPickup}
-                      disabled={true} // Disabled until future phase
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Teams List */}
-              {!loading && !error && showTeams && teams.length > 0 && (
-                <div className="grid gap-4">
-                  {teams.map((team) => (
-                    <TeamCard
-                      key={team.id}
-                      team={team}
-                      onViewDetails={handleTeamClick}
-                      onRequestPickup={handleRequestPickup}
-                      disabled={true} // Disabled until future phase
-                    />
-                  ))}
-                </div>
-              )}
             </div>
-            )}
 
-            {/* Map-only mode states */}
-            {viewMode === 'map' && (
-              <div className="space-y-6">
-                {/* Loading State */}
-                {loading && (
-                  <DiscoveryEmptyStates type="loading" />
-                )}
-
-                {/* Error State */}
-                {error && !loading && (
-                  <ErrorState error={error} onRetry={() => fetchDiscoveryData(location, debouncedFilters)} />
-                )}
-
-                {/* No Results State */}
-                {!loading && !error && volunteers.length === 0 && teams.length === 0 && (
-                  <NoVolunteersState
-                    onExpandRadius={handleExpandRadius}
-                    onResetFilters={handleResetFilters}
+            {/* Split / List Grid Area */}
+            <div className={`grid gap-6 ${
+              viewMode === 'split' ? 'grid-cols-1 lg:grid-cols-12' : 'grid-cols-1'
+            }`}>
+              
+              {/* Left Column - Filters & Cards List */}
+              {viewMode !== 'map' && (
+                <div className={`space-y-4 ${viewMode === 'split' ? 'lg:col-span-6 xl:col-span-5' : ''}`}>
+                  
+                  {/* Filter Toolbar */}
+                  <DiscoveryFilters
+                    filters={filters}
+                    onFiltersChange={handleFiltersChange}
+                    onReset={handleResetFilters}
+                    totalCount={showTeams ? teams.length : volunteers.length}
                   />
-                )}
-              </div>
-            )}
 
-            {/* Right Column - Map */}
-            {(viewMode === 'map' || viewMode === 'split') && (
-              <div className="lg:sticky lg:top-20 lg:self-start">
-                <VolunteerMap
-                  userLocation={location}
-                  volunteers={volunteers}
-                  teams={teams}
-                  onVolunteerClick={handleVolunteerClick}
-                  onTeamClick={handleTeamClick}
-                  className="h-[500px] lg:h-[600px]"
-                />
-              </div>
-            )}
+                  {/* Loading Skeleton */}
+                  {loading && (
+                    <DiscoveryEmptyStates type="loading" />
+                  )}
+
+                  {/* Error State */}
+                  {error && !loading && (
+                    <ErrorState error={error} onRetry={() => fetchDiscoveryData(location, debouncedFilters)} />
+                  )}
+
+                  {/* Empty Results State */}
+                  {!loading && !error && volunteers.length === 0 && teams.length === 0 && (
+                    <NoVolunteersState
+                      onExpandRadius={handleExpandRadius}
+                      onResetFilters={handleResetFilters}
+                    />
+                  )}
+
+                  {/* Volunteers Card List */}
+                  {!loading && !error && !showTeams && volunteers.length > 0 && (
+                    <div className="grid gap-4">
+                      {volunteers.map((volunteer) => (
+                        <VolunteerCard
+                          key={volunteer.id}
+                          volunteer={volunteer}
+                          onViewDetails={handleVolunteerClick}
+                          onRequestPickup={handleRequestPickup}
+                          disabled={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Teams Card List */}
+                  {!loading && !error && showTeams && teams.length > 0 && (
+                    <div className="grid gap-4">
+                      {teams.map((team) => (
+                        <TeamCard
+                          key={team.id}
+                          team={team}
+                          onViewDetails={handleTeamClick}
+                          onRequestPickup={handleRequestPickup}
+                          disabled={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Right Column - Map Display */}
+              {(viewMode === 'map' || viewMode === 'split') && (
+                <div className={`${
+                  viewMode === 'split' 
+                    ? 'lg:col-span-6 xl:col-span-7 lg:sticky lg:top-20 lg:self-start' 
+                    : 'w-full'
+                }`}>
+                  <VolunteerMap
+                    userLocation={location}
+                    volunteers={volunteers}
+                    teams={teams}
+                    onVolunteerClick={handleVolunteerClick}
+                    onTeamClick={handleTeamClick}
+                    className="h-[520px] lg:h-[680px]"
+                  />
+                </div>
+              )}
+
+            </div>
           </div>
         )}
+
       </div>
 
+      {/* Manual Location Entry Modal */}
       <ManualLocationModal
         isOpen={showManualLocationModal}
         onClose={() => setShowManualLocationModal(false)}
         onSubmit={handleManualLocationSubmit}
       />
+
+      {/* Interactive Quick Detail Modal */}
+      <VolunteerDetailModal
+        item={selectedItem}
+        isTeam={isDetailItemTeam}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        onRequestPickup={handleRequestPickup}
+      />
+
     </DashboardLayout>
   );
 };
+
 export { VolunteerDiscoveryPage };
 export default VolunteerDiscoveryPage;
-

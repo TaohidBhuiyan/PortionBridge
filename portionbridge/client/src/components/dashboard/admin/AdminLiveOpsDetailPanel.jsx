@@ -82,11 +82,11 @@ export function AdminLiveOpsDetailPanel({ entity, onClose }) {
           />
           <Row label="Destination / Receiver" value="Not tracked by this platform" />
           <Row
-            label="Distance to Pickup"
+            label="Distance to Pickup (straight-line)"
             value={entity.distanceKm !== null && entity.distanceKm !== undefined ? `${entity.distanceKm.toFixed(1)} km` : 'Unavailable'}
           />
           <Row
-            label="ETA"
+            label="Approx. ETA"
             value={entity.etaMinutes !== null && entity.etaMinutes !== undefined ? `${Math.round(entity.etaMinutes)} min` : 'Unavailable'}
           />
           {!entity.hasPosition && (

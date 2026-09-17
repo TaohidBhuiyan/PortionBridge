@@ -248,312 +248,367 @@ export function MyDonationsPage() {
   return (
     <>
       <DashboardLayout>
-        <div className="max-w-7xl mx-auto pb-12">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-sm text-text-secondary hover:text-text-primary transition-colors mb-3"
-        >
-          <ArrowLeft size={16} />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">
-              My Donations
-            </h1>
-            <p className="text-sm text-text-secondary mt-1">
-              {summary ? `${summary.total || 0} donation${summary.total === 1 ? '' : 's'} total` : 'Track and manage everything you\u2019ve given'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleExportCSV}
-              disabled={donations.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Export to CSV"
-            >
-              <FileSpreadsheet size={16} />
-              <span className="hidden sm:inline">CSV</span>
-            </button>
-            <button
-              onClick={handleExportPDF}
-              disabled={donations.length === 0}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              title="Export to PDF"
-            >
-              <FileText size={16} />
-              <span className="hidden sm:inline">PDF</span>
-            </button>
-            <Button onClick={() => navigate('/donation/create')} icon={Plus}>
-              Create Donation
-            </Button>
-          </div>
-        </div>
-      </div>
+        <div className="max-w-7xl mx-auto pb-12 space-y-6">
+          {/* Hero Header Card */}
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-dash-primary via-indigo-600 to-purple-600 p-6 sm:p-8 text-white shadow-xl">
+            {/* Background Decorative Circles */}
+            <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute right-1/3 -top-12 w-48 h-48 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
 
-      {/* Stats Cards */}
-      {summary && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <StatCard
-            label="Total"
-            value={summary.total || 0}
-            color="primary"
-          />
-          <StatCard
-            label="Completed"
-            value={summary.completed || 0}
-            color="success"
-          />
-          <StatCard
-            label="Pending"
-            value={summary.pending || 0}
-            color="warning"
-          />
-          <StatCard
-            label="Cancelled"
-            value={summary.cancelled || 0}
-            color="danger"
-          />
-        </div>
-      )}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <button
+                  onClick={() => navigate(-1)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium backdrop-blur-md transition-colors mb-3"
+                >
+                  <ArrowLeft size={14} />
+                  <span>Back to Dashboard</span>
+                </button>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
+                  <Package className="w-8 h-8 text-amber-300 shrink-0" />
+                  My Donation History
+                </h1>
+                <p className="text-white/80 text-sm mt-1 max-w-xl">
+                  {summary
+                    ? `You've created ${summary.total || 0} donation mission${summary.total === 1 ? '' : 's'} to nourish communities.`
+                    : 'Track, manage, and export all your contributions in one place.'}
+                </p>
+              </div>
 
-      {/* Search and Filters */}
-      <div className="bg-surface rounded-xl shadow-pb-card border border-border p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <div className="flex-1 w-full sm:w-auto flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden="true" />
-              <input
-                type="text"
-                placeholder="Search by title, category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 border border-border rounded-lg bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
-                aria-label="Search donations"
-              />
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={handleExportCSV}
+                  disabled={donations.length === 0}
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/15 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  title="Export to CSV"
+                >
+                  <FileSpreadsheet size={16} className="text-emerald-300" />
+                  <span>Export CSV</span>
+                </button>
+                <button
+                  onClick={handleExportPDF}
+                  disabled={donations.length === 0}
+                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/15 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  title="Export to PDF"
+                >
+                  <FileText size={16} className="text-rose-300" />
+                  <span>Export PDF</span>
+                </button>
+                <button
+                  onClick={() => navigate('/donation/create')}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-dash-primary hover:bg-white/90 font-bold text-xs shadow-lg hover:shadow-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Plus size={16} />
+                  <span>Create Donation</span>
+                </button>
+              </div>
             </div>
-            <button
-              onClick={() => setShowFilters((v) => !v)}
-              className={`relative flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border text-sm font-medium transition-colors shrink-0 ${
-                showFilters || activeFilterCount > 0
-                  ? 'border-dash-primary bg-dash-primary-soft text-dash-primary'
-                  : 'border-border bg-page text-text-secondary hover:bg-surface-hover'
-              }`}
-              aria-expanded={showFilters}
-            >
-              <SlidersHorizontal size={15} />
-              <span className="hidden sm:inline">Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-dash-primary text-white text-[10px] font-bold">
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-          </div>
-          <div className="flex items-center gap-1 rounded-lg border border-border p-0.5" role="group" aria-label="View mode">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'grid'
-                  ? 'bg-dash-primary text-white'
-                  : 'text-text-secondary hover:bg-surface-hover'
-              }`}
-              aria-label="Grid view"
-              aria-pressed={viewMode === 'grid'}
-            >
-              <LayoutGrid size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('table')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'table'
-                  ? 'bg-dash-primary text-white'
-                  : 'text-text-secondary hover:bg-surface-hover'
-              }`}
-              aria-label="Table view"
-              aria-pressed={viewMode === 'table'}
-            >
-              <List size={16} />
-            </button>
-          </div>
-        </div>
 
-        {/* Expanded Filters */}
-        {showFilters && (
-          <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
-                Category
-              </label>
-              <select
-                value={categoryFilter}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
-              >
-                <option value="">All Categories</option>
-                <option value="food">Food</option>
-                <option value="clothes">Clothes</option>
-              </select>
+            {/* Quick Stats Strip */}
+            {summary && (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/15">
+                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
+                  <p className="text-[11px] font-medium text-white/70 uppercase tracking-wider">Total Donations</p>
+                  <p className="text-2xl font-extrabold mt-0.5">{summary.total || 0}</p>
+                </div>
+                <div className="bg-emerald-500/20 backdrop-blur-md rounded-xl p-3.5 border border-emerald-400/20">
+                  <p className="text-[11px] font-medium text-emerald-200 uppercase tracking-wider">Completed</p>
+                  <p className="text-2xl font-extrabold text-emerald-300 mt-0.5">{summary.completed || 0}</p>
+                </div>
+                <div className="bg-amber-500/20 backdrop-blur-md rounded-xl p-3.5 border border-amber-400/20">
+                  <p className="text-[11px] font-medium text-amber-200 uppercase tracking-wider">In Progress / Pending</p>
+                  <p className="text-2xl font-extrabold text-amber-300 mt-0.5">{summary.pending || 0}</p>
+                </div>
+                <div className="bg-rose-500/20 backdrop-blur-md rounded-xl p-3.5 border border-rose-400/20">
+                  <p className="text-[11px] font-medium text-rose-200 uppercase tracking-wider">Cancelled</p>
+                  <p className="text-2xl font-extrabold text-rose-300 mt-0.5">{summary.cancelled || 0}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Controls Bar: Search, Category Quick Pills, and View Mode */}
+          <div className="bg-surface rounded-2xl shadow-pb-card border border-border p-4 space-y-4">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+              {/* Search Box */}
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted w-4 h-4" aria-hidden="true" />
+                <input
+                  type="text"
+                  placeholder="Search by donation title, category, location..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
+                  aria-label="Search donations"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary p-1"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* View Toggle & Filter Modal Button */}
+              <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                <button
+                  onClick={() => setShowFilters((v) => !v)}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                    showFilters || activeFilterCount > 0
+                      ? 'border-dash-primary bg-dash-primary-soft text-dash-primary shadow-sm'
+                      : 'border-border bg-page text-text-secondary hover:bg-surface-hover'
+                  }`}
+                  aria-expanded={showFilters}
+                >
+                  <SlidersHorizontal size={15} />
+                  <span>Filters</span>
+                  {activeFilterCount > 0 && (
+                    <span className="flex items-center justify-center w-5 h-5 rounded-full bg-dash-primary text-white text-[10px] font-bold">
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-1 bg-surface-hover p-1 rounded-xl border border-border" role="group" aria-label="View mode">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 rounded-lg transition-all ${
+                      viewMode === 'grid'
+                        ? 'bg-surface text-dash-primary shadow-sm font-semibold'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                    aria-label="Grid view"
+                    aria-pressed={viewMode === 'grid'}
+                  >
+                    <LayoutGrid size={16} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    className={`p-2 rounded-lg transition-all ${
+                      viewMode === 'table'
+                        ? 'bg-surface text-dash-primary shadow-sm font-semibold'
+                        : 'text-text-secondary hover:text-text-primary'
+                    }`}
+                    aria-label="Table view"
+                    aria-pressed={viewMode === 'table'}
+                  >
+                    <List size={16} />
+                  </button>
+                </div>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
-                Status
-              </label>
-              <select
-                value={statusFilter}
-                onChange={(e) => handleFilterChange('status', e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
-              >
-                <option value="">All Statuses</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="scheduled">Scheduled</option>
-                <option value="on_the_way">On The Way</option>
-                <option value="picked_up">Picked Up</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-            <div className="flex items-end">
+
+            {/* Quick Category Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none text-xs font-medium">
+              <span className="text-text-muted text-[11px] font-semibold uppercase tracking-wider shrink-0 mr-1">Category:</span>
               <button
-                onClick={() => {
+                onClick={() => handleFilterChange('category', '')}
+                className={`px-3 py-1.5 rounded-full transition-all shrink-0 ${
+                  !categoryFilter
+                    ? 'bg-dash-primary text-white font-semibold shadow-sm'
+                    : 'bg-surface-hover text-text-secondary hover:text-text-primary border border-border'
+                }`}
+              >
+                All Categories
+              </button>
+              <button
+                onClick={() => handleFilterChange('category', 'food')}
+                className={`px-3 py-1.5 rounded-full transition-all shrink-0 flex items-center gap-1.5 ${
+                  categoryFilter === 'food'
+                    ? 'bg-amber-500 text-white font-semibold shadow-sm'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 border border-amber-500/20'
+                }`}
+              >
+                <span>🍲</span> Food Initiative
+              </button>
+              <button
+                onClick={() => handleFilterChange('category', 'clothes')}
+                className={`px-3 py-1.5 rounded-full transition-all shrink-0 flex items-center gap-1.5 ${
+                  categoryFilter === 'clothes'
+                    ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                    : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20'
+                }`}
+              >
+                <span>👕</span> Clothing & Wear
+              </button>
+            </div>
+
+            {/* Expanded Filters */}
+            {showFilters && (
+              <div className="mt-4 pt-4 border-t border-border grid grid-cols-1 sm:grid-cols-3 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
+                    Category Filter
+                  </label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => handleFilterChange('category', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
+                  >
+                    <option value="">All Categories</option>
+                    <option value="food">Food</option>
+                    <option value="clothes">Clothes</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-text-secondary mb-1.5 uppercase tracking-wide">
+                    Status Filter
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => handleFilterChange('status', e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-border bg-input text-sm text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all cursor-pointer"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="accepted">Accepted</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="on_the_way">On The Way</option>
+                    <option value="picked_up">Picked Up</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setCategoryFilter('');
+                      setStatusFilter('');
+                      setSortBy('created_at');
+                      setSortOrder('desc');
+                      setPage(1);
+                    }}
+                    disabled={activeFilterCount === 0 && !searchQuery}
+                    className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl border border-border bg-page text-sm text-text-primary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <X size={14} /> Clear All Filters
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Content */}
+          {loading ? (
+            <LoadingState />
+          ) : error ? (
+            <ErrorState
+              title="Failed to load donations"
+              message={error}
+              onRetry={loadDonations}
+            />
+          ) : donations.length === 0 ? (
+            (searchQuery || activeFilterCount > 0) ? (
+              <EmptyState
+                icon={Search}
+                title="No matching donations found"
+                description="No donations match your search parameters. Try adjusting or clearing your filters."
+                actionLabel="Clear Filters"
+                onAction={() => {
                   setSearchQuery('');
                   setCategoryFilter('');
                   setStatusFilter('');
-                  setSortBy('created_at');
-                  setSortOrder('desc');
                   setPage(1);
                 }}
-                disabled={activeFilterCount === 0 && !searchQuery}
-                className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border border-border bg-page text-sm text-text-primary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <X size={14} /> Clear Filters
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      {loading ? (
-        <LoadingState />
-      ) : error ? (
-        <ErrorState
-          title="Failed to load donations"
-          message={error}
-          onRetry={loadDonations}
-        />
-      ) : donations.length === 0 ? (
-        (searchQuery || activeFilterCount > 0) ? (
-          <EmptyState
-            icon={Search}
-            title="No matching donations"
-            description="No donations match your current search or filters. Try adjusting or clearing them."
-            actionLabel="Clear Filters"
-            onAction={() => {
-              setSearchQuery('');
-              setCategoryFilter('');
-              setStatusFilter('');
-              setPage(1);
-            }}
-          />
-        ) : (
-          <EmptyState
-            icon={Package}
-            title="No donations yet"
-            description="You haven't created any donations yet. Start by creating your first donation to help those in need."
-            actionLabel="Create Donation"
-            onAction={() => navigate('/donation/create')}
-          />
-        )
-      ) : (
-        <>
-          {/* Results */}
-          {viewMode === 'grid' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {donations.map((donation, index) => (
-                <div
-                  key={donation.id}
-                  style={{
-                    animation: 'rowIn 0.25s ease backwards',
-                    // Cap the stagger delay so long lists don't feel sluggish —
-                    // everything past the first ~10 cards animates together.
-                    animationDelay: `${Math.min(index, 10) * 25}ms`,
-                  }}
-                >
-                  <DonationCard
-                    donation={donation}
+              />
+            ) : (
+              <EmptyState
+                icon={Package}
+                title="No donations posted yet"
+                description="You haven't created any donation listings yet. Share your excess food or clothing to help families in need today."
+                actionLabel="Create First Donation"
+                onAction={() => navigate('/donation/create')}
+              />
+            )
+          ) : (
+            <>
+              {/* Results */}
+              {viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {donations.map((donation, index) => (
+                    <div
+                      key={donation.id}
+                      className="transition-transform duration-200 hover:-translate-y-1"
+                      style={{
+                        animation: 'rowIn 0.25s ease backwards',
+                        animationDelay: `${Math.min(index, 10) * 25}ms`,
+                      }}
+                    >
+                      <DonationCard
+                        donation={donation}
+                        onViewDetails={handleViewDetails}
+                        onEdit={handleEdit}
+                        onCancel={handleCancel}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-surface rounded-2xl shadow-pb-card border border-border overflow-hidden">
+                  <DonationTable
+                    donations={donations}
                     onViewDetails={handleViewDetails}
                     onEdit={handleEdit}
                     onCancel={handleCancel}
                   />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="bg-surface rounded-xl shadow-pb-card border border-border overflow-hidden">
-              <DonationTable
-                donations={donations}
-                onViewDetails={handleViewDetails}
-                onEdit={handleEdit}
-                onCancel={handleCancel}
-              />
-            </div>
+              )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-4 border-t border-border">
+                  <p className="text-xs text-text-muted">
+                    Showing Page <span className="font-semibold text-text-primary">{page}</span> of <span className="font-semibold text-text-primary">{totalPages}</span> ({total} total items)
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => handlePageChange(page - 1)}
+                      disabled={page === 1}
+                      aria-label="Previous page"
+                      className="p-2 rounded-xl border border-border bg-surface text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 shadow-sm"
+                    >
+                      <ChevronLeft size={16} />
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
+                      .map((pageNum, idx, arr) => (
+                        <span key={pageNum} className="flex items-center">
+                          {idx > 0 && arr[idx - 1] !== pageNum - 1 && (
+                            <span className="px-1.5 text-text-muted text-xs">&hellip;</span>
+                          )}
+                          <button
+                            onClick={() => handlePageChange(pageNum)}
+                            aria-current={pageNum === page ? 'page' : undefined}
+                            className={`w-9 h-9 rounded-xl text-xs font-bold transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 ${
+                              pageNum === page
+                                ? 'bg-dash-primary text-white shadow-md'
+                                : 'border border-border bg-surface text-text-primary hover:bg-surface-hover'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        </span>
+                      ))}
+
+                    <button
+                      onClick={() => handlePageChange(page + 1)}
+                      disabled={page === totalPages}
+                      aria-label="Next page"
+                      className="p-2 rounded-xl border border-border bg-surface text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 shadow-sm"
+                    >
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-              <p className="text-xs text-text-muted">
-                Page {page} of {totalPages} &middot; {total} total
-              </p>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1}
-                  aria-label="Previous page"
-                  className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((n) => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
-                  .map((pageNum, idx, arr) => (
-                    <span key={pageNum} className="flex items-center">
-                      {idx > 0 && arr[idx - 1] !== pageNum - 1 && (
-                        <span className="px-1 text-text-muted text-sm">&hellip;</span>
-                      )}
-                      <button
-                        onClick={() => handlePageChange(pageNum)}
-                        aria-current={pageNum === page ? 'page' : undefined}
-                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40 ${
-                          pageNum === page
-                            ? 'bg-dash-primary text-white'
-                            : 'border border-border bg-page text-text-primary hover:bg-surface-hover'
-                        }`}
-                      >
-                        {pageNum}
-                      </button>
-                    </span>
-                  ))}
-
-                <button
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === totalPages}
-                  aria-label="Next page"
-                  className="p-2 rounded-lg border border-border bg-page text-text-primary hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary/40"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            </div>
-          )}
-        </>
-      )}
-      </div>
+        </div>
       </DashboardLayout>
 
       <ConfirmActionModal
@@ -570,55 +625,18 @@ export function MyDonationsPage() {
 }
 
 /**
- * StatCard component for displaying statistics
- */
-function StatCard({ label, value, color }) {
-  const colorClasses = {
-    primary: {
-      bg: 'bg-dash-primary-soft',
-      text: 'text-dash-primary',
-      border: 'border-dash-primary/20',
-    },
-    success: {
-      bg: 'bg-success-soft',
-      text: 'text-success',
-      border: 'border-success/20',
-    },
-    warning: {
-      bg: 'bg-warning-soft',
-      text: 'text-warning',
-      border: 'border-warning/20',
-    },
-    danger: {
-      bg: 'bg-danger-soft',
-      text: 'text-danger',
-      border: 'border-danger/20',
-    },
-  };
-
-  const classes = colorClasses[color] || colorClasses.primary;
-
-  return (
-    <div className={`p-3.5 rounded-lg border ${classes.bg} ${classes.border}`}>
-      <p className={`text-xs font-semibold ${classes.text} mb-1`}>{label}</p>
-      <p className="text-xl font-bold text-text-primary">{value}</p>
-    </div>
-  );
-}
-
-/**
  * LoadingState component
  */
 function LoadingState() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {[1, 2, 3, 4, 5, 6].map((i) => (
-        <div key={i} className="bg-surface rounded-xl border border-border overflow-hidden shadow-pb-card">
-          <div className="aspect-video bg-surface-hover animate-pulse" />
-          <div className="p-4 space-y-2.5">
-            <div className="h-4 bg-surface-hover rounded animate-pulse" />
-            <div className="h-3 bg-surface-hover rounded animate-pulse w-2/3" />
-            <div className="h-3 bg-surface-hover rounded animate-pulse w-1/2" />
+        <div key={i} className="bg-surface rounded-2xl border border-border overflow-hidden shadow-pb-card p-4 space-y-4 animate-pulse">
+          <div className="aspect-video bg-surface-hover rounded-xl" />
+          <div className="space-y-2.5">
+            <div className="h-4 bg-surface-hover rounded w-3/4" />
+            <div className="h-3 bg-surface-hover rounded w-1/2" />
+            <div className="h-3 bg-surface-hover rounded w-2/3" />
           </div>
         </div>
       ))}

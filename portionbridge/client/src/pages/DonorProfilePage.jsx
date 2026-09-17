@@ -1,23 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ArrowLeft, Save, MapPin, Calendar, User, Mail, Phone, Camera, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, MapPin, Calendar, User, Mail, Phone, Camera, Loader2, CheckCircle2, ShieldCheck, ExternalLink, Sparkles, AlertCircle, Building } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { profileApi } from '../services/profileApi';
 import { Avatar } from '../components/common/Avatar';
 
-/**
- * Donor Profile Settings Page
- * Edit profile information, photo, and preferences
- */
 export function DonorProfilePage() {
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState(null);
   const fileInputRef = useRef(null);
@@ -34,7 +30,7 @@ export function DonorProfilePage() {
     name: userData.name || '',
     phone: userData.phone || '',
     address: userData.address || '',
-    dateOfBirth: userData.date_of_birth || '',
+    dateOfBirth: userData.date_of_birth ? userData.date_of_birth.split('T')[0] : '',
     gender: userData.gender || '',
   });
 
@@ -44,22 +40,21 @@ export function DonorProfilePage() {
 
     try {
       const result = await profileApi.getProfile();
-      
       if (result.success) {
         setProfile(result.data.user);
         setFormData(extractFormData(result.data.user));
       } else {
-        setError(result.error || 'Failed to load profile');
+        setError(result.error || 'Failed to load profile details.');
       }
     } catch {
-      setError('Failed to load profile. Please try again.');
+      setError('Failed to load profile. Please refresh to try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount pattern used throughout this codebase
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadProfile();
   }, [loadProfile]);
 
@@ -70,7 +65,7 @@ export function DonorProfilePage() {
 
   const handlePhotoChange = async (e) => {
     const file = e.target.files?.[0];
-    e.target.value = ''; // allow re-selecting the same file later
+    e.target.value = '';
     if (!file) return;
 
     setPhotoError(null);
@@ -80,12 +75,16 @@ export function DonorProfilePage() {
       if (result.success) {
         setProfile(result.data.user);
         updateUser(result.data.user);
-        setSuccess('Profile photo updated!');
+        toast.success('Profile photo updated!');
       } else {
-        setPhotoError(result.message || 'Failed to upload photo.');
+        const msg = result.message || 'Failed to upload photo.';
+        setPhotoError(msg);
+        toast.error(msg);
       }
     } catch (err) {
-      setPhotoError(err.response?.data?.message || 'Failed to upload photo. Please try again.');
+      const msg = err.response?.data?.message || 'Failed to upload photo.';
+      setPhotoError(msg);
+      toast.error(msg);
     } finally {
       setPhotoUploading(false);
     }
@@ -95,20 +94,23 @@ export function DonorProfilePage() {
     e.preventDefault();
     setSaving(true);
     setError(null);
-    setSuccess(null);
 
     try {
       const result = await profileApi.updateProfile(formData);
       
       if (result.success) {
-        setSuccess('Profile updated successfully!');
+        toast.success('Profile updated successfully!');
         setProfile(result.data.user);
         updateUser(result.data.user);
       } else {
-        setError(result.error || 'Failed to update profile');
+        const msg = result.error || 'Failed to update profile';
+        setError(msg);
+        toast.error(msg);
       }
     } catch {
-      setError('Failed to update profile. Please try again.');
+      const msg = 'Failed to update profile. Please try again.';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -117,48 +119,10 @@ export function DonorProfilePage() {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="max-w-4xl mx-auto space-y-6">
-          {/* Header Skeleton */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="h-10 w-10 bg-surface-hover rounded-lg animate-pulse" />
-            <div className="space-y-2">
-              <div className="h-8 w-48 bg-surface-hover rounded-lg animate-pulse" />
-              <div className="h-4 w-64 bg-surface-hover rounded-lg animate-pulse" />
-            </div>
-          </div>
-
-          {/* Profile Photo Section Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 animate-pulse">
-            <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-full bg-surface-hover animate-pulse" />
-              <div className="space-y-2">
-                <div className="h-4 w-32 bg-surface-hover rounded-lg animate-pulse" />
-                <div className="h-10 w-32 bg-surface-hover rounded-lg animate-pulse" />
-              </div>
-            </div>
-          </div>
-
-          {/* Form Skeleton */}
-          <div className="bg-surface rounded-2xl border border-border p-6 animate-pulse space-y-4">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg animate-pulse" />
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-4 w-24 bg-surface-hover rounded-lg animate-pulse" />
-                <div className="h-12 w-full bg-surface-hover rounded-lg animate-pulse" />
-              </div>
-            ))}
-          </div>
-
-          {/* Account Info Skeleton */}
-          <div className="bg-page rounded-2xl border border-border p-6 animate-pulse">
-            <div className="h-6 w-48 bg-surface-hover rounded-lg animate-pulse mb-4" />
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex justify-between">
-                <div className="h-4 w-32 bg-surface-hover rounded-lg animate-pulse" />
-                <div className="h-4 w-24 bg-surface-hover rounded-lg animate-pulse" />
-              </div>
-            ))}
-          </div>
+        <div className="max-w-5xl mx-auto space-y-6">
+          <div className="h-10 w-48 bg-surface border border-border rounded-xl animate-pulse" />
+          <div className="bg-surface rounded-3xl border border-border p-8 h-48 animate-pulse" />
+          <div className="bg-surface rounded-3xl border border-border p-8 h-96 animate-pulse" />
         </div>
       </DashboardLayout>
     );
@@ -166,246 +130,315 @@ export function DonorProfilePage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
+      <div className="max-w-5xl mx-auto space-y-6 pb-16">
+        {/* Navigation Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2.5 bg-surface hover:bg-surface-hover border border-border rounded-xl transition-all shadow-xs shrink-0"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black text-text-primary tracking-tight">
+                Profile Management
+              </h1>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Update your personal information and profile picture
+              </p>
+            </div>
+          </div>
+
           <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-surface-hover rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-            aria-label="Go back"
+            onClick={() => navigate('/donor/settings')}
+            className="flex items-center gap-2 px-4 py-2 bg-surface hover:bg-surface-hover border border-border text-text-primary text-xs font-semibold rounded-xl transition-all shadow-xs"
           >
-            <ArrowLeft className="w-5 h-5 text-text-secondary" />
+            <ShieldCheck size={16} className="text-dash-primary" />
+            <span>Account Settings</span>
           </button>
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary">
-              Profile Settings
-            </h1>
-            <p className="text-sm text-text-secondary">
-              Manage your profile information
-            </p>
-          </div>
         </div>
 
-        {/* Success/Error Messages */}
-        {success && (
-          <div className="mb-4 p-4 bg-success-soft border border-success/20 rounded-lg" role="alert" aria-live="polite">
-            <p className="text-sm text-success">{success}</p>
+        {/* Hero Cover & Avatar Banner */}
+        <div className="bg-surface rounded-3xl border border-border overflow-hidden shadow-sm relative">
+          {/* Gradient Cover Photo Header */}
+          <div className="h-36 sm:h-44 bg-gradient-to-r from-dash-primary via-dash-primary/80 to-purple-600 relative overflow-hidden">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.2),transparent_60%)]" />
+            <div className="absolute top-4 right-4 px-3 py-1 bg-black/20 backdrop-blur-md rounded-full text-white text-xs font-semibold flex items-center gap-1.5 border border-white/20">
+              <Sparkles size={12} />
+              <span className="capitalize">{profile?.role || 'Donor'} Account</span>
+            </div>
           </div>
-        )}
-        {error && (
-          <div className="mb-4 p-4 bg-danger-soft border border-danger/20 rounded-lg" role="alert" aria-live="assertive">
-            <p className="text-sm text-danger">{error}</p>
-          </div>
-        )}
 
-        {/* Profile Photo Section */}
-        <div className="bg-surface rounded-xl border border-border p-6 mb-6 shadow-pb-card">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
-            Profile Photo
-          </h2>
-          <div className="flex items-center gap-6">
-            <div className="relative group">
-              <Avatar item={profile} className="w-24 h-24 text-3xl" />
+          {/* Profile Header Content */}
+          <div className="px-6 sm:px-8 pb-6 pt-0 relative flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 -mt-16 sm:-mt-20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-end gap-5">
+              {/* Avatar + Photo Upload Overlay */}
+              <div className="relative group">
+                <Avatar
+                  item={profile}
+                  className="w-28 h-28 sm:w-32 sm:h-32 text-4xl rounded-2xl ring-4 ring-surface shadow-xl object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={photoUploading}
+                  title="Upload profile photo"
+                  className="absolute bottom-1 right-1 p-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl shadow-lg transition-all border-2 border-surface focus:outline-none disabled:opacity-60 cursor-pointer"
+                >
+                  {photoUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                />
+              </div>
+
+              {/* User Snapshot Details */}
+              <div className="mb-1">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl sm:text-2xl font-black text-text-primary">
+                    {profile?.name || 'Valued User'}
+                  </h2>
+                  <span className="p-1 rounded-full bg-success-soft text-success">
+                    <CheckCircle2 size={16} />
+                  </span>
+                </div>
+                <p className="text-xs text-text-secondary mt-0.5">{profile?.email}</p>
+                <div className="flex items-center gap-3 text-xs text-text-muted mt-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-dash-primary-soft text-dash-primary font-semibold text-[11px] capitalize">
+                    {profile?.role || 'Donor'}
+                  </span>
+                  <span>•</span>
+                  <span>Joined {profile?.created_at ? new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '2026'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Action Button */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={photoUploading}
-                aria-label="Change profile photo"
-                className="absolute bottom-0 right-0 p-2 bg-dash-primary text-white rounded-full hover:bg-dash-primary-hover transition-all shadow-pb-elevated focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 disabled:opacity-60"
+                className="w-full sm:w-auto px-4 py-2 bg-page hover:bg-surface-hover border border-border text-text-primary text-xs font-semibold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
               >
-                {photoUploading ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+                <Camera size={14} />
+                <span>{photoUploading ? 'Uploading...' : 'Change Photo'}</span>
               </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={handlePhotoChange}
-                className="hidden"
-              />
-            </div>
-            <div>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={photoUploading}
-                className="px-4 py-2 bg-page border border-border text-text-primary rounded-xl hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-60"
-              >
-                {photoUploading ? 'Uploading...' : 'Choose File'}
-              </button>
-              <p className="text-xs text-text-secondary mt-2">
-                JPG, PNG, or WEBP. Max 5MB.
-              </p>
-              {photoError && (
-                <p className="text-xs text-danger mt-1">{photoError}</p>
-              )}
             </div>
           </div>
-        </div>
 
-        {/* Profile Information Form */}
-        <form onSubmit={handleSubmit} className="bg-surface rounded-xl border border-border p-6 mb-6 shadow-pb-card">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
-            Personal Information
-          </h2>
-
-          <div className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
-                  placeholder="Enter your full name"
-                />
-              </div>
-            </div>
-
-            {/* Email (Read-only) */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
-                <input
-                  type="email"
-                  value={profile?.email || ''}
-                  disabled
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-surface-hover text-text-secondary cursor-not-allowed"
-                  placeholder="your@email.com"
-                />
-              </div>
-              <p className="text-xs text-text-secondary mt-1">
-                Contact support to change email
+          {photoError && (
+            <div className="px-6 pb-4">
+              <p className="text-xs text-danger font-medium bg-danger-soft p-2.5 rounded-xl border border-danger/20 flex items-center gap-2">
+                <AlertCircle size={14} /> {photoError}
               </p>
             </div>
+          )}
+        </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Phone Number
-              </label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
-                  placeholder="+880 1XXX-XXXXXX"
-                />
+        {/* Main Profile Form */}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Personal Information Card */}
+          <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-border">
+              <div className="p-2.5 bg-dash-primary-soft text-dash-primary rounded-xl">
+                <User size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-text-primary">Personal Details</h3>
+                <p className="text-xs text-text-secondary">Update your name, contact phone, and personal demographics</p>
               </div>
             </div>
 
-            {/* Address */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* Full Name */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary transition-all"
+                    placeholder="Enter your full name"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary transition-all"
+                    placeholder="+880 1XXX-XXXXXX"
+                  />
+                </div>
+              </div>
+
+              {/* Date of Birth */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Date of Birth
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Gender */}
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Gender
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-border rounded-xl bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary transition-all cursor-pointer"
+                >
+                  <option value="">Select gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer_not_to_say">Prefer not to say</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Location & Address Card */}
+          <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex items-center justify-between pb-4 border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-dash-primary-soft text-dash-primary rounded-xl">
+                  <MapPin size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-text-primary">Primary Location & Address</h3>
+                  <p className="text-xs text-text-secondary">Your default address for pickup scheduling</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => navigate('/donor/addresses')}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-page hover:bg-surface-hover border border-border text-xs font-semibold text-text-primary rounded-lg transition-all"
+              >
+                <span>Saved Addresses</span>
+                <ExternalLink size={12} className="text-text-muted" />
+              </button>
+            </div>
+
             <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Address
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                Street Address / Area Detail
               </label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-3 w-5 h-5 text-text-secondary" />
+                <MapPin className="absolute left-3.5 top-3.5 w-4 h-4 text-text-muted" />
                 <textarea
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all resize-none"
-                  placeholder="Enter your address"
+                  className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary transition-all resize-none"
+                  placeholder="e.g. House 42, Road 11, Block D, Mirpur 12, Dhaka"
                 />
               </div>
-            </div>
-
-            {/* Date of Birth */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Date of Birth
-              </label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-secondary" />
-                <input
-                  type="date"
-                  name="dateOfBirth"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Gender */}
-            <div>
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Gender
-              </label>
-              <select
-                name="gender"
-                value={formData.gender}
-                onChange={handleChange}
-                className="w-full px-4 py-2.5 border border-border rounded-xl bg-input text-text-primary focus:outline-none focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary transition-all appearance-none cursor-pointer"
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-                <option value="prefer_not_to_say">Prefer not to say</option>
-              </select>
             </div>
           </div>
 
-          {/* Submit Button */}
-          <div className="mt-6 flex justify-end">
+          {/* Account Security Overview Card */}
+          <div className="bg-surface rounded-3xl border border-border p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="flex items-center gap-3 pb-4 border-b border-border">
+              <div className="p-2.5 bg-dash-primary-soft text-dash-primary rounded-xl">
+                <Mail size={20} />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-text-primary">Account Identity & Email</h3>
+                <p className="text-xs text-text-secondary">System credentials associated with this account</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Primary Email (Read-Only)
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                  <input
+                    type="email"
+                    value={profile?.email || ''}
+                    disabled
+                    className="w-full pl-10 pr-4 py-3 border border-border rounded-xl bg-page text-text-muted text-sm font-mono cursor-not-allowed"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                  Account Status
+                </label>
+                <div className="p-3 bg-page border border-border rounded-xl flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-success animate-pulse" />
+                    <span className="text-xs font-semibold text-text-primary">Email Verified & Active</span>
+                  </div>
+                  <span className="text-[11px] font-mono text-dash-primary font-medium">ID #{profile?.id || '---'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Form Actions Footer */}
+          <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="submit"
               disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-medium transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
+              className="w-full sm:w-auto px-8 py-3.5 bg-dash-primary hover:bg-dash-primary-hover text-white text-sm font-bold rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
-              <Save size={16} />
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Saving Profile...</span>
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  <span>Save Profile Changes</span>
+                </>
+              )}
             </button>
           </div>
         </form>
-
-        {/* Account Info */}
-        <div className="bg-page rounded-xl border border-border p-6 shadow-pb-subtle">
-          <h2 className="text-lg font-semibold text-text-primary mb-4">
-            Account Information
-          </h2>
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Member Since</span>
-              <span className="text-text-primary font-medium">
-                {profile?.created_at ? new Date(profile.created_at).toLocaleDateString() : 'N/A'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Account Type</span>
-              <span className="text-text-primary font-medium capitalize">
-                {profile?.role || 'Donor'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Email Verified</span>
-              <span className={`font-medium ${profile?.email_verified ? 'text-success' : 'text-warning'}`}>
-                {profile?.email_verified ? 'Verified' : 'Not Verified'}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Phone Verified</span>
-              <span className={`font-medium ${profile?.phone_verified ? 'text-success' : 'text-warning'}`}>
-                {profile?.phone_verified ? 'Verified' : 'Not Verified'}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </DashboardLayout>
   );
 }
+

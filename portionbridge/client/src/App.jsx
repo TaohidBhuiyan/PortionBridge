@@ -39,6 +39,8 @@ const VolunteerHistory = lazy(() => import("./pages/VolunteerHistory").then(m =>
 const VolunteerMission = lazy(() => import("./pages/VolunteerMission").then(m => ({ default: m.VolunteerMission })));
 const VolunteerActiveMissions = lazy(() => import("./pages/VolunteerActiveMissions").then(m => ({ default: m.VolunteerActiveMissions })));
 const VolunteerLiveMap = lazy(() => import("./pages/VolunteerLiveMap").then(m => ({ default: m.VolunteerLiveMap })));
+const VolunteerLeaderboardPage = lazy(() => import("./pages/VolunteerLeaderboardPage").then(m => ({ default: m.VolunteerLeaderboardPage })));
+const VolunteerHelpPage = lazy(() => import("./pages/VolunteerHelpPage").then(m => ({ default: m.VolunteerHelpPage })));
 const AdminSectionPage = lazy(() => import("./pages/AdminSectionPage").then(m => ({ default: m.AdminSectionPage })));
 const AdminUsers = lazy(() => import("./pages/AdminUsers").then(m => ({ default: m.AdminUsers })));
 const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail").then(m => ({ default: m.AdminUserDetail })));
@@ -218,15 +220,35 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/volunteer/live-map" 
+              <Route
+                path="/volunteer/live-map"
                 element={
                   <ProtectedRoute requiredRole="volunteer">
                     <AuthSocketProvider>
                       <VolunteerLiveMap />
                     </AuthSocketProvider>
                   </ProtectedRoute>
-                } 
+                }
+              />
+              <Route
+                path="/volunteer/leaderboard"
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerLeaderboardPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/volunteer/help"
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerHelpPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/admin/dashboard" 

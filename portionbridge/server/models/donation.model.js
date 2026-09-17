@@ -871,13 +871,15 @@ async function findByDonorId(donorId) {
 
 /**
  * Finds all donations for a volunteer (including soft-deleted for statistics).
- * Used for calculating volunteer statistics.
+ * Used for calculating volunteer statistics. Includes both individual assignments
+ * (volunteer_id) and team assignments where this user is the assigned member
+ * (assigned_member_id), so team-assigned members get credit for their work.
  * @param {number} volunteerId - ID of the volunteer
  * @returns {Promise<Array>} Array of all donation objects
  */
 async function findByVolunteerId(volunteerId) {
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests WHERE volunteer_id = :volunteerId`,
+    `SELECT ${BASE_COLUMNS} FROM donation_requests WHERE volunteer_id = :volunteerId OR assigned_member_id = :volunteerId`,
     { volunteerId }
   );
   return rows.map(parseJsonFields);

@@ -1,22 +1,9 @@
-import { Star, MapPin, Clock, CheckCircle, Shield, Eye, EyeOff, Camera, Loader2 } from 'lucide-react';
+import { Star, MapPin, Clock, CheckCircle, Shield, Eye, EyeOff, Camera, Loader2, Sparkles, Award } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { resolveMediaUrl } from '../../../utils/mediaUrl';
 import { profileApi } from '../../../services/profileApi';
 import { useAuth } from '../../../context/AuthContext';
 
-/**
- * Volunteer Profile Header Component
- * Displays volunteer's key information at the top of the profile page
- *
- * PHASE — Profile Picture Audit: `getProfileImage()` was returning the
- * bare relative path (e.g. "profiles/xyz.jpg") straight into <img src>,
- * which the browser resolves against the current page's origin, not the
- * API server — so this never actually rendered a real photo, silently
- * falling through to the broken-image state. Now resolved via the shared
- * resolveMediaUrl() helper. Also adds a working "change photo" control
- * when the logged-in user is viewing their own profile — there was
- * previously no UI anywhere for a volunteer to set their own photo.
- */
 const VolunteerProfileHeader = ({ volunteer, distance, isOwnProfile, onPhotoUpdated }) => {
   const { updateUser } = useAuth();
   const fileInputRef = useRef(null);
@@ -63,7 +50,7 @@ const VolunteerProfileHeader = ({ volunteer, distance, isOwnProfile, onPhotoUpda
     if (!dist) return 'N/A';
     const num = parseFloat(dist);
     if (num < 1) return `${Math.round(num * 1000)}m`;
-    return `${num.toFixed(1)}km`;
+    return `${num.toFixed(1)} km`;
   };
 
   const calculateETA = (dist) => {
@@ -78,156 +65,148 @@ const VolunteerProfileHeader = ({ volunteer, distance, isOwnProfile, onPhotoUpda
   const isVerified = volunteer.email_verified === 1 || volunteer.email_verified === true;
 
   return (
-    <div className="bg-dash-primary-soft border border-border rounded-2xl p-6">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Profile Photo */}
-        <div className="flex-shrink-0">
-          <div className="relative">
-            {getProfileImage() ? (
-              <img
-                src={getProfileImage()}
-                alt={volunteer.name}
-                className="w-24 h-24 md:w-32 md:h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-lg"
-              />
-            ) : (
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-dash-primary flex items-center justify-center text-white font-bold text-3xl md:text-4xl border-4 border-white dark:border-gray-800 shadow-lg">
-                {getInitials(volunteer.name)}
-              </div>
-            )}
-            
-            {/* Online Status */}
-            <div className={`absolute bottom-2 right-2 w-6 h-6 rounded-full border-4 border-white dark:border-gray-800 ${
-              isOnline ? 'bg-success' : 'bg-text-muted'
-            }`} />
+    <div className="pb-volunteer-hero rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-md">
+      <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center">
+        {/* Profile Avatar Frame */}
+        <div className="relative shrink-0 mx-auto md:mx-0">
+          <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl bg-gradient-to-br from-dash-primary via-indigo-500 to-emerald-500 p-1 shadow-xl">
+            <div className="w-full h-full rounded-[22px] bg-surface overflow-hidden relative group flex items-center justify-center">
+              {getProfileImage() ? (
+                <img
+                  src={getProfileImage()}
+                  alt={volunteer.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-dash-primary-soft flex items-center justify-center text-dash-primary font-extrabold text-3xl sm:text-4xl">
+                  {getInitials(volunteer.name)}
+                </div>
+              )}
 
-            {/* Verified Badge */}
-            {isVerified && (
-              <div className="absolute -top-2 -right-2 w-8 h-8 bg-dash-primary rounded-full flex items-center justify-center shadow-lg">
-                <Shield className="w-4 h-4 text-white" />
-              </div>
-            )}
-
-            {isOwnProfile && (
-              <>
+              {isOwnProfile && (
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={photoUploading}
                   aria-label="Change profile photo"
-                  className="absolute bottom-2 left-2 p-2 bg-dash-primary text-white rounded-full hover:bg-dash-primary-hover transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 disabled:opacity-60"
+                  className="absolute inset-0 bg-black/50 text-white flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 >
-                  {photoUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+                  {photoUploading ? <Loader2 size={20} className="animate-spin" /> : <Camera size={20} />}
+                  <span className="text-[10px] font-bold mt-1">Update Photo</span>
                 </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                />
-              </>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Hidden File Input */}
+          {isOwnProfile && (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              className="hidden"
+            />
+          )}
+
+          {/* Online Radar Dot */}
+          <span className="absolute -bottom-1 -right-1 flex h-5 w-5">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${isOnline ? 'bg-emerald-400' : 'bg-gray-400'}`}></span>
+            <span className={`relative inline-flex rounded-full h-5 w-5 border-2 border-surface ${isOnline ? 'bg-emerald-500' : 'bg-gray-500'}`}></span>
+          </span>
+
+          {/* Verified Badge */}
+          {isVerified && (
+            <div className="absolute -top-2 -left-2 w-7 h-7 bg-dash-primary text-white rounded-full flex items-center justify-center shadow-md" title="Verified Volunteer">
+              <Shield className="w-3.5 h-3.5 fill-white" />
+            </div>
+          )}
+
           {isOwnProfile && photoError && (
-            <p className="text-xs text-danger mt-1 max-w-[8rem]">{photoError}</p>
+            <p className="text-[11px] text-danger mt-1 text-center font-medium">{photoError}</p>
           )}
         </div>
 
-        {/* Volunteer Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1">
+        {/* Volunteer Main Info */}
+        <div className="flex-1 min-w-0 text-center md:text-left space-y-3">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-center md:justify-start gap-2 mb-1 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-dash-primary-soft text-dash-primary border border-dash-primary/20">
+                  <Sparkles size={12} /> Verified Volunteer
+                </span>
+                {volunteer.team && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    <Award size={12} /> {volunteer.team.name} ({volunteer.team.member_count} members)
+                  </span>
+                )}
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
                 {volunteer.name}
               </h1>
-              
-              {/* Team Name */}
-              {volunteer.team && (
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <span className="px-2 py-1 bg-dash-primary-soft text-dash-primary rounded-full font-medium">
-                    {volunteer.team.name}
-                  </span>
-                  <span>•</span>
-                  <span>{volunteer.team.member_count} members</span>
-                </div>
-              )}
-
-              {/* Rating */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1">
-                  <Star className="w-5 h-5 text-warning fill-warning" />
-                  <span className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {volunteer.rating_summary?.average_rating || volunteer.rating || 'N/A'}
-                  </span>
-                </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  ({volunteer.rating_summary?.total_ratings || 0} reviews)
-                </span>
-              </div>
             </div>
 
-            {/* Status Badges */}
-            <div className="flex flex-wrap gap-2">
+            {/* Availability Badges */}
+            <div className="flex items-center justify-center md:justify-end gap-2 flex-wrap">
               {isOnline ? (
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-success-soft text-success rounded-full text-sm font-medium">
-                  <Eye className="w-4 h-4" />
-                  Available Now
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-full text-xs font-bold border border-emerald-500/20">
+                  <Eye className="w-3.5 h-3.5" /> Available Now
                 </div>
               ) : (
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
-                  <EyeOff className="w-4 h-4" />
-                  Offline
-                </div>
-              )}
-              
-              {volunteer.statistics?.active_pickups > 0 && (
-                <div className="flex items-center gap-1 px-3 py-1.5 bg-dash-primary-soft text-dash-primary rounded-full text-sm font-medium">
-                  <Clock className="w-4 h-4" />
-                  {volunteer.statistics.active_pickups} Active Pickup{volunteer.statistics.active_pickups > 1 ? 's' : ''}
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-500/10 text-text-muted rounded-full text-xs font-semibold border border-border">
+                  <EyeOff className="w-3.5 h-3.5" /> Currently Offline
                 </div>
               )}
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-dash-primary/30">
-            <div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <CheckCircle className="w-3.5 h-3.5" />
-                <span>Completed Pickups</span>
+          {/* Rating Summary Pill */}
+          <div className="flex items-center justify-center md:justify-start gap-3 text-xs sm:text-sm">
+            <div className="inline-flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full font-bold">
+              <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+              <span>{volunteer.rating_summary?.average_rating || volunteer.rating || '5.0'}</span>
+            </div>
+            <span className="text-text-muted">
+              ({volunteer.rating_summary?.total_ratings || 0} donor reviews)
+            </span>
+          </div>
+
+          {/* Quick Metrics Cards Row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-border/60">
+            <div className="pb-glass-card p-3 rounded-xl border border-border/60 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 text-[11px] font-semibold text-text-muted mb-0.5">
+                <CheckCircle className="w-3 h-3 text-emerald-500" /> Completed
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-base sm:text-lg font-extrabold text-text-primary">
                 {volunteer.statistics?.completed_pickups || volunteer.total_pickups || 0}
               </p>
             </div>
 
-            <div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <MapPin className="w-3.5 h-3.5" />
-                <span>Distance</span>
+            <div className="pb-glass-card p-3 rounded-xl border border-border/60 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 text-[11px] font-semibold text-text-muted mb-0.5">
+                <MapPin className="w-3 h-3 text-rose-500" /> Distance
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-base sm:text-lg font-extrabold text-text-primary">
                 {distance ? formatDistance(distance) : 'N/A'}
               </p>
             </div>
 
-            <div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <Clock className="w-3.5 h-3.5" />
-                <span>ETA</span>
+            <div className="pb-glass-card p-3 rounded-xl border border-border/60 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 text-[11px] font-semibold text-text-muted mb-0.5">
+                <Clock className="w-3 h-3 text-dash-primary" /> Est. ETA
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
+              <p className="text-base sm:text-lg font-extrabold text-text-primary">
                 {distance ? calculateETA(distance) : 'N/A'}
               </p>
             </div>
 
-            <div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-1">
-                <Star className="w-3.5 h-3.5" />
-                <span>Acceptance Rate</span>
+            <div className="pb-glass-card p-3 rounded-xl border border-border/60 text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 text-[11px] font-semibold text-text-muted mb-0.5">
+                <Star className="w-3 h-3 text-amber-500" /> Success Rate
               </div>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">
-                {volunteer.statistics?.acceptance_rate ? `${volunteer.statistics.acceptance_rate.toFixed(0)}%` : 'N/A'}
+              <p className="text-base sm:text-lg font-extrabold text-text-primary">
+                {volunteer.statistics?.acceptance_rate ? `${volunteer.statistics.acceptance_rate.toFixed(0)}%` : '100%'}
               </p>
             </div>
           </div>

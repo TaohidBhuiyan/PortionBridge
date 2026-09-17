@@ -1,19 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { SkeletonCard } from '../skeletons';
 import { ErrorState } from '../ErrorState';
-import { CheckCircle2, Truck, Users } from 'lucide-react';
+import { CheckCircle2, Truck, Users, Star, ArrowUpRight } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
-/**
- * AnimatedCounter — identical count-up behavior to the one in
- * donor/StatisticsCards.jsx. Duplicated rather than extracted into a
- * shared util, matching this project's existing per-widget component
- * style (donor widgets each own their small helpers rather than sharing
- * a common lib).
- */
-function AnimatedCounter({ value, duration = 2000 }) {
+function AnimatedCounter({ value, duration = 1800 }) {
   const [count, setCount] = useState(0);
   const animationRef = useRef(null);
 
@@ -24,7 +17,6 @@ function AnimatedCounter({ value, duration = 2000 }) {
     const animate = () => {
       const now = Date.now();
       const progress = Math.min((now - startTimestamp) / duration, 1);
-
       const easeOutQuart = 1 - Math.pow(1 - progress, 4);
       const currentCount = Math.floor(easeOutQuart * endValue);
 
@@ -47,26 +39,39 @@ function AnimatedCounter({ value, duration = 2000 }) {
   return <span>{count.toLocaleString()}</span>;
 }
 
-const TONE_CLASSES = {
-  primary: 'bg-dash-primary-soft text-dash-primary',
-  success: 'bg-success-soft text-success',
-  warning: 'bg-warning-soft text-warning',
-  danger: 'bg-danger-soft text-danger',
-  info: 'bg-info-soft text-info',
+const CARD_STYLES = {
+  success: {
+    badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20',
+    iconGradient: 'from-emerald-500 to-teal-600',
+    borderGlow: 'hover:border-emerald-500/40 hover:shadow-emerald-500/10',
+    accentText: 'text-emerald-600 dark:text-emerald-400',
+  },
+  info: {
+    badgeBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20',
+    iconGradient: 'from-blue-500 to-indigo-600',
+    borderGlow: 'hover:border-blue-500/40 hover:shadow-blue-500/10',
+    accentText: 'text-blue-600 dark:text-blue-400',
+  },
+  primary: {
+    badgeBg: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20',
+    iconGradient: 'from-purple-500 to-pink-600',
+    borderGlow: 'hover:border-purple-500/40 hover:shadow-purple-500/10',
+    accentText: 'text-purple-600 dark:text-purple-400',
+  },
+  warning: {
+    badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20',
+    iconGradient: 'from-amber-500 to-orange-600',
+    borderGlow: 'hover:border-amber-500/40 hover:shadow-amber-500/10',
+    accentText: 'text-amber-600 dark:text-amber-400',
+  },
 };
 
-const HOVER_BORDER_CLASSES = {
-  primary: 'hover:border-dash-primary/30',
-  success: 'hover:border-success/30',
-  warning: 'hover:border-warning/30',
-  danger: 'hover:border-danger/30',
-  info: 'hover:border-info/30',
-};
+function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loading, error, subtitle }) {
+  const style = CARD_STYLES[tone] || CARD_STYLES.primary;
 
-function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loading, error }) {
   if (loading) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-3">
+      <div className="pb-glass-card rounded-2xl p-4 border border-border/60 shadow-sm">
         <SkeletonCard count={1} />
       </div>
     );
@@ -74,38 +79,41 @@ function StatCard({ icon: Icon, label, value, suffix = '', tone = 'primary', loa
 
   if (error) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-3">
-        <div className="text-center text-text-secondary">
-          <Icon size={18} className="mx-auto mb-1.5 opacity-50" />
-          <p className="text-[11px]">Unavailable</p>
-        </div>
+      <div className="pb-glass-card rounded-2xl p-4 border border-border/60 shadow-sm text-center text-text-muted">
+        <Icon size={20} className="mx-auto mb-1.5 opacity-40" />
+        <p className="text-xs font-medium">Unavailable</p>
       </div>
     );
   }
 
   return (
-    <div className={`bg-surface rounded-lg border border-border/50 p-3 ${HOVER_BORDER_CLASSES[tone] || HOVER_BORDER_CLASSES.primary} transition-[border-color,box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5`}>
-      <div className={`w-8 h-8 rounded-md flex items-center justify-center mb-2 ${TONE_CLASSES[tone]}`}>
-        <Icon size={16} />
+    <div className={`pb-glass-card pb-hover-lift rounded-2xl p-4 sm:p-5 border border-border/60 shadow-sm ${style.borderGlow} relative overflow-hidden group`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${style.iconGradient} text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
+          <Icon size={20} />
+        </div>
+        <span className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${style.badgeBg}`}>
+          <ArrowUpRight size={10} /> Active
+        </span>
       </div>
-      <p className="text-xl font-semibold text-text-primary mb-0.5 tracking-tight">
-        <AnimatedCounter value={value} />{suffix}
-      </p>
-      <p className="text-[11px] font-medium text-text-secondary">{label}</p>
+
+      <div>
+        <p className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">
+          <AnimatedCounter value={value} />{suffix}
+        </p>
+        <p className="text-xs font-semibold text-text-secondary mt-0.5">{label}</p>
+        {subtitle && <p className="text-[11px] text-text-muted mt-1">{subtitle}</p>}
+      </div>
     </div>
   );
 }
 
-/**
- * Rating card — kept separate from StatCard because a decimal average
- * (e.g. 4.87) doesn't make sense running through the integer count-up
- * animation, and "no ratings yet" needs its own real (not zero-as-fake)
- * empty phrasing.
- */
 function RatingCard({ averageRating, totalRatings, loading, error }) {
+  const style = CARD_STYLES.warning;
+
   if (loading) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-3">
+      <div className="pb-glass-card rounded-2xl p-4 border border-border/60 shadow-sm">
         <SkeletonCard count={1} />
       </div>
     );
@@ -113,11 +121,9 @@ function RatingCard({ averageRating, totalRatings, loading, error }) {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-3">
-        <div className="text-center text-text-secondary">
-          <span className="text-lg mx-auto mb-1.5 block opacity-50">⭐</span>
-          <p className="text-[11px]">Unavailable</p>
-        </div>
+      <div className="pb-glass-card rounded-2xl p-4 border border-border/60 shadow-sm text-center text-text-muted">
+        <Star size={20} className="mx-auto mb-1.5 opacity-40" />
+        <p className="text-xs font-medium">Unavailable</p>
       </div>
     );
   }
@@ -125,37 +131,41 @@ function RatingCard({ averageRating, totalRatings, loading, error }) {
   const hasRatings = totalRatings > 0;
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-3 hover:border-warning/30 transition-[border-color,box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
-      <div className="w-8 h-8 rounded-md flex items-center justify-center mb-2 bg-warning-soft text-warning">
-        <span className="text-sm leading-none">⭐</span>
+    <div className={`pb-glass-card pb-hover-lift rounded-2xl p-4 sm:p-5 border border-border/60 shadow-sm ${style.borderGlow} relative overflow-hidden group`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${style.iconGradient} text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
+          <Star size={20} className="fill-white" />
+        </div>
+        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${style.badgeBg}`}>
+          Rating Score
+        </span>
       </div>
-      {hasRatings ? (
-        <>
-          <p className="text-xl font-semibold text-text-primary mb-0.5 tracking-tight">
-            {averageRating.toFixed(1)} ⭐
-          </p>
-          <p className="text-[11px] font-medium text-text-secondary">
-            Rating · {totalRatings} review{totalRatings === 1 ? '' : 's'}
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="text-xl font-semibold text-text-primary mb-0.5 tracking-tight">—</p>
-          <p className="text-[11px] font-medium text-text-secondary">No ratings yet</p>
-        </>
-      )}
+
+      <div>
+        {hasRatings ? (
+          <>
+            <p className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight flex items-baseline gap-1">
+              {averageRating.toFixed(1)} <span className="text-sm font-semibold text-amber-500">⭐</span>
+            </p>
+            <p className="text-xs font-semibold text-text-secondary mt-0.5">
+              Volunteer Rating
+            </p>
+            <p className="text-[11px] text-text-muted mt-1">
+              Based on {totalRatings} review{totalRatings === 1 ? '' : 's'}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight">—</p>
+            <p className="text-xs font-semibold text-text-secondary mt-0.5">No Ratings Yet</p>
+            <p className="text-[11px] text-text-muted mt-1">Complete missions to earn ratings</p>
+          </>
+        )}
+      </div>
     </div>
   );
 }
 
-/**
- * VolunteerStatisticsCards — volunteer-side equivalent of
- * donor/StatisticsCards.jsx. Pulls from GET /profile/volunteer/statistics
- * (Phase 1: rating calculation fixed to use ratings.stars, peopleHelped
- * added). Deliberately does NOT show volunteer hours — Phase 1 confirmed
- * that metric isn't stored/derivable yet, so it's left out rather than
- * faked, per the Phase 2 brief.
- */
 export function VolunteerStatisticsCards() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -191,7 +201,7 @@ export function VolunteerStatisticsCards() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <SkeletonCard count={4} />
       </div>
     );
@@ -199,7 +209,7 @@ export function VolunteerStatisticsCards() {
 
   if (error && !stats) {
     return (
-      <div className="mb-5">
+      <div className="mb-6">
         <ErrorState
           title="Failed to load statistics"
           message="Unable to fetch your volunteer statistics. Please try again."
@@ -210,10 +220,11 @@ export function VolunteerStatisticsCards() {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       <StatCard
         icon={CheckCircle2}
         label="Missions Completed"
+        subtitle="Total food & supply rescues"
         value={stats?.completedPickups || 0}
         tone="success"
         loading={loading}
@@ -222,6 +233,7 @@ export function VolunteerStatisticsCards() {
       <StatCard
         icon={Truck}
         label="Active Pickups"
+        subtitle="Currently assigned to you"
         value={stats?.acceptedDonations || 0}
         tone="info"
         loading={loading}
@@ -230,6 +242,7 @@ export function VolunteerStatisticsCards() {
       <StatCard
         icon={Users}
         label="People Helped"
+        subtitle="Beneficiaries served"
         value={stats?.peopleHelped || 0}
         tone="primary"
         loading={loading}

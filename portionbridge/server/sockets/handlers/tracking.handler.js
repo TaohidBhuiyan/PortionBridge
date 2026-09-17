@@ -134,6 +134,9 @@ function registerTrackingHandlers(_io, socket) {
       if (!donationId || typeof latitude !== 'number' || typeof longitude !== 'number') {
         return ack(socketError('donationId, latitude, and longitude are required.'));
       }
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return ack(socketError('latitude/longitude must be finite numbers.'));
+      }
       if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
         return ack(socketError('latitude/longitude out of range.'));
       }

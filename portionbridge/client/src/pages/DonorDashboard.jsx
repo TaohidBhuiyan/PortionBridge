@@ -1,20 +1,15 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { DashboardLayout, ProfileCard } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import {
-  WelcomeHeader,
   StatisticsCards,
   QuickActions,
   ActiveDonations,
   RecentActivities,
-  LeaderboardWidget,
-  ProfileCompletion,
   ImpactSummary,
-  NotificationPreview,
   RatingReminders,
 } from '../components/dashboard/donor';
-import { AchievementsPanel } from '../components/common/AchievementsPanel';
 import { donationApi } from '../services/donationApi';
 
 const containerVariants = {
@@ -28,18 +23,17 @@ const containerVariants = {
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 12 },
+  hidden: { opacity: 0, y: 10 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.35, ease: 'easeOut' },
+    transition: { duration: 0.3, ease: 'easeOut' },
   },
 };
 
 /**
- * DonorDashboard — Ultra-Premium Donor Experience
- * Combines sleek top WelcomeHeader with the full-bleed ProfileCard and Active Donations hero,
- * followed by elevated KPIs, interactive action hub, impact sanctuary, and community feeds.
+ * DonorDashboard — Streamlined, Clean & Organized Donor Experience
+ * Aligned with Landing Page, Login, and Register brand aesthetics.
  */
 export function DonorDashboard() {
   const { user } = useAuth();
@@ -67,72 +61,55 @@ export function DonorDashboard() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="space-y-6 pb-8"
+        className="space-y-6 pb-8 max-w-7xl mx-auto"
       >
-        {/* 1. Sleek Compact Welcome Header Ribbon */}
-        <motion.div variants={itemVariants}>
-          <WelcomeHeader user={user} summary={summary} />
-        </motion.div>
-
-        {/* 2. Rating Reminders — nudges donors to rate completed donations */}
+        {/* Rating Reminders (shows only when donor has pending delivery ratings) */}
         <motion.div variants={itemVariants}>
           <RatingReminders />
         </motion.div>
 
-        {/* 3. Hero Row — ProfileCard (exact size from screenshot) + Active Donations */}
+        {/* 1. Hero Overview Row — ProfileCard (Untouched layout) + Active Donations */}
         <motion.div
           variants={itemVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
         >
+          {/* ProfileCard — Maintained exactly as requested */}
           <div className="lg:col-span-1 h-full flex flex-col">
             <ProfileCard user={user} roleLabel="Donor" tone="donor" stats={stats} />
           </div>
+
+          {/* Active Donations Progress Tracker */}
           <div className="lg:col-span-2 h-full flex flex-col">
             <ActiveDonations />
           </div>
         </motion.div>
 
-        {/* 3. Performance & Impact Statistics */}
-        <motion.div variants={itemVariants}>
-          <StatisticsCards />
-        </motion.div>
-
-        {/* 4. Interactive Quick Actions Hub */}
+        {/* 2. Quick Action Hub */}
         <motion.div variants={itemVariants}>
           <QuickActions />
         </motion.div>
 
-        {/* 5. Ecological Impact Sanctuary + Live Activity Timeline */}
+        {/* 3. Performance & Impact Metrics */}
+        <motion.div variants={itemVariants}>
+          <StatisticsCards />
+        </motion.div>
+
+        {/* 4. Activity Timeline & Ecological Impact (2-Column Organized Grid) */}
         <motion.div
           variants={itemVariants}
-          className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch"
+          className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
         >
-          <div className="h-full flex flex-col">
-            <ImpactSummary />
-          </div>
-          <div className="h-full flex flex-col">
+          {/* Recent Donation Activity */}
+          <div className="space-y-6">
             <RecentActivities />
+          </div>
+
+          {/* Ecological Impact Sanctuary */}
+          <div className="space-y-6">
+            <ImpactSummary />
           </div>
         </motion.div>
 
-        {/* 6. Community Ranks, Profile Health, Achievements & Real-Time Feed */}
-        <motion.div
-          variants={itemVariants}
-          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch"
-        >
-          <div className="h-full flex flex-col">
-            <LeaderboardWidget />
-          </div>
-          <div className="h-full flex flex-col">
-            <ProfileCompletion />
-          </div>
-          <div className="h-full flex flex-col">
-            <AchievementsPanel userId={user?.id} userRole="donor" />
-          </div>
-          <div className="h-full flex flex-col">
-            <NotificationPreview />
-          </div>
-        </motion.div>
       </motion.div>
     </DashboardLayout>
   );

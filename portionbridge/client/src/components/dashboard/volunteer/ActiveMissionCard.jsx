@@ -4,7 +4,7 @@ import { SkeletonCard } from '../skeletons';
 import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
 import { StatusBadge } from '../../donation/StatusBadge';
-import { Utensils, Shirt, MapPin, Clock, CalendarClock, ArrowRight, Package } from 'lucide-react';
+import { Utensils, Shirt, MapPin, Clock, CalendarClock, ArrowRight, Package, Navigation, Compass } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -14,30 +14,6 @@ const CATEGORY_ICON = {
   clothes: Shirt,
 };
 
-/**
- * ActiveMissionCard — the volunteer's current active mission (accepted or
- * scheduled), sourced from the existing GET /volunteer/assignments
- * endpoint (Phase 0/1 audit: reuses volunteer.model.js's active-assignments
- * query, no new backend route). Called with limit=1 and no extra sort
- * params, so the backend's own default ordering (scheduled_at ASC, i.e.
- * the soonest/most pressing pickup) decides which single mission surfaces.
- *
- * Known scope limitation (documented, not silently patched): this
- * endpoint's status filter only ever returns 'accepted' or 'scheduled'
- * donations (see volunteer.validator.js ASSIGNMENT_STATUSES) — donations
- * the volunteer has already marked on_the_way or picked_up won't appear
- * here. There's currently no volunteer-scoped endpoint that returns those
- * statuses for an individually-accepted (non-team) donation. Widening
- * ASSIGNMENT_STATUSES is a small, defensible backend follow-up, but Phase
- * 2 is display-only and the brief calls for zero backend changes unless
- * unavoidable, so this is left as-is and called out in the phase report.
- *
- * PHASE 3 UPDATE: the empty state below now links to
- * /volunteer/opportunities (added in Phase 3), which didn't exist when
- * this component was first built — the rest of the component (data
- * fetching, loading/error states, mission card layout) is unchanged from
- * Phase 2.
- */
 export function ActiveMissionCard() {
   const navigate = useNavigate();
   const [mission, setMission] = useState(null);
@@ -85,8 +61,12 @@ export function ActiveMissionCard() {
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <h2 className="text-sm font-semibold text-text-primary mb-3">Active Mission</h2>
+      <div className="pb-glass-card rounded-2xl p-5 border border-border/60 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+            <Compass size={16} className="text-dash-primary" /> Active Mission
+          </h2>
+        </div>
         <SkeletonCard count={1} />
       </div>
     );
@@ -94,8 +74,10 @@ export function ActiveMissionCard() {
 
   if (error) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <h2 className="text-sm font-semibold text-text-primary mb-2">Active Mission</h2>
+      <div className="pb-glass-card rounded-2xl p-5 border border-border/60 shadow-sm">
+        <h2 className="text-sm font-semibold text-text-primary mb-3 flex items-center gap-2">
+          <Compass size={16} className="text-dash-primary" /> Active Mission
+        </h2>
         <ErrorState
           title="Failed to load active mission"
           message="Unable to fetch your current mission. Please try again."
@@ -108,13 +90,17 @@ export function ActiveMissionCard() {
 
   if (!mission) {
     return (
-      <div className="bg-surface rounded-lg border border-border/50 p-4">
-        <h2 className="text-sm font-semibold text-text-primary mb-2">Active Mission</h2>
+      <div className="pb-glass-card rounded-2xl p-5 border border-border/60 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-text-primary flex items-center gap-2">
+            <Compass size={16} className="text-dash-primary" /> Active Mission
+          </h2>
+        </div>
         <EmptyState
           icon={Package}
-          title="No active mission"
-          description="You don't have an active mission right now. New assignments will appear here once you accept a donation."
-          actionLabel="Find Opportunities"
+          title="No active mission assigned"
+          description="You don't have an active mission right now. New assignments will appear here once you claim a donation."
+          actionLabel="Explore Opportunities"
           onAction={() => navigate('/volunteer/opportunities')}
           size="small"
         />
@@ -127,60 +113,87 @@ export function ActiveMissionCard() {
   const pickupTimeLabel = formatDateTime(mission.pickup_time);
 
   return (
-    <div className="bg-surface rounded-lg border border-border/50 p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-text-primary">Active Mission</h2>
-        <button
-          onClick={() => navigate(`/donations/${mission.id}`)}
-          className="text-[11px] text-dash-primary hover:text-dash-primary-hover font-medium focus:outline-none focus-visible:underline"
-        >
-          View Details
-        </button>
+    <div className="pb-glass-card rounded-2xl p-5 border border-dash-primary/30 shadow-md relative overflow-hidden group">
+      {/* Background radial accent */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-dash-primary/10 via-indigo-500/5 to-transparent rounded-bl-full pointer-events-none" />
+
+      {/* Header with Radar indicator */}
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-2.5">
+          <div className="relative">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+            <span className="animate-ping absolute inset-0 rounded-full bg-emerald-400 opacity-75"></span>
+          </div>
+          <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">
+            Live Active Mission
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/volunteer/live-map')}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors"
+          >
+            <Navigation size={12} /> Live Map
+          </button>
+          <button
+            onClick={() => navigate(`/donations/${mission.id}`)}
+            className="text-xs text-dash-primary hover:text-dash-primary-hover font-semibold underline-offset-2 hover:underline"
+          >
+            Details &rarr;
+          </button>
+        </div>
       </div>
 
+      {/* Mission Body Card */}
       <div
         onClick={() => navigate(`/donations/${mission.id}`)}
-        className="flex items-start gap-3 p-2.5 rounded-md border border-border/50 hover:border-dash-primary/30 hover:bg-surface-hover hover:shadow-pb-card cursor-pointer transition-[border-color,background-color,box-shadow,transform] duration-150 hover:-translate-y-0.5"
+        className="relative z-10 p-4 rounded-xl bg-surface/80 border border-border/80 hover:border-dash-primary/40 hover:shadow-pb-card cursor-pointer transition-all duration-200"
       >
-        <div className="w-9 h-9 rounded-md bg-dash-primary-soft flex items-center justify-center shrink-0">
-          <CategoryIcon size={16} className="text-dash-primary" />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-1.5">
-            <h3 className="text-sm font-medium text-text-primary capitalize">
-              {mission.category} donation{mission.quantity ? ` · Qty ${mission.quantity}` : ''}
-            </h3>
-            <StatusBadge status={mission.status} size="small" />
+        <div className="flex items-start gap-3.5">
+          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-dash-primary to-indigo-600 text-white flex items-center justify-center shrink-0 shadow-md">
+            <CategoryIcon size={20} />
           </div>
 
-          {mission.description && (
-            <p className="text-xs text-text-secondary mb-2 line-clamp-2">{mission.description}</p>
-          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2 mb-1.5 flex-wrap">
+              <h3 className="text-base font-bold text-text-primary capitalize truncate">
+                {mission.category} donation {mission.quantity ? `· Qty: ${mission.quantity}` : ''}
+              </h3>
+              <StatusBadge status={mission.status} size="small" />
+            </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] text-text-secondary">
-            {mission.pickup_location && (
-              <span className="flex items-center gap-1">
-                <MapPin size={10} />
-                {mission.pickup_location}
-              </span>
+            {mission.description && (
+              <p className="text-xs text-text-secondary mb-3 line-clamp-2">
+                {mission.description}
+              </p>
             )}
-            {pickupTimeLabel && (
-              <span className="flex items-center gap-1">
-                <Clock size={10} />
-                Pickup {pickupTimeLabel}
-              </span>
-            )}
-            {scheduledLabel && (
-              <span className="flex items-center gap-1">
-                <CalendarClock size={10} />
-                Scheduled {scheduledLabel}
-              </span>
-            )}
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
+              {mission.pickup_location && (
+                <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
+                  <MapPin size={13} className="text-rose-500 shrink-0" />
+                  <span className="truncate max-w-[200px]">{mission.pickup_location}</span>
+                </span>
+              )}
+              {pickupTimeLabel && (
+                <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
+                  <Clock size={13} className="text-dash-primary shrink-0" />
+                  <span>Pickup: {pickupTimeLabel}</span>
+                </span>
+              )}
+              {scheduledLabel && (
+                <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
+                  <CalendarClock size={13} className="text-amber-500 shrink-0" />
+                  <span>Scheduled: {scheduledLabel}</span>
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-dash-primary-soft text-dash-primary shrink-0 self-center group-hover:translate-x-1 transition-transform">
+            <ArrowRight size={16} />
           </div>
         </div>
-
-        <ArrowRight size={14} className="text-dash-primary shrink-0 mt-1" />
       </div>
     </div>
   );

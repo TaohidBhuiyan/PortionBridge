@@ -47,6 +47,9 @@ async function createRating(donorId, { donationId, stars, comment, ipAddress, us
     throw new AppError('You have already rated this donation request.', HTTP_STATUS.CONFLICT);
   }
 
+  // For team-mode donations, credit the assigned member; otherwise credit the volunteer
+  const ratedVolunteerId = donation.assignment_mode === 'team' ? donation.assigned_member_id : donation.volunteer_id;
+
   const connection = await pool.getConnection();
   let ratingId;
   let notificationId;
@@ -57,13 +60,13 @@ async function createRating(donorId, { donationId, stars, comment, ipAddress, us
     ratingId = await ratingModel.create(connection, {
       donationRequestId: donationId,
       ratedBy: donorId,
-      ratedUser: donation.volunteer_id,
+      ratedUser: ratedVolunteerId,
       stars,
       comment,
     });
 
     notificationId = await notificationModel.create(connection, {
-      userId: donation.volunteer_id,
+      userId: ratedVolunteerId,
       type: NOTIFICATION_TYPES.RATING_RECEIVED,
       title: 'You received a new rating',
       message: `You received a ${stars}-star rating for donation request #${donationId}.`,
@@ -86,14 +89,14 @@ async function createRating(donorId, { donationId, stars, comment, ipAddress, us
 
   const rating = await ratingModel.findById(ratingId);
 
-  await notificationService.deliverById(donation.volunteer_id, notificationId);
+  await notificationService.deliverById(ratedVolunteerId, notificationId);
 
   await auditService.record({
     userId: donorId,
     action: AUDIT_ACTIONS.RATING_CREATED,
     ipAddress,
     userAgent,
-    metadata: { donationId, ratedUser: donation.volunteer_id, stars },
+    metadata: { donationId, ratedUser: ratedVolunteerId, stars },
   });
 
   return rating;
@@ -101,7 +104,7 @@ async function createRating(donorId, { donationId, stars, comment, ipAddress, us
 
 /**
  * Gets the rating for a donation. Restricted to the donation's two
- * participants (donor and assigned volunteer) — mirrors the 403/404
+ * participants (donor and assigned volunteer/team member) — mirrors the 403/404
  * ordering used for assignment details elsewhere in the app.
  * @param {number} donationId - Donation ID
  * @param {number} requestingUserId - ID of the user making the request
@@ -114,7 +117,9 @@ async function getRatingByDonation(donationId, requestingUserId) {
     throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
   }
 
-  const isParticipant = donation.donor_id === requestingUserId || donation.volunteer_id === requestingUserId;
+  // For team-mode donations, the assigned member is a participant too
+  const ratedVolunteerId = donation.assignment_mode === 'team' ? donation.assigned_member_id : donation.volunteer_id;
+  const isParticipant = donation.donor_id === requestingUserId || ratedVolunteerId === requestingUserId;
   if (!isParticipant) {
     throw new AppError('You are not allowed to view this rating.', HTTP_STATUS.FORBIDDEN);
   }

@@ -15,7 +15,8 @@ import {
   HandHeart,
   CalendarClock,
   Truck,
-  PackageCheck
+  PackageCheck,
+  CheckCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { donationApi } from '../services/donationApi';
@@ -75,7 +76,11 @@ export function DonationDetailsPage() {
           setExistingRating(result.data.donation.rating);
         }
       } else {
-        setError(result.error);
+        if (result.status === 403 && result.error?.includes('Set your base address')) {
+          setError('Set your base address first — this is what donors near you and the nearby-donation radius are both based on.');
+        } else {
+          setError(result.error);
+        }
       }
     } catch {
       setError('Failed to load donation details. Please try again.');
@@ -242,9 +247,24 @@ export function DonationDetailsPage() {
       loadDonationDetails();
     } else if (result.status === 409) {
       toast.error(result.error || 'This donation can no longer be updated.');
-      loadDonationDetails();
     } else {
       toast.error(result.error || 'Failed to update status. Please try again.');
+    }
+
+    setActionInProgress(false);
+  };
+
+  const handleMarkCompleted = async () => {
+    if (actionInProgress) return;
+    setActionInProgress(true);
+
+    const result = await donationApi.completeDonation(id);
+
+    if (result.success) {
+      toast.success('Donation completed! Thank you for your generosity.');
+      loadDonationDetails();
+    } else {
+      toast.error(result.error || 'Failed to complete donation. Please try again.');
     }
 
     setActionInProgress(false);
@@ -363,10 +383,12 @@ export function DonationDetailsPage() {
   // explicit requirement not to expose a step the backend doesn't allow.
   const isVolunteer = currentUser?.role === 'volunteer';
   const isAssignedVolunteer = isVolunteer && volunteer_id === currentUser?.id;
+  const isDonorOwner = currentUser?.role === 'donor' && (donation.donor_id === currentUser?.id || currentUser?.id);
   const canAccept = isVolunteer && status === 'pending';
   const canSchedule = isAssignedVolunteer && status === 'accepted';
   const canMarkOnTheWay = isAssignedVolunteer && status === 'scheduled';
   const canMarkPickedUp = isAssignedVolunteer && status === 'on_the_way';
+  const canComplete = (isDonorOwner || currentUser?.role === 'donor') && status === 'picked_up';
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -453,6 +475,16 @@ export function DonationDetailsPage() {
               >
                 {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
                 {actionInProgress ? 'Updating...' : 'Mark Picked Up'}
+              </button>
+            )}
+            {canComplete && (
+              <button
+                onClick={handleMarkCompleted}
+                disabled={actionInProgress}
+                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 shadow-sm"
+              >
+                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                {actionInProgress ? 'Completing...' : 'Confirm Pickup & Complete'}
               </button>
             )}
           </div>

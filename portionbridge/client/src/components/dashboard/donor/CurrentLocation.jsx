@@ -1,44 +1,45 @@
-import { MapPin, Navigation, RefreshCw, AlertCircle } from 'lucide-react';
+import React from 'react';
+import { MapPin, Navigation, RefreshCw, AlertCircle, Compass, Radio } from 'lucide-react';
 
 /**
  * Current Location Display Component
- * Shows user's current location with refresh capability
+ * Displays real-time location radar status with location refresh capability.
  */
 const CurrentLocation = ({ location, onRefresh, isRefreshing, onManualLocation }) => {
   const formatAddress = () => {
-    if (!location) return 'Location not available';
+    if (!location) return 'Location not configured';
     if (location.address) return location.address;
-    return `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`;
+    return `${location.latitude.toFixed(4)}° N, ${location.longitude.toFixed(4)}° E`;
   };
 
   const formatAccuracy = () => {
     if (!location?.accuracy) return null;
-    if (location.accuracy < 10) return 'High';
+    if (location.accuracy < 15) return 'High';
     if (location.accuracy < 50) return 'Medium';
     return 'Low';
   };
 
   const accuracy = formatAccuracy();
-  const accuracyColor = accuracy === 'High' ? 'text-success' :
-                       accuracy === 'Medium' ? 'text-warning' :
-                       'text-orange-600 dark:text-orange-400';
 
   if (!location) {
     return (
-      <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Location Not Set</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Enable location or enter manually</p>
+      <div className="bg-surface border border-warning/30 rounded-2xl p-4 shadow-pb-card">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-warning-soft rounded-2xl flex items-center justify-center text-warning flex-shrink-0">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-text-primary">Location Radar Inactive</p>
+              <p className="text-xs text-text-secondary mt-0.5">Enable GPS or pick your area manually to discover nearby volunteers.</p>
+            </div>
           </div>
           <button
             onClick={onManualLocation}
-            className="px-3 py-1.5 text-sm bg-dash-primary hover:bg-dash-primary-hover text-white rounded-lg transition-colors"
+            className="w-full sm:w-auto px-4 py-2 text-xs font-bold bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
           >
-            Set Location
+            <MapPin className="w-4 h-4" />
+            <span>Set Pickup Location</span>
           </button>
         </div>
       </div>
@@ -46,47 +47,82 @@ const CurrentLocation = ({ location, onRefresh, isRefreshing, onManualLocation }
   }
 
   return (
-    <div className="bg-dash-primary-soft border border-border rounded-xl p-4">
-      <div className="flex items-start gap-3">
-        <div className="w-10 h-10 bg-dash-primary rounded-full flex items-center justify-center flex-shrink-0">
-          <MapPin className="w-5 h-5 text-white" />
-        </div>
+    <div className="relative overflow-hidden bg-gradient-to-r from-dash-primary-soft via-surface to-surface border border-dash-primary/20 rounded-2xl p-4 shadow-pb-card">
+      
+      {/* Background Subtle Radar Glow */}
+      <div className="absolute top-1/2 -left-10 -translate-y-1/2 w-40 h-40 bg-dash-primary/5 rounded-full pointer-events-none blur-xl" />
+
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 relative z-10">
         
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Your Location</p>
-            {accuracy && (
-              <span className={`text-xs px-2 py-0.5 rounded-full bg-white dark:bg-gray-800 ${accuracyColor} font-medium`}>
-                {accuracy} Accuracy
-              </span>
-            )}
+        {/* Radar Icon & Details */}
+        <div className="flex items-center gap-3.5 min-w-0">
+          <div className="relative flex-shrink-0">
+            <div className="w-12 h-12 bg-dash-primary rounded-2xl flex items-center justify-center text-white shadow-md shadow-dash-primary/20">
+              <Radio className="w-6 h-6 animate-pulse" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-surface animate-ping" />
+            <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-surface" />
           </div>
           
-          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2 truncate">
-            {formatAddress()}
-          </p>
-          
-          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-1">
-              <Navigation className="w-3.5 h-3.5" />
-              <span>{location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}</span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-0.5">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-dash-primary flex items-center gap-1">
+                <Compass className="w-3.5 h-3.5" />
+                Live Radar Zone
+              </span>
+              
+              {accuracy && (
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                  accuracy === 'High' 
+                    ? 'bg-success-soft text-success border-success/30' 
+                    : accuracy === 'Medium'
+                    ? 'bg-warning-soft text-warning border-warning/30'
+                    : 'bg-page text-text-muted border-border'
+                }`}>
+                  {accuracy} GPS Precision
+                </span>
+              )}
             </div>
-            {location.accuracy && (
-              <div className="flex items-center gap-1">
-                <span>±{Math.round(location.accuracy)}m</span>
-              </div>
-            )}
+            
+            <p className="text-sm font-bold text-text-primary truncate">
+              {formatAddress()}
+            </p>
+            
+            <div className="flex items-center gap-3 text-[11px] text-text-secondary mt-0.5">
+              <span className="flex items-center gap-1 font-mono">
+                <Navigation className="w-3 h-3 text-dash-primary" />
+                {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)}
+              </span>
+              {location.accuracy && (
+                <span className="text-text-muted font-medium">
+                  ±{Math.round(location.accuracy)}m range
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        <button
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          title="Refresh location"
-        >
-          <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-        </button>
+        {/* Action Controls */}
+        <div className="flex items-center gap-2 w-full sm:w-auto self-stretch sm:self-center justify-end">
+          <button
+            onClick={onManualLocation}
+            className="px-3 py-2 text-xs font-semibold bg-surface border border-border text-text-primary hover:bg-surface-hover rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <MapPin className="w-3.5 h-3.5 text-dash-primary" />
+            <span>Change</span>
+          </button>
+
+          <button
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="p-2 text-text-secondary hover:text-dash-primary bg-surface hover:bg-surface-hover border border-border rounded-xl transition-all shadow-2xs disabled:opacity-50 cursor-pointer"
+            title="Refresh GPS location"
+            aria-label="Refresh location"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-dash-primary' : ''}`} />
+          </button>
+        </div>
+
       </div>
     </div>
   );

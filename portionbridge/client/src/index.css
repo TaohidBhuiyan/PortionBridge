@@ -58,44 +58,44 @@
 }
 
 .dark {
-  --pb-primary: oklch(70% 0.22 292.717);
-  --pb-primary-hover: oklch(75% 0.23 292.717);
-  --pb-primary-soft: oklch(30% 0.08 292.717);
-  --pb-page: oklch(15% 0.02 292.717);
-  --pb-surface: oklch(20% 0.03 292.717);
-  --pb-surface-hover: oklch(25% 0.04 292.717);
-  --pb-border: oklch(35% 0.03 292.717);
-  --pb-text-primary: oklch(95% 0.01 292.717);
-  --pb-text-secondary: oklch(75% 0.01 292.717);
-  --pb-text-muted: oklch(60% 0.01 292.717);
-  --pb-success: oklch(70% 0.2 145);
-  --pb-success-soft: oklch(30% 0.08 145);
-  --pb-warning: oklch(75% 0.18 85);
-  --pb-warning-soft: oklch(30% 0.08 85);
-  --pb-danger: oklch(65% 0.24 25);
-  --pb-danger-soft: oklch(30% 0.08 25);
-  --pb-info: oklch(70% 0.2 250);
-  --pb-info-soft: oklch(30% 0.08 250);
+  --pb-primary: oklch(72% 0.24 292.717);
+  --pb-primary-hover: oklch(77% 0.25 292.717);
+  --pb-primary-soft: oklch(26% 0.09 292.717);
+  --pb-page: oklch(14% 0.025 285);
+  --pb-surface: oklch(19% 0.035 285);
+  --pb-surface-hover: oklch(24% 0.045 285);
+  --pb-border: oklch(28% 0.035 285);
+  --pb-text-primary: oklch(96% 0.01 285);
+  --pb-text-secondary: oklch(78% 0.015 285);
+  --pb-text-muted: oklch(62% 0.015 285);
+  --pb-success: oklch(72% 0.2 145);
+  --pb-success-soft: oklch(26% 0.08 145);
+  --pb-warning: oklch(76% 0.18 85);
+  --pb-warning-soft: oklch(26% 0.08 85);
+  --pb-danger: oklch(68% 0.24 25);
+  --pb-danger-soft: oklch(26% 0.08 25);
+  --pb-info: oklch(72% 0.2 250);
+  --pb-info-soft: oklch(26% 0.08 250);
 
   /* Per-role accent colors in dark mode */
-  --pb-donor: oklch(70% 0.22 340);
-  --pb-donor-soft: oklch(30% 0.08 340);
-  --pb-volunteer: oklch(68% 0.2 250);
-  --pb-volunteer-soft: oklch(30% 0.08 250);
-  --pb-admin: oklch(65% 0.24 292.717);
-  --pb-admin-soft: oklch(30% 0.08 292.717);
+  --pb-donor: oklch(72% 0.22 340);
+  --pb-donor-soft: oklch(26% 0.08 340);
+  --pb-volunteer: oklch(70% 0.2 250);
+  --pb-volunteer-soft: oklch(26% 0.08 250);
+  --pb-admin: oklch(68% 0.24 292.717);
+  --pb-admin-soft: oklch(26% 0.08 292.717);
 
-  /* PHASE 7: dark-mode surface/elevation tokens */
-  --pb-elevated: oklch(25% 0.04 292.717);
-  --pb-modal: oklch(22% 0.04 292.717);
-  --pb-sidebar: oklch(18% 0.03 292.717);
-  --pb-navbar: oklch(18% 0.03 292.717);
-  --pb-input: oklch(20% 0.03 292.717);
-  --pb-border-focus: oklch(70% 0.22 292.717);
-  --pb-shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.2);
-  --pb-shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3);
-  --pb-shadow-elevated: 0 4px 12px -2px rgb(0 0 0 / 0.4), 0 2px 6px -2px rgb(0 0 0 / 0.3);
-  --pb-shadow-modal: 0 20px 40px -8px rgb(0 0 0 / 0.55), 0 8px 16px -8px rgb(0 0 0 / 0.35);
+  /* Surface/elevation tokens for dark mode */
+  --pb-elevated: oklch(23% 0.04 285);
+  --pb-modal: oklch(20% 0.04 285);
+  --pb-sidebar: oklch(16% 0.03 285);
+  --pb-navbar: oklch(16% 0.03 285);
+  --pb-input: oklch(16% 0.03 285);
+  --pb-border-focus: oklch(72% 0.24 292.717);
+  --pb-shadow-subtle: 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --pb-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 0 15px -3px rgba(168, 85, 247, 0.12);
+  --pb-shadow-elevated: 0 10px 30px -4px rgba(0, 0, 0, 0.6), 0 0 20px -2px rgba(168, 85, 247, 0.18);
+  --pb-shadow-modal: 0 24px 48px -8px rgba(0, 0, 0, 0.8), 0 0 30px -4px rgba(168, 85, 247, 0.25);
 }
 
 @theme {
@@ -760,4 +760,85 @@ button:focus-visible {
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: rgba(56, 189, 248, 0.5);
+  border-radius: 3px;
 }
+
+/* ========================================
+   VOLUNTEER UI REDESIGN UTILITIES & GLOWS
+   ======================================== */
+
+.pb-volunteer-hero {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(16, 185, 129, 0.06) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.18);
+  box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.12);
+}
+
+.dark .pb-volunteer-hero {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(88, 28, 135, 0.3) 50%, rgba(6, 78, 59, 0.25) 100%);
+  border: 1px solid rgba(147, 51, 234, 0.25);
+  box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(147, 51, 234, 0.15);
+}
+
+.pb-glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.dark .pb-glass-card {
+  background: rgba(19, 24, 38, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pb-hover-lift {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+}
+
+.pb-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.12);
+}
+
+.dark .pb-hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px -6px rgba(0, 0, 0, 0.6), 0 0 20px -2px rgba(99, 102, 241, 0.18);
+}
+
+.pb-radar-ring {
+  position: relative;
+}
+
+.pb-radar-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.35);
+  animation: radarPing 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes radarPing {
+  75%, 100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+

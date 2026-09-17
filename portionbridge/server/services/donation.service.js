@@ -391,21 +391,36 @@ async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}
 const DEFAULT_OPPORTUNITY_RADIUS_KM = 10;
 
 /**
- * Lists pending donations for volunteers to browse, with search/filter/sort/pagination.
- *
- * Optional latitude/longitude/radius add a nearby-donations distance filter
- * on top of the existing category/location/search filters (never replacing
- * them) — enforced in donationModel via the same Haversine-in-SQL pattern
- * already used for volunteer discovery (volunteerDiscovery.model.js), so a
- * volunteer can't bypass it by only filtering client-side. Omitting
+ * Browse pending donation requests — search, filter, sort, paginate.
+ * Volunteers can optionally send latitude/longitude to filter by distance
+ * (nearby-donation discovery). The radius filter is enforced server-side so a
+ * malicious volunteer can't bypass it by only filtering client-side. Omitting
  * latitude/longitude keeps the old unfiltered-by-distance behavior exactly
  * as before.
+ *
+ * Volunteers must have a base address set (latitude/longitude in volunteer_profiles)
+ * before they can browse donations — this is what donors search against and what
+ * the nearby-donation radius is based on.
  * @param {Object} query - Query parameters from request
+ * @param {Object} user - Requesting user (for volunteer address check)
  * @returns {Promise<Object>} Object containing donations array, pagination meta, and the effective radius (null when no location was sent)
  */
-async function browseDonations(query) {
+async function browseDonations(query, user) {
   const { page, limit, offset } = getPaginationParams(query);
   const { category, location, search, sortBy, sortOrder, latitude, longitude, radius } = query;
+
+  // Volunteers must have a base address set before browsing donations
+  if (user && user.role === 'volunteer') {
+    const volunteerProfileModel = require('../models/volunteerProfile.model');
+    const volunteerProfile = await volunteerProfileModel.findByUserId(user.id);
+    if (!volunteerProfile || volunteerProfile.latitude === null || volunteerProfile.longitude === null) {
+      throw new AppError(
+        'Set your base address first — this is what donors near you and the nearby-donation radius are both based on.',
+        HTTP_STATUS.FORBIDDEN,
+        'ADDRESS_REQUIRED'
+      );
+    }
+  }
 
   const hasGeoFilter = latitude !== undefined && longitude !== undefined;
   const effectiveRadius = hasGeoFilter
@@ -1195,10 +1210,12 @@ async function getTeamAssignments(teamId, userId) {
 }
 
 /**
- * Get donation details by ID with role-based access control.
+ * Get donation details with role-based access control.
  * Donors can only view their own donations.
- * Volunteers can only view donations assigned to them.
+ * Volunteers can only view donations assigned to them or pending donations (for browsing).
  * Admins can view any donation.
+ *
+ * Volunteers viewing a pending donation must have a base address set.
  * @param {number} donationId - Donation ID
  * @param {number} userId - User ID requesting the details
  * @param {string} userRole - User role (donor, volunteer, admin)
@@ -1220,9 +1237,22 @@ async function getDonationDetails(donationId, userId, userRole) {
     // Volunteers can view if assigned to them or if it's pending (for browsing)
     const isAssigned = donation.volunteer_id === userId || donation.assigned_member_id === userId;
     const isPending = donation.status === DONATION_STATUS.PENDING;
-    
+
     if (!isAssigned && !isPending) {
       throw new AppError('You are not allowed to view this donation request.', HTTP_STATUS.FORBIDDEN);
+    }
+
+    // Volunteers viewing a pending donation must have a base address set
+    if (isPending) {
+      const volunteerProfileModel = require('../models/volunteerProfile.model');
+      const volunteerProfile = await volunteerProfileModel.findByUserId(userId);
+      if (!volunteerProfile || volunteerProfile.latitude === null || volunteerProfile.longitude === null) {
+        throw new AppError(
+          'Set your base address first — this is what donors near you and the nearby-donation radius are both based on.',
+          HTTP_STATUS.FORBIDDEN,
+          'ADDRESS_REQUIRED'
+        );
+      }
     }
   }
   // Admins can view any donation - no restriction needed

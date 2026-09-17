@@ -53,10 +53,8 @@ export function DonationFormPage() {
   const isEditMode = Boolean(editId);
 
   const STEPS = [
-    { id: 'basic', title: 'Basic Info' },
-    { id: 'details', title: 'Details' },
-    { id: 'pickup', title: 'Pickup & Photos' },
-    { id: 'assignment', title: 'Assignment' },
+    { id: 'details', title: 'Item & Details' },
+    { id: 'logistics', title: 'Pickup & Logistics' },
     { id: 'review', title: isEditMode ? 'Review & Update' : 'Review & Submit' },
   ];
 
@@ -70,7 +68,7 @@ export function DonationFormPage() {
       : {};
   });
 
-  const [stepValidation, setStepValidation] = useState([false, false, false, false, true]);
+  const [stepValidation, setStepValidation] = useState([false, false, true]);
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSavedTime, setLastSavedTime] = useState(null);
@@ -260,7 +258,7 @@ export function DonationFormPage() {
     const newErrors = {};
     const data = formData;
 
-    // Step 1: Basic Info
+    // Step 0: Item & Details
     if (stepIndex === 0) {
       if (!data.title?.trim()) {
         newErrors.title = 'Title is required';
@@ -287,10 +285,7 @@ export function DonationFormPage() {
       } else if (data.category === 'clothes' && !['piece', 'box', 'packet'].includes(data.quantityUnit)) {
         newErrors.quantityUnit = 'Please select a clothing unit (Piece, Box, or Packet)';
       }
-    }
 
-    // Step 2: Details
-    if (stepIndex === 1) {
       if (data.category === 'food') {
         if (!data.foodType) newErrors.foodType = 'Food type is required';
         if (!data.foodName?.trim()) newErrors.foodName = 'Food name is required';
@@ -300,13 +295,11 @@ export function DonationFormPage() {
         if (!data.gender) newErrors.gender = 'Target gender is required';
         if (!data.ageGroup) newErrors.ageGroup = 'Age group is required';
         if (!data.itemCondition) newErrors.itemCondition = 'Item condition is required';
-      } else {
-        newErrors.category = 'Please select either Food or Clothes in Step 1';
       }
     }
 
-    // Step 3: Pickup Info
-    if (stepIndex === 2) {
+    // Step 1: Pickup & Logistics
+    if (stepIndex === 1) {
       if (!data.savedAddressId && !data.pickupAddress?.fullAddress?.trim()) {
         newErrors.fullAddress = 'Address is required';
       }
@@ -413,7 +406,7 @@ export function DonationFormPage() {
     setHasUnsavedChanges(false);
     setLastSavedTime(null);
     setCurrentStep(0);
-    setStepValidation([false, false, false, false, true]);
+    setStepValidation([false, false, true]);
     setErrors({});
     setConfirmClearDraft(false);
   };
@@ -527,7 +520,7 @@ export function DonationFormPage() {
   const handleCreateAnother = () => {
     setFormData({});
     setCurrentStep(0);
-    setStepValidation([false, false, false, false, true]);
+    setStepValidation([false, false, true]);
     setErrors({});
     setSubmissionResult(null);
     setUploadProgress({});
@@ -660,31 +653,15 @@ export function DonationFormPage() {
                 exit="exit"
               >
                 {currentStep === 0 && (
-                  <Step1BasicInfo
-                    formData={formData}
-                    errors={errors}
-                    onChange={handleFieldChange}
-                    onValidationChange={handleStepValidation}
-                  />
-                )}
-                {currentStep === 1 && (
-                  <Step2DonationDetails
-                    formData={formData}
-                    errors={errors}
-                    onChange={handleFieldChange}
-                    onValidationChange={handleStepValidation}
-                  />
-                )}
-                {currentStep === 2 && (
-                  <div className="space-y-8">
-                    <Step3PickupInfo
+                  <div className="space-y-10">
+                    <Step1BasicInfo
                       formData={formData}
                       errors={errors}
                       onChange={handleFieldChange}
-                      onValidationChange={handleStepValidation}
+                      onValidationChange={() => {}}
                     />
-                    <div className="pt-2 border-t border-border/60">
-                      <Step4Images
+                    <div className="pt-8 border-t border-border/60">
+                      <Step2DonationDetails
                         formData={formData}
                         errors={errors}
                         onChange={handleFieldChange}
@@ -693,16 +670,34 @@ export function DonationFormPage() {
                     </div>
                   </div>
                 )}
-                {currentStep === 3 && (
-                  <Step6Assignment
-                    formData={formData}
-                    errors={errors}
-                    onChange={handleFieldChange}
-                    onValidationChange={handleStepValidation}
-                    pickupLocation={formData.pickupAddress}
-                  />
+                {currentStep === 1 && (
+                  <div className="space-y-10">
+                    <Step3PickupInfo
+                      formData={formData}
+                      errors={errors}
+                      onChange={handleFieldChange}
+                      onValidationChange={() => {}}
+                    />
+                    <div className="pt-8 border-t border-border/60">
+                      <Step4Images
+                        formData={formData}
+                        errors={errors}
+                        onChange={handleFieldChange}
+                        onValidationChange={() => {}}
+                      />
+                    </div>
+                    <div className="pt-8 border-t border-border/60">
+                      <Step6Assignment
+                        formData={formData}
+                        errors={errors}
+                        onChange={handleFieldChange}
+                        onValidationChange={() => {}}
+                        pickupLocation={formData.pickupAddress}
+                      />
+                    </div>
+                  </div>
                 )}
-                {currentStep === 4 && (
+                {currentStep === 2 && (
                   <Step5Review
                     formData={formData}
                     onEditStep={handleEditStep}
