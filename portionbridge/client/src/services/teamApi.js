@@ -252,4 +252,155 @@ export const teamApi = {
       return { success: false, error: message, status: error.response?.status || null };
     }
   },
+
+  /**
+   * Create a new team.
+   * POST /teams
+   */
+  createTeam: async (data) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/teams`,
+        data,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken, 'Content-Type': 'application/json' } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to create team';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Search/browse teams for discovery.
+   * GET /teams/search
+   */
+  searchTeams: async (search = '') => {
+    try {
+      const token = getAuthToken();
+      const params = search ? `?search=${encodeURIComponent(search)}` : '';
+      const response = await axios.get(`${API_BASE}/teams/search${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to search teams';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Send a join request to a team.
+   * POST /teams/join-requests
+   */
+  sendJoinRequest: async (teamId, message = '') => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/teams/join-requests`,
+        { teamId, message },
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken, 'Content-Type': 'application/json' } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const messageText = error.response?.data?.message || 'Failed to send join request';
+      return { success: false, error: messageText, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Get current volunteer's sent join requests.
+   * GET /teams/my/join-requests
+   */
+  getMyJoinRequests: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/teams/my/join-requests`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch join requests';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Cancel a pending join request.
+   * DELETE /teams/my/join-requests/:requestId
+   */
+  cancelJoinRequest: async (requestId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(
+        `${API_BASE}/teams/my/join-requests/${requestId}`,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to cancel join request';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * List pending join requests for a team (leader only).
+   * GET /teams/:id/join-requests
+   */
+  listTeamJoinRequests: async (teamId) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/teams/${teamId}/join-requests`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch team join requests';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Accept a join request (leader only).
+   * POST /teams/:id/join-requests/:requestId/accept
+   */
+  acceptJoinRequest: async (teamId, requestId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/teams/${teamId}/join-requests/${requestId}/accept`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to accept join request';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Reject a join request (leader only).
+   * POST /teams/:id/join-requests/:requestId/reject
+   */
+  rejectJoinRequest: async (teamId, requestId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/teams/${teamId}/join-requests/${requestId}/reject`,
+        {},
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to reject join request';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
 };

@@ -106,6 +106,26 @@ const memberIdValidationRules = [
   param('memberId').isInt({ min: 1 }).withMessage('A valid member id is required.'),
 ];
 
+/**
+ * Validation rules for sending a join request
+ */
+const sendJoinRequestValidationRules = [
+  body('teamId')
+    .isInt({ min: 1 }).withMessage('A valid teamId is required.'),
+
+  body('message')
+    .optional()
+    .trim()
+    .isLength({ max: 255 }).withMessage('Message must not exceed 255 characters.'),
+];
+
+/**
+ * Validation rules for request ID parameter
+ */
+const requestIdValidationRules = [
+  param('requestId').isInt({ min: 1 }).withMessage('A valid requestId is required.'),
+];
+
 module.exports = {
   createTeamValidationRules,
   updateTeamValidationRules,
@@ -113,4 +133,7 @@ module.exports = {
   teamIdValidationRules,
   invitationIdValidationRules,
   memberIdValidationRules,
+  sendJoinRequestValidationRules,
+  requestIdValidationRules,
 };
+

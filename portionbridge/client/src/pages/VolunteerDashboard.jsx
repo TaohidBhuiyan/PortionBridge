@@ -20,8 +20,10 @@ export function VolunteerDashboard() {
   useEffect(() => {
     let cancelled = false;
     donationApi.getVolunteerHistorySummary().then((result) => {
-      if (!cancelled && result.success) setSummary(result.data);
-    });
+      if (!cancelled && result.success) {
+        setSummary(result.data?.summary || result.data);
+      }
+    }).catch(() => {});
     profileApi.getProfile().then((result) => {
       if (!cancelled && result?.data?.volunteerProfile) {
         setVolunteerProfile(result.data.volunteerProfile);

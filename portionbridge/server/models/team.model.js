@@ -126,6 +126,43 @@ async function isUserLeader(userId) {
   return rows.length > 0;
 }
 
+/**
+ * Searches teams by name or ID for discovery.
+ * @param {Object} options - Search options
+ * @param {string} options.search - Query string
+ * @param {number} options.limit - Max records
+ * @param {number} options.offset - Pagination offset
+ * @returns {Promise<Array>} List of teams with leader info and member count
+ */
+async function searchTeams({ search, limit = 20, offset = 0 }) {
+  const params = { limit, offset };
+  let whereClause = '1=1';
+
+  if (search) {
+    if (!isNaN(search) && Number.isInteger(Number(search))) {
+      whereClause = '(t.name LIKE :searchStr OR t.id = :searchId)';
+      params.searchStr = `%${search}%`;
+      params.searchId = Number(search);
+    } else {
+      whereClause = 't.name LIKE :searchStr';
+      params.searchStr = `%${search}%`;
+    }
+  }
+
+  const [rows] = await pool.query(
+    `SELECT t.id, t.name, t.description, t.leader_id, t.base_address, t.created_at,
+            u.name AS leader_name, u.profile_photo AS leader_photo,
+            (SELECT COUNT(*) FROM team_members tm WHERE tm.team_id = t.id) AS member_count
+     FROM teams t
+     JOIN users u ON t.leader_id = u.id
+     WHERE ${whereClause}
+     ORDER BY t.created_at DESC
+     LIMIT :limit OFFSET :offset`,
+    params
+  );
+  return rows;
+}
+
 module.exports = {
   create,
   findById,
@@ -134,4 +171,6 @@ module.exports = {
   updateLeader,
   deleteById,
   isUserLeader,
+  searchTeams,
 };
+

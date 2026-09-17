@@ -18,6 +18,13 @@ const {
   getMyInvitations,
   getMyTeam,
   leaveTeam,
+  searchTeams,
+  sendJoinRequest,
+  getMyJoinRequests,
+  cancelJoinRequest,
+  listTeamJoinRequests,
+  acceptJoinRequest,
+  rejectJoinRequest,
 } = require('../../controllers/team.controller');
 
 const {
@@ -27,28 +34,52 @@ const {
   teamIdValidationRules,
   invitationIdValidationRules,
   memberIdValidationRules,
+  sendJoinRequestValidationRules,
+  requestIdValidationRules,
 } = require('../../validators/team.validator');
 
 const validateRequest = require('../../middleware/validateRequest');
 const { protect, authorize } = require('../../middleware/auth.middleware');
 const { USER_ROLES } = require('../../constants');
 
-// Current user team routes
-// PHASE 4 FIX: these three static-path routes (/my, /my/invitations,
-// /my/leave) were originally registered AFTER 'GET /:id' and
-// 'GET /:id/invitations' below. Since teamIdValidationRules requires :id
-// to be a positive integer, a request to GET /team/my or
-// GET /team/my/invitations would match the earlier :id-based route first,
-// fail that validation (id="my" isn't an integer), and return 400 —
-// meaning "My Team" and "My Invitations" were completely unreachable.
-// This is the exact same class of bug fixed in donation.routes.js during
-// Phase 1: moving the static routes above the dynamic ones fixes it, with
-// no change to any handler's logic or authorization.
+// Static / discovery & current user routes — MUST be above dynamic /:id parameter routes
+router.get(
+  '/search',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  searchTeams
+);
+
 router.get(
   '/my/invitations',
   protect,
   authorize(USER_ROLES.VOLUNTEER),
   getMyInvitations
+);
+
+router.get(
+  '/my/join-requests',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  getMyJoinRequests
+);
+
+router.post(
+  '/join-requests',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  sendJoinRequestValidationRules,
+  validateRequest,
+  sendJoinRequest
+);
+
+router.delete(
+  '/my/join-requests/:requestId',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  requestIdValidationRules,
+  validateRequest,
+  cancelJoinRequest
 );
 
 router.get(
@@ -142,6 +173,36 @@ router.delete(
   cancelInvitation
 );
 
+// Team join request management routes (leader only)
+router.get(
+  '/:id/join-requests',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  teamIdValidationRules,
+  validateRequest,
+  listTeamJoinRequests
+);
+
+router.post(
+  '/:id/join-requests/:requestId/accept',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  teamIdValidationRules,
+  requestIdValidationRules,
+  validateRequest,
+  acceptJoinRequest
+);
+
+router.post(
+  '/:id/join-requests/:requestId/reject',
+  protect,
+  authorize(USER_ROLES.VOLUNTEER),
+  teamIdValidationRules,
+  requestIdValidationRules,
+  validateRequest,
+  rejectJoinRequest
+);
+
 // Team member management routes (leader only)
 router.delete(
   '/:id/members/:memberId',
@@ -191,8 +252,5 @@ router.post(
   validateRequest,
   declineInvitation
 );
-
-// Current user team routes moved to the top of this file — see the
-// PHASE 4 FIX comment there for why.
 
 module.exports = router;

@@ -18,22 +18,18 @@ import React from "react";
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
     this.handleRetry = this.handleRetry.bind(this);
     this.handleGoHome = this.handleGoHome.bind(this);
   }
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
   }
 
   componentDidCatch(error, errorInfo) {
-    // Dev-mode debugging stays available; production never surfaces the
-    // stack trace in the UI (only this console log, same as the server's
-    // error handler convention of hiding stacks from the response body).
-    if (import.meta.env.DEV) {
-      console.error("ErrorBoundary caught an error:", error, errorInfo);
-    }
+    this.setState({ error, errorInfo });
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
   handleRetry() {
@@ -111,13 +107,33 @@ export class ErrorBoundary extends React.Component {
               style={{
                 fontSize: "14px",
                 color: "var(--pb-text-secondary)",
-                margin: "0 0 24px",
+                margin: "0 0 16px",
                 lineHeight: 1.5,
               }}
             >
               This page hit an unexpected error. You can try again, or head
               back to your dashboard.
             </p>
+
+            {this.state.error && (
+              <div
+                style={{
+                  margin: "0 0 20px",
+                  padding: "12px",
+                  background: "#fee2e2",
+                  color: "#991b1b",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  fontFamily: "monospace",
+                  textAlign: "left",
+                  wordBreak: "break-word",
+                  maxHeight: "150px",
+                  overflowY: "auto",
+                }}
+              >
+                {this.state.error.toString()}
+              </div>
+            )}
 
             <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
               <button

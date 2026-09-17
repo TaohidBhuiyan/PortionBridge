@@ -13,12 +13,14 @@ export function ProfileCard({ user, roleLabel = 'Donor', tone = 'donor', stats =
   const [imgError, setImgError] = useState(false);
 
   const displayName = user?.name || 'User';
-  const initials = displayName
-    .split(' ')
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
+  const initials =
+    displayName
+      .split(' ')
+      .filter(Boolean)
+      .map((w) => w[0])
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'U';
 
   const photoUrl = resolveMediaUrl(
     user?.photo || user?.profile_photo || user?.profile_picture
@@ -40,8 +42,8 @@ export function ProfileCard({ user, roleLabel = 'Donor', tone = 'donor', stats =
 
   // Primary stat pill label (e.g. "5 Donations" or "Donor")
   const pillLabel =
-    stats && stats.length > 0 && Number(stats[0]?.value) > 0
-      ? `${stats[0].value} ${stats[0].label.replace(/Total\s*/i, '')}`
+    stats && Array.isArray(stats) && stats.length > 0 && Number(stats[0]?.value) > 0
+      ? `${stats[0].value} ${(stats[0]?.label || '').replace(/Total\s*/i, '')}`
       : roleLabel;
 
   return (

@@ -39,8 +39,19 @@ export function VolunteerWelcomeHeader({ user }) {
         });
 
         if (isMounted && response.data?.success) {
-          const slots = response.data.data?.volunteerProfile?.availability;
-          setAvailability(Array.isArray(slots) ? slots : null);
+          const rawSlots = response.data.data?.volunteerProfile?.availability;
+          let slots = null;
+          if (Array.isArray(rawSlots)) {
+            slots = rawSlots;
+          } else if (typeof rawSlots === 'string') {
+            try {
+              const parsed = JSON.parse(rawSlots);
+              if (Array.isArray(parsed)) slots = parsed;
+            } catch {
+              // ignore invalid JSON availability string
+            }
+          }
+          setAvailability(slots);
         }
       } catch (err) {
         console.error('Error fetching volunteer availability:', err);
@@ -54,7 +65,7 @@ export function VolunteerWelcomeHeader({ user }) {
     };
   }, []);
 
-  const displayName = user?.name?.split(' ')[0] || 'Volunteer';
+  const displayName = (user?.name || '').trim().split(' ')[0] || 'Volunteer';
   const fullName = user?.name || 'Volunteer Hero';
 
   return (

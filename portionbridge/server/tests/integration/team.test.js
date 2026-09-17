@@ -89,4 +89,37 @@ describe('team: authorization and team-donation flow', () => {
 
     await assert.rejects(() => donationService.acceptDonationForTeam(donation.id, team.id, outsider.id));
   });
+
+  test('a volunteer can send a join request and the leader can accept it', async (t) => {
+    if (!dbReady) return t.skip('no test database reachable');
+
+    const { user: leader } = await createVerifiedUser({ role: 'volunteer' });
+    const { user: applicant } = await createVerifiedUser({ role: 'volunteer' });
+
+    const team = await teamService.createTeam(leader.id, { name: 'Joinable Team' });
+    const request = await teamService.sendJoinRequest(applicant.id, {
+      teamId: team.id,
+      message: 'I want to join!',
+    });
+
+    assert.ok(request.id);
+    assert.equal(request.status, 'pending');
+
+    // Duplicate request check
+    await assert.rejects(() => teamService.sendJoinRequest(applicant.id, { teamId: team.id }));
+
+    // Leader lists incoming requests
+    const incoming = await teamService.listTeamJoinRequests(team.id, leader.id);
+    assert.equal(incoming.length, 1);
+    assert.equal(incoming[0].user_id, applicant.id);
+
+    // Leader accepts request
+    await teamService.acceptJoinRequest(team.id, request.id, leader.id);
+
+    // Verify applicant is now in team
+    const updatedTeam = await teamService.getMyTeam(applicant.id);
+    assert.ok(updatedTeam);
+    assert.equal(updatedTeam.id, team.id);
+  });
 });
+

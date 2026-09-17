@@ -1,4 +1,4 @@
-import { useNavigate } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, History, Bell, Trophy, HelpCircle, ArrowRight } from 'lucide-react';
 
 const LINKS = [

@@ -3,6 +3,7 @@ const AppError = require('../utils/AppError');
 const teamModel = require('../models/team.model');
 const teamMemberModel = require('../models/teamMember.model');
 const teamInvitationModel = require('../models/teamInvitation.model');
+const teamJoinRequestModel = require('../models/teamJoinRequest.model');
 const userModel = require('../models/user.model');
 const donationModel = require('../models/donation.model');
 const auditService = require('./audit.service');
@@ -683,6 +684,240 @@ async function leaveTeam(userId) {
   await auditService.record({ userId, action: 'team_left', metadata: { teamId: team.id } });
 }
 
+/**
+ * Searches teams for volunteer discovery.
+ * @param {Object} query - Query params (search, page, limit)
+ * @returns {Promise<Object>} Search results with pagination meta
+ */
+async function searchTeams(query = {}) {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(query.limit) || 10));
+  const offset = (page - 1) * limit;
+  const search = query.search ? String(query.search).trim() : null;
+
+  const teams = await teamModel.searchTeams({ search, limit, offset });
+  return { teams, page, limit };
+}
+
+/**
+ * Sends a join request to a team.
+ * @param {number} userId - Requesting volunteer ID
+ * @param {Object} data - { teamId, message }
+ * @returns {Promise<Object>} Created request
+ */
+async function sendJoinRequest(userId, { teamId, message }) {
+  const user = await userModel.findById(userId);
+  if (!user || user.role !== USER_ROLES.VOLUNTEER) {
+    throw new AppError('Only volunteers can send team join requests.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  // Check if volunteer already in a team
+  const isMember = await teamMemberModel.isUserInTeam(userId);
+  if (isMember) {
+    throw new AppError('You are already a member of a team.', HTTP_STATUS.CONFLICT);
+  }
+
+  const team = await teamModel.findById(teamId);
+  if (!team) {
+    throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  // Check if there is already a pending request
+  const existingPending = await teamJoinRequestModel.findPendingByTeamAndUser(teamId, userId);
+  if (existingPending) {
+    throw new AppError('You already have a pending join request for this team.', HTTP_STATUS.CONFLICT);
+  }
+
+  // Create join request
+  const requestId = await teamJoinRequestModel.create({
+    teamId,
+    userId,
+    message,
+  });
+
+  // Send notification to team leader
+  await notificationService.createNotification(team.leader_id, {
+    type: NOTIFICATION_TYPES.TEAM_INVITATION_RECEIVED,
+    title: 'New Team Join Request',
+    message: `${user.name} has requested to join your team "${team.name}".`,
+    relatedId: teamId,
+  });
+
+  // Audit log
+  await auditService.record({ userId, action: 'team_join_request_sent', metadata: { teamId, requestId } });
+
+  return await teamJoinRequestModel.findById(requestId);
+}
+
+/**
+ * Lists join requests sent by the current volunteer.
+ * @param {number} userId - Volunteer user ID
+ * @returns {Promise<Array>} List of requests with team details
+ */
+async function getMyJoinRequests(userId) {
+  return await teamJoinRequestModel.findByUserId(userId);
+}
+
+/**
+ * Cancels a pending join request sent by current volunteer.
+ * @param {number} userId - Volunteer user ID
+ * @param {number} requestId - Request ID
+ * @returns {Promise<void>}
+ */
+async function cancelJoinRequest(userId, requestId) {
+  const request = await teamJoinRequestModel.findById(requestId);
+  if (!request) {
+    throw new AppError('Join request not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (request.user_id !== userId) {
+    throw new AppError('You are not authorized to cancel this request.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  if (request.status !== 'pending') {
+    throw new AppError('Only pending join requests can be cancelled.', HTTP_STATUS.CONFLICT);
+  }
+
+  await teamJoinRequestModel.updateStatus(requestId, 'cancelled', new Date());
+}
+
+/**
+ * Lists pending join requests for a team (leader only).
+ * @param {number} teamId - Team ID
+ * @param {number} userId - Leader user ID
+ * @returns {Promise<Array>} Array of pending join requests
+ */
+async function listTeamJoinRequests(teamId, userId) {
+  const team = await teamModel.findById(teamId);
+  if (!team) {
+    throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (team.leader_id !== userId) {
+    throw new AppError('Only the team leader can view team join requests.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  return await teamJoinRequestModel.findPendingByTeamId(teamId);
+}
+
+/**
+ * Accepts a join request (leader only).
+ * @param {number} teamId - Team ID
+ * @param {number} requestId - Request ID
+ * @param {number} userId - Leader user ID
+ * @returns {Promise<Object>} Added team member
+ */
+async function acceptJoinRequest(teamId, requestId, userId) {
+  const team = await teamModel.findById(teamId);
+  if (!team) {
+    throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (team.leader_id !== userId) {
+    throw new AppError('Only the team leader can accept join requests.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  const request = await teamJoinRequestModel.findById(requestId);
+  if (!request || request.team_id !== teamId) {
+    throw new AppError('Join request not found for this team.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (request.status !== 'pending') {
+    throw new AppError('This join request is no longer pending.', HTTP_STATUS.CONFLICT);
+  }
+
+  // Check if volunteer is already in a team
+  const targetUserInTeam = await teamMemberModel.isUserInTeam(request.user_id);
+  if (targetUserInTeam) {
+    await teamJoinRequestModel.updateStatus(requestId, 'rejected', new Date());
+    throw new AppError('This volunteer has already joined another team.', HTTP_STATUS.CONFLICT);
+  }
+
+  const connection = await require('../config/db').pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Update request status
+    await teamJoinRequestModel.updateStatus(requestId, 'accepted', new Date());
+
+    // Add volunteer to team_members
+    await teamMemberModel.create({
+      teamId,
+      userId: request.user_id,
+      role: TEAM_MEMBER_ROLE.MEMBER,
+    });
+
+    await connection.commit();
+
+    // Notify requesting volunteer
+    const targetUser = await userModel.findById(request.user_id);
+    await notificationService.createNotification(request.user_id, {
+      type: NOTIFICATION_TYPES.TEAM_INVITATION_ACCEPTED,
+      title: 'Join Request Accepted',
+      message: `Your request to join team "${team.name}" was accepted!`,
+      relatedId: teamId,
+    });
+
+    // Broadcast team activity
+    const io = getIO();
+    if (io) {
+      broadcastTeamActivity(teamId, 'member_joined', {
+        userId: request.user_id,
+        userName: targetUser.name,
+      });
+    }
+
+    await auditService.record({ userId, action: 'team_join_request_accepted', metadata: { teamId, requestId, volunteerId: request.user_id } });
+
+    return await teamMemberModel.findByTeamAndUser(teamId, request.user_id);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Rejects a join request (leader only).
+ * @param {number} teamId - Team ID
+ * @param {number} requestId - Request ID
+ * @param {number} userId - Leader user ID
+ * @returns {Promise<void>}
+ */
+async function rejectJoinRequest(teamId, requestId, userId) {
+  const team = await teamModel.findById(teamId);
+  if (!team) {
+    throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (team.leader_id !== userId) {
+    throw new AppError('Only the team leader can reject join requests.', HTTP_STATUS.FORBIDDEN);
+  }
+
+  const request = await teamJoinRequestModel.findById(requestId);
+  if (!request || request.team_id !== teamId) {
+    throw new AppError('Join request not found for this team.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  if (request.status !== 'pending') {
+    throw new AppError('This join request is no longer pending.', HTTP_STATUS.CONFLICT);
+  }
+
+  await teamJoinRequestModel.updateStatus(requestId, 'rejected', new Date());
+
+  // Notify requesting volunteer
+  await notificationService.createNotification(request.user_id, {
+    type: NOTIFICATION_TYPES.TEAM_MEMBER_REMOVED,
+    title: 'Join Request Update',
+    message: `Your request to join team "${team.name}" was declined.`,
+    relatedId: teamId,
+  });
+
+  await auditService.record({ userId, action: 'team_join_request_rejected', metadata: { teamId, requestId, volunteerId: request.user_id } });
+}
+
 module.exports = {
   createTeam,
   getTeam,
@@ -699,4 +934,12 @@ module.exports = {
   promoteMember,
   transferLeadership,
   leaveTeam,
+  searchTeams,
+  sendJoinRequest,
+  getMyJoinRequests,
+  cancelJoinRequest,
+  listTeamJoinRequests,
+  acceptJoinRequest,
+  rejectJoinRequest,
 };
+

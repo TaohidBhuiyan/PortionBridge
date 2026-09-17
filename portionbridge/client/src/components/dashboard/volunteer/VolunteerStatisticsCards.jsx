@@ -145,7 +145,7 @@ function RatingCard({ averageRating, totalRatings, loading, error }) {
         {hasRatings ? (
           <>
             <p className="text-2xl sm:text-3xl font-extrabold text-text-primary tracking-tight flex items-baseline gap-1">
-              {averageRating.toFixed(1)} <span className="text-sm font-semibold text-amber-500">⭐</span>
+              {(Number(averageRating) || 0).toFixed(1)} <span className="text-sm font-semibold text-amber-500">⭐</span>
             </p>
             <p className="text-xs font-semibold text-text-secondary mt-0.5">
               Volunteer Rating
