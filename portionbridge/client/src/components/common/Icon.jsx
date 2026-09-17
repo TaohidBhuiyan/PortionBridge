@@ -9,6 +9,8 @@ const ICON_PATHS = {
   bolt: "M13 2L4 14h6l-1 8 9-12h-6l1-8z",
   check: "M20 6L9 17l-5-5",
   x: "M18 6L6 18M6 6l12 12",
+  arrow: "M5 12h14M13 6l6 6-6 6",
+  clock: "M12 8v4l3 3",
 };
 
 /**

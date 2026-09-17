@@ -87,9 +87,9 @@ export function ReviewSection() {
     <section ref={ref} className="py-24 md:py-28">
       <div className="max-w-6xl mx-auto px-6 md:px-10">
         <Reveal>
-          <div className="font-mono text-xs mb-4 tracking-wider" style={{ color: PRIMARY_DEEP }}>USER REVIEWS</div>
-          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mb-3">What people are saying.</h2>
-          <p className="text-slate-500 max-w-lg text-sm md:text-base font-normal mb-14">
+          <div className="font-mono text-xs mb-4 tracking-wider text-center" style={{ color: PRIMARY_DEEP }}>USER REVIEWS</div>
+          <h2 className="font-serif text-4xl md:text-5xl max-w-xl mx-auto mb-3 text-center">What people are saying.</h2>
+          <p className="text-slate-500 max-w-lg mx-auto text-sm md:text-base font-normal mb-14 text-center">
             Real feedback from donors and volunteers using PortionBridge.
           </p>
         </Reveal>
@@ -104,7 +104,7 @@ export function ReviewSection() {
                 ))}
               </div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="review-grid grid sm:grid-cols-2 gap-4">
               {[0, 1, 2, 3].map((i) => (
                 <ReviewCardSkeleton key={i} />
               ))}
@@ -131,12 +131,12 @@ export function ReviewSection() {
                 </span>
                 <Stars rating={ratingSummary?.averageRating || 0} size="w-4 h-4" />
               </div>
-              <p className="text-sm text-black/50 mb-6">
+              <p className="text-left text-sm text-black/50 mb-6">
                 Based on {ratingSummary?.totalReviews ?? 0} review{ratingSummary?.totalReviews === 1 ? '' : 's'}
               </p>
               <div className="flex flex-col gap-2.5">
-                {breakdown.map((r) => (
-                  <div key={r.star} className="flex items-center gap-3 text-sm">
+                {breakdown.map((r, i) => (
+                  <div key={r.star} className="flex items-center gap-3 text-sm" style={{ animation: "rowIn 0.4s ease-out both", animationDelay: `${i * 0.06}s` }}>
                     <span className="w-3 text-black/60">{r.star}</span>
                     <svg viewBox="0 0 20 20" className="w-3.5 h-3.5 shrink-0" fill="#FBBF24" aria-hidden="true">
                       <path d="M10 1.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z" />
@@ -159,15 +159,15 @@ export function ReviewSection() {
                 const dateLabel = formatReviewDate(r.createdAt);
                 return (
                   <Reveal key={`${r.name}-${i}`} delay={i * 70}>
-                    <div className="group relative h-full p-5 rounded-2xl border border-black/5 bg-white shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="glass-card group relative h-full p-5 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all duration-300">
                       <Quote
-                        className="absolute top-4 right-4 w-6 h-6 opacity-[0.06] group-hover:opacity-10 transition-opacity"
+                        className="absolute top-4 right-4 w-6 h-6 opacity-[0.06] group-hover:opacity-10 group-hover:scale-110 transition-all duration-300"
                         style={{ color: PRIMARY }}
                         strokeWidth={2.5}
                       />
                       <div className="flex items-center gap-3 mb-3">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-semibold shrink-0 transition-transform duration-300 group-hover:scale-105"
                           style={{ background: PRIMARY }}
                         >
                           {initials}

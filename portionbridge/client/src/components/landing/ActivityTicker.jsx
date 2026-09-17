@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Icon } from "../common/Icon";
 import { useSocket } from "../../context/SocketContext";
 
+const PRIMARY = "var(--color-primary)";
 const PRIMARY_DEEP = "var(--color-primary-deep)";
 const PRIMARY_TINT = "var(--color-primary-tint)";
 
@@ -76,13 +77,18 @@ export function ActivityTicker() {
       <div className="absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-primary-tint to-transparent pointer-events-none z-10" />
       <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-primary-tint to-transparent pointer-events-none z-10" />
 
-      <div 
-        className="flex gap-10 py-2.5 whitespace-nowrap" 
+      <div
+        className="flex gap-10 py-2.5 whitespace-nowrap"
         style={{ width: "max-content", animation: "scrollx-rtl 22s linear infinite" }}
       >
         {items.map((t, i) => (
           <span key={i} className="text-xs font-semibold tracking-wide flex items-center gap-2" style={{ color: PRIMARY_DEEP }}>
-            <Icon name={t.icon} className="w-3.5 h-3.5 shrink-0" />
+            <span
+              className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: `${PRIMARY}18` }}
+            >
+              <Icon name={t.icon} className="w-3 h-3" />
+            </span>
             {t.text}
           </span>
         ))}

@@ -48,25 +48,6 @@ export function LoginPage() {
     return () => clearInterval(cooldownRef.current);
   }, []);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const prevBodyOverflow = document.body.style.overflow;
-    const prevHtmlOverflow = document.documentElement.style.overflow;
-
-    const syncOverflow = () => {
-      const lock = mq.matches ? "hidden" : "";
-      document.body.style.overflow = lock;
-      document.documentElement.style.overflow = lock;
-    };
-
-    syncOverflow();
-    mq.addEventListener("change", syncOverflow);
-    return () => {
-      mq.removeEventListener("change", syncOverflow);
-      document.body.style.overflow = prevBodyOverflow;
-      document.documentElement.style.overflow = prevHtmlOverflow;
-    };
-  }, []);
 
   const { socket, connected } = useSocket();
   const [stats, setStats] = useState({
@@ -223,183 +204,195 @@ export function LoginPage() {
   };
 
   const inputClass = (hasError) =>
-    `w-full min-h-11 pl-11 pr-4 py-2.5 bg-white border rounded-xl text-base lg:text-sm text-slate-900 placeholder-slate-400 shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-4 ${
+    `w-full min-h-12 pl-11 pr-4 py-3 bg-slate-50 border-2 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus:ring-4 focus:bg-white ${
       hasError
         ? "border-red-300 focus:ring-red-500/15 focus:border-red-500"
-        : "border-slate-200 focus:ring-sky-500/15 focus:border-sky-500"
+        : "border-slate-200 hover:border-slate-300 focus:ring-[#6d45bd]/15 focus:border-[#6d45bd]"
     }`;
 
   return (
-    <div className="login-page min-h-dvh lg:h-dvh lg:max-h-dvh overflow-y-auto lg:overflow-hidden flex flex-col lg:flex-row bg-slate-950 font-sans">
-      {/* LEFT PANEL — original brand & living ecosystem */}
-      <section className="login-page__left lg:w-[53%] xl:w-[55%] relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-800 px-5 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-6 xl:px-10 xl:py-7 flex flex-col justify-between overflow-hidden lg:h-full lg:min-h-0 border-b lg:border-b-0 lg:border-r border-sky-900/30 select-none">
-        <div className="absolute -top-32 -left-32 w-[520px] h-[520px] bg-sky-600/15 rounded-full blur-[110px] pointer-events-none animate-pulse" />
-        <div className="absolute top-1/3 -right-24 w-[460px] h-[460px] bg-cyan-500/12 rounded-full blur-[120px] pointer-events-none animate-pulse" style={{ animationDelay: "-3s" }} />
-        <div className="absolute -bottom-40 left-1/4 w-[500px] h-[500px] bg-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
-        <div className="absolute inset-0 opacity-[0.035] pointer-events-none bg-[radial-gradient(#38bdf8_1.2px,transparent_1.2px)] [background-size:28px_28px]" />
+    <div className="min-h-screen w-full bg-[#f8f7fb] text-slate-900 flex items-center justify-center p-3 sm:p-5 lg:p-8 relative selection:bg-[#6d45bd]/20 selection:text-[#35206f]">
+      {/* Floating ambient background lighting */}
+      <div className="absolute -top-32 right-[8%] w-[500px] h-[400px] rounded-full blur-3xl opacity-35 pointer-events-none" style={{ background: "#e8c6ed", animation: "float 9s ease-in-out infinite" }} />
+      <div className="absolute top-1/3 -left-20 w-80 h-80 rounded-full blur-3xl opacity-25 pointer-events-none" style={{ background: "#d9c8f1", animation: "float 7s ease-in-out infinite reverse" }} />
+      <div className="absolute -bottom-24 left-1/3 w-96 h-96 rounded-full blur-3xl opacity-25 pointer-events-none" style={{ background: "#efe8fa", animation: "float 10s ease-in-out infinite" }} />
+      <div
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{
+          backgroundImage: "radial-gradient(#35206f 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          maskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 75%)",
+          WebkitMaskImage: "radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 75%)",
+        }}
+      />
 
-        <header className="relative z-10 shrink-0">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-3.5 hover:opacity-80 transition-opacity focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 rounded-xl"
-          >
-            <div className="relative group shrink-0">
-              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-sky-400 to-cyan-400 opacity-30 blur-md group-hover:opacity-60 transition duration-500" />
-              <Logo className="relative w-[42px] h-[42px] rounded-xl shadow-lg" />
-            </div>
-            <div>
-              <div className="font-bold text-2xl tracking-tight text-white flex items-center gap-1.5">
-                PortionBridge
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+      {/* Master Elevated Card Container */}
+      <div className="w-full max-w-5xl rounded-3xl bg-white border border-slate-200/90 shadow-[0_20px_60px_-15px_rgba(53,32,111,0.12)] overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-[620px] relative z-10">
+        {/* LEFT PANEL — Deep Royal Violet Brand & Living Impact Showcase */}
+        <section className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between relative border-b lg:border-b-0 lg:border-r border-white/10 bg-gradient-to-br from-[#241246] via-[#35206f] to-[#1c0e39] text-white">
+          <div className="relative z-10">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-3 hover:opacity-90 transition-opacity focus:outline-none rounded-xl"
+            >
+              <div className="h-11 w-11 rounded-2xl bg-white/10 border border-white/20 p-1 flex items-center justify-center shrink-0 shadow-md">
+                <Logo className="w-7 h-7" />
               </div>
-              <p className="text-[11px] font-medium text-sky-400/70 tracking-wide uppercase">
-                Surplus Redistribution Network
-              </p>
-            </div>
-          </Link>
-
-          <div className="mt-6 sm:mt-8 lg:mt-8 max-w-2xl">
-            <h1 className="login-page__headline m-0 text-3xl sm:text-4xl lg:text-[clamp(2rem,4.4vh,3.15rem)] xl:text-[clamp(2.25rem,4.8vh,3.4rem)] font-extrabold text-white tracking-tight leading-[1.12]">
-              Bridging <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-300 via-cyan-300 to-sky-400">surplus</span> with those <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-sky-300 to-teal-300">in need</span>.
-            </h1>
-            <p className="text-slate-300/90 text-sm sm:text-base lg:text-[clamp(0.95rem,1.8vh,1.15rem)] mt-4 leading-relaxed max-w-xl font-medium">
-              Connect surplus food and clothing with communities that need them — powered by donors, volunteers, and verified local action.
-            </p>
-          </div>
-        </header>
-
-        <div className="login-page__ecosystem relative z-10 my-5 lg:my-6 flex-1 min-h-0 flex items-center justify-center">
-          <div className="login-page__cards relative w-full max-w-xl grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="login-page__card rounded-xl lg:rounded-2xl p-3.5 border border-sky-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-sky-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default group" style={{ animation: "floatGentle 8s ease-in-out infinite" }}>
-              <div className="flex items-center justify-between gap-1.5 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-400/30 flex items-center justify-center text-base shadow-sm shrink-0">
-                    🍲
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-semibold text-white group-hover:text-sky-300 transition-colors">Meals Redirected</h3>
-                    <p className="text-[10px] text-slate-400">18 districts</p>
-                  </div>
+              <div>
+                <div className="font-bold text-xl tracking-tight text-white flex items-center gap-1.5 font-serif">
+                  PortionBridge
                 </div>
-                <span className="w-2 h-2 rounded-full bg-emerald-400 ring-4 ring-emerald-400/20 animate-pulse shrink-0" />
+                <p className="text-[10px] font-semibold text-[#d9c8f1] tracking-wider uppercase font-mono">
+                  Surplus Redistribution Network
+                </p>
               </div>
-              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight tabular-nums">
-                {(stats.mealsDelivered ?? 0).toLocaleString()}+
-              </div>
-              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
-                Surplus portions matched with local kitchens.
+            </Link>
+
+            <div className="mt-8 space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight tracking-tight font-serif">
+                Bridging <span className="text-[#e8c6ed]">surplus</span>
+                <br />
+                with those <span className="underline decoration-[#6d45bd] underline-offset-4">in need</span>.
+              </h1>
+              <p className="text-white/75 text-xs sm:text-sm leading-relaxed font-normal">
+                Connect surplus food and clothing with communities that need them — powered by donors, volunteers, and verified local action.
               </p>
-              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-emerald-400 font-medium">
-                <Bolt size={12} />
-                <span>Live distribution</span>
-              </div>
             </div>
 
-            <div className="login-page__card rounded-xl lg:rounded-2xl p-3.5 border border-cyan-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-cyan-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default" style={{ animation: "floatReverse 9.5s ease-in-out 1.2s infinite" }}>
-              <div className="flex items-center justify-between gap-1.5 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-sky-500/20 border border-cyan-400/30 flex items-center justify-center text-base shadow-sm shrink-0">
-                    🧥
+            {/* 3 Live Ecosystem Cards */}
+            <div className="mt-7 space-y-3">
+              <div className="rounded-2xl p-3.5 border border-white/15 bg-white/10 backdrop-blur-md shadow-sm hover:bg-white/15 transition-all">
+                <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-400/30 flex items-center justify-center text-sm shrink-0">
+                      🍲
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white">Meals Redirected</h3>
+                      <p className="text-[10px] text-[#d9c8f1]">18 districts</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors">Clothing Drive</h3>
-                    <p className="text-[10px] text-slate-400">Seasonal relief</p>
-                  </div>
+                  <span className="flex items-center gap-1 text-[9px] font-bold text-emerald-300 bg-emerald-500/20 border border-emerald-400/30 px-2 py-0.5 rounded-full">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live
+                  </span>
                 </div>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 shrink-0">Active</span>
-              </div>
-              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight tabular-nums">
-                {(stats.clothesDonated ?? 0).toLocaleString()}+
-              </div>
-              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
-                Warm coats distributed by verified teams.
-              </p>
-              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-cyan-300 font-medium">
-                <MapPin size={12} />
-                <span>Regional distribution</span>
-              </div>
-            </div>
-
-            <div className="login-page__card rounded-xl lg:rounded-2xl p-3.5 border border-sky-400/20 backdrop-blur-xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 shadow-2xl hover:border-sky-400/40 transition-all duration-300 transform hover:scale-[1.02] cursor-default" style={{ animation: "floatGentle 8.5s ease-in-out 2.4s infinite" }}>
-              <div className="flex items-center justify-between gap-1.5 mb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-sky-500/20 to-indigo-500/20 border border-sky-400/30 flex items-center justify-center text-base shadow-sm shrink-0">
-                    🤝
-                  </div>
-                  <div className="min-w-0">
-                    <h3 className="text-xs font-semibold text-white group-hover:text-sky-300 transition-colors">Active Logistics</h3>
-                    <p className="text-[10px] text-slate-400">On-road couriers</p>
-                  </div>
+                <div className="text-2xl font-extrabold text-white font-serif tabular-nums">
+                  {(stats.mealsDelivered ?? 0).toLocaleString()}+
                 </div>
-                <span className="flex items-center gap-1 text-[10px] font-bold text-sky-300 bg-sky-500/20 border border-sky-400/30 px-2 py-0.5 rounded-full shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping" /> Live
-                </span>
+                <p className="text-[11px] text-[#d9c8f1]/80 mt-0.5 leading-snug">
+                  Surplus portions matched with verified local kitchens.
+                </p>
               </div>
-              <div className="text-lg sm:text-xl font-extrabold text-white tracking-tight tabular-nums">
-                {(stats.verifiedVolunteers ?? 0).toLocaleString()}+
+
+              <div className="rounded-2xl p-3.5 border border-white/15 bg-white/10 backdrop-blur-md shadow-sm hover:bg-white/15 transition-all">
+                <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#6d45bd]/30 border border-[#b88de0]/40 flex items-center justify-center text-sm shrink-0">
+                      🧥
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white">Clothing Drive</h3>
+                      <p className="text-[10px] text-[#d9c8f1]">Seasonal relief</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide uppercase bg-white/15 text-[#e8c6ed] border border-white/20">
+                    Active
+                  </span>
+                </div>
+                <div className="text-2xl font-extrabold text-white font-serif tabular-nums">
+                  {(stats.clothesDonated ?? 0).toLocaleString()}+
+                </div>
+                <p className="text-[11px] text-[#d9c8f1]/80 mt-0.5 leading-snug">
+                  Warm coats and clothing bundles distributed across hubs.
+                </p>
               </div>
-              <p className="text-[10px] text-slate-300 mt-0.5 leading-snug">
-                Certified volunteers on dispatch today.
-              </p>
-              <div className="mt-2 pt-2 border-t border-sky-800/30 flex items-center gap-1 text-[10px] text-slate-400">
-                <Route size={12} className="text-sky-400 shrink-0" />
-                <span>Avg. <strong>18 mins</strong> response</span>
+
+              <div className="rounded-2xl p-3.5 border border-white/15 bg-white/10 backdrop-blur-md shadow-sm hover:bg-white/15 transition-all">
+                <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#6d45bd]/30 border border-[#b88de0]/40 flex items-center justify-center text-sm shrink-0">
+                      🤝
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-white">Active Logistics</h3>
+                      <p className="text-[10px] text-[#d9c8f1]">On-road couriers</p>
+                    </div>
+                  </div>
+                  <span className="flex items-center gap-1 text-[9px] font-bold text-[#e8c6ed] bg-white/15 border border-white/20 px-2 py-0.5 rounded-full">
+                    Avg 18m
+                  </span>
+                </div>
+                <div className="text-2xl font-extrabold text-white font-serif tabular-nums">
+                  {(stats.verifiedVolunteers ?? 0).toLocaleString()}+
+                </div>
+                <p className="text-[11px] text-[#d9c8f1]/80 mt-0.5 leading-snug">
+                  Certified volunteer couriers ready for direct dispatch.
+                </p>
               </div>
             </div>
           </div>
-        </div>
 
-        <footer className="login-page__left-footer relative z-10 shrink-0 border-t border-sky-900/40 pt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between text-[10px] sm:text-xs text-slate-400 gap-2">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
-            <span className="text-slate-300">Unified humanitarian platform for Donors, Volunteers &amp; Hubs</span>
-          </div>
-          <div className="flex items-center gap-3 text-slate-500 text-[11px]">
-            <span>Transparent Aid</span>
-            <span>•</span>
-            <span>Zero Food Waste</span>
-          </div>
-        </footer>
-      </section>
+          <footer className="mt-6 pt-4 border-t border-white/15 relative z-10 flex items-center justify-between text-[11px] text-white/70">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Verified Network</span>
+            </div>
+            <div className="flex items-center gap-2 font-mono text-[10px]">
+              <span>Transparent Aid</span>
+              <span>•</span>
+              <span>Zero Waste</span>
+            </div>
+          </footer>
+        </section>
 
-      {/* RIGHT — form */}
-      <section className="login-page__right relative flex-1 lg:w-[47%] xl:w-[45%] flex flex-col justify-center items-center px-4 py-6 sm:px-8 sm:py-8 lg:px-8 lg:py-6 xl:px-10 bg-[#f8fafc] text-slate-900 lg:h-full lg:min-h-0 lg:overflow-y-auto">
-        <div className="absolute top-0 right-0 w-64 h-64 lg:w-80 lg:h-80 bg-sky-400/8 rounded-full blur-3xl pointer-events-none" />
+        {/* RIGHT PANEL — Pristine White Form with High Contrast */}
+        <section className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center bg-white text-slate-900 overflow-y-auto">
+          <div>
+            <div className="mb-4 flex items-center justify-between">
+              <Link
+                to="/"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6d45bd] hover:text-[#35206f] transition-colors group cursor-pointer"
+              >
+                <ArrowRight size={14} className="rotate-180 group-hover:-translate-x-1 transition-transform" />
+                Back to Home
+              </Link>
+            </div>
 
-        <div className="w-full max-w-[440px] relative z-10">
-          <div className="bg-white/90 lg:bg-white border border-slate-200/80 rounded-2xl sm:rounded-3xl shadow-xl shadow-slate-900/5 p-5 sm:p-7">
-            <header className="mb-5">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider text-sky-700 bg-sky-50 border border-sky-100 mb-3 uppercase">
-                <ShieldCheck size={12} className="text-sky-600" /> Welcome back
+            <header className="mb-6 pb-4 border-b border-slate-100">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider text-[#6d45bd] bg-[#f5effb] border border-[#6d45bd]/20 mb-2 uppercase font-mono">
+                <ShieldCheck size={12} className="text-[#6d45bd]" />
+                Welcome back
               </div>
-              <h2 className="m-0 text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight font-serif">
                 Sign in to your account
               </h2>
-              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
                 Continue creating real impact in your community.
               </p>
             </header>
 
+            {/* Error Banner */}
             {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 text-red-700 text-xs flex items-start gap-2.5" role="alert">
-                <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="mb-5 p-3.5 rounded-xl bg-red-50 border-2 border-red-200 text-red-700 text-xs flex items-start gap-2.5" role="alert">
+                <AlertCircle size={17} className="text-red-500 flex-shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold block text-red-900">Couldn&apos;t sign in</span>
-                  <span className="text-red-700/90">{error}</span>
+                  <span className="font-bold block text-red-900">Couldn't sign in</span>
+                  <span className="text-red-700">{error}</span>
                 </div>
               </div>
             )}
 
+            {/* Needs Verification Banner */}
             {needsVerification && (
-              <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-800 text-xs flex flex-col gap-2" role="status">
+              <div className="mb-5 p-3.5 rounded-xl bg-amber-50 border-2 border-amber-200 text-amber-900 text-xs flex flex-col gap-2.5" role="status">
                 <div className="flex items-start gap-2.5">
-                  <Mail size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                  <Mail size={17} className="text-amber-600 flex-shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-semibold block text-amber-900">Verification required</span>
-                    Please verify your email to continue. We sent an activation link to your inbox.
+                    <span className="font-bold block text-amber-900">Verification required</span>
+                    <span>Please verify your email to continue. We sent an activation link to your inbox.</span>
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-amber-200/80">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2 border-t border-amber-200">
                   <span className="text-[11px] text-amber-700 font-medium">
                     {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Ready to resend"}
                   </span>
@@ -407,7 +400,7 @@ export function LoginPage() {
                     type="button"
                     onClick={handleResendVerification}
                     disabled={resendStatus === "sending" || resendCooldown > 0}
-                    className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 bg-[#6d45bd] hover:bg-[#5b33a8] text-white rounded-lg text-xs font-semibold transition-all disabled:opacity-50 cursor-pointer"
                   >
                     {resendStatus === "sending" ? "Sending..." : "Resend email"}
                   </button>
@@ -415,22 +408,24 @@ export function LoginPage() {
               </div>
             )}
 
+            {/* Success Banner */}
             {successMsg && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs flex items-start gap-2.5" role="status">
-                <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+              <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-200 text-emerald-800 text-xs flex items-start gap-2.5" role="status">
+                <CheckCircle2 size={17} className="text-emerald-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-semibold block text-emerald-900">Success</span>
-                  {successMsg}
+                  <span className="font-bold block text-emerald-900">Success</span>
+                  <span>{successMsg}</span>
                 </div>
               </div>
             )}
 
             <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+              {/* Email Input */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5" htmlFor="email">
-                  Email address
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5" htmlFor="email">
+                  Email address <span className="text-[#6d45bd]">*</span>
                 </label>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Mail size={17} />
                   </div>
@@ -449,26 +444,27 @@ export function LoginPage() {
                   />
                 </div>
                 {fieldErrors.email && (
-                  <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                  <p className="text-xs font-medium text-red-600 mt-1.5 flex items-center gap-1">
                     <CircleAlert size={13} /> {fieldErrors.email}
                   </p>
                 )}
               </div>
 
+              {/* Password Input */}
               <div>
                 <div className="flex items-center justify-between gap-3 mb-1.5">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600" htmlFor="password">
-                    Password
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700" htmlFor="password">
+                    Password <span className="text-[#6d45bd]">*</span>
                   </label>
                   <button
                     type="button"
-                    className="text-xs font-semibold text-sky-600 hover:text-sky-700 hover:underline shrink-0"
+                    className="text-xs font-semibold text-[#6d45bd] hover:text-[#35206f] hover:underline shrink-0 cursor-pointer"
                     onClick={() => navigate("/forgot-password")}
                   >
                     Forgot password?
                   </button>
                 </div>
-                <div className="relative">
+                <div className="relative flex items-center">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <LockKeyhole size={17} />
                   </div>
@@ -489,160 +485,102 @@ export function LoginPage() {
                     type="button"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     aria-pressed={showPassword}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus-visible:text-sky-600"
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors focus:outline-none cursor-pointer"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
                 {fieldErrors.password && (
-                  <p className="text-[11px] font-medium text-red-600 mt-1.5 flex items-center gap-1">
+                  <p className="text-xs font-medium text-red-600 mt-1.5 flex items-center gap-1">
                     <CircleAlert size={13} /> {fieldErrors.password}
                   </p>
                 )}
               </div>
 
-              <label className="flex items-start sm:items-center gap-2.5 cursor-pointer">
+              {/* Remember Me */}
+              <label className="flex items-center gap-2.5 cursor-pointer py-1">
                 <input
                   checked={rememberMe}
-                  className="mt-0.5 sm:mt-0 w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 cursor-pointer"
+                  className="w-4 h-4 rounded border-2 border-slate-300 text-[#6d45bd] focus:ring-[#6d45bd]/20 cursor-pointer"
                   name="remember"
                   type="checkbox"
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                <span className="text-xs font-medium text-slate-600 select-none leading-snug">
+                <span className="text-xs font-medium text-slate-600 select-none">
                   Remember this device for 30 days
                 </span>
               </label>
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full min-h-11 relative py-2.5 px-4 bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white font-semibold rounded-xl text-sm transition-all flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed active:scale-[0.99] shadow-[0_10px_24px_-8px_rgba(14,165,233,0.55)]"
+                className="w-full min-h-12 relative py-3.5 px-5 bg-gradient-to-r from-[#35206f] via-[#4d2899] to-[#6d45bd] hover:from-[#2a1758] hover:to-[#572ea8] text-white font-bold rounded-xl text-sm transition-all duration-300 shadow-lg shadow-[#35206f]/25 hover:shadow-xl hover:shadow-[#35206f]/35 active:scale-[0.99] flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed overflow-hidden"
               >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor" />
-                    </svg>
-                    <span>Signing in…</span>
-                  </>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    Sign in
-                    <ArrowRight size={16} className="transform group-hover:translate-x-0.5 transition-transform" />
-                  </span>
-                )}
+                <span
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{
+                    background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.3) 50%, transparent 70%)",
+                    backgroundSize: "220% 220%",
+                    animation: "shimmerSweep 1.6s ease-in-out infinite",
+                  }}
+                />
+                <span className="relative z-10 flex items-center gap-2 font-bold">
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" fill="currentColor" />
+                      </svg>
+                      <span>Signing in...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Sign in</span>
+                      <ArrowRight size={16} className="transform group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </span>
               </button>
 
-              <div className="relative py-1">
-                <div aria-hidden="true" className="absolute inset-0 flex items-center">
+              {/* Divider */}
+              <div className="relative my-5 text-center">
+                <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-slate-200" />
                 </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="px-3 bg-white text-slate-400 font-semibold uppercase tracking-wider text-[10px]">
-                    or continue with
-                  </span>
-                </div>
+                <span className="relative px-3 bg-white text-[10px] uppercase tracking-wider text-slate-400 font-semibold font-mono">
+                  Or continue with
+                </span>
               </div>
 
-              <GoogleAuthButton
-                label="Continue with Google"
-                disabled={loading}
-                onSuccess={handleGoogleSuccess}
-                onError={(message) => setError(message)}
-              />
+              {/* Google Auth Button */}
+              <div className="flex justify-center [&>button]:w-full">
+                <GoogleAuthButton
+                  label="Continue with Google"
+                  disabled={loading}
+                  onSuccess={handleGoogleSuccess}
+                  onError={(message) => setError(message)}
+                />
+              </div>
             </form>
 
-            <p className="mt-5 pt-4 border-t border-slate-100 text-center text-sm text-slate-600">
-              New to PortionBridge?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/register")}
-                className="font-semibold text-sky-600 hover:text-sky-700 hover:underline"
-              >
-                Create an account
-              </button>
-            </p>
-          </div>
-
-          <div className="mt-5 text-center space-y-2 px-1">
-            <p className="text-[11px] text-slate-500 flex items-center justify-center gap-1.5 font-medium leading-snug">
-              <ShieldCheck size={13} className="text-sky-500 shrink-0" />
-              Protected by secure authentication
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-x-3 gap-y-1 text-[11px] text-slate-400 font-medium">
-              <Link to="/" className="hover:text-slate-700 hover:underline">Home</Link>
-              <span aria-hidden="true">·</span>
-              <Link to="/#roles" className="hover:text-slate-700 hover:underline">How it works</Link>
-              <span aria-hidden="true">·</span>
-              <Link to="/register" className="hover:text-slate-700 hover:underline">Create account</Link>
+            {/* Switch to Register */}
+            <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+              <p className="text-xs text-slate-600">
+                New to PortionBridge?{" "}
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="font-bold text-[#6d45bd] hover:text-[#35206f] hover:underline cursor-pointer ml-1"
+                >
+                  Create an account
+                </button>
+              </p>
             </div>
           </div>
-        </div>
-      </section>
-
-      <style>{`
-        @media (min-width: 1024px) {
-          .login-page {
-            height: 100dvh;
-            max-height: 100dvh;
-          }
-
-          @supports not (height: 100dvh) {
-            .login-page {
-              height: 100vh;
-              max-height: 100vh;
-            }
-          }
-
-          .login-page__left {
-            flex-shrink: 0;
-          }
-
-          .login-page__ecosystem {
-            overflow: hidden;
-          }
-        }
-
-        @media (min-width: 1024px) and (max-height: 820px) {
-          .login-page__headline {
-            font-size: clamp(1.55rem, 3.2vh, 2.15rem) !important;
-          }
-
-          .login-page__ecosystem {
-            margin-block: 0.75rem;
-          }
-        }
-
-        @media (min-width: 1024px) and (max-height: 700px) {
-          .login-page__left {
-            padding-block: 1rem;
-          }
-
-          .login-page__headline {
-            font-size: clamp(1.35rem, 2.8vh, 1.75rem) !important;
-          }
-
-          .login-page__card {
-            padding: 0.75rem;
-          }
-
-          .login-page__left-footer {
-            padding-top: 0.5rem;
-          }
-        }
-
-        @keyframes floatGentle {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
-        }
-        @keyframes floatReverse {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(4px); }
-        }
-      `}</style>
+        </section>
+      </div>
     </div>
   );
 }

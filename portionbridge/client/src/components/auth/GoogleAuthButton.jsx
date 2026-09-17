@@ -67,7 +67,7 @@ export function GoogleAuthButton({ onSuccess, onError, label = "Continue with Go
       type="button"
       onClick={handleClick}
       disabled={disabled || !ready}
-      className={`w-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 p-0.5 disabled:cursor-not-allowed bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 rounded-xl ${className}`}
+      className={`w-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6d45bd]/40 p-0.5 disabled:cursor-not-allowed bg-white hover:bg-gray-50 text-gray-900 border border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 rounded-xl ${className}`}
     >
       <span className="flex items-center justify-center gap-2 font-medium py-2 px-3 text-sm sm:text-base">
         <svg

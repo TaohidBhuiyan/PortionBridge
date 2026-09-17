@@ -13,7 +13,7 @@ const PRIMARY_DEEPER = "var(--color-primary-deeper, oklch(22% 0.12 292.717))";
 function FooterMarquee({ text }) {
   const items = useMemo(() => Array(6).fill(text), [text]);
   return (
-    <div className="relative overflow-hidden py-8 border-b border-white/10">
+    <div className="relative overflow-hidden py-5 border-b border-white/10">
       {/* Premium Side Fades */}
       <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-primary-deeper to-transparent pointer-events-none z-10" />
       <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-primary-deeper to-transparent pointer-events-none z-10" />
@@ -23,7 +23,7 @@ function FooterMarquee({ text }) {
         style={{ width: "max-content", animation: "scrollx-ltr-to-rtl 30s linear infinite" }}
       >
         {items.map((t, i) => (
-          <span key={i} className="flex items-center gap-10 font-serif font-bold text-2xl md:text-4xl text-white">
+          <span key={i} className="flex items-center gap-8 font-serif font-bold text-lg md:text-2xl text-white">
             {t}
             <span className="text-lg not-italic" style={{ color: PRIMARY }}>✦</span>
           </span>

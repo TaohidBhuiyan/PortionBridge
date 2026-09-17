@@ -32,13 +32,13 @@ export function Navbar() {
   };
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 bg-white/90 backdrop-blur-sm border-b border-black/5">
-      <div className="max-w-6xl mx-auto flex items-center justify-between px-6 md:px-10 h-16">
-        <Link to="/" className="flex items-center gap-2 font-serif text-lg font-medium">
+    <header className="fixed top-0 inset-x-0 z-50 px-4 pt-4 md:px-6">
+      <div className="glass-panel max-w-5xl mx-auto flex items-center justify-between px-4 md:px-5 h-12 rounded-2xl">
+        <Link to="/" className="flex items-center gap-2 font-serif text-sm md:text-base font-semibold text-[#35206f]">
           <Logo className="w-7 h-7" />
           PortionBridge
         </Link>
-        <nav className="hidden md:flex items-center gap-7 font-mono text-[11px] text-black/60">
+        <nav className="hidden md:flex items-center gap-7 font-mono text-[10px] text-[#35206f]/70">
           <Link to="/#roles" className="hover:opacity-70">Roles</Link>
           <Link to="/#leaderboard" className="hover:opacity-70">Leaderboard</Link>
         </nav>
@@ -47,7 +47,7 @@ export function Navbar() {
             <>
               <Link
                 to={getDashboardPath()}
-                className="hidden sm:inline-block text-sm font-medium px-4 py-2 rounded-full border border-black/10 hover:border-black/30 transition-colors"
+                className="hidden sm:inline-block text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-[#35206f]/15 text-[#35206f] hover:border-[#35206f]/35 transition-colors"
               >
                 Dashboard
               </Link>
@@ -85,14 +85,14 @@ export function Navbar() {
             <>
               <Link
                 to="/login"
-                className="hidden sm:inline-block text-sm font-medium px-4 py-2 rounded-full border border-black/10 hover:border-black/30 transition-colors"
+                className="hidden sm:inline-block text-xs font-semibold px-3.5 py-2 rounded-xl border border-[#35206f]/15 text-[#35206f] hover:border-[#35206f]/35 transition-colors"
               >
                 Login
               </Link>
               <Link
                 to="/register"
-                className="text-white text-sm font-medium px-5 py-2 rounded-full transition-transform hover:scale-105"
-                style={{ background: PRIMARY }}
+                className="text-white text-xs font-semibold px-4 py-2 rounded-xl transition-transform hover:scale-105 shadow-sm"
+                style={{ background: `linear-gradient(135deg, var(--color-primary-deeper), ${PRIMARY})` }}
               >
                 Donate now
               </Link>

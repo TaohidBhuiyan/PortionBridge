@@ -289,6 +289,12 @@
   --color-primary-purple-deep: oklch(38% 0.19 292.717);
   --color-primary-purple-deeper: oklch(22% 0.12 292.717);
   --color-primary-purple-tint: oklch(94% 0.03 292.717);
+
+  /* Landing page specific colors */
+  --color-primary: oklch(60.6% 0.25 292.717);
+  --color-primary-deep: oklch(38% 0.19 292.717);
+  --color-primary-deeper: oklch(22% 0.12 292.717);
+  --color-primary-tint: oklch(94% 0.03 292.717);
 }
 
 /* Global Keyframes - Declared outside @theme so Vite/Tailwind v4 doesn't purge them as unused classes */
@@ -352,6 +358,112 @@
 @keyframes dropdownIn {
   from { opacity: 0; transform: translateY(-4px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Landing Page Glass Panel Effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Hero Section Animations */
+.hero-visual {
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  transform: perspective(1000px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 0.1s ease-out;
+}
+
+.hero-visual-orbit {
+  animation: orbit 20s linear infinite;
+}
+
+.hero-visual-orbit-delayed {
+  animation: orbit 25s linear infinite reverse;
+}
+
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.hero-progress {
+  animation: progressPulse 2s ease-in-out infinite;
+}
+
+@keyframes progressPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.hero-floating-note {
+  animation: floatNote 3s ease-in-out infinite;
+}
+
+.hero-floating-note-delayed {
+  animation: floatNote 4s ease-in-out infinite reverse;
+}
+
+@keyframes floatNote {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.hero-section {
+  --cursor-x: 50%;
+  --cursor-y: 50%;
+}
+
+.hero-content-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .hero-content-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Zone Section Coverage Map */
+.coverage-map {
+  position: relative;
+}
+
+.coverage-marker {
+  animation: markerPulse 2s ease-in-out infinite;
+}
+
+.coverage-marker-pulse {
+  animation: markerPulseInner 2s ease-in-out infinite;
+}
+
+@keyframes markerPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes markerPulseInner {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.role-feature {
+  transition: all 0.3s ease;
+}
+
+.interactive-card {
+  cursor: pointer;
 }
 
 :root {

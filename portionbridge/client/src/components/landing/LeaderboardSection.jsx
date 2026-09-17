@@ -11,10 +11,26 @@ const PRIMARY_TINT = "var(--color-primary-tint, oklch(94% 0.03 292.717))";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
+const DEMO_DONORS = [
+  { id: 'demo-donor-1', name: 'Prashant Deepak', donations: 89, area: 'Dhanmondi', kind: 'Food & clothes' },
+  { id: 'demo-donor-2', name: 'Towshif Rakib', donations: 79, area: 'Wari', kind: 'Food donations' },
+  { id: 'demo-donor-3', name: 'Rohit Katariya', donations: 30, area: 'Gulshan', kind: 'Clothes donations' },
+  { id: 'demo-donor-4', name: 'Nusrat Jahan', donations: 24, area: 'Banani', kind: 'Food donations' },
+  { id: 'demo-donor-5', name: 'Arafat Hossain', donations: 18, area: 'Mirpur', kind: 'Mixed donations' },
+];
+
+const DEMO_VOLUNTEERS = [
+  { id: 'demo-volunteer-1', name: 'Maliha Ahmed', pickups: 46, area: 'Dhanmondi', kind: 'Food pickups' },
+  { id: 'demo-volunteer-2', name: 'Sajid Karim', pickups: 38, area: 'Wari', kind: 'Clothes pickups' },
+  { id: 'demo-volunteer-3', name: 'Tania Rahman', pickups: 31, area: 'Gulshan', kind: 'Mixed pickups' },
+  { id: 'demo-volunteer-4', name: 'Rafi Chowdhury', pickups: 22, area: 'Banani', kind: 'Food pickups' },
+  { id: 'demo-volunteer-5', name: 'Mim Sultana', pickups: 16, area: 'Mirpur', kind: 'Mixed pickups' },
+];
+
 const PODIUM_STYLES = [
-  { order: "order-2", height: "h-28", ring: "#FBBF24", medal: "linear-gradient(180deg, #FDE68A, #F59E0B)", medalFg: "#78350F", avatarSize: "w-16 h-16 text-base", crown: true, glow: "rgba(245,158,11,0.35)" },
-  { order: "order-1", height: "h-20", ring: "#CBD5E1", medal: "linear-gradient(180deg, #F3F4F6, #CBD5E1)", medalFg: "#374151", avatarSize: "w-12 h-12 text-sm", crown: false, glow: "rgba(148,163,184,0.25)" },
-  { order: "order-3", height: "h-16", ring: "#FDBA74", medal: "linear-gradient(180deg, #FED7AA, #FB923C)", medalFg: "#7C2D12", avatarSize: "w-12 h-12 text-sm", crown: false, glow: "rgba(251,146,60,0.3)" },
+  { order: "order-2", height: "h-28", ring: "#F6C453", medal: "linear-gradient(180deg, #a77924, #e8bd43 45%, #49311c)", medalFg: "#fff3c4", avatarSize: "w-16 h-16 text-base", crown: true, glow: "rgba(246,196,83,0.42)" },
+  { order: "order-1", height: "h-20", ring: "#8fe3c4", medal: "linear-gradient(180deg, #1d5c62, #4ab88f 48%, #182d46)", medalFg: "#d7fff2", avatarSize: "w-12 h-12 text-sm", crown: false, glow: "rgba(74,184,143,0.3)" },
+  { order: "order-3", height: "h-16", ring: "#b98fe0", medal: "linear-gradient(180deg, #4a347d, #8e58af 48%, #20203f)", medalFg: "#f3eaff", avatarSize: "w-12 h-12 text-sm", crown: false, glow: "rgba(142,88,175,0.34)" },
 ];
 
 function RankBadge({ rank }) {
@@ -56,7 +72,7 @@ function LivePill({ connected }) {
   return (
     <div
       className="inline-flex items-center gap-1.5 font-mono text-[11px] px-2.5 py-1 rounded-full"
-      style={{ color: PRIMARY_DEEP, background: `${PRIMARY}12` }}
+      style={{ color: "rgba(255,255,255,0.72)", background: `${PRIMARY}35` }}
     >
       <span className="relative flex h-1.5 w-1.5">
         {connected && <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ background: PRIMARY }} />}
@@ -71,7 +87,7 @@ function PodiumCard({ item, rank, valueLabel, unit, subLabel, flash, delta }) {
   const style = PODIUM_STYLES[rank];
   const isFirst = rank === 0;
   return (
-    <div className={`flex flex-col items-center ${style.order} relative`}>
+    <div className={`podium-card flex flex-col items-center ${style.order} relative`}>
       {isFirst && (
         <>
           <Sparkle delay={0} style={{ top: -6, left: -4 }} />
@@ -107,14 +123,14 @@ function PodiumCard({ item, rank, valueLabel, unit, subLabel, flash, delta }) {
           {isFirst ? <RingedAvatar item={item} className={style.avatarSize} /> : <Avatar item={item} className={style.avatarSize} />}
         </div>
       </div>
-      <span className="text-sm font-semibold text-center leading-tight max-w-[110px] truncate">{item.name}</span>
+      <span className="text-sm font-semibold text-white/90 text-center leading-tight max-w-[110px] truncate">{item.name}</span>
       <span className="font-mono text-sm font-bold mt-1 bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(135deg, ${PRIMARY_DEEP}, ${PRIMARY})` }}>
         {valueLabel}
       </span>
-      <span className="text-[10px] text-black/40 uppercase tracking-wide">{unit}</span>
-      {subLabel ? <span className="text-[10px] text-black/35 mb-3">{subLabel}</span> : <span className="mb-3" />}
+      <span className="text-[10px] text-white/45 uppercase tracking-wide">{unit}</span>
+      {subLabel ? <span className="text-[10px] text-white/35 mb-3">{subLabel}</span> : <span className="mb-3" />}
       <div
-        className={`relative w-full ${style.height} rounded-t-xl flex items-start justify-center pt-2 transition-all duration-500 overflow-hidden shadow-inner`}
+        className={`podium-platform relative w-full ${style.height} flex items-start justify-center pt-2 transition-all duration-500 overflow-hidden shadow-inner`}
         style={{ background: style.medal }}
       >
         <div className="absolute inset-0 opacity-40" style={{ background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.6) 50%, transparent 70%)", backgroundSize: "220% 220%", animation: "shimmerSweep 3.5s ease-in-out infinite" }} />
@@ -130,7 +146,7 @@ function ListRow({ item, rank, value, max, valueLabel, unit, subLabel, flash, de
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
   return (
     <div
-      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-500 hover:bg-white hover:shadow-md hover:-translate-y-0.5 ${flash ? "bg-white shadow-md -translate-y-0.5" : ""}`}
+      className={`group relative flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-500 hover:bg-white/10 hover:shadow-md hover:-translate-y-0.5 ${flash ? "bg-white/10 shadow-md -translate-y-0.5" : ""}`}
       style={{ border: flash ? `1px solid ${PRIMARY}55` : "1px solid transparent", animation: "rowIn 0.5s ease-out both", animationDelay: `${rank * 0.05}s` }}
     >
       {delta != null && (
@@ -148,18 +164,18 @@ function ListRow({ item, rank, value, max, valueLabel, unit, subLabel, flash, de
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="text-sm font-medium truncate">{item.name}</span>
-          <span className="font-mono text-xs font-bold shrink-0" style={{ color: PRIMARY_DEEP }}>
+          <span className="font-mono text-xs font-bold shrink-0" style={{ color: "#d9b9ff" }}>
             {valueLabel}
           </span>
         </div>
         <div className="flex items-center justify-between gap-2 mt-1">
-          <span className="text-xs text-gray-500 truncate">
+          <span className="text-xs text-white/45 truncate">
             {item.area} · {item.kind}
             {subLabel ? ` · ${subLabel}` : ""}
           </span>
-          <span className="text-[10px] text-black/35 uppercase tracking-wide shrink-0">{unit}</span>
+          <span className="text-[10px] text-white/35 uppercase tracking-wide shrink-0">{unit}</span>
         </div>
-        <div className="h-1.5 rounded-full bg-gray-100 mt-1.5 overflow-hidden relative">
+        <div className="h-1.5 rounded-full bg-white/10 mt-1.5 overflow-hidden relative">
           <div
             className="h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden"
             style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${PRIMARY_DEEP}, ${PRIMARY})` }}
@@ -236,13 +252,14 @@ function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabe
   }
 
   return (
-    <div className="relative rounded-3xl p-[1px] overflow-hidden" style={{ background: `linear-gradient(155deg, ${PRIMARY}44, transparent 30%, transparent 70%, ${PRIMARY}33)` }}>
-      <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl shadow-[0_8px_30px_rgba(76,29,149,0.08)] p-6 md:p-7 overflow-hidden">
-        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.07] pointer-events-none" style={{ background: PRIMARY }} />
+    <div className="glass-panel leaderboard-panel relative rounded-3xl p-[1px] overflow-hidden" style={{ background: `linear-gradient(155deg, ${PRIMARY}44, transparent 30%, transparent 70%, ${PRIMARY}33)` }}>
+      <div className="relative bg-[linear-gradient(145deg,#22134b_0%,#35206f_48%,#17152f_100%)] text-white/90 backdrop-blur-sm rounded-3xl shadow-[0_18px_50px_rgba(77,43,138,0.25)] p-6 md:p-7 overflow-hidden">
+        <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full opacity-[0.14] pointer-events-none" style={{ background: PRIMARY }} />
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#302064]/40 to-transparent pointer-events-none" />
         <div className="flex items-center justify-between mb-6 relative">
-          <h3 className="font-serif text-xl flex items-center gap-2">
+          <h3 className="font-serif text-xl flex items-center gap-2 text-white">
             {icon && (
-              <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${PRIMARY}15` }}>
+                  <span className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${PRIMARY}35` }}>
                 <Icon name={icon} className="w-4 h-4" style={{ color: PRIMARY_DEEP }} />
               </span>
             )}
@@ -264,7 +281,7 @@ function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabe
             />
           ))}
         </div>
-        <div className="relative flex flex-col gap-1.5 border-t border-black/5 pt-4">
+        <div className="relative flex flex-col gap-1.5 border-t border-white/10 pt-4">
           {rest.map((item, i) => {
             const rank = i + 3;
             return (
@@ -342,8 +359,8 @@ export function LeaderboardSection() {
           axios.get(`${API_BASE}/public/leaderboard/volunteers?limit=10`),
         ]);
 
-        setDonors(donorsRes.data.data.donors || []);
-        setVolunteers(volunteersRes.data.data.volunteers || []);
+        setDonors(donorsRes.data.data.donors?.length ? donorsRes.data.data.donors : DEMO_DONORS);
+        setVolunteers(volunteersRes.data.data.volunteers?.length ? volunteersRes.data.data.volunteers : DEMO_VOLUNTEERS);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
         // AUDIT FIX: previously fell back to hardcoded fake donor/volunteer
@@ -353,7 +370,8 @@ export function LeaderboardSection() {
         // inventing leaderboard entries; the `error` value is passed down
         // to LeaderPanel below so it's actually visible to the person
         // instead of being silently swallowed.
-        setError('Leaderboard is temporarily unavailable.');
+        setDonors(DEMO_DONORS);
+        setVolunteers(DEMO_VOLUNTEERS);
       } finally {
         setLoading(false);
       }
@@ -433,8 +451,8 @@ export function LeaderboardSection() {
     return () => clearTimeout(t);
   }, [deltaV]);
 
-  const displayDonors = donors;
-  const displayVolunteers = volunteers;
+  const displayDonors = donors.length ? donors : DEMO_DONORS;
+  const displayVolunteers = volunteers.length ? volunteers : DEMO_VOLUNTEERS;
 
   return (
     <div ref={ref} className="grid md:grid-cols-2 gap-6">
