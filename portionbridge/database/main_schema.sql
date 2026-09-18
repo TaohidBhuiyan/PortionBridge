@@ -4,7 +4,9 @@
 -- Requires: MySQL 8.0.16+ or MariaDB 10.2.1+ (for CHECK constraint enforcement)
 -- Charset: utf8mb4 (full Unicode support, including emoji in chat messages)
 -- ============================================================================
--- This schema includes all changes from migrations 002-015
+-- This schema includes all structural changes from migrations 002-023.
+-- Migration history INSERTs and existing-data cleanup statements are intentionally
+-- excluded because this file creates a fresh database.
 -- ============================================================================
 --
 -- SETUP INSTRUCTIONS:
@@ -30,6 +32,9 @@ DROP VIEW IF EXISTS top_donors;
 DROP VIEW IF EXISTS top_volunteers;
 
 DROP TABLE IF EXISTS donation_assignments;
+DROP TABLE IF EXISTS recurring_donations;
+DROP TABLE IF EXISTS team_join_requests;
+DROP TABLE IF EXISTS notification_templates;
 DROP TABLE IF EXISTS team_invitations;
 DROP TABLE IF EXISTS team_members;
 DROP TABLE IF EXISTS teams;
@@ -316,6 +321,7 @@ CREATE TABLE volunteer_profiles (
   is_online         TINYINT(1) NOT NULL DEFAULT 0,
   last_location_update TIMESTAMP NULL DEFAULT NULL,
   coverage_radius   DECIMAL(10, 2) DEFAULT NULL,
+  base_address      VARCHAR(255) DEFAULT NULL,
   created_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at        TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
                       ON UPDATE CURRENT_TIMESTAMP,
@@ -420,6 +426,7 @@ CREATE TABLE teams (
   latitude DECIMAL(10, 8) DEFAULT NULL,
   longitude DECIMAL(11, 8) DEFAULT NULL,
   coverage_radius DECIMAL(10, 2) DEFAULT NULL,
+  base_address VARCHAR(255) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
@@ -489,6 +496,37 @@ CREATE INDEX idx_team_invitations_team ON team_invitations(team_id);
 CREATE INDEX idx_team_invitations_invited_user ON team_invitations(invited_user_id);
 CREATE INDEX idx_team_invitations_status ON team_invitations(status);
 CREATE INDEX idx_team_invitations_expires_at ON team_invitations(expires_at);
+
+
+-- ============================================================================
+-- TABLE: team_join_requests
+-- Migration 022/023: Volunteer requests to join an existing team.
+-- ============================================================================
+CREATE TABLE team_join_requests (
+  id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  team_id      INT UNSIGNED NOT NULL,
+  user_id      INT UNSIGNED NOT NULL,
+  status       ENUM('pending', 'accepted', 'rejected', 'cancelled')
+               NOT NULL DEFAULT 'pending',
+  message      VARCHAR(255) DEFAULT NULL,
+  responded_at DATETIME DEFAULT NULL,
+  created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+               ON UPDATE CURRENT_TIMESTAMP,
+  pending_flag TINYINT(1) GENERATED ALWAYS AS
+               (CASE WHEN status = 'pending' THEN 1 ELSE NULL END) STORED,
+
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_team_join_requests_one_pending (team_id, user_id, pending_flag),
+  KEY idx_team_join_requests_team (team_id),
+  KEY idx_team_join_requests_user (user_id),
+  KEY idx_team_join_requests_status (status),
+
+  CONSTRAINT fk_team_join_requests_team
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_team_join_requests_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 
 -- ============================================================================
@@ -707,6 +745,9 @@ CREATE TABLE notifications (
                   'report_filed',
                   'team_invitation_received',
                   'team_invitation_accepted',
+                  'team_join_request_received',
+                  'team_join_request_accepted',
+                  'team_join_request_rejected',
                   'team_member_joined',
                   'team_member_left',
                   'team_leadership_transferred',
@@ -754,6 +795,57 @@ CREATE TABLE notification_templates (
   CONSTRAINT fk_notification_templates_created_by
     FOREIGN KEY (created_by) REFERENCES users(id)
     ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: recurring_donations
+-- Migration 019: Daily, weekly, or monthly donation schedules.
+-- ============================================================================
+CREATE TABLE recurring_donations (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  donor_id        INT UNSIGNED NOT NULL,
+  title           VARCHAR(150) NOT NULL,
+  category        ENUM('food', 'clothes') NOT NULL,
+  description     TEXT DEFAULT NULL,
+  quantity        DECIMAL(10, 2) NOT NULL,
+  quantity_unit   VARCHAR(50) NOT NULL,
+  pickup_location VARCHAR(500) NOT NULL,
+  contact_phone   VARCHAR(20) NOT NULL,
+
+  frequency       ENUM('daily', 'weekly', 'monthly') NOT NULL,
+  interval_value TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  day_of_week    TINYINT UNSIGNED DEFAULT NULL,
+  day_of_month   TINYINT UNSIGNED DEFAULT NULL,
+
+  food_details    JSON DEFAULT NULL,
+  clothing_details JSON DEFAULT NULL,
+
+  is_active       TINYINT(1) NOT NULL DEFAULT 1,
+  start_date      DATE NOT NULL,
+  end_date        DATE DEFAULT NULL,
+  next_occurrence DATE NOT NULL,
+
+  created_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                  ON UPDATE CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (id),
+  KEY idx_recurring_donations_donor (donor_id),
+  KEY idx_recurring_donations_active (is_active),
+  KEY idx_recurring_donations_next (next_occurrence),
+
+  CONSTRAINT fk_recurring_donations_donor
+    FOREIGN KEY (donor_id) REFERENCES users(id)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT chk_recurring_quantity CHECK (quantity > 0),
+  CONSTRAINT chk_recurring_interval CHECK (interval_value >= 1),
+  CONSTRAINT chk_recurring_day_of_week
+    CHECK (day_of_week IS NULL OR day_of_week <= 6),
+  CONSTRAINT chk_recurring_day_of_month
+    CHECK (day_of_month IS NULL OR (day_of_month >= 1 AND day_of_month <= 31)),
+  CONSTRAINT chk_recurring_dates
+    CHECK (end_date IS NULL OR end_date >= start_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 

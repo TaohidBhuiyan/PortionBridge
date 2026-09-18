@@ -24,6 +24,8 @@ import { Step4Images } from '../components/donation/Step4Images';
 import { Step5Review } from '../components/donation/Step5Review';
 import { Step6Assignment } from '../components/donation/Step6Assignment';
 import { donationApi, transformFormDataToApi } from '../services/donationApi';
+import { profileApi } from '../services/profileApi';
+import { useAuth } from '../context/AuthContext';
 
 const stepVariants = {
   enter: (dir) => ({
@@ -41,6 +43,15 @@ const stepVariants = {
     transition: { duration: 0.18, ease: 'easeIn' },
   }),
 };
+
+function formatBackendErrors(errors) {
+  return Object.fromEntries(
+    Object.entries(errors || {}).map(([field, value]) => [
+      field,
+      Array.isArray(value) ? value.join(', ') : String(value),
+    ])
+  );
+}
 
 /**
  * DonationFormPage - Multi-step donation creation & edit flow
@@ -80,6 +91,7 @@ export function DonationFormPage() {
   const [copiedId, setCopiedId] = useState(false);
   const [confirmClearDraft, setConfirmClearDraft] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const categoryParam = searchParams.get('category');
 
@@ -120,7 +132,7 @@ export function DonationFormPage() {
         return updated;
       });
       setCurrentStep(0);
-      setStepValidation([false, false, false, false, true]);
+      setStepValidation([false, false, true]);
       setErrors({});
     }
   }, [categoryParam]);
@@ -167,7 +179,7 @@ export function DonationFormPage() {
           images: donation.images || [],
         };
         setFormData(formInitialData);
-        setStepValidation([true, true, true, true, true]);
+        setStepValidation([true, true, true]);
       } else {
         toast.error(result.error || 'Failed to load donation');
         navigate('/donor/my-donations');
@@ -224,6 +236,35 @@ export function DonationFormPage() {
       }
     }
   }, [isEditMode, editId, loadDonationForEdit, categoryParam]);
+
+  // Apply saved donor preferences only to a new, blank form. A saved draft or
+  // edit must remain the source of truth for values the donor already chose.
+  useEffect(() => {
+    if (isEditMode || localStorage.getItem('donationFormDraft')) return;
+
+    let cancelled = false;
+    profileApi.getProfile().then((result) => {
+      if (cancelled || !result?.success) return;
+
+      const preferences = result.data?.preferences;
+      const preferredSlot = preferences?.preferred_pickup_time;
+      const preferredContact = preferences?.preferred_contact;
+
+      setFormData((previous) => ({
+        ...previous,
+        ...(['morning', 'afternoon', 'evening'].includes(preferredSlot) && !previous.pickupTimeSlot
+          ? { pickupTimeSlot: preferredSlot }
+          : {}),
+        ...(preferredContact === 'phone' && user?.phone && !previous.contactPhone
+          ? { contactPhone: user.phone }
+          : {}),
+      }));
+    }).catch(() => {
+      // Preferences are optional; the form remains usable with manual values.
+    });
+
+    return () => { cancelled = true; };
+  }, [isEditMode, user?.phone]);
 
   // Auto-save form data to localStorage (only for create mode)
   useEffect(() => {
@@ -300,6 +341,10 @@ export function DonationFormPage() {
 
     // Step 1: Pickup & Logistics
     if (stepIndex === 1) {
+      const [year, month, day] = data.pickupDate
+        ? data.pickupDate.split('-').map(Number)
+        : [NaN, NaN, NaN];
+
       if (!data.savedAddressId && !data.pickupAddress?.fullAddress?.trim()) {
         newErrors.fullAddress = 'Address is required';
       }
@@ -313,7 +358,7 @@ export function DonationFormPage() {
       if (!data.pickupDate) {
         newErrors.pickupDate = 'Pickup date is required';
       } else {
-        const pickupDate = new Date(data.pickupDate);
+        const pickupDate = new Date(year, month - 1, day);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (pickupDate < today) {
@@ -323,6 +368,17 @@ export function DonationFormPage() {
 
       if (!data.pickupTimeSlot) {
         newErrors.pickupTimeSlot = 'Time slot is required';
+      } else if (data.pickupDate) {
+        const pickupHourBySlot = {
+          morning: '10:00:00',
+          afternoon: '14:00:00',
+          evening: '18:00:00',
+        };
+        const [hours, minutes, seconds] = (pickupHourBySlot[data.pickupTimeSlot] || '10:00:00').split(':').map(Number);
+        const pickupTime = new Date(year, month - 1, day, hours, minutes, seconds);
+        if (pickupTime <= new Date()) {
+          newErrors.pickupTimeSlot = 'Please choose a future pickup time slot';
+        }
       }
     }
 
@@ -412,9 +468,11 @@ export function DonationFormPage() {
   };
 
   const handleSubmit = async () => {
-    const allValid = stepValidation.every(Boolean);
-    if (!allValid) {
-      const firstInvalidStep = stepValidation.findIndex((v) => !v);
+    const firstStepValid = validateStep(0);
+    const secondStepValid = validateStep(1);
+
+    if (!firstStepValid || !secondStepValid) {
+      const firstInvalidStep = firstStepValid ? 1 : 0;
       setDirection(firstInvalidStep > currentStep ? 1 : -1);
       setCurrentStep(firstInvalidStep);
       return;
@@ -430,11 +488,7 @@ export function DonationFormPage() {
         const updateResult = await donationApi.updateDonation(editId, apiData);
         if (!updateResult.success) {
           if (updateResult.errors) {
-            const backendErrors = {};
-            Object.keys(updateResult.errors).forEach((field) => {
-              backendErrors[field] = updateResult.errors[field].join(', ');
-            });
-            setErrors(backendErrors);
+            setErrors(formatBackendErrors(updateResult.errors));
           } else {
             setErrors({ submit: updateResult.error });
           }
@@ -452,11 +506,7 @@ export function DonationFormPage() {
         const createResult = await donationApi.createDonation(apiData);
         if (!createResult.success) {
           if (createResult.errors) {
-            const backendErrors = {};
-            Object.keys(createResult.errors).forEach((field) => {
-              backendErrors[field] = createResult.errors[field].join(', ');
-            });
-            setErrors(backendErrors);
+            setErrors(formatBackendErrors(createResult.errors));
           } else {
             setErrors({ submit: createResult.error });
           }
@@ -529,9 +579,6 @@ export function DonationFormPage() {
   const handleReturnDashboard = () => {
     navigate('/donor/dashboard');
   };
-
-  const canGoNext = stepValidation[currentStep];
-  const canSubmit = stepValidation.every(Boolean) && !isSubmitting;
 
   // Skeleton Loader for Edit Fetch
   if (loading) {
@@ -755,7 +802,6 @@ export function DonationFormPage() {
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!canGoNext}
                   className="flex items-center gap-2 px-5 sm:px-6 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white rounded-xl font-bold transition-all shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
                 >
                   <span>Continue</span>
@@ -765,7 +811,7 @@ export function DonationFormPage() {
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={!canSubmit}
+                  disabled={isSubmitting}
                   className="flex items-center gap-2 px-6 sm:px-8 py-2.5 bg-gradient-to-r from-dash-primary to-emerald-600 hover:from-dash-primary-hover hover:to-emerald-500 text-white rounded-xl font-bold transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
                 >
                   {isSubmitting ? (

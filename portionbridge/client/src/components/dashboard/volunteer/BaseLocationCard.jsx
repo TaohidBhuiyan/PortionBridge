@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { MapPin, LocateFixed, Loader2, Check, Navigation, ShieldCheck } from 'lucide-react';
+import { useState, useCallback, useEffect } from 'react';
+import { MapPin, LocateFixed, Loader2, Check, Navigation, ShieldCheck, Search, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { reverseGeocode } from '../../../utils/geocoding';
+import { reverseGeocode, searchAddressNominatim } from '../../../utils/geocoding';
 
 const MIN_RADIUS_KM = 1;
 const MAX_RADIUS_KM = 50;
@@ -11,6 +11,36 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
   const [saving, setSaving] = useState(false);
   const [pending, setPending] = useState(null);
   const [radius, setRadius] = useState(savedLocation?.coverageRadius || 10);
+  const [showAddressSearch, setShowAddressSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+
+  const handleAddressSearch = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearching(true);
+    try {
+      const results = await searchAddressNominatim(query);
+      setSearchResults(results);
+    } catch (err) {
+      console.error('Address search failed:', err);
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      handleAddressSearch(searchQuery);
+    }, 450);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery, handleAddressSearch]);
 
   const handleDetect = () => {
     if (!navigator.geolocation) {
@@ -124,6 +154,14 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
           {savedLocation?.baseAddress ? 'Update Location' : 'Use Current GPS Location'}
         </button>
 
+        <button
+          onClick={() => setShowAddressSearch(!showAddressSearch)}
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-surface text-xs font-semibold text-text-primary hover:bg-surface-hover transition-colors"
+        >
+          <Search size={14} className="text-dash-primary" />
+          Enter Address Manually
+        </button>
+
         {pending && (
           <button
             onClick={handleSave}
@@ -135,6 +173,78 @@ export function BaseLocationCard({ savedLocation, onSave, title = 'Base Location
           </button>
         )}
       </div>
+
+      {showAddressSearch && (
+        <div className="mt-3 p-3.5 rounded-xl bg-surface/80 border border-border/70">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Search address..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-9 py-2 rounded-lg border border-border bg-page text-xs text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-dash-primary/20 focus:border-dash-primary"
+              />
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSearchResults([]);
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setShowAddressSearch(false)}
+              className="p-2 rounded-lg border border-border bg-page text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          {searching && (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 size={16} className="animate-spin text-dash-primary" />
+              <span className="ml-2 text-xs text-text-muted">Searching...</span>
+            </div>
+          )}
+
+          {!searching && searchResults.length > 0 && (
+            <div className="max-h-48 overflow-y-auto space-y-1.5">
+              {searchResults.map((result, index) => (
+                <button
+                  key={index}
+                  onClick={() => {
+                    setPending({
+                      latitude: result.lat,
+                      longitude: result.lng,
+                      baseAddress: result.displayName,
+                    });
+                    setShowAddressSearch(false);
+                    setSearchQuery('');
+                    setSearchResults([]);
+                  }}
+                  className="w-full text-left p-2.5 rounded-lg border border-border/60 bg-page hover:bg-surface-hover transition-colors"
+                >
+                  <p className="text-xs font-medium text-text-primary line-clamp-2">{result.displayName}</p>
+                  <p className="text-[11px] text-text-muted mt-0.5">
+                    {result.district && result.district !== result.division ? `${result.district}, ` : ''}
+                    {result.division}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!searching && searchQuery && searchResults.length === 0 && (
+            <p className="text-xs text-text-muted py-4 text-center">No results found. Try a different search term.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

@@ -79,10 +79,10 @@ async function createTeam(userId, { name, description }) {
     await connection.beginTransaction();
 
     // Create team
-    const teamId = await teamModel.create({ name, description, leaderId: userId });
+    const teamId = await teamModel.create({ name, description, leaderId: userId }, connection);
 
     // Add creator as leader member
-    await teamMemberModel.create({ teamId, userId, role: TEAM_MEMBER_ROLE.LEADER });
+    await teamMemberModel.create({ teamId, userId, role: TEAM_MEMBER_ROLE.LEADER }, connection);
 
     await connection.commit();
 
@@ -347,14 +347,14 @@ async function acceptInvitation(invitationId, userId) {
     await connection.beginTransaction();
 
     // Update invitation status
-    await teamInvitationModel.updateStatus(invitationId, TEAM_INVITATION_STATUS.ACCEPTED, new Date());
+    await teamInvitationModel.updateStatus(invitationId, TEAM_INVITATION_STATUS.ACCEPTED, new Date(), connection);
 
     // Add user to team as member
     await teamMemberModel.create({
       teamId: invitation.team_id,
       userId,
       role: TEAM_MEMBER_ROLE.MEMBER,
-    });
+    }, connection);
 
     await connection.commit();
 
@@ -529,13 +529,13 @@ async function promoteMember(teamId, memberId, userId) {
     await connection.beginTransaction();
 
     // Demote current leader to member
-    await teamMemberModel.updateRoleByUserId(userId, TEAM_MEMBER_ROLE.MEMBER);
+    await teamMemberModel.updateRoleByUserId(userId, TEAM_MEMBER_ROLE.MEMBER, connection);
 
     // Promote new member to leader
-    await teamMemberModel.updateRoleByUserId(memberId, TEAM_MEMBER_ROLE.LEADER);
+    await teamMemberModel.updateRoleByUserId(memberId, TEAM_MEMBER_ROLE.LEADER, connection);
 
     // Update team leader
-    await teamModel.updateLeader(teamId, memberId);
+    await teamModel.updateLeader(teamId, memberId, connection);
 
     await connection.commit();
 
@@ -601,13 +601,13 @@ async function transferLeadership(teamId, memberId, userId) {
     await connection.beginTransaction();
 
     // Demote current leader to member
-    await teamMemberModel.updateRoleByUserId(userId, TEAM_MEMBER_ROLE.MEMBER);
+    await teamMemberModel.updateRoleByUserId(userId, TEAM_MEMBER_ROLE.MEMBER, connection);
 
     // Promote new member to leader
-    await teamMemberModel.updateRoleByUserId(memberId, TEAM_MEMBER_ROLE.LEADER);
+    await teamMemberModel.updateRoleByUserId(memberId, TEAM_MEMBER_ROLE.LEADER, connection);
 
     // Update team leader
-    await teamModel.updateLeader(teamId, memberId);
+    await teamModel.updateLeader(teamId, memberId, connection);
 
     await connection.commit();
 
@@ -737,7 +737,7 @@ async function sendJoinRequest(userId, { teamId, message }) {
 
   // Send notification to team leader
   await notificationService.createNotification(team.leader_id, {
-    type: NOTIFICATION_TYPES.TEAM_INVITATION_RECEIVED,
+    type: NOTIFICATION_TYPES.TEAM_JOIN_REQUEST_RECEIVED,
     title: 'New Team Join Request',
     message: `${user.name} has requested to join your team "${team.name}".`,
     relatedId: teamId,
@@ -839,21 +839,21 @@ async function acceptJoinRequest(teamId, requestId, userId) {
     await connection.beginTransaction();
 
     // Update request status
-    await teamJoinRequestModel.updateStatus(requestId, 'accepted', new Date());
+    await teamJoinRequestModel.updateStatus(requestId, 'accepted', new Date(), connection);
 
     // Add volunteer to team_members
     await teamMemberModel.create({
       teamId,
       userId: request.user_id,
       role: TEAM_MEMBER_ROLE.MEMBER,
-    });
+    }, connection);
 
     await connection.commit();
 
     // Notify requesting volunteer
     const targetUser = await userModel.findById(request.user_id);
     await notificationService.createNotification(request.user_id, {
-      type: NOTIFICATION_TYPES.TEAM_INVITATION_ACCEPTED,
+      type: NOTIFICATION_TYPES.TEAM_JOIN_REQUEST_ACCEPTED,
       title: 'Join Request Accepted',
       message: `Your request to join team "${team.name}" was accepted!`,
       relatedId: teamId,
@@ -909,7 +909,7 @@ async function rejectJoinRequest(teamId, requestId, userId) {
 
   // Notify requesting volunteer
   await notificationService.createNotification(request.user_id, {
-    type: NOTIFICATION_TYPES.TEAM_MEMBER_REMOVED,
+    type: NOTIFICATION_TYPES.TEAM_JOIN_REQUEST_REJECTED,
     title: 'Join Request Update',
     message: `Your request to join team "${team.name}" was declined.`,
     relatedId: teamId,

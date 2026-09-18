@@ -52,7 +52,7 @@ export function RatingSubmission({ donation, onRatingSubmitted }) {
         
         // Notify parent component
         if (onRatingSubmitted) {
-          onRatingSubmitted(result.data.rating);
+          onRatingSubmitted(result.data?.rating || result.data);
         }
       } else {
         setError(result.error || 'Failed to submit rating');

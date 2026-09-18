@@ -35,6 +35,7 @@ import { RatingSubmission } from '../components/donation/RatingSubmission';
 import { ReportIssueModal } from '../components/donation/ReportIssueModal';
 import { useDonationTracking } from '../hooks/useDonationTracking';
 import { useAuth } from '../context/AuthContext';
+import { DashboardLayout } from '../components/dashboard';
 
 /**
  * DonationDetailsPage - Central tracking page for a donation
@@ -70,10 +71,13 @@ export function DonationDetailsPage() {
       const result = await donationApi.getDonationDetails(id);
 
       if (result.success) {
-        setDonation(result.data.donation);
+        const donationData = result.data?.donation || result.data;
+        setDonation(donationData);
         // Check if donation has existing rating
-        if (result.data.donation.rating) {
-          setExistingRating(result.data.donation.rating);
+        if (donationData?.rating) {
+          setExistingRating(donationData.rating);
+        } else {
+          setExistingRating(null);
         }
       } else {
         if (result.status === 403 && result.error?.includes('Set your base address')) {
@@ -82,8 +86,8 @@ export function DonationDetailsPage() {
           setError(result.error);
         }
       }
-    } catch {
-      setError('Failed to load donation details. Please try again.');
+    } catch (error) {
+      setError(error?.message || 'Failed to load donation details. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -391,12 +395,16 @@ export function DonationDetailsPage() {
   const canComplete = (isDonorOwner || currentUser?.role === 'donor') && status === 'picked_up';
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto pb-12 space-y-6">
       {/* Header */}
-      <div className="mb-6">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-dash-primary via-indigo-600 to-purple-600 p-6 sm:p-8 text-white shadow-xl">
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute right-1/3 -top-12 w-48 h-48 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
+        <div className="relative z-10">
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 rounded-lg px-2 py-1 text-sm"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium backdrop-blur-md transition-colors mb-4"
         >
           <ArrowLeft size={16} />
           <span className="font-medium">Back</span>
@@ -404,16 +412,17 @@ export function DonationDetailsPage() {
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-xl font-semibold text-text-primary">
+              <Package className="w-8 h-8 text-amber-300 shrink-0" />
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
                 {title}
               </h1>
               <StatusBadge status={status} />
             </div>
-            <p className="text-sm text-text-secondary">
+            <p className="text-sm text-white/80 ml-11">
               ID: #{donationId} • Created {formatDate(created_at)}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {canEdit && (
               <button
                 onClick={handleEdit}
@@ -489,7 +498,7 @@ export function DonationDetailsPage() {
             )}
           </div>
         </div>
-
+      </div>
       </div>
 
       {/* Main Content Grid */}
@@ -795,7 +804,8 @@ export function DonationDetailsPage() {
         donationTitle={title}
         isLoading={actionInProgress}
       />
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

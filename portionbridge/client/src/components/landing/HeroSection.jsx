@@ -107,11 +107,11 @@ function HeroVisual() {
           </div>
         </div>
 
-        <div className="hero-floating-note absolute -right-5 top-24 hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-left shadow-xl shadow-[#35206f]/10 backdrop-blur-md sm:flex">
+        <div className="hero-floating-note absolute -right-5 top-24 hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-left shadow-xl shadow-[#35206f]/10 backdrop-blur-md lg:flex">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><Icon name="check" className="h-4 w-4" /></span>
           <span><strong className="block text-xs text-[#35206f]">Pickup confirmed</strong><small className="text-[10px] text-[#35206f]/50">A moment ago</small></span>
         </div>
-        <div className="hero-floating-note hero-floating-note-delayed absolute -left-7 bottom-12 hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-left shadow-xl shadow-[#35206f]/10 backdrop-blur-md sm:flex">
+        <div className="hero-floating-note hero-floating-note-delayed absolute -left-7 bottom-12 hidden items-center gap-2 rounded-2xl border border-white/80 bg-white/90 px-3 py-2.5 text-left shadow-xl shadow-[#35206f]/10 backdrop-blur-md lg:flex">
           <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#f6effb] text-[#6d45bd]"><Icon name="shirt" className="h-4 w-4" /></span>
           <span><strong className="block text-xs text-[#35206f]">More than a donation</strong><small className="text-[10px] text-[#35206f]/50">A bridge to someone</small></span>
         </div>

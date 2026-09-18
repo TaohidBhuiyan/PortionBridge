@@ -37,7 +37,7 @@ Go to: `http://localhost/phpmyadmin`
 
 **What this creates:**
 - The `portionbridge` database (if it doesn't already exist)
-- 23 tables: `users`, `email_verifications`, `password_history`, `refresh_tokens`, `audit_logs`, `password_resets`, `saved_addresses`, `user_preferences`, `notification_settings`, `volunteer_profiles`, `user_achievements`, `achievement_definitions`, `teams`, `team_members`, `team_invitations`, `donation_requests`, `donation_assignments`, `donation_status_history`, `chat_messages`, `notifications`, `ratings`, `reports`, `schema_migrations`
+- 26 tables: `users`, `schema_migrations`, `email_verifications`, `password_history`, `refresh_tokens`, `audit_logs`, `password_resets`, `saved_addresses`, `user_preferences`, `notification_settings`, `volunteer_profiles`, `user_achievements`, `achievement_definitions`, `teams`, `team_members`, `team_invitations`, `team_join_requests`, `donation_requests`, `donation_assignments`, `donation_status_history`, `chat_messages`, `notifications`, `notification_templates`, `recurring_donations`, `ratings`, `reports`
 - 2 views: `top_donors`, `top_volunteers`
 
 > If you're re-importing after a previous attempt, this file safely drops and recreates everything — no manual cleanup needed.
@@ -52,7 +52,7 @@ Go to: `http://localhost/phpmyadmin`
 4. Click **Go**.
 
 **What this creates:**
-- 4 triggers: `trg_donation_status_insert`, `trg_donation_status_update`, `trg_saved_addresses_limit`, `trg_saved_addresses_single_default`
+- 3 triggers: `trg_donation_status_insert`, `trg_donation_status_update`, and `trg_saved_addresses_limit`
 
 These triggers provide automatic audit logging, notification generation, and data integrity constraints at the database level.
 
@@ -76,7 +76,7 @@ These triggers provide automatic audit logging, notification generation, and dat
 
 ## Step 6 — Verify the Import
 
-In phpMyAdmin, click on the `portionbridge` database in the left sidebar and confirm you see all 23 tables plus the 2 views listed.
+In phpMyAdmin, click on the `portionbridge` database in the left sidebar and confirm you see all 26 tables plus the 2 views listed.
 
 Quick verification queries (run these in the **SQL** tab):
 

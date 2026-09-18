@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Award, Loader2, Sparkles } from 'lucide-react';
+import { Award, Loader2, Sparkles, Trophy } from 'lucide-react';
 import { achievementApi } from '../../services/achievementApi';
 import { AchievementBadge } from './AchievementBadge';
 
@@ -80,23 +80,35 @@ export function AchievementsPanel() {
   }
 
   return (
-    <div className="bg-surface rounded-3xl border border-border/50 p-5 sm:p-6 shadow-pb-card h-full flex flex-col justify-between">
+    <div className="relative overflow-hidden bg-surface rounded-3xl border border-border/50 p-5 sm:p-6 shadow-pb-card h-full flex flex-col justify-between">
+      <div className="pointer-events-none absolute -right-12 -top-14 h-36 w-36 rounded-full bg-amber-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute -left-16 bottom-8 h-28 w-28 rounded-full bg-dash-primary/10 blur-3xl" />
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-dash-primary-soft flex items-center justify-center text-dash-primary">
-              <Award size={16} />
+        <div className="relative flex items-start justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-md shadow-amber-500/20">
+              <Trophy size={19} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-text-primary">Achievements</h3>
-              <p className="text-xs text-text-secondary">Earned Medals & Badges</p>
+              <h3 className="text-base font-extrabold text-text-primary">Achievements</h3>
+              <p className="text-xs text-text-secondary">Earned medals & badges</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-[11px]">
-              <Sparkles size={11} />
-              {summary.totalPoints} pts
+          <div className="flex flex-col items-end gap-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-extrabold text-[11px] border border-amber-500/15">
+              <Sparkles size={12} /> {Number(summary.totalPoints || 0).toLocaleString()} pts
             </span>
+            <span className="text-[10px] font-semibold text-text-muted">{summary.totalCount || 0} unlocked</span>
+          </div>
+        </div>
+
+        <div className="relative mb-5 rounded-2xl border border-amber-500/15 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600 dark:text-amber-400">Your impact collection</p>
+              <p className="mt-1 text-xs font-medium text-text-secondary">Every completed donation adds to your story.</p>
+            </div>
+            <Award size={22} className="shrink-0 text-amber-500" />
           </div>
         </div>
 
@@ -111,11 +123,11 @@ export function AchievementsPanel() {
             </p>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="relative space-y-2">
             {achievements.map((achievement) => (
-              <div key={achievement.id} className="relative p-2 rounded-xl bg-surface hover:bg-surface-hover border border-border/40 transition-colors">
+              <div key={achievement.id} className="relative rounded-2xl border border-border/50 bg-surface-hover/45 p-2 transition-colors hover:border-dash-primary/25 hover:bg-dash-primary-soft/40">
                 <AchievementBadge achievement={achievement} />
-                <p className="text-[10px] text-text-secondary mt-1 ml-11">
+                <p className="text-[10px] text-text-muted mt-1 ml-12">
                   Unlocked {formatDate(achievement.unlocked_at)}
                 </p>
               </div>

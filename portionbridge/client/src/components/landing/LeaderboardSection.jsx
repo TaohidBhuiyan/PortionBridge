@@ -189,9 +189,10 @@ function ListRow({ item, rank, value, max, valueLabel, unit, subLabel, flash, de
 }
 
 function LeaderPanel({ title, icon, items, valueKey, valueLabelFn, unit, subLabelFn, loading, error, connected, flashIdx, delta }) {
-  const top3 = items.slice(0, 3);
-  const rest = items.slice(3);
-  const max = items.length > 0 ? Math.max(...items.map((i) => i[valueKey])) : 0;
+  const topFive = items.slice(0, 5);
+  const top3 = topFive.slice(0, 3);
+  const rest = topFive.slice(3);
+  const max = topFive.length > 0 ? Math.max(...topFive.map((i) => i[valueKey])) : 0;
 
   if (loading && items.length === 0) {
     return (
@@ -355,8 +356,8 @@ export function LeaderboardSection() {
         setError(null);
 
         const [donorsRes, volunteersRes] = await Promise.all([
-          axios.get(`${API_BASE}/public/leaderboard/donors?limit=10`),
-          axios.get(`${API_BASE}/public/leaderboard/volunteers?limit=10`),
+          axios.get(`${API_BASE}/public/leaderboard/donors?limit=5`),
+          axios.get(`${API_BASE}/public/leaderboard/volunteers?limit=5`),
         ]);
 
         setDonors(donorsRes.data.data.donors?.length ? donorsRes.data.data.donors : DEMO_DONORS);

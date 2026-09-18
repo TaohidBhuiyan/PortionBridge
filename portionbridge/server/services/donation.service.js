@@ -11,6 +11,7 @@ const { getIO, broadcastTeamActivity } = require('../sockets/ioInstance');
 const { getDonationRoomName, getAdminLiveOpsRoomName } = require('../sockets/rooms');
 const teamMemberModel = require('../models/teamMember.model');
 const savedAddressModel = require('../models/savedAddress.model');
+const ratingModel = require('../models/rating.model');
 
 /**
  * Broadcasts a real-time 'donation_status_updated' event for one donation,
@@ -1257,7 +1258,8 @@ async function getDonationDetails(donationId, userId, userRole) {
   }
   // Admins can view any donation - no restriction needed
 
-  return donation;
+  const rating = await ratingModel.findByDonationId(donation.id);
+  return { ...donation, rating };
 }
 
 /**

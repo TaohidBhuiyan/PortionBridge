@@ -15,10 +15,11 @@ const BASE_COLUMNS = `
  * @param {string} data.name - Team name
  * @param {string|null} data.description - Team description
  * @param {number} data.leaderId - User ID of the team leader
+ * @param {Object} executor - Database executor (defaults to pool)
  * @returns {Promise<number>} The insert ID
  */
-async function create({ name, description, leaderId }) {
-  const [result] = await pool.query(
+async function create({ name, description, leaderId }, executor = pool) {
+  const [result] = await executor.query(
     `INSERT INTO teams (name, description, leader_id)
      VALUES (:name, :description, :leaderId)`,
     {
@@ -95,10 +96,11 @@ async function update(id, fields) {
  * Updates the team leader.
  * @param {number} id - Team ID
  * @param {number} newLeaderId - New leader's user ID
+ * @param {Object} executor - Database executor (defaults to pool)
  * @returns {Promise<void>}
  */
-async function updateLeader(id, newLeaderId) {
-  await pool.query(
+async function updateLeader(id, newLeaderId, executor = pool) {
+  await executor.query(
     `UPDATE teams SET leader_id = :newLeaderId WHERE id = :id`,
     { newLeaderId, id }
   );

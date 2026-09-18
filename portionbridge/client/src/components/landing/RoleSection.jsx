@@ -12,7 +12,7 @@ const ROLES = [
     icon: "donor",
     title: "Donor",
     tag: "GIVE WHAT YOU CAN SPARE",
-    body: "Share extra food or clothes in under a minute. Choose to donate cash, goods, or both — and easily track which zone and volunteer handles the pickup.",
+    body: "Share extra food or clothes in under a minute, then easily track which zone and volunteer handles the pickup.",
     points: ["Schedule a pickup from your address", "See your total impact on the leaderboard", "Get a receipt for every handover"],
   },
   {
@@ -40,7 +40,7 @@ export function RoleSection() {
           <div className="font-mono text-xs mb-4 text-center" style={{ color: PRIMARY_DEEP }}>HOW IT WORKS</div>
           <h2 className="font-serif text-4xl md:text-5xl max-w-xl mx-auto text-center">Two roles, one bridge.</h2>
           <p className="text-black/55 max-w-lg mx-auto mt-4 text-center">
-            PortionBridge connects donors and volunteers through one simple platform. Donors can share food, clothes, or financial support, while volunteers help ensure every contribution reaches the people who need it.
+            PortionBridge connects donors and volunteers through one simple platform. Donors can share extra food and clothing, while volunteers help ensure every contribution reaches the people who need it.
           </p>
         </Reveal>
 

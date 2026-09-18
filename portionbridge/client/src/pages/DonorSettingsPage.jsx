@@ -86,9 +86,8 @@ export function DonorSettingsPage() {
           <div className="flex items-center gap-4 z-10">
             <div className="relative">
               <Avatar
-                src={user?.profile_photo_url}
-                alt={user?.name || 'User'}
-                size="lg"
+                item={user}
+                tone="dash"
                 className="w-16 h-16 rounded-2xl border-2 border-surface shadow-md object-cover"
               />
               <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-success border-2 border-surface flex items-center justify-center text-[10px] text-white font-bold">

@@ -25,7 +25,7 @@ import { Button } from '../components/common/Button';
 import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 import { Package } from 'lucide-react';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { autoTable } from 'jspdf-autotable';
 
 /**
  * MyDonationsPage - Donation Management Center
@@ -209,38 +209,43 @@ export function MyDonationsPage() {
       return;
     }
 
-    const doc = new jsPDF();
-    const tableColumn = ['Title', 'Category', 'Status', 'Quantity', 'Unit', 'Pickup Date'];
-    const tableRows = donations.map(d => [
-      d.title,
-      d.category,
-      d.status,
-      d.quantity,
-      d.quantity_unit,
-      d.pickup_date ? new Date(d.pickup_date).toLocaleDateString() : 'N/A',
-    ]);
+    try {
+      const doc = new jsPDF();
+      const tableColumn = ['Title', 'Category', 'Status', 'Quantity', 'Unit', 'Pickup Date'];
+      const tableRows = donations.map(d => [
+        d.title,
+        d.category,
+        d.status,
+        d.quantity,
+        d.quantity_unit,
+        d.pickup_date ? new Date(d.pickup_date).toLocaleDateString() : 'N/A',
+      ]);
 
-    doc.setFontSize(18);
-    doc.text('Donation History', 14, 22);
-    doc.setFontSize(11);
-    doc.text(`Exported on ${new Date().toLocaleDateString()}`, 14, 30);
+      doc.setFontSize(18);
+      doc.text('Donation History', 14, 22);
+      doc.setFontSize(11);
+      doc.text(`Exported on ${new Date().toLocaleDateString()}`, 14, 30);
 
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 40,
-      styles: {
-        fontSize: 9,
-        cellPadding: 3,
-      },
-      headStyles: {
-        fillColor: [59, 130, 246],
-        textColor: 255,
-      },
-    });
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 40,
+        styles: {
+          fontSize: 9,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [59, 130, 246],
+          textColor: 255,
+        },
+      });
 
-    doc.save(`donation-history-${new Date().toISOString().split('T')[0]}.pdf`);
-    toast.success('PDF exported successfully');
+      doc.save(`donation-history-${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success('PDF exported successfully');
+    } catch (error) {
+      console.error('Failed to export donation history PDF:', error);
+      toast.error('Could not export PDF. Please try again.');
+    }
   };
 
   const totalPages = Math.ceil(total / limit);

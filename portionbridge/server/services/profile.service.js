@@ -463,7 +463,7 @@ function calculateMonthlyTrend(donations) {
 
   // Populate with actual data
   donations.forEach(donation => {
-    const monthKey = donation.created_at.slice(0, 7);
+    const monthKey = new Date(donation.created_at).toISOString().slice(0, 7);
     if (monthlyData[monthKey]) {
       monthlyData[monthKey].count++;
       if (donation.status === DONATION_STATUS.COMPLETED) {

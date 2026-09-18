@@ -118,10 +118,11 @@ async function findByUserId(userId) {
  * @param {number} id - Request ID
  * @param {string} status - New status ('accepted', 'rejected', 'cancelled')
  * @param {Date|null} respondedAt - Timestamp
+ * @param {Object} executor - Database executor (defaults to pool)
  * @returns {Promise<void>}
  */
-async function updateStatus(id, status, respondedAt = new Date()) {
-  await pool.query(
+async function updateStatus(id, status, respondedAt = new Date(), executor = pool) {
+  await executor.query(
     `UPDATE team_join_requests
      SET status = :status, responded_at = :respondedAt
      WHERE id = :id`,

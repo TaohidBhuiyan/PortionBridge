@@ -220,7 +220,7 @@ export const donationApi = {
         }
       );
       
-      return { success: true, data: response.data.data };
+      return { success: true, data: response.data.data?.summary || response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch donation summary';
       return { success: false, error: message };
@@ -280,7 +280,8 @@ export const donationApi = {
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to update donation';
-      return { success: false, error: message };
+      const errors = error.response?.data?.errors || null;
+      return { success: false, error: message, errors };
     }
   },
 
@@ -567,6 +568,12 @@ export const donationApi = {
  * @returns {Object} API request body
  */
 export const transformFormDataToApi = (formData) => {
+  const pickupHourBySlot = {
+    morning: '10:00:00',
+    afternoon: '14:00:00',
+    evening: '18:00:00',
+  };
+
   const apiData = {
     title: formData.title,
     category: formData.category,
@@ -575,6 +582,9 @@ export const transformFormDataToApi = (formData) => {
     quantityUnit: formData.quantityUnit,
     contactPhone: formData.contactPhone,
     pickupDate: formData.pickupDate,
+    pickupTime: formData.pickupDate && formData.pickupTimeSlot
+      ? `${formData.pickupDate}T${pickupHourBySlot[formData.pickupTimeSlot] || '10:00:00'}`
+      : undefined,
     pickupTimeSlot: formData.pickupTimeSlot,
     specialInstructions: formData.specialInstructions,
   };

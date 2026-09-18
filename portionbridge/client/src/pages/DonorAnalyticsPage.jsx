@@ -7,6 +7,9 @@ import { analyticsApi } from '../services/analyticsApi';
 import { LineChart } from '../components/common/LineChart';
 import { PieChart } from '../components/common/PieChart';
 import { AchievementsPanel } from '../components/common/AchievementsPanel';
+import jsPDF from 'jspdf';
+import { autoTable } from 'jspdf-autotable';
+import toast from 'react-hot-toast';
 
 export function DonorAnalyticsPage() {
   const navigate = useNavigate();
@@ -46,6 +49,49 @@ export function DonorAnalyticsPage() {
     { value: 'last_6_months', label: 'Last 6 Months' },
     { value: 'all_time', label: 'All Time' },
   ];
+
+  const handleExportReport = () => {
+    if (!stats) {
+      toast.error('Analytics are still loading');
+      return;
+    }
+
+    try {
+      const doc = new jsPDF();
+      const rangeLabel = timeRangeOptions.find((option) => option.value === timeRange)?.label || 'All Time';
+
+      doc.setFontSize(18);
+      doc.text('PortionBridge Impact Report', 14, 20);
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Donor: ${user?.name || 'Donor'} | Period: ${rangeLabel}`, 14, 28);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 34);
+      doc.setTextColor(0);
+
+      autoTable(doc, {
+        startY: 44,
+        head: [['Metric', 'Value']],
+        body: [
+          ['Total donations', stats.totalDonations || 0],
+          ['Completed pickups', stats.completedDonations || 0],
+          ['Food donations', stats.foodDonations || 0],
+          ['Clothing donations', stats.clothingDonations || 0],
+          ['Meals shared', stats.mealsShared || 0],
+          ['Clothes donated', stats.clothesDonated || 0],
+          ['People helped', stats.peopleHelped || 0],
+          ['Completion rate', `${stats.completionRate || 0}%`],
+        ],
+        headStyles: { fillColor: [14, 116, 144], textColor: 255 },
+        styles: { fontSize: 10, cellPadding: 4 },
+      });
+
+      doc.save(`portionbridge-impact-report-${new Date().toISOString().split('T')[0]}.pdf`);
+      toast.success('Impact report exported successfully');
+    } catch (error) {
+      console.error('Failed to export impact report:', error);
+      toast.error('Could not export report. Please try again.');
+    }
+  };
 
   if (loading) {
     return (
@@ -109,9 +155,10 @@ export function DonorAnalyticsPage() {
             </div>
 
             <button
-              disabled
-              title="Export report coming soon"
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-muted rounded-xl text-xs font-semibold cursor-not-allowed opacity-60"
+              onClick={handleExportReport}
+              disabled={loading || !stats}
+              title="Export impact report"
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-surface border border-border text-text-secondary hover:text-dash-primary hover:border-dash-primary/40 rounded-xl text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Download size={14} />
               <span>Export Report</span>

@@ -29,6 +29,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useAuthSocket } from '../../context/SocketContext';
 import { Avatar } from '../common/Avatar';
+import { Logo } from '../common/Logo';
 
 function NavLink({ item, active, isCollapsed, onNavigate }) {
   return (
@@ -38,7 +39,7 @@ function NavLink({ item, active, isCollapsed, onNavigate }) {
       aria-current={active ? 'page' : undefined}
       aria-label={isCollapsed ? item.title : undefined}
       title={isCollapsed ? item.title : undefined}
-      className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl mb-1 text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/40 ${
+      className={`group relative flex items-center justify-start gap-3 px-3 py-2 rounded-xl mb-1 text-left text-xs font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/40 ${
         active
           ? 'bg-dash-primary-soft text-dash-primary font-semibold shadow-xs'
           : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -208,9 +209,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
         <div className={`flex items-center h-16 px-4 border-b border-border/40 ${collapsed ? 'justify-center px-0' : 'justify-between'}`}>
           {!collapsed && (
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-xl bg-dash-primary/10 border border-dash-primary/20 flex items-center justify-center shrink-0">
-                <span className="w-2 h-2 bg-dash-primary rounded-full" />
-              </div>
+              <Logo className="w-7 h-7 shrink-0" />
               <span className="font-bold text-text-primary tracking-tight truncate text-sm">PortionBridge</span>
             </div>
           )}
@@ -290,9 +289,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
         {/* Mobile Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-xl bg-dash-primary/10 border border-dash-primary/20 flex items-center justify-center">
-              <span className="w-2 h-2 bg-dash-primary rounded-full" />
-            </div>
+            <Logo className="w-7 h-7 shrink-0" />
             <span className="font-bold text-text-primary text-sm">PortionBridge</span>
           </div>
           <button
@@ -310,7 +307,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
               key={item.title}
               to={item.path}
               onClick={onMobileToggle}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary ${
+              className={`flex items-center justify-start gap-3 px-3 py-2.5 rounded-xl mb-1 text-left text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary ${
                 isActive(item.path)
                   ? 'bg-dash-primary-soft text-dash-primary font-semibold'
                   : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'

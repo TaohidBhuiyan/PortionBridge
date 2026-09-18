@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Award, ChevronLeft, ChevronRight, Crown, Heart, Medal, Sparkles, Target, Trophy, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
+import { Avatar as UserAvatar } from '../components/common/Avatar';
 import leaderboardApi from '../services/leaderboardApi';
 
 const PAGE_SIZE = 10;
@@ -13,8 +14,7 @@ const podiumStyles = {
 };
 
 function Avatar({ donor, className = '' }) {
-  const initial = (donor.name || '?').charAt(0).toUpperCase();
-  return <div className={`overflow-hidden rounded-full bg-gradient-to-br from-donor to-violet-500 p-[2px] ${className}`}><div className="h-full w-full overflow-hidden rounded-full bg-surface">{donor.photo ? <img src={donor.photo} alt={donor.name || 'Donor'} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center bg-donor-soft text-lg font-bold text-donor">{initial}</div>}</div></div>;
+  return <div className={`overflow-hidden rounded-full bg-gradient-to-br from-donor to-violet-500 p-[2px] ${className}`}><UserAvatar item={donor} tone="brand" className="h-full w-full" /></div>;
 }
 
 function PodiumCard({ donor, rank, reducedMotion }) {
