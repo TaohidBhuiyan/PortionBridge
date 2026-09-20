@@ -44,6 +44,17 @@ async function assertNoActiveAssignment(userId, action = 'removed') {
   }
 }
 
+async function assertNoActiveTeamAssignment(teamId) {
+  const assignments = await donationModel.findByTeamId(teamId);
+  const active = assignments.filter((d) => ACTIVE_DONATION_STATUSES.includes(d.status));
+  if (active.length > 0) {
+    throw new AppError(
+      `This team has ${active.length} active donation${active.length > 1 ? 's' : ''} in progress and can't be deleted yet. Wait for completion first.`,
+      HTTP_STATUS.CONFLICT
+    );
+  }
+}
+
 /**
  * Creates a new team.
  * @param {number} userId - User ID of the team creator
@@ -159,7 +170,7 @@ async function updateTeam(teamId, userId, data) {
  */
 async function deleteTeam(teamId, userId) {
   const team = await teamModel.findById(teamId);
-  
+
   if (!team) {
     throw new AppError('Team not found.', HTTP_STATUS.NOT_FOUND);
   }
@@ -167,6 +178,9 @@ async function deleteTeam(teamId, userId) {
   if (team.leader_id !== userId) {
     throw new AppError('Only the team leader can delete the team.', HTTP_STATUS.FORBIDDEN);
   }
+
+  // Block deletion if team has active donations
+  await assertNoActiveTeamAssignment(teamId);
 
   await teamModel.deleteById(teamId);
 

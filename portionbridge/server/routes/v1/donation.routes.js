@@ -38,6 +38,8 @@ const {
   cancelDonationValidationRules,
   browseDonationsValidationRules,
   acceptDonationValidationRules,
+  acceptTeamValidationRules,
+  assignTeamMemberValidationRules,
   schedulePickupValidationRules,
   onTheWayValidationRules,
   pickedUpValidationRules,
@@ -212,6 +214,8 @@ router.post(
   '/:id/accept-team',
   protect,
   authorize('volunteer'),
+  acceptTeamValidationRules,
+  validateRequest,
   loadDonation,
   acceptDonationForTeam
 );
@@ -221,6 +225,8 @@ router.post(
   '/:id/assign-member',
   protect,
   authorize('volunteer'),
+  assignTeamMemberValidationRules,
+  validateRequest,
   loadDonation,
   assignTeamMember
 );

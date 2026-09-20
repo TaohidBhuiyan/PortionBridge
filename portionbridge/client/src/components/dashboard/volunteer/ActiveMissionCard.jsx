@@ -4,7 +4,7 @@ import { SkeletonCard } from '../skeletons';
 import { EmptyState } from '../EmptyState';
 import { ErrorState } from '../ErrorState';
 import { StatusBadge } from '../../donation/StatusBadge';
-import { Utensils, Shirt, MapPin, Clock, CalendarClock, ArrowRight, Package, Navigation, Compass } from 'lucide-react';
+import { Utensils, Shirt, MapPin, Clock, CalendarClock, ArrowRight, Package, Navigation, Compass, Users, UserCircle2 } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
@@ -169,6 +169,18 @@ export function ActiveMissionCard() {
             )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
+              {mission.assignment_mode === 'team' && (
+                <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-md border border-indigo-200 dark:border-indigo-700/50">
+                  <Users size={13} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <span className="font-medium text-indigo-700 dark:text-indigo-300">Team Mission · {mission.team_name || 'Unknown Team'}</span>
+                </span>
+              )}
+              {mission.assignment_mode === 'team' && (
+                <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
+                  <UserCircle2 size={13} className="text-dash-primary shrink-0" />
+                  <span>Pickup: {mission.assigned_member_name || 'Not assigned'}</span>
+                </span>
+              )}
               {mission.pickup_location && (
                 <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
                   <MapPin size={13} className="text-rose-500 shrink-0" />

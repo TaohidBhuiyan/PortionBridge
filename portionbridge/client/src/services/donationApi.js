@@ -539,7 +539,7 @@ export const donationApi = {
     try {
       const token = getAuthToken();
       const csrfToken = getCsrfToken();
-      
+
       const response = await axios.patch(
         `${API_BASE}/donations/${donationId}/complete`,
         {},
@@ -550,10 +550,75 @@ export const donationApi = {
           },
         }
       );
-      
+
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to complete donation';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * PHASE 4 — Accept a donation on behalf of a team.
+   * POST /donations/:id/accept-team, body: { teamId }
+   * @param {number} donationId - Donation ID
+   * @param {number} teamId - Team ID accepting the donation
+   * @returns {Promise<Object>}
+   */
+  acceptDonationForTeam: async (donationId, teamId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+
+      const response = await axios.post(
+        `${API_BASE}/donations/${donationId}/accept-team`,
+        { teamId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to accept donation for team';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * PHASE 4 — Assign a team member to a team-assigned donation.
+   * POST /donations/:id/assign-member, body: { teamId, memberId }
+   * @param {number} donationId - Donation ID
+   * @param {number} teamId - Team ID
+   * @param {number} memberId - Member user ID to assign
+   * @returns {Promise<Object>}
+   */
+  assignTeamMember: async (donationId, teamId, memberId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+
+      const response = await axios.post(
+        `${API_BASE}/donations/${donationId}/assign-member`,
+        { teamId, memberId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to assign team member';
       const status = error.response?.status || null;
       return { success: false, error: message, status };
     }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Utensils, Shirt, MapPin, CalendarClock, Package, Navigation, ArrowRight, Truck } from 'lucide-react';
+import { Utensils, Shirt, MapPin, CalendarClock, Package, Navigation, ArrowRight, Truck, Users, UserCircle2 } from 'lucide-react';
 import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
 import { SkeletonCard } from '../components/dashboard/skeletons';
 import { StatusBadge } from '../components/donation/StatusBadge';
@@ -144,6 +144,18 @@ export function VolunteerActiveMissions() {
                     </div>
 
                     <div className="space-y-2 py-2">
+                      {mission.assignment_mode === 'team' && (
+                        <div className="flex items-center gap-2 text-xs bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-700/50">
+                          <Users size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                          <span className="font-medium text-indigo-700 dark:text-indigo-300">Team Mission · {mission.team_name || 'Unknown Team'}</span>
+                        </div>
+                      )}
+                      {mission.assignment_mode === 'team' && (
+                        <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface/80 p-2.5 rounded-xl border border-border/60">
+                          <UserCircle2 size={14} className="text-dash-primary shrink-0" />
+                          <span>Pickup: {mission.assigned_member_name || 'Not assigned'}</span>
+                        </div>
+                      )}
                       {mission.pickup_location && (
                         <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface/80 p-2.5 rounded-xl border border-border/60">
                           <MapPin size={14} className="text-rose-500 shrink-0" />

@@ -649,9 +649,15 @@ async function completeDonation(connection, id) {
  * @param {string} [filters.search] - Search across description and pickup location
  * @returns {Object} Object containing whereClause string and params object
  */
-function buildHistoryFilter({ ownerColumn, ownerId, status, category, search }) {
-  const conditions = [`(is_deleted = 0 OR status = 'cancelled')`, `${ownerColumn} = :ownerId`];
+function buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember = false }) {
+  const conditions = [`(is_deleted = 0 OR status = 'cancelled')`];
   const params = { ownerId };
+
+  if (includeAssignedMember) {
+    conditions.push(`(${ownerColumn} = :ownerId OR assigned_member_id = :ownerId)`);
+  } else {
+    conditions.push(`${ownerColumn} = :ownerId`);
+  }
 
   if (status) {
     const statuses = String(status)
@@ -699,8 +705,8 @@ function buildHistoryFilter({ ownerColumn, ownerId, status, category, search }) 
  * @param {number} options.offset - Result offset
  * @returns {Promise<Array>} Array of donation objects
  */
-async function queryHistory({ ownerColumn, ownerId, status, category, search, sortBy, sortOrder, limit, offset }) {
-  const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search });
+async function queryHistory({ ownerColumn, ownerId, status, category, search, sortBy, sortOrder, limit, offset, includeAssignedMember = false }) {
+  const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember });
 
   const orderColumn = ALLOWED_HISTORY_SORT_COLUMNS.includes(sortBy) ? sortBy : 'created_at';
   const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
@@ -726,8 +732,8 @@ async function queryHistory({ ownerColumn, ownerId, status, category, search, so
  * @param {string} [filters.search] - Search across description and location
  * @returns {Promise<number>} Total count of matching donations
  */
-async function countHistory({ ownerColumn, ownerId, status, category, search }) {
-  const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search });
+async function countHistory({ ownerColumn, ownerId, status, category, search, includeAssignedMember = false }) {
+  const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember });
 
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`,
@@ -782,7 +788,7 @@ async function countDonorHistory(donorId, { status, category, search }) {
  * @returns {Promise<Array>} Array of donation objects
  */
 async function findVolunteerHistory(volunteerId, { status, category, search, sortBy, sortOrder, limit, offset }) {
-  return queryHistory({ ownerColumn: 'volunteer_id', ownerId: volunteerId, status, category, search, sortBy, sortOrder, limit, offset });
+  return queryHistory({ ownerColumn: 'volunteer_id', ownerId: volunteerId, status, category, search, sortBy, sortOrder, limit, offset, includeAssignedMember: true });
 }
 
 /**
@@ -795,7 +801,7 @@ async function findVolunteerHistory(volunteerId, { status, category, search, sor
  * @returns {Promise<number>} Total count of matching donations
  */
 async function countVolunteerHistory(volunteerId, { status, category, search }) {
-  return countHistory({ ownerColumn: 'volunteer_id', ownerId: volunteerId, status, category, search });
+  return countHistory({ ownerColumn: 'volunteer_id', ownerId: volunteerId, status, category, search, includeAssignedMember: true });
 }
 
 /**
@@ -808,17 +814,21 @@ async function countVolunteerHistory(volunteerId, { status, category, search }) 
  * @param {Array<string>} statuses - Array of status values to count
  * @returns {Promise<Object>} Object with total and status counts
  */
-async function getSummaryCounts(ownerColumn, ownerId, statuses) {
+async function getSummaryCounts(ownerColumn, ownerId, statuses, includeAssignedMember = false) {
   const sumClauses = statuses.map((status) => `SUM(status = :status_${status}) AS ${status}`).join(', ');
   const params = { ownerId };
   statuses.forEach((status) => {
     params[`status_${status}`] = status;
   });
 
+  const whereClause = includeAssignedMember
+    ? `(${ownerColumn} = :ownerId OR assigned_member_id = :ownerId) AND (is_deleted = 0 OR status = 'cancelled')`
+    : `${ownerColumn} = :ownerId AND (is_deleted = 0 OR status = 'cancelled')`;
+
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS total, ${sumClauses}
      FROM donation_requests
-     WHERE ${ownerColumn} = :ownerId AND (is_deleted = 0 OR status = 'cancelled')`,
+     WHERE ${whereClause}`,
     params
   );
   return rows[0];
@@ -852,7 +862,7 @@ async function getVolunteerSummary(volunteerId) {
     DONATION_STATUS.ACCEPTED,
     DONATION_STATUS.SCHEDULED,
     DONATION_STATUS.COMPLETED,
-  ]);
+  ], true);
 }
 
 /**

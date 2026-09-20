@@ -575,6 +575,12 @@ async function acceptDonation(donationId, volunteerId) {
 function assertAssignedVolunteer(donation, volunteerId) {
   // For team mode, check assigned_member_id
   if (donation.assignment_mode === 'team') {
+    if (donation.assigned_member_id === null || donation.assigned_member_id === undefined) {
+      throw new AppError(
+        'This team donation has no pickup member assigned yet. Ask your team leader to assign someone first.',
+        HTTP_STATUS.CONFLICT
+      );
+    }
     if (donation.assigned_member_id !== volunteerId) {
       throw new AppError(
         'You are not the assigned team member for this donation request.',
@@ -582,7 +588,7 @@ function assertAssignedVolunteer(donation, volunteerId) {
       );
     }
   } else {
-    // For individual mode, check volunteer_id
+    // For individual mode (or if assignment_mode is not set), check volunteer_id
     if (donation.volunteer_id !== volunteerId) {
       throw new AppError(
         'You are not the assigned volunteer for this donation request.',
@@ -1220,6 +1226,17 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
     throw new AppError('This donation is not assigned to this team.', HTTP_STATUS.FORBIDDEN);
   }
 
+  // Status guard: only allow reassignment while donation is active
+  if (!['accepted', 'scheduled', 'on_the_way'].includes(donation.status)) {
+    throw new AppError(
+      `This donation cannot be reassigned in its current status "${donation.status}". Reassignment is only allowed while the donation is accepted, scheduled, or on the way.`,
+      HTTP_STATUS.CONFLICT
+    );
+  }
+
+  // Capture previous assigned member before reassigning
+  const previousAssignedMemberId = donation.assigned_member_id;
+
   await donationModel.assignTeamMember(donationId, teamId, memberId, assignedBy);
 
   // Notify the assigned member
@@ -1230,15 +1247,22 @@ async function assignTeamMemberToDonation(donationId, teamId, memberId, assigned
     relatedId: donationId,
   });
 
-  // Broadcast team activity
-  const io = getIO();
-  if (io) {
-    broadcastTeamActivity(io, teamId, 'donation_assigned', {
-      donationId,
-      memberId,
-      assignedBy,
+  // Notify the previous member if one existed and differs from the new one
+  if (previousAssignedMemberId && previousAssignedMemberId !== memberId) {
+    await notificationService.createNotification(previousAssignedMemberId, {
+      type: NOTIFICATION_TYPES.ASSIGNMENT_CHANGED,
+      title: 'Assignment Changed',
+      message: 'Your donation assignment has been changed.',
+      relatedId: donationId,
     });
   }
+
+  // Broadcast team activity (fixed: broadcastTeamActivity doesn't take an io argument)
+  broadcastTeamActivity(teamId, 'donation_assigned', {
+    donationId,
+    memberId,
+    assignedBy,
+  });
 
   // Log audit
   await auditService.record({ userId: assignedBy, action: 'team_member_assigned', metadata: { donationId, teamId, memberId } });
@@ -1278,7 +1302,7 @@ async function getTeamDonations(teamId, userId, status = null) {
  * @returns {Promise<Array>} Array of donation objects
  */
 async function getMemberAssignments(memberId, status = null) {
-  return await donationModel.findByAssignedMemberId(memberId, status);
+  return await donationModel.findByAssignedMember(memberId, status);
 }
 
 /**
@@ -1345,6 +1369,29 @@ async function getDonationDetails(donationId, userId, userRole) {
     }
   }
   // Admins can view any donation - no restriction needed
+
+  // Enrich with human-readable names
+  if (donation.volunteer_id) {
+    const userModel = require('../models/user.model');
+    const volunteerUser = await userModel.findById(donation.volunteer_id);
+    if (volunteerUser) {
+      donation.volunteer_name = volunteerUser.name;
+      donation.volunteer_photo = volunteerUser.profile_photo;
+    }
+  }
+  if (donation.assignment_mode === 'team' && donation.team_id) {
+    const teamModel = require('../models/team.model');
+    const team = await teamModel.findById(donation.team_id);
+    if (team) donation.team_name = team.name;
+    if (donation.assigned_member_id) {
+      const userModel = require('../models/user.model');
+      const assignedUser = await userModel.findById(donation.assigned_member_id);
+      if (assignedUser) {
+        donation.assigned_member_name = assignedUser.name;
+        donation.assigned_member_photo = assignedUser.profile_photo;
+      }
+    }
+  }
 
   const rating = await ratingModel.findByDonationId(donation.id);
   return { ...donation, rating };

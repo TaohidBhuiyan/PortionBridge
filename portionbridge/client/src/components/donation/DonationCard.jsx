@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Loader2 } from 'lucide-react';
+import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Loader2, Users } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
 /**
@@ -11,8 +11,12 @@ import { StatusBadge } from './StatusBadge';
  * volunteer Opportunities grid (Accept, shown only when `onAccept` is
  * passed). `pickup_location` and `accepting` are additive/optional too, so
  * every existing caller keeps working unchanged.
+ *
+ * PHASE 4: extended with optional `onAcceptForTeam` and `teamName` props
+ * for team-leader-only "Accept for [Team Name]" button. When both onAccept
+ * and onAcceptForTeam are present, two buttons are shown.
  */
-export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAccept, accepting = false }) {
+export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAccept, onAcceptForTeam, teamName, accepting = false }) {
   const navigate = useNavigate();
 
   const {
@@ -73,6 +77,13 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
     e.stopPropagation();
     if (onAccept) {
       onAccept(id);
+    }
+  };
+
+  const handleAcceptForTeam = (e) => {
+    e.stopPropagation();
+    if (onAcceptForTeam) {
+      onAcceptForTeam(id);
     }
   };
 
@@ -203,7 +214,26 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
               Cancel
             </button>
           )}
-          {canAccept && (
+          {canAccept && onAcceptForTeam ? (
+            <>
+              <button
+                onClick={handleAccept}
+                disabled={accepting}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {accepting ? <Loader2 size={16} className="animate-spin" /> : <HandHeart size={16} />}
+                {accepting ? 'Accepting...' : 'Accept (You)'}
+              </button>
+              <button
+                onClick={handleAcceptForTeam}
+                disabled={accepting}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {accepting ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+                {accepting ? 'Accepting...' : `Accept for ${teamName || 'Team'}`}
+              </button>
+            </>
+          ) : canAccept && (
             <button
               onClick={handleAccept}
               disabled={accepting}

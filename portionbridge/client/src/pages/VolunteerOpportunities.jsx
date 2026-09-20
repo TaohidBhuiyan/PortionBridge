@@ -4,10 +4,12 @@ import toast from 'react-hot-toast';
 import { DashboardLayout } from '../components/dashboard';
 import { donationApi } from '../services/donationApi';
 import { profileApi } from '../services/profileApi';
+import { teamApi } from '../services/teamApi';
 import { DonationCard } from '../components/donation/DonationCard';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { SkeletonCard } from '../components/dashboard/skeletons';
+import { useAuth } from '../context/AuthContext';
 
 const CATEGORY_OPTIONS = [
   { value: '', label: 'All Categories' },
@@ -27,12 +29,14 @@ const MAX_RADIUS_KM = 50;
 const DEFAULT_RADIUS_KM = 10;
 
 export function VolunteerOpportunities() {
+  const { user } = useAuth();
   const [donations, setDonations] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [acceptingId, setAcceptingId] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [myTeam, setMyTeam] = useState(null);
 
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -54,6 +58,17 @@ export function VolunteerOpportunities() {
           longitude: Number(vp.longitude),
           coverageRadius: vp.coverage_radius ? Number(vp.coverage_radius) : DEFAULT_RADIUS_KM,
         });
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch volunteer's team on mount
+  useEffect(() => {
+    let cancelled = false;
+    teamApi.getMyTeam().then((result) => {
+      if (!cancelled && result.success) {
+        setMyTeam(result.data);
       }
     }).catch(() => {});
     return () => { cancelled = true; };
@@ -133,6 +148,39 @@ export function VolunteerOpportunities() {
   };
 
   const sortOptions = SORT_OPTIONS;
+
+  const isTeamLeader = myTeam && myTeam.leader_id === user?.id;
+
+  const handleAcceptForTeam = async (donationId) => {
+    if (acceptingId) return;
+    setAcceptingId(donationId);
+
+    const result = await donationApi.acceptDonationForTeam(donationId, myTeam.id);
+
+    if (result.success) {
+      toast.success('Donation accepted for your team! Check your Team Activity.');
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 409) {
+      toast.error('This donation is no longer available.');
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 401) {
+      toast.error('Your session has expired. Please log in again.');
+    } else if (result.status === 403) {
+      if (result.error?.includes('coverage radius')) {
+        toast.error('This donation is outside your team\'s coverage radius.');
+      } else if (result.error?.includes('no pickup location on file')) {
+        toast.error('This donation has no pickup location on file.');
+      } else if (result.error?.includes('team\'s base location')) {
+        toast.error('This donation is outside your team\'s base location radius.');
+      } else {
+        toast.error("You don't have permission to accept this donation for your team.");
+      }
+    } else {
+      toast.error(result.error || 'Failed to accept donation for team. Please try again.');
+    }
+
+    setAcceptingId(null);
+  };
 
   const handleAccept = async (donationId) => {
     if (acceptingId) return;
@@ -312,6 +360,8 @@ export function VolunteerOpportunities() {
                   <DonationCard
                     donation={donation}
                     onAccept={handleAccept}
+                    onAcceptForTeam={isTeamLeader ? handleAcceptForTeam : undefined}
+                    teamName={myTeam?.name}
                     accepting={acceptingId === donation.id}
                   />
                 </div>

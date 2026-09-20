@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
   MapPin,
   Calendar,
   Phone,
@@ -16,10 +16,13 @@ import {
   CalendarClock,
   Truck,
   PackageCheck,
-  CheckCircle2
+  CheckCircle2,
+  Users,
+  UserCircle2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { donationApi } from '../services/donationApi';
+import { teamApi } from '../services/teamApi';
 import { StatusBadge } from '../components/donation/StatusBadge';
 import { StatusTimeline } from '../components/donation/StatusTimeline';
 import { ImageGallery } from '../components/donation/ImageGallery';
@@ -33,6 +36,7 @@ import { TrackingPanel } from '../components/donation/TrackingPanel';
 import { ChatWindow } from '../components/donation/ChatWindow';
 import { RatingSubmission } from '../components/donation/RatingSubmission';
 import { ReportIssueModal } from '../components/donation/ReportIssueModal';
+import { AssignMemberModal } from '../components/team/AssignMemberModal';
 import { useDonationTracking } from '../hooks/useDonationTracking';
 import { useAuth } from '../context/AuthContext';
 import { DashboardLayout } from '../components/dashboard';
@@ -62,6 +66,11 @@ export function DonationDetailsPage() {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+
+  // PHASE 4 — team member assignment state
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assigning, setAssigning] = useState(false);
+  const [myTeamMembers, setMyTeamMembers] = useState([]);
 
   const loadDonationDetails = useCallback(async () => {
     setLoading(true);
@@ -118,6 +127,17 @@ export function DonationDetailsPage() {
     loadDonationDetails();
     loadDonationHistory();
   }, [id, loadDonationDetails, loadDonationHistory]);
+
+  // PHASE 4 — Fetch team members for assign-member modal
+  useEffect(() => {
+    if (donation?.assignment_mode === 'team' && currentUser?.role === 'volunteer') {
+      teamApi.getMyTeam().then((result) => {
+        if (result.success && result.data?.id === donation.team_id) {
+          setMyTeamMembers(result.data.members || []);
+        }
+      }).catch(() => {});
+    }
+  }, [donation?.assignment_mode, donation?.team_id, currentUser?.role]);
 
   // Real-time tracking
   useDonationTracking(id, {
@@ -279,6 +299,25 @@ export function DonationDetailsPage() {
     loadDonationDetails(); // Reload to get updated donation details
   };
 
+  // PHASE 4 — Handle team member assignment
+  const handleAssignMember = async (memberId) => {
+    setAssigning(true);
+    try {
+      const result = await donationApi.assignTeamMember(id, team_id, memberId);
+      if (result.success) {
+        toast.success('Team member assigned successfully.');
+        loadDonationDetails();
+        setShowAssignModal(false);
+      } else {
+        toast.error(result.error || 'Failed to assign team member.');
+      }
+    } catch {
+      toast.error('Failed to assign team member. Please try again.');
+    } finally {
+      setAssigning(false);
+    }
+  };
+
   if (loading) {
     return <LoadingSkeleton />;
   }
@@ -341,6 +380,10 @@ export function DonationDetailsPage() {
     volunteer_name,
     volunteer_photo,
     team_name,
+    assignment_mode,
+    team_id,
+    assigned_member_id,
+    assigned_member_name,
   } = donation;
 
   // Only real fields — no fabricated rating, completed-pickup count, or
@@ -386,13 +429,20 @@ export function DonationDetailsPage() {
   // "Complete" button is ever shown to a volunteer, matching the audit's
   // explicit requirement not to expose a step the backend doesn't allow.
   const isVolunteer = currentUser?.role === 'volunteer';
-  const isAssignedVolunteer = isVolunteer && volunteer_id === currentUser?.id;
+  const isTeamMission = assignment_mode === 'team';
+  const isAssignedVolunteer = isVolunteer && (
+    isTeamMission ? assigned_member_id === currentUser?.id : volunteer_id === currentUser?.id
+  );
   const isDonorOwner = currentUser?.role === 'donor' && (donation.donor_id === currentUser?.id || currentUser?.id);
   const canAccept = isVolunteer && status === 'pending';
   const canSchedule = isAssignedVolunteer && status === 'accepted';
   const canMarkOnTheWay = isAssignedVolunteer && status === 'scheduled';
   const canMarkPickedUp = isAssignedVolunteer && status === 'on_the_way';
   const canComplete = (isDonorOwner || currentUser?.role === 'donor') && status === 'picked_up';
+
+  // PHASE 4 — Team member assignment flags
+  const isLeaderOfDonationTeam = isTeamMission && myTeamMembers.some(m => m.role === 'leader' && m.user_id === currentUser?.id);
+  const canAssignMember = isLeaderOfDonationTeam && ['accepted', 'scheduled', 'on_the_way'].includes(status);
 
   return (
     <DashboardLayout>
@@ -711,8 +761,42 @@ export function DonationDetailsPage() {
 
           {/* Volunteer Information */}
           <SectionCard title="Volunteer">
+            {isTeamMission && (
+              <div className="space-y-2 mb-4">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-xs bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-700/50 flex-1">
+                    <Users size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span className="font-medium text-indigo-700 dark:text-indigo-300">Team Mission · {team_name || 'Unknown Team'}</span>
+                  </div>
+                  {canAssignMember && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="text-xs px-2.5 py-1.5 rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors font-medium"
+                    >
+                      {assigned_member_id ? 'Reassign' : 'Assign'}
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface/80 p-2.5 rounded-xl border border-border/60">
+                  <UserCircle2 size={14} className="text-dash-primary shrink-0" />
+                  <span>Pickup: {assigned_member_name || 'Not assigned'}</span>
+                </div>
+              </div>
+            )}
             <VolunteerCard volunteer={volunteer} />
           </SectionCard>
+
+          {/* PHASE 4 — Assign Member Modal */}
+          {isLeaderOfDonationTeam && (
+            <AssignMemberModal
+              isOpen={showAssignModal}
+              onClose={() => setShowAssignModal(false)}
+              onAssign={handleAssignMember}
+              members={myTeamMembers}
+              currentAssignedId={assigned_member_id}
+              assigning={assigning}
+            />
+          )}
 
           {/* Chat Window - Only show when volunteer is assigned */}
           {isVolunteerAssigned && (

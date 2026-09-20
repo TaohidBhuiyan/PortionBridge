@@ -9,9 +9,18 @@ const { PICKUP_LAT_EXPR, PICKUP_LNG_EXPR } = require('./donation.model');
  */
 
 const BASE_COLUMNS = `
-  id, donor_id, volunteer_id, category, quantity, description, photo,
-  pickup_location, pickup_time, scheduled_at, accepted_at, completed_at, status,
-  is_deleted, deleted_at, created_at, updated_at
+  dr.id, dr.donor_id, dr.volunteer_id, dr.category, dr.quantity, dr.description, dr.photo,
+  dr.pickup_location, dr.pickup_time, dr.scheduled_at, dr.accepted_at, dr.completed_at, dr.status,
+  dr.is_deleted, dr.deleted_at, dr.created_at, dr.updated_at,
+  dr.assignment_mode, dr.team_id, dr.assigned_member_id,
+  t.name AS team_name,
+  am.name AS assigned_member_name
+`;
+
+const BASE_FROM = `
+  donation_requests dr
+  LEFT JOIN teams t ON t.id = dr.team_id
+  LEFT JOIN users am ON am.id = dr.assigned_member_id
 `;
 
 /**
@@ -51,7 +60,7 @@ function buildAssignmentFilter({ volunteerId, status, category, search }) {
   // they just couldn't discover it here in the first place. Matches the
   // same volunteer_id-or-assigned_member_id check getAssignmentDetail
   // already uses (volunteer.service.js).
-  const conditions = ['is_deleted = 0', '(volunteer_id = :volunteerId OR assigned_member_id = :volunteerId)'];
+  const conditions = ['(volunteer_id = :volunteerId OR assigned_member_id = :volunteerId)'];
   const params = { volunteerId };
 
   if (status) {
@@ -100,8 +109,8 @@ async function findAssignments({ volunteerId, status, category, search, sortBy, 
   const orderDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
 
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests
-     WHERE ${whereClause}
+    `SELECT ${BASE_COLUMNS} FROM ${BASE_FROM}
+     WHERE dr.is_deleted = 0 AND ${whereClause}
      ORDER BY ${orderColumn} ${orderDirection}
      LIMIT :limit OFFSET :offset`,
     { ...params, limit, offset }
@@ -119,7 +128,7 @@ async function countAssignments({ volunteerId, status, category, search }) {
   const { whereClause, params } = buildAssignmentFilter({ volunteerId, status, category, search });
 
   const [rows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`,
+    `SELECT COUNT(*) AS total FROM donation_requests WHERE is_deleted = 0 AND ${whereClause}`,
     params
   );
   return rows[0].total;
@@ -139,7 +148,6 @@ async function countAssignments({ volunteerId, status, category, search }) {
  */
 function buildUpcomingFilter({ volunteerId, today, week }) {
   const conditions = [
-    'is_deleted = 0',
     'volunteer_id = :volunteerId',
     'status = :scheduledStatus',
     'scheduled_at IS NOT NULL',
@@ -173,8 +181,8 @@ async function findUpcoming({ volunteerId, today, week, limit, offset }) {
   const { whereClause, params } = buildUpcomingFilter({ volunteerId, today, week });
 
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests
-     WHERE ${whereClause}
+    `SELECT ${BASE_COLUMNS} FROM ${BASE_FROM}
+     WHERE dr.is_deleted = 0 AND ${whereClause}
      ORDER BY scheduled_at ASC
      LIMIT :limit OFFSET :offset`,
     { ...params, limit, offset }

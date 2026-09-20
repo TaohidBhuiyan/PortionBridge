@@ -485,6 +485,17 @@ const cancelDonationValidationRules = [...donationIdParamValidationRules];
 
 const acceptDonationValidationRules = [...donationIdParamValidationRules];
 
+const acceptTeamValidationRules = [
+  ...donationIdParamValidationRules,
+  body('teamId').notEmpty().isInt({ min: 1 }).toInt(),
+];
+
+const assignTeamMemberValidationRules = [
+  ...donationIdParamValidationRules,
+  body('teamId').notEmpty().isInt({ min: 1 }).toInt(),
+  body('memberId').notEmpty().isInt({ min: 1 }).toInt(),
+];
+
 const schedulePickupValidationRules = [
   ...donationIdParamValidationRules,
 
@@ -615,6 +626,8 @@ module.exports = {
   cancelDonationValidationRules,
   browseDonationsValidationRules,
   acceptDonationValidationRules,
+  acceptTeamValidationRules,
+  assignTeamMemberValidationRules,
   schedulePickupValidationRules,
   onTheWayValidationRules,
   pickedUpValidationRules,
