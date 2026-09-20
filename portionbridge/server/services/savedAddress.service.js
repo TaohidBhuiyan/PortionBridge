@@ -1,8 +1,18 @@
 const { HTTP_STATUS, ADDRESS_LABEL } = require('../constants');
 const AppError = require('../utils/AppError');
 const savedAddressModel = require('../models/savedAddress.model');
+const userModel = require('../models/user.model');
 
 const MAX_ADDRESSES_PER_USER = 3;
+
+async function syncAddressToUserProfile(userId, fullAddress) {
+  if (!fullAddress) return;
+  try {
+    await userModel.updateProfile(userId, { address: fullAddress });
+  } catch (err) {
+    console.error('Error syncing saved address to user profile:', err);
+  }
+}
 
 /**
  * Creates a new saved address for a user.
@@ -49,17 +59,6 @@ async function createAddress(userId, data) {
       HTTP_STATUS.BAD_REQUEST
     );
   }
-
-const userModel = require('../models/user.model');
-
-async function syncAddressToUserProfile(userId, fullAddress) {
-  if (!fullAddress) return;
-  try {
-    await userModel.updateProfile(userId, { address: fullAddress });
-  } catch (err) {
-    console.error('Error syncing saved address to user profile:', err);
-  }
-}
 
   const user = await userModel.findById(userId);
 

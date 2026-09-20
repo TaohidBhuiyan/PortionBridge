@@ -42,9 +42,24 @@ ALTER TABLE notifications
 
 -- 2. Add pending_flag column to team_join_requests
 -- This generated column marks pending requests for the unique constraint
-ALTER TABLE team_join_requests
-  ADD COLUMN pending_flag TINYINT(1) GENERATED ALWAYS AS 
-    (CASE WHEN status = 'pending' THEN 1 ELSE 0 END) STORED;
+SET @col_exists = (
+  SELECT COUNT(*)
+  FROM information_schema.columns
+  WHERE table_schema = 'portionbridge'
+    AND table_name = 'team_join_requests'
+    AND column_name = 'pending_flag'
+);
+
+SET @sql = IF(@col_exists = 0,
+  'ALTER TABLE team_join_requests
+    ADD COLUMN pending_flag TINYINT(1) GENERATED ALWAYS AS 
+      (CASE WHEN status = ''pending'' THEN 1 ELSE 0 END) STORED',
+  'SELECT ''Column pending_flag already exists'' AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- 3. Defensive cleanup: cancel any older duplicate pending requests
 -- This ensures the unique constraint can be applied even if duplicates exist
@@ -61,6 +76,21 @@ SET t1.status = 'cancelled',
 
 -- 4. Add unique constraint to prevent multiple pending requests from same user to same team
 -- This mirrors the uq_team_invitations_pending constraint but allows repeat history after rejection/cancellation
-ALTER TABLE team_join_requests
-  ADD CONSTRAINT uq_team_join_requests_one_pending 
-  UNIQUE (team_id, user_id, pending_flag);
+SET @constraint_exists = (
+  SELECT COUNT(*)
+  FROM information_schema.table_constraints
+  WHERE table_schema = 'portionbridge'
+    AND table_name = 'team_join_requests'
+    AND constraint_name = 'uq_team_join_requests_one_pending'
+);
+
+SET @sql = IF(@constraint_exists = 0,
+  'ALTER TABLE team_join_requests
+    ADD CONSTRAINT uq_team_join_requests_one_pending 
+    UNIQUE (team_id, user_id, pending_flag)',
+  'SELECT ''Constraint uq_team_join_requests_one_pending already exists'' AS message'
+);
+
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

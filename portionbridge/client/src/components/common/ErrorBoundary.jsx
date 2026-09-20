@@ -33,11 +33,19 @@ export class ErrorBoundary extends React.Component {
   }
 
   handleRetry() {
-    this.setState({ hasError: false });
+    if (
+      this.state.error?.message?.includes("dynamically imported module") ||
+      this.state.error?.message?.includes("Failed to fetch") ||
+      this.state.error?.name === "TypeError"
+    ) {
+      window.location.reload();
+    } else {
+      this.setState({ hasError: false, error: null, errorInfo: null });
+    }
   }
 
   handleGoHome() {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: null, errorInfo: null });
     window.location.href = "/";
   }
 

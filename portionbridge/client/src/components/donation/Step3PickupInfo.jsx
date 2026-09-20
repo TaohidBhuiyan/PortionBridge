@@ -108,8 +108,8 @@ export function Step3PickupInfo({ formData, errors, onChange, onValidationChange
       if (selected) {
         onChange('savedAddressLabel', addressLabel(selected));
         // Keep coordinates in sync for Step 6 volunteer matching
-        const lat = selected.latitude || selected.lat || 23.8103;
-        const lng = selected.longitude || selected.lng || 90.4125;
+        const lat = selected.latitude ?? selected.lat ?? null;
+        const lng = selected.longitude ?? selected.lng ?? null;
         onChange('pickupAddress', {
           ...pickupAddress,
           latitude: lat,
@@ -118,7 +118,7 @@ export function Step3PickupInfo({ formData, errors, onChange, onValidationChange
           area: selected.area || '',
           district: selected.district || 'Dhaka',
         });
-        setLocationAcquired(true);
+        setLocationAcquired(Boolean(lat && lng));
       }
     }
   };

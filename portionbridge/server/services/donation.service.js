@@ -12,6 +12,7 @@ const { getDonationRoomName, getAdminLiveOpsRoomName } = require('../sockets/roo
 const teamMemberModel = require('../models/teamMember.model');
 const savedAddressModel = require('../models/savedAddress.model');
 const ratingModel = require('../models/rating.model');
+const { calculateDistance } = require('../models/volunteerDiscovery.model');
 
 /**
  * Broadcasts a real-time 'donation_status_updated' event for one donation,
@@ -152,6 +153,13 @@ async function createDonation(donorId, data) {
 
     if (savedAddress.user_id !== donorId) {
       throw new AppError('You are not allowed to use this saved address.', HTTP_STATUS.FORBIDDEN);
+    }
+
+    if (savedAddress.latitude === null || savedAddress.longitude === null) {
+      throw new AppError(
+        'This saved address has no location coordinates. Please add a location to this saved address first.',
+        HTTP_STATUS.BAD_REQUEST
+      );
     }
 
     pickupLocation = savedAddress.full_address;
@@ -391,12 +399,40 @@ async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}
 // latitude/longitude but no explicit radius.
 const DEFAULT_OPPORTUNITY_RADIUS_KM = 10;
 
+function getDonationPickupCoords(donation) {
+  const lat = donation?.pickup_address_details?.latitude;
+  const lng = donation?.pickup_address_details?.longitude;
+  if (lat === undefined || lat === null || lng === undefined || lng === null) return null;
+  return { latitude: Number(lat), longitude: Number(lng) };
+}
+
+function assertDonationWithinRadius(donation, base, subject) {
+  const pickup = getDonationPickupCoords(donation);
+  if (!pickup) {
+    throw new AppError(
+      'This donation request has no pickup location on file, so distance cannot be verified.',
+      HTTP_STATUS.FORBIDDEN,
+      'DONATION_LOCATION_MISSING'
+    );
+  }
+  const radiusKm = base.coverageRadius || DEFAULT_OPPORTUNITY_RADIUS_KM;
+  const distanceKm = calculateDistance(base.latitude, base.longitude, pickup.latitude, pickup.longitude);
+  if (distanceKm > radiusKm) {
+    const whose = subject === 'team' ? "your team's" : 'your';
+    throw new AppError(
+      `This donation is ${distanceKm.toFixed(1)}km away, outside ${whose} ${radiusKm}km coverage radius.`,
+      HTTP_STATUS.FORBIDDEN,
+      'OUT_OF_RANGE'
+    );
+  }
+}
+
 /**
  * Browse pending donation requests — search, filter, sort, paginate.
- * Volunteers can optionally send latitude/longitude to filter by distance
- * (nearby-donation discovery). The radius filter is enforced server-side so a
- * malicious volunteer can't bypass it by only filtering client-side. Omitting
- * latitude/longitude keeps the old unfiltered-by-distance behavior exactly
+ * Volunteers can optionally send nearby=true to filter by distance using their
+ * persisted base address (never client-sent coordinates). The radius filter is
+ * enforced server-side so a malicious volunteer can't bypass it by only filtering
+ * client-side. Omitting nearby keeps the old unfiltered-by-distance behavior exactly
  * as before.
  *
  * Volunteers must have a base address set (latitude/longitude in volunteer_profiles)
@@ -408,7 +444,7 @@ const DEFAULT_OPPORTUNITY_RADIUS_KM = 10;
  */
 async function browseDonations(query, user) {
   const { page, limit, offset } = getPaginationParams(query);
-  const { category, location, search, sortBy, sortOrder, latitude, longitude, radius } = query;
+  const { category, location, search, sortBy, sortOrder, nearby, radius } = query;
 
   // Volunteers must have a base address set before browsing donations
   if (user && user.role === 'volunteer') {
@@ -421,18 +457,34 @@ async function browseDonations(query, user) {
         'ADDRESS_REQUIRED'
       );
     }
+
+    // When nearby=true, use the volunteer's persisted location for geo filtering
+    if (nearby === true) {
+      const effectiveRadius = radius !== undefined ? radius : (volunteerProfile.coverage_radius || DEFAULT_OPPORTUNITY_RADIUS_KM);
+      const filters = {
+        category,
+        location,
+        search,
+        latitude: volunteerProfile.latitude,
+        longitude: volunteerProfile.longitude,
+        radius: effectiveRadius,
+      };
+
+      const [donations, totalItems] = await Promise.all([
+        donationModel.findPendingList({ ...filters, sortBy, sortOrder, limit, offset }),
+        donationModel.countPendingList(filters),
+      ]);
+
+      const meta = buildPaginationMeta({ page, limit, totalItems });
+      return { donations, meta, radius: effectiveRadius };
+    }
   }
 
-  const hasGeoFilter = latitude !== undefined && longitude !== undefined;
-  const effectiveRadius = hasGeoFilter
-    ? (radius !== undefined ? radius : DEFAULT_OPPORTUNITY_RADIUS_KM)
-    : undefined;
-
+  // No geo filter (either not a volunteer, or nearby=false)
   const filters = {
     category,
     location,
     search,
-    ...(hasGeoFilter && { latitude, longitude, radius: effectiveRadius }),
   };
 
   const [donations, totalItems] = await Promise.all([
@@ -441,7 +493,7 @@ async function browseDonations(query, user) {
   ]);
 
   const meta = buildPaginationMeta({ page, limit, totalItems });
-  return { donations, meta, radius: hasGeoFilter ? effectiveRadius : null };
+  return { donations, meta, radius: null };
 }
 
 /**
@@ -462,14 +514,32 @@ async function browseDonations(query, user) {
  * @throws {AppError} If donation is no longer available to accept
  */
 async function acceptDonation(donationId, volunteerId) {
+  // Location check before transaction
+  const volunteerProfileModel = require('../models/volunteerProfile.model');
+  const profile = await volunteerProfileModel.findByUserId(volunteerId);
+  if (!profile || profile.latitude === null || profile.longitude === null) {
+    throw new AppError(
+      'Set your base address first before accepting donations.',
+      HTTP_STATUS.FORBIDDEN,
+      'ADDRESS_REQUIRED'
+    );
+  }
+
+  const donation = await donationModel.findById(donationId);
+  if (!donation) {
+    throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  assertDonationWithinRadius(donation, { coverageRadius: profile.coverage_radius, latitude: profile.latitude, longitude: profile.longitude }, 'volunteer');
+
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    const donation = await donationModel.acceptDonation(connection, donationId, volunteerId);
+    const acceptedDonation = await donationModel.acceptDonation(connection, donationId, volunteerId);
 
-    if (!donation) {
+    if (!acceptedDonation) {
       throw new AppError(
         'This donation request is no longer available to accept. It may have already been accepted, completed, cancelled, or removed.',
         HTTP_STATUS.CONFLICT
@@ -481,9 +551,9 @@ async function acceptDonation(donationId, volunteerId) {
     // trg_donation_status_update already inserted a 'donation_accepted'
     // notification for the donor as part of this same transaction —
     // fetch and deliver it now rather than inserting a duplicate.
-    await notificationService.deliverLatestForRelated(donation.donor_id, donation.id);
+    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
 
-    return donation;
+    return acceptedDonation;
   } catch (err) {
     await connection.rollback();
     throw err;
@@ -863,7 +933,7 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
 
     // Create a rating reminder notification for the donor (Group 6)
     // This is separate from the completion notification to encourage rating
-    const reminderNotificationId = await notificationModel.create({
+    const reminderNotificationId = await notificationModel.create(pool, {
       userId: updatedDonation.donor_id,
       type: NOTIFICATION_TYPES.STATUS_UPDATED,
       title: 'Rate your volunteer',
@@ -1058,14 +1128,32 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
     throw new AppError('Only the team leader can accept a donation on behalf of the team.', HTTP_STATUS.FORBIDDEN);
   }
 
+  // Team location check before transaction
+  const teamModel = require('../models/team.model');
+  const team = await teamModel.findById(teamId);
+  if (!team || team.latitude === null || team.longitude === null) {
+    throw new AppError(
+      'Set your team base address first before accepting donations.',
+      HTTP_STATUS.FORBIDDEN,
+      'TEAM_ADDRESS_REQUIRED'
+    );
+  }
+
+  const donation = await donationModel.findById(donationId);
+  if (!donation) {
+    throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  assertDonationWithinRadius(donation, { coverageRadius: team.coverage_radius, latitude: team.latitude, longitude: team.longitude }, 'team');
+
   const connection = await pool.getConnection();
 
   try {
     await connection.beginTransaction();
 
-    const donation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
+    const acceptedDonation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
 
-    if (!donation) {
+    if (!acceptedDonation) {
       throw new AppError(
         'This donation request is no longer available to accept. It may have already been accepted, completed, cancelled, or removed.',
         HTTP_STATUS.CONFLICT
@@ -1077,12 +1165,12 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
     // trg_donation_status_update already inserted a 'donation_accepted'
     // notification for the donor as part of this same transaction —
     // fetch and deliver it now rather than inserting a duplicate.
-    await notificationService.deliverLatestForRelated(donation.donor_id, donation.id);
+    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
 
     // Log audit
     await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
 
-    return donation;
+    return acceptedDonation;
   } catch (err) {
     await connection.rollback();
     throw err;

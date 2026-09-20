@@ -10,6 +10,8 @@
  */
 require('dotenv').config();
 const { pool } = require('../../config/db');
+const { hashPassword } = require('../../utils/password');
+const { HTTP_STATUS } = require('../../constants');
 
 let dbChecked = false;
 let dbAvailable = false;
@@ -38,11 +40,25 @@ function uniqueEmail(prefix = 'test') {
 
 const TEST_PASSWORD = 'StrongPass123!';
 
+async function setVolunteerLocation(userId, { latitude = 23.8103, longitude = 90.4125, coverageRadius = 10 } = {}) {
+  await pool.query(
+    `UPDATE volunteer_profiles SET latitude=:latitude, longitude=:longitude, coverage_radius=:coverageRadius, base_address='Test Base Address' WHERE user_id=:userId`,
+    { userId, latitude, longitude, coverageRadius }
+  );
+}
+
+async function setTeamLocation(teamId, { latitude = 23.8103, longitude = 90.4125, coverageRadius = 10 } = {}) {
+  await pool.query(
+    `UPDATE teams SET latitude=:latitude, longitude=:longitude, coverage_radius=:coverageRadius, base_address='Test Team Base Address' WHERE id=:teamId`,
+    { teamId, latitude, longitude, coverageRadius }
+  );
+}
+
 /**
  * Registers + verifies + logs in a user via the real service layer
  * (not raw SQL), returning { user, accessToken }.
  */
-async function createVerifiedUser({ role = 'donor', name = 'Test User' } = {}) {
+async function createVerifiedUser({ role = 'donor', name = 'Test User', withLocation = true } = {}) {
   const authService = require('../../services/auth.service');
   const email = uniqueEmail(role);
 
@@ -64,6 +80,11 @@ async function createVerifiedUser({ role = 'donor', name = 'Test User' } = {}) {
     ipAddress: '127.0.0.1',
     userAgent: 'node-test',
   });
+
+  // Automatically set volunteer location for Phase 3 compatibility
+  if (role === 'volunteer' && withLocation) {
+    await setVolunteerLocation(loginResult.user.id);
+  }
 
   return { user: loginResult.user, accessToken: loginResult.accessToken, refreshToken: loginResult.rawRefreshToken, email };
 }
@@ -132,4 +153,6 @@ module.exports = {
   cleanupTestData,
   validFoodDonationPayload,
   TEST_PASSWORD,
+  setVolunteerLocation,
+  setTeamLocation,
 };

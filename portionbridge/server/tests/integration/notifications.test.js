@@ -1,7 +1,7 @@
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { isDbAvailable, createVerifiedUser, cleanupTestData, validFoodDonationPayload } = require('./setup');
+const { isDbAvailable, createVerifiedUser, cleanupTestData, validFoodDonationPayload, setTeamLocation } = require('./setup');
 
 /**
  * Regression tests for the two notification bugs this audit fixed:
@@ -49,6 +49,7 @@ describe('notifications: no duplicates, right recipients', () => {
     const { user: donor } = await createVerifiedUser({ role: 'donor' });
     const { user: leader } = await createVerifiedUser({ role: 'volunteer' });
     const team = await teamService.createTeam(leader.id, { name: 'Notif Test Team' });
+    await setTeamLocation(team.id);
     const donation = await donationService.createDonation(donor.id, validFoodDonationPayload());
 
     await donationService.acceptDonationForTeam(donation.id, team.id, leader.id);
@@ -70,6 +71,7 @@ describe('notifications: no duplicates, right recipients', () => {
     const { user: member } = await createVerifiedUser({ role: 'volunteer' });
 
     const team = await teamService.createTeam(leader.id, { name: 'Completion Notif Team' });
+    await setTeamLocation(team.id);
     const invitationId = await require('../../models/teamInvitation.model').create({
       teamId: team.id,
       invitedBy: leader.id,

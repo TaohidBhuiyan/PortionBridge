@@ -11,6 +11,7 @@ export function Step6Assignment({ onChange, onValidationChange, errors, pickupLo
   const [assignmentMode, setAssignmentMode] = useState('auto');
   const [selectedVolunteer, setSelectedVolunteer] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [locationError, setLocationError] = useState(null);
 
   // Coordinates from pickupLocation prop
   const latitude = pickupLocation?.latitude ?? null;
@@ -42,10 +43,11 @@ export function Step6Assignment({ onChange, onValidationChange, errors, pickupLo
 
   const handleDetectCoordinates = () => {
     if (!navigator.geolocation) {
-      handleUseDefaultCoordinates();
+      setLocationError('Your browser does not support geolocation.');
       return;
     }
     setIsLocating(true);
+    setLocationError(null);
     navigator.geolocation.getCurrentPosition(
       ({ coords }) => {
         setIsLocating(false);
@@ -57,20 +59,10 @@ export function Step6Assignment({ onChange, onValidationChange, errors, pickupLo
       },
       () => {
         setIsLocating(false);
-        handleUseDefaultCoordinates();
+        setLocationError('Could not retrieve your location. Please try again or enter coordinates manually.');
       },
       { timeout: 8000 }
     );
-  };
-
-  const handleUseDefaultCoordinates = () => {
-    // Dhaka Central coordinates as default fallback
-    onChange('pickupAddress', {
-      ...pickupLocation,
-      latitude: 23.8103,
-      longitude: 90.4125,
-      area: pickupLocation?.area || 'Dhaka',
-    });
   };
 
   return (
@@ -104,34 +96,30 @@ export function Step6Assignment({ onChange, onValidationChange, errors, pickupLo
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-1">
-            <button
-              type="button"
-              onClick={handleDetectCoordinates}
-              disabled={isLocating}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-dash-primary hover:bg-dash-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-all disabled:opacity-50"
-            >
-              {isLocating ? (
-                <>
-                  <Loader2 size={14} className="animate-spin" />
-                  Locating GPS...
-                </>
-              ) : (
-                <>
-                  <Navigation size={14} />
-                  Detect My GPS Location
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleUseDefaultCoordinates}
-              className="w-full sm:w-auto px-4 py-2.5 bg-surface border border-border text-text-primary text-xs font-bold rounded-xl hover:bg-surface-hover transition-colors"
-            >
-              Use City Central Coordinates
-            </button>
+          <div className="flex items-center gap-3">
+            {latitude && longitude ? (
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <MapPin size={14} className="text-dash-primary" />
+                <span>{latitude.toFixed(4)}, {longitude.toFixed(4)}</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleDetectCoordinates}
+                disabled={isLocating}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dash-primary-soft text-dash-primary text-xs font-semibold hover:bg-dash-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isLocating ? <Loader2 size={14} className="animate-spin" /> : <Navigation size={14} />}
+                {isLocating ? 'Detecting...' : 'Detect My GPS Location'}
+              </button>
+            )}
           </div>
+          {locationError && (
+            <div className="flex items-start gap-2 text-xs text-amber-600 bg-amber-50/50 px-3 py-2 rounded-lg">
+              <AlertCircle size={14} className="shrink-0 mt-0.5" />
+              <span>{locationError}</span>
+            </div>
+          )}
         </div>
       ) : (
         <>

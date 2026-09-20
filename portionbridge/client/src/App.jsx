@@ -11,51 +11,70 @@ import { AuthProvider } from "./context/AuthContext";
 import { SocketProvider, AuthSocketProvider } from "./context/SocketContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 
-// Lazy load donor module pages for better performance
-const DonorDashboard = lazy(() => import("./pages/DonorDashboard").then(m => ({ default: m.DonorDashboard })));
-const DonorAnalyticsPage = lazy(() => import("./pages/DonorAnalyticsPage").then(m => ({ default: m.DonorAnalyticsPage })));
-const DonorProfilePage = lazy(() => import("./pages/DonorProfilePage").then(m => ({ default: m.DonorProfilePage })));
-const DonorSettingsPage = lazy(() => import("./pages/DonorSettingsPage").then(m => ({ default: m.DonorSettingsPage })));
-const DonorLeaderboardPage = lazy(() => import("./pages/DonorLeaderboardPage").then(m => ({ default: m.DonorLeaderboardPage })));
-const DonorHelpPage = lazy(() => import("./pages/DonorHelpPage").then(m => ({ default: m.DonorHelpPage })));
-const SavedAddressesPage = lazy(() => import("./pages/SavedAddressesPage").then(m => ({ default: m.SavedAddressesPage })));
-const DonationFormPage = lazy(() => import("./pages/DonationFormPage").then(m => ({ default: m.DonationFormPage })));
-const MyDonationsPage = lazy(() => import("./pages/MyDonationsPage").then(m => ({ default: m.MyDonationsPage })));
-const DonationDetailsPage = lazy(() => import("./pages/DonationDetailsPage").then(m => ({ default: m.DonationDetailsPage })));
-const VolunteerDiscoveryPage = lazy(() => import("./pages/VolunteerDiscoveryPage").then(m => ({ default: m.VolunteerDiscoveryPage || m.default })));
-const NotificationsPage = lazy(() => import("./pages/NotificationsPage").then(m => ({ default: m.NotificationsPage })));
-const MessagesPage = lazy(() => import("./pages/MessagesPage").then(m => ({ default: m.MessagesPage })));
+// Helper for lazy loading pages with fallback module resolution and auto-reload on Vite chunk fetch failures
+const safeLazy = (importFn) =>
+  lazy(async () => {
+    const pageHasBeenRefreshed = sessionStorage.getItem('pb_page_refreshed');
+    try {
+      const module = await importFn();
+      sessionStorage.removeItem('pb_page_refreshed');
+      const component = module.default || Object.values(module)[0];
+      return { default: component };
+    } catch (error) {
+      // Handle Vite dev server restart / HMR chunk invalidation / network fetch error
+      if (!pageHasBeenRefreshed && (error?.name === 'TypeError' || error?.message?.includes('dynamically imported module') || error?.message?.includes('Failed to fetch'))) {
+        sessionStorage.setItem('pb_page_refreshed', 'true');
+        window.location.reload();
+      }
+      throw error;
+    }
+  });
 
-// Lazy load volunteer and admin dashboards (not part of donor module review)
-const VolunteerDashboard = lazy(() => import("./pages/VolunteerDashboard").then(m => ({ default: m.VolunteerDashboard })));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard").then(m => ({ default: m.AdminDashboard })));
-const VolunteerProfilePage = lazy(() => import("./pages/VolunteerProfilePage").then(m => ({ default: m.VolunteerProfilePage || m.default })));
+// Lazy load donor module pages for better performance
+const DonorDashboard = safeLazy(() => import("./pages/DonorDashboard"));
+const DonorAnalyticsPage = safeLazy(() => import("./pages/DonorAnalyticsPage"));
+const DonorProfilePage = safeLazy(() => import("./pages/DonorProfilePage"));
+const DonorSettingsPage = safeLazy(() => import("./pages/DonorSettingsPage"));
+const DonorLeaderboardPage = safeLazy(() => import("./pages/DonorLeaderboardPage"));
+const DonorHelpPage = safeLazy(() => import("./pages/DonorHelpPage"));
+const SavedAddressesPage = safeLazy(() => import("./pages/SavedAddressesPage"));
+const DonationFormPage = safeLazy(() => import("./pages/DonationFormPage"));
+const MyDonationsPage = safeLazy(() => import("./pages/MyDonationsPage"));
+const DonationDetailsPage = safeLazy(() => import("./pages/DonationDetailsPage"));
+const VolunteerDiscoveryPage = safeLazy(() => import("./pages/VolunteerDiscoveryPage"));
+const NotificationsPage = safeLazy(() => import("./pages/NotificationsPage"));
+const MessagesPage = safeLazy(() => import("./pages/MessagesPage"));
+
+// Lazy load volunteer and admin dashboards
+const VolunteerDashboard = safeLazy(() => import("./pages/VolunteerDashboard"));
+const AdminDashboard = safeLazy(() => import("./pages/AdminDashboard"));
+const VolunteerProfilePage = safeLazy(() => import("./pages/VolunteerProfilePage"));
 // PHASE 3: Nearby Opportunities + mission actions
-const VolunteerOpportunities = lazy(() => import("./pages/VolunteerOpportunities").then(m => ({ default: m.VolunteerOpportunities })));
+const VolunteerOpportunities = safeLazy(() => import("./pages/VolunteerOpportunities"));
 // PHASE 4: My Team + announcements
-const VolunteerTeam = lazy(() => import("./pages/VolunteerTeam").then(m => ({ default: m.VolunteerTeam })));
+const VolunteerTeam = safeLazy(() => import("./pages/VolunteerTeam"));
 // PHASE 5: Mission History
-const VolunteerHistory = lazy(() => import("./pages/VolunteerHistory").then(m => ({ default: m.VolunteerHistory })));
-const VolunteerMission = lazy(() => import("./pages/VolunteerMission").then(m => ({ default: m.VolunteerMission })));
-const VolunteerActiveMissions = lazy(() => import("./pages/VolunteerActiveMissions").then(m => ({ default: m.VolunteerActiveMissions })));
-const VolunteerLiveMap = lazy(() => import("./pages/VolunteerLiveMap").then(m => ({ default: m.VolunteerLiveMap })));
-const VolunteerLeaderboardPage = lazy(() => import("./pages/VolunteerLeaderboardPage").then(m => ({ default: m.VolunteerLeaderboardPage })));
-const VolunteerHelpPage = lazy(() => import("./pages/VolunteerHelpPage").then(m => ({ default: m.VolunteerHelpPage })));
-const AdminSectionPage = lazy(() => import("./pages/AdminSectionPage").then(m => ({ default: m.AdminSectionPage })));
-const AdminUsers = lazy(() => import("./pages/AdminUsers").then(m => ({ default: m.AdminUsers })));
-const AdminUserDetail = lazy(() => import("./pages/AdminUserDetail").then(m => ({ default: m.AdminUserDetail })));
-const AdminDonations = lazy(() => import("./pages/AdminDonations").then(m => ({ default: m.AdminDonations })));
-const AdminDonationDetail = lazy(() => import("./pages/AdminDonationDetail").then(m => ({ default: m.AdminDonationDetail })));
-const AdminVolunteersTeams = lazy(() => import("./pages/AdminVolunteersTeams").then(m => ({ default: m.AdminVolunteersTeams })));
-const AdminVolunteerDetail = lazy(() => import("./pages/AdminVolunteerDetail").then(m => ({ default: m.AdminVolunteerDetail })));
-const AdminTeamDetail = lazy(() => import("./pages/AdminTeamDetail").then(m => ({ default: m.AdminTeamDetail })));
-const AdminLiveOperations = lazy(() => import("./pages/AdminLiveOperations").then(m => ({ default: m.AdminLiveOperations })));
-const AdminAttentionCenter = lazy(() => import("./pages/AdminAttentionCenter").then(m => ({ default: m.AdminAttentionCenter })));
-const AdminReports = lazy(() => import("./pages/AdminReports").then(m => ({ default: m.AdminReports })));
-const AdminReportDetail = lazy(() => import("./pages/AdminReportDetail").then(m => ({ default: m.AdminReportDetail })));
-const AdminNotifications = lazy(() => import("./pages/AdminNotifications").then(m => ({ default: m.AdminNotifications })));
-const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics").then(m => ({ default: m.AdminAnalytics })));
-const AdminAuditLogs = lazy(() => import("./pages/AdminAuditLogs").then(m => ({ default: m.AdminAuditLogs })));
+const VolunteerHistory = safeLazy(() => import("./pages/VolunteerHistory"));
+const VolunteerMission = safeLazy(() => import("./pages/VolunteerMission"));
+const VolunteerActiveMissions = safeLazy(() => import("./pages/VolunteerActiveMissions"));
+const VolunteerLiveMap = safeLazy(() => import("./pages/VolunteerLiveMap"));
+const VolunteerLeaderboardPage = safeLazy(() => import("./pages/VolunteerLeaderboardPage"));
+const VolunteerHelpPage = safeLazy(() => import("./pages/VolunteerHelpPage"));
+const AdminSectionPage = safeLazy(() => import("./pages/AdminSectionPage"));
+const AdminUsers = safeLazy(() => import("./pages/AdminUsers"));
+const AdminUserDetail = safeLazy(() => import("./pages/AdminUserDetail"));
+const AdminDonations = safeLazy(() => import("./pages/AdminDonations"));
+const AdminDonationDetail = safeLazy(() => import("./pages/AdminDonationDetail"));
+const AdminVolunteersTeams = safeLazy(() => import("./pages/AdminVolunteersTeams"));
+const AdminVolunteerDetail = safeLazy(() => import("./pages/AdminVolunteerDetail"));
+const AdminTeamDetail = safeLazy(() => import("./pages/AdminTeamDetail"));
+const AdminLiveOperations = safeLazy(() => import("./pages/AdminLiveOperations"));
+const AdminAttentionCenter = safeLazy(() => import("./pages/AdminAttentionCenter"));
+const AdminReports = safeLazy(() => import("./pages/AdminReports"));
+const AdminReportDetail = safeLazy(() => import("./pages/AdminReportDetail"));
+const AdminNotifications = safeLazy(() => import("./pages/AdminNotifications"));
+const AdminAnalytics = safeLazy(() => import("./pages/AdminAnalytics"));
+const AdminAuditLogs = safeLazy(() => import("./pages/AdminAuditLogs"));
 
 // Loading fallback component
 const PageLoader = () => (

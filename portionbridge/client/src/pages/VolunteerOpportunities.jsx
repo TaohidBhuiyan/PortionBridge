@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight, Compass, MapPin, LocateFixed, AlertTriangle, Filter, ArrowUpDown } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Compass, MapPin, AlertTriangle, Filter, ArrowUpDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DashboardLayout } from '../components/dashboard';
 import { donationApi } from '../services/donationApi';
@@ -43,32 +43,6 @@ export function VolunteerOpportunities() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS_KM);
   const [radiusTouched, setRadiusTouched] = useState(false);
 
-  const [coords, setCoords] = useState(null);
-  const [locationStatus, setLocationStatus] = useState('idle');
-
-  const requestLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('unsupported');
-      return;
-    }
-    setLocationStatus('loading');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setCoords({ latitude: position.coords.latitude, longitude: position.coords.longitude });
-        setLocationStatus('granted');
-        setPage(1);
-      },
-      () => {
-        setCoords(null);
-        setLocationStatus('denied');
-        setSortBy((prev) => (prev === 'distance' ? 'created_at' : prev));
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
-  const hasLiveLocation = locationStatus === 'granted' && coords !== null;
-
   const [savedLocation, setSavedLocation] = useState(null);
   useEffect(() => {
     let cancelled = false;
@@ -85,9 +59,7 @@ export function VolunteerOpportunities() {
     return () => { cancelled = true; };
   }, []);
 
-  const effectiveCoords = hasLiveLocation ? coords : savedLocation;
-  const hasLocation = effectiveCoords !== null;
-  const usingSavedLocation = !hasLiveLocation && savedLocation !== null;
+  const hasLocation = savedLocation !== null;
 
   const effectiveRadius = radiusTouched || !savedLocation ? radius : savedLocation.coverageRadius;
 
@@ -111,8 +83,7 @@ export function VolunteerOpportunities() {
         page,
         limit: PAGE_SIZE,
         ...(hasLocation && {
-          latitude: effectiveCoords.latitude,
-          longitude: effectiveCoords.longitude,
+          nearby: true,
           radius: debouncedRadius,
         }),
       });
@@ -133,7 +104,7 @@ export function VolunteerOpportunities() {
     };
 
     loadOpportunities();
-  }, [search, locationFilter, category, sortBy, sortOrder, page, refreshTrigger, hasLocation, effectiveCoords, debouncedRadius]);
+  }, [search, locationFilter, category, sortBy, sortOrder, page, refreshTrigger, hasLocation, debouncedRadius]);
 
   const handleSearchChange = (value) => {
     setSearch(value);
@@ -161,9 +132,7 @@ export function VolunteerOpportunities() {
     setPage(1);
   };
 
-  const sortOptions = hasLocation
-    ? [{ value: 'distance', label: 'Nearest First' }, ...SORT_OPTIONS]
-    : SORT_OPTIONS;
+  const sortOptions = SORT_OPTIONS;
 
   const handleAccept = async (donationId) => {
     if (acceptingId) return;
@@ -180,7 +149,15 @@ export function VolunteerOpportunities() {
     } else if (result.status === 401) {
       toast.error('Your session has expired. Please log in again.');
     } else if (result.status === 403) {
-      toast.error("You don't have permission to accept this donation.");
+      if (result.error?.includes('coverage radius')) {
+        toast.error('This donation is outside your coverage radius.');
+      } else if (result.error?.includes('no pickup location on file')) {
+        toast.error('This donation has no pickup location on file.');
+      } else if (result.error?.includes('Set your base address')) {
+        toast.error('Set your base address first before accepting donations.');
+      } else {
+        toast.error("You don't have permission to accept this donation.");
+      }
     } else {
       toast.error(result.error || 'Failed to accept donation. Please try again.');
     }
@@ -227,40 +204,9 @@ export function VolunteerOpportunities() {
             <div className="flex items-center gap-3">
               <AlertTriangle size={20} className="text-amber-500 shrink-0" />
               <span className="text-text-primary font-medium">
-                {locationStatus === 'loading'
-                  ? 'Detecting your GPS location...'
-                  : locationStatus === 'unsupported'
-                    ? "Your browser doesn't support geolocation — displaying all available requests."
-                    : 'Enable live location or set your base address to view nearby donations with exact distances.'}
+                Set your base address on the dashboard to view nearby donations with exact distances.
               </span>
             </div>
-            {locationStatus !== 'loading' && locationStatus !== 'unsupported' && (
-              <button
-                onClick={requestLocation}
-                className="shrink-0 flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-dash-primary text-white font-bold hover:bg-dash-primary-hover shadow-sm transition-all"
-              >
-                <LocateFixed size={14} />
-                Enable Location
-              </button>
-            )}
-          </div>
-        )}
-
-        {usingSavedLocation && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-glass-card rounded-2xl px-5 py-3.5 text-xs sm:text-sm border border-border/80 shadow-sm">
-            <div className="flex items-center gap-3">
-              <MapPin size={18} className="text-dash-primary shrink-0" />
-              <span className="text-text-secondary font-medium">
-                Filtering by your saved base location. Switch to live location for real-time GPS accuracy.
-              </span>
-            </div>
-            <button
-              onClick={requestLocation}
-              className="shrink-0 flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border border-border bg-surface text-xs font-semibold text-text-primary hover:bg-surface-hover transition-colors"
-            >
-              <LocateFixed size={14} className="text-dash-primary" />
-              Use Live Location
-            </button>
           </div>
         )}
 

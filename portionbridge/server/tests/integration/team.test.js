@@ -1,7 +1,7 @@
 const { test, describe, before, after } = require('node:test');
 const assert = require('node:assert/strict');
 
-const { isDbAvailable, createVerifiedUser, cleanupTestData, validFoodDonationPayload } = require('./setup');
+const { isDbAvailable, createVerifiedUser, cleanupTestData, validFoodDonationPayload, setTeamLocation } = require('./setup');
 
 describe('team: authorization and team-donation flow', () => {
   let dbReady = false;
@@ -24,6 +24,7 @@ describe('team: authorization and team-donation flow', () => {
 
     const { user: leader } = await createVerifiedUser({ role: 'volunteer' });
     const team = await teamService.createTeam(leader.id, { name: 'Test Team', description: 'A test team' });
+    await setTeamLocation(team.id);
 
     assert.ok(team.id);
     assert.equal(team.leader_id, leader.id);
@@ -33,7 +34,8 @@ describe('team: authorization and team-donation flow', () => {
     if (!dbReady) return t.skip('no test database reachable');
 
     const { user: leader } = await createVerifiedUser({ role: 'volunteer' });
-    await teamService.createTeam(leader.id, { name: 'First Team' });
+    const team = await teamService.createTeam(leader.id, { name: 'First Team' });
+    await setTeamLocation(team.id);
 
     await assert.rejects(() => teamService.createTeam(leader.id, { name: 'Second Team' }));
   });
@@ -45,6 +47,7 @@ describe('team: authorization and team-donation flow', () => {
     const { user: nonMember } = await createVerifiedUser({ role: 'volunteer' });
     const { user: target } = await createVerifiedUser({ role: 'volunteer' });
     const team = await teamService.createTeam(leader.id, { name: 'Auth Test Team' });
+    await setTeamLocation(team.id);
 
     await assert.rejects(() => teamService.inviteMember(team.id, nonMember.id, { invitedUserId: target.id }));
   });
@@ -57,6 +60,7 @@ describe('team: authorization and team-donation flow', () => {
     const { user: member } = await createVerifiedUser({ role: 'volunteer' });
 
     const team = await teamService.createTeam(leader.id, { name: 'Pickup Team' });
+    await setTeamLocation(team.id);
     const invitationId = await require('../../models/teamInvitation.model').create({
       teamId: team.id,
       invitedBy: leader.id,
@@ -85,6 +89,7 @@ describe('team: authorization and team-donation flow', () => {
     const { user: outsider } = await createVerifiedUser({ role: 'volunteer' });
 
     const team = await teamService.createTeam(leader.id, { name: 'Exclusive Team' });
+    await setTeamLocation(team.id);
     const donation = await donationService.createDonation(donor.id, validFoodDonationPayload());
 
     await assert.rejects(() => donationService.acceptDonationForTeam(donation.id, team.id, outsider.id));
@@ -97,6 +102,7 @@ describe('team: authorization and team-donation flow', () => {
     const { user: applicant } = await createVerifiedUser({ role: 'volunteer' });
 
     const team = await teamService.createTeam(leader.id, { name: 'Joinable Team' });
+    await setTeamLocation(team.id);
     const request = await teamService.sendJoinRequest(applicant.id, {
       teamId: team.id,
       message: 'I want to join!',

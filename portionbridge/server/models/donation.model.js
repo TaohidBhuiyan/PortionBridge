@@ -1062,4 +1062,6 @@ module.exports = {
   findByAssignedMember,
   findTeamAssignments,
   updateAssignmentStatus,
+  PICKUP_LAT_EXPR,
+  PICKUP_LNG_EXPR,
 };

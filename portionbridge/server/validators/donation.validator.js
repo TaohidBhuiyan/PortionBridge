@@ -279,6 +279,13 @@ const createDonationValidationRules = [
     .notEmpty().withMessage('Contact phone is required.')
     .matches(/^[+]?[\d\s-()]+$/).withMessage('Contact phone must be a valid phone number.'),
 
+  body('pickupAddress.latitude').if(body('pickupAddress').exists())
+    .notEmpty().withMessage('Pickup location must be set on the map (latitude missing).')
+    .isFloat({ min: -90, max: 90 }).toFloat(),
+  body('pickupAddress.longitude').if(body('pickupAddress').exists())
+    .notEmpty().withMessage('Pickup location must be set on the map (longitude missing).')
+    .isFloat({ min: -180, max: 180 }).toFloat(),
+
   body('saveForFuture')
     .optional()
     .isBoolean().withMessage('Save for future must be a boolean value.'),
@@ -538,34 +545,9 @@ const browseDonationsValidationRules = [
     .withMessage(`limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}.`)
     .toInt(),
 
-  // Nearby-opportunity radius filter — all three are optional (browsing
-  // without location still works, unfiltered by distance, same as before).
-  // But latitude/longitude must arrive together, since a radius filter is
-  // meaningless with only one of them.
-  query('latitude')
-    .optional()
-    .isFloat({ min: -90, max: 90 }).withMessage('latitude must be between -90 and 90.')
-    .toFloat(),
-
-  query('longitude')
-    .optional()
-    .isFloat({ min: -180, max: 180 }).withMessage('longitude must be between -180 and 180.')
-    .toFloat(),
-
-  query('radius')
-    .optional()
-    .isFloat({ min: MIN_OPPORTUNITY_RADIUS_KM, max: MAX_OPPORTUNITY_RADIUS_KM })
-    .withMessage(`radius must be between ${MIN_OPPORTUNITY_RADIUS_KM} and ${MAX_OPPORTUNITY_RADIUS_KM} km.`)
-    .toFloat(),
-
-  query('longitude').custom((value, { req }) => {
-    const hasLat = req.query.latitude !== undefined && req.query.latitude !== '';
-    const hasLng = value !== undefined && value !== '';
-    if (hasLat !== hasLng) {
-      throw new Error('latitude and longitude must be provided together.');
-    }
-    return true;
-  }),
+  // Nearby-opportunity radius filter — nearby is boolean, radius is optional
+  query('nearby').optional().isBoolean().withMessage('nearby must be true or false.').toBoolean(),
+  query('radius').optional().isFloat({ min: MIN_OPPORTUNITY_RADIUS_KM, max: MAX_OPPORTUNITY_RADIUS_KM }).toFloat(),
 ];
 
 /**

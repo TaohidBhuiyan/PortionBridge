@@ -1,5 +1,6 @@
 const { pool } = require('../config/db');
 const { DONATION_STATUS } = require('../constants');
+const { PICKUP_LAT_EXPR, PICKUP_LNG_EXPR } = require('./donation.model');
 
 /**
  * Raw SQL data-access layer for volunteer-facing dashboard and assignment
@@ -246,8 +247,8 @@ async function getAssignmentMapContext(donationId) {
        dr.pickup_location, dr.pickup_time, dr.scheduled_at, dr.accepted_at, dr.completed_at,
        dr.status, dr.saved_address_id, dr.created_at, dr.updated_at,
        donor.name AS donor_name, donor.phone AS donor_phone,
-       sa.latitude AS pickup_latitude, sa.longitude AS pickup_longitude,
-       sa.full_address AS pickup_full_address
+       ${PICKUP_LAT_EXPR} AS pickup_latitude, ${PICKUP_LNG_EXPR} AS pickup_longitude,
+       COALESCE(sa.full_address, dr.pickup_location) AS pickup_full_address
      FROM donation_requests dr
      LEFT JOIN users donor ON donor.id = dr.donor_id
      LEFT JOIN saved_addresses sa ON sa.id = dr.saved_address_id
