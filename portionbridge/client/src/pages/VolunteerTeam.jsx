@@ -29,6 +29,11 @@ import {
   X,
   Sparkles,
   UserCircle2,
+  Edit3,
+  Trash2,
+  MailCheck,
+  ShieldAlert,
+  Mail,
 } from 'lucide-react';
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
@@ -56,6 +61,7 @@ export function VolunteerTeam() {
 
   const [team, setTeam] = useState(null);
   const [invitations, setInvitations] = useState([]);
+  const [sentInvitations, setSentInvitations] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [availableTeams, setAvailableTeams] = useState([]);
   const [incomingRequests, setIncomingRequests] = useState([]);
@@ -68,11 +74,16 @@ export function VolunteerTeam() {
   const [createForm, setCreateForm] = useState({ name: '', description: '' });
   const [creatingTeam, setCreatingTeam] = useState(false);
 
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ name: '', description: '' });
+  const [updatingTeam, setUpdatingTeam] = useState(false);
+
   const [showJoinModal, setShowJoinModal] = useState(null); // Selected team object
   const [joinMessage, setJoinMessage] = useState('');
   const [sendingRequest, setSendingRequest] = useState(false);
 
   const [cancellingRequestId, setCancellingRequestId] = useState(null);
+  const [cancellingSentInvId, setCancellingSentInvId] = useState(null);
   const [acceptingJoinRequestId, setAcceptingJoinRequestId] = useState(null);
   const [rejectingJoinRequestId, setRejectingJoinRequestId] = useState(null);
   const [acceptingId, setAcceptingId] = useState(null);
@@ -106,20 +117,29 @@ export function VolunteerTeam() {
       try {
         const teamResult = await teamApi.getMyTeam();
 
-        if (teamResult.success && teamResult.data) {
-          setTeam(teamResult.data);
+        const activeTeam =
+          teamResult.data?.team !== undefined ? teamResult.data.team : teamResult.data;
+
+        if (teamResult.success && activeTeam && activeTeam.id) {
+          setTeam(activeTeam);
 
           // Fetch team donations
-          const donationsResult = await teamApi.getTeamDonations(teamResult.data.id);
+          const donationsResult = await teamApi.getTeamDonations(activeTeam.id);
           if (donationsResult.success) {
             setDonations(donationsResult.data.donations || []);
           }
 
-          // If leader, fetch incoming join requests
-          if (teamResult.data.leader_id === user?.id) {
-            const requestsResult = await teamApi.listTeamJoinRequests(teamResult.data.id);
+          // If leader, fetch incoming join requests and sent pending invitations
+          if (activeTeam.leader_id === user?.id) {
+            const [requestsResult, sentInvsResult] = await Promise.all([
+              teamApi.listTeamJoinRequests(activeTeam.id),
+              teamApi.listTeamInvitations(activeTeam.id),
+            ]);
             if (requestsResult.success) {
               setIncomingRequests(requestsResult.data.requests || []);
+            }
+            if (sentInvsResult.success) {
+              setSentInvitations(sentInvsResult.data.invitations || []);
             }
           }
         } else {
@@ -362,6 +382,50 @@ export function VolunteerTeam() {
       toast.error(result.error || 'Failed to leave team.');
     }
     setActionLoading(false);
+  };
+
+  const handleCancelSentInvitation = async (invitationId) => {
+    setCancellingSentInvId(invitationId);
+    const result = await teamApi.cancelInvitation(team.id, invitationId);
+    if (result.success) {
+      toast.success('Sent invitation cancelled.');
+      setRefreshTrigger((t) => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to cancel invitation.');
+    }
+    setCancellingSentInvId(null);
+  };
+
+  const handleDisbandTeam = async () => {
+    setActionLoading(true);
+    const result = await teamApi.deleteTeam(team.id);
+    if (result.success) {
+      toast.success('Team disbanded successfully.');
+      setConfirmModal(null);
+      setRefreshTrigger((t) => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to disband team.');
+    }
+    setActionLoading(false);
+  };
+
+  const handleEditTeam = async (e) => {
+    e.preventDefault();
+    if (!editForm.name.trim()) {
+      toast.error('Team name is required.');
+      return;
+    }
+    setUpdatingTeam(true);
+    const result = await teamApi.updateTeam(team.id, editForm);
+    if (result.success) {
+      toast.success('Team details updated successfully.');
+      setShowEditModal(false);
+      setTeam((prev) => ({ ...prev, ...result.data.team }));
+      setRefreshTrigger((t) => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to update team details.');
+    }
+    setUpdatingTeam(false);
   };
 
   const isLeader = team?.leader_id === user?.id;
@@ -929,26 +993,51 @@ export function VolunteerTeam() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0">
-                <Users size={20} className="text-dash-primary" />
+              <div className="w-11 h-11 rounded-xl bg-dash-primary-soft flex items-center justify-center shrink-0 shadow-xs">
+                <Users size={22} className="text-dash-primary" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">{team.name}</h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-text-primary">{team.name}</h1>
+                  <span className="px-2.5 py-0.5 rounded-full bg-dash-primary-soft text-dash-primary text-xs font-semibold">
+                    {isLeader ? 'Leader View' : 'Member View'}
+                  </span>
+                </div>
                 <p className="text-text-secondary text-sm mt-0.5">
                   {team.description || 'Team overview and activity'}
                 </p>
               </div>
             </div>
             {isLeader && (
-              <button
-                onClick={() => setShowAnnouncementModal(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-dash-primary text-white text-sm font-medium hover:bg-dash-primary-hover transition-colors shadow-sm"
-              >
-                <Megaphone size={16} />
-                Send Announcement
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => {
+                    setEditForm({ name: team.name || '', description: team.description || '' });
+                    setShowEditModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-border bg-surface text-text-primary text-xs font-semibold hover:bg-surface-hover transition-colors shadow-xs"
+                >
+                  <Edit3 size={14} />
+                  Edit Details
+                </button>
+                <button
+                  onClick={() => setShowAnnouncementModal(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-dash-primary text-white text-xs font-semibold hover:bg-dash-primary-hover transition-colors shadow-xs"
+                >
+                  <Megaphone size={14} />
+                  Announcement
+                </button>
+                <button
+                  onClick={() => setConfirmModal({ type: 'disband' })}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-danger/30 text-danger text-xs font-semibold hover:bg-danger-soft transition-colors shadow-xs"
+                  title="Disband Team"
+                >
+                  <Trash2 size={14} />
+                  Disband
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1011,6 +1100,52 @@ export function VolunteerTeam() {
                       )}
                     </button>
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SENT INVITATIONS (Leader Only) */}
+        {isLeader && sentInvitations.length > 0 && (
+          <div className="bg-dash-primary-soft/30 border border-dash-primary/30 rounded-xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-text-primary flex items-center gap-2">
+                <MailCheck size={16} className="text-dash-primary" />
+                Sent Pending Invitations ({sentInvitations.length})
+              </h2>
+              <span className="text-xs text-text-secondary">Invitations awaiting volunteer response</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {sentInvitations.map((inv) => (
+                <div
+                  key={inv.id}
+                  className="bg-surface rounded-lg border border-border p-4 flex items-center justify-between gap-3 shadow-xs"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 rounded-lg bg-dash-primary-soft flex items-center justify-center shrink-0">
+                      <Mail size={16} className="text-dash-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-text-primary truncate">
+                        {inv.invitee?.name || inv.invitee_email || 'Invited Volunteer'}
+                      </p>
+                      <p className="text-xs text-text-secondary truncate">{inv.invitee_email}</p>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleCancelSentInvitation(inv.id)}
+                    disabled={cancellingSentInvId === inv.id}
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-text-secondary hover:bg-danger-soft hover:text-danger hover:border-danger/30 transition-colors shrink-0 disabled:opacity-50"
+                  >
+                    {cancellingSentInvId === inv.id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      'Revoke'
+                    )}
+                  </button>
                 </div>
               ))}
             </div>
@@ -1423,12 +1558,78 @@ export function VolunteerTeam() {
         />
       )}
 
+      {/* EDIT TEAM DETAILS MODAL */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fadeIn">
+          <div className="bg-surface rounded-xl border border-border p-6 max-w-md w-full shadow-pb-elevated space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
+                <Edit3 size={18} className="text-dash-primary" /> Edit Team Details
+              </h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditTeam} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1">
+                  Team Name <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-border bg-input text-sm text-text-primary focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1">
+                  Team Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  placeholder="Describe your team's mission or coverage area..."
+                  className="w-full px-3.5 py-2 rounded-lg border border-border bg-input text-sm text-text-primary focus:ring-4 focus:ring-dash-primary/10 focus:border-dash-primary focus:outline-none"
+                />
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 rounded-lg border border-border text-xs font-medium text-text-secondary hover:bg-surface-hover"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updatingTeam}
+                  className="px-4 py-2 rounded-lg bg-dash-primary text-white text-xs font-semibold hover:bg-dash-primary-hover flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  {updatingTeam ? <Loader2 size={14} className="animate-spin" /> : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {confirmModal && (
         <ConfirmActionModal
           isOpen={true}
           title={
             confirmModal.type === 'leave'
               ? 'Leave Team?'
+              : confirmModal.type === 'disband'
+              ? 'Disband Team?'
               : confirmModal.type === 'remove'
               ? `Remove ${confirmModal.memberName}?`
               : `Transfer Leadership to ${confirmModal.memberName}?`
@@ -1436,6 +1637,8 @@ export function VolunteerTeam() {
           message={
             confirmModal.type === 'leave'
               ? 'Are you sure you want to leave this team? You will no longer receive team notifications or be assigned team missions.'
+              : confirmModal.type === 'disband'
+              ? 'Are you sure you want to disband this team? This action is permanent and will remove all members from the team.'
               : confirmModal.type === 'remove'
               ? `Are you sure you want to remove ${confirmModal.memberName} from the team?`
               : `Are you sure you want to transfer team leadership to ${confirmModal.memberName}? You will become a regular member.`
@@ -1443,6 +1646,8 @@ export function VolunteerTeam() {
           confirmLabel={
             confirmModal.type === 'leave'
               ? 'Leave Team'
+              : confirmModal.type === 'disband'
+              ? 'Disband Team'
               : confirmModal.type === 'remove'
               ? 'Remove Member'
               : 'Transfer Leadership'
@@ -1450,6 +1655,7 @@ export function VolunteerTeam() {
           confirmVariant={confirmModal.type === 'transfer' ? 'primary' : 'danger'}
           onConfirm={() => {
             if (confirmModal.type === 'leave') handleLeaveTeam();
+            else if (confirmModal.type === 'disband') handleDisbandTeam();
             else if (confirmModal.type === 'remove')
               handleRemoveMember(confirmModal.memberUserId, confirmModal.memberName);
             else if (confirmModal.type === 'transfer')

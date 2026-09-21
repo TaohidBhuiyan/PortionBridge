@@ -1,14 +1,6 @@
-import { Check } from 'lucide-react';
+import { Check, Sparkles, ArrowRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
 
-// These are the exact statuses supported by the backend's donation_requests.status
-// ENUM ('pending', 'accepted', 'scheduled', 'on_the_way', 'picked_up', 'completed').
-// There is no 'cancelled' status — cancellation is a soft-delete, not a status
-// value, so it isn't part of this progression.
-//
-// `timestampKey` and `next` map each step to a real column on the donation
-// (when present) and a short, honest "what happens next" hint — no invented
-// ETAs or fabricated copy, matching TrackingPanel's approach to real data.
 const STATUSES = [
   { key: 'pending', label: 'Pending', timestampKey: 'created_at', next: 'Waiting for a volunteer to accept this donation.' },
   { key: 'accepted', label: 'Accepted', timestampKey: 'accepted_at', next: 'The volunteer is arranging pickup details.' },
@@ -25,60 +17,77 @@ function formatTimestamp(value) {
   return date.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
-/**
- * StatusTimeline — vertical progression through the real donation lifecycle
- * statuses. Shows a timestamp for any step whose column is present on the
- * donation record, and a short "what's happening now" hint for the current
- * step so the donor always knows what to expect next.
- */
 export function StatusTimeline({ currentStatus, donation }) {
   const currentIndex = STATUSES.findIndex((s) => s.key === currentStatus);
   const currentStep = STATUSES[currentIndex];
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div>
-      <div className="relative">
-        <div className="absolute left-3.5 top-1 bottom-1 w-px bg-border" />
-        <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="relative pl-1">
+        {/* Progress connecting line */}
+        <div className="absolute left-[15px] top-3 bottom-3 w-0.5 bg-border/60 rounded-full" />
+        
+        {/* Progress active filled bar */}
+        {currentIndex > 0 && (
+          <div
+            className="absolute left-[15px] top-3 w-0.5 bg-gradient-to-b from-success via-dash-primary to-dash-primary rounded-full transition-all duration-500"
+            style={{
+              height: `${Math.min(100, (currentIndex / (STATUSES.length - 1)) * 100)}%`,
+            }}
+          />
+        )}
+
+        <div className="space-y-4">
           {STATUSES.map((s, index) => {
             const isPast = index < currentIndex;
             const isCurrent = index === currentIndex;
             const timestamp = s.timestampKey ? formatTimestamp(donation?.[s.timestampKey]) : null;
 
             return (
-              <div key={s.key} className="relative flex items-start gap-3 pl-9">
+              <div key={s.key} className="relative flex items-start gap-3.5 pl-10 group">
+                {/* Node icon / indicator */}
                 <div
-                  className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center ring-4 ring-surface shrink-0 ${
+                  className={`absolute left-0 w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-300 shadow-sm ${
                     isPast
-                      ? 'bg-success text-white'
+                      ? 'bg-success text-white ring-4 ring-surface'
                       : isCurrent
-                        ? 'bg-dash-primary text-white'
-                        : 'bg-page border border-border text-text-secondary'
+                        ? 'bg-dash-primary text-white ring-4 ring-dash-primary/20 shadow-pb-elevated'
+                        : 'bg-surface border border-border text-text-muted ring-4 ring-surface'
                   }`}
                 >
                   {isCurrent && !shouldReduceMotion ? (
                     <motion.span
                       key={currentStatus}
-                      initial={{ scale: 0.7, opacity: 0.6 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                      className="absolute inset-0 rounded-full ring-4 ring-dash-primary/30"
+                      initial={{ scale: 0.8, opacity: 0.6 }}
+                      animate={{ scale: 1.25, opacity: 0 }}
+                      transition={{ repeat: Infinity, duration: 2, ease: 'easeOut' }}
+                      className="absolute inset-0 rounded-full bg-dash-primary/40"
                     />
                   ) : null}
-                  {isPast ? <Check size={13} /> : <span className="text-[10px] font-semibold relative">{index + 1}</span>}
+                  {isPast ? (
+                    <Check size={14} className="stroke-[2.5]" />
+                  ) : (
+                    <span className={`text-[11px] font-bold relative ${isCurrent ? 'text-white' : 'text-text-muted'}`}>
+                      {index + 1}
+                    </span>
+                  )}
                 </div>
-                <div className="min-w-0">
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <p className={`text-sm ${isPast || isCurrent ? 'font-medium text-text-primary' : 'text-text-secondary'}`}>
+
+                {/* Content */}
+                <div className="min-w-0 pt-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className={`text-sm ${isPast ? 'font-medium text-text-primary' : isCurrent ? 'font-bold text-dash-primary' : 'text-text-secondary'}`}>
                       {s.label}
                     </p>
                     {isCurrent && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-dash-primary">Current</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-dash-primary-soft text-dash-primary text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                        <Sparkles size={10} /> Active Stage
+                      </span>
                     )}
                   </div>
                   {timestamp && (
-                    <p className="text-xs text-text-muted mt-0.5">{timestamp}</p>
+                    <p className="text-xs text-text-muted mt-0.5 font-medium">{timestamp}</p>
                   )}
                 </div>
               </div>
@@ -88,11 +97,17 @@ export function StatusTimeline({ currentStatus, donation }) {
       </div>
 
       {currentStep?.next && (
-        <div className="mt-4 pt-4 border-t border-border">
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted mb-1">What happens next</p>
-          <p className="text-sm text-text-secondary">{currentStep.next}</p>
+        <div className="mt-5 pt-4 border-t border-border/60 bg-dash-primary-soft/40 -mx-5 -mb-5 p-4 rounded-b-xl flex items-start gap-2.5">
+          <div className="p-1 rounded-md bg-dash-primary/10 text-dash-primary shrink-0 mt-0.5">
+            <ArrowRight size={14} />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-dash-primary mb-0.5">What Happens Next</p>
+            <p className="text-xs text-text-secondary leading-relaxed">{currentStep.next}</p>
+          </div>
         </div>
       )}
     </div>
   );
 }
+

@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Maximize2, Image as ImageIcon } from 'lucide-react';
 
 /**
- * ImageGallery component for displaying donation images
+ * ImageGallery component for displaying donation images with premium grid and lightbox
  */
 export function ImageGallery({ images = [], coverImage }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -11,8 +11,12 @@ export function ImageGallery({ images = [], coverImage }) {
 
   if (allImages.length === 0) {
     return (
-      <div className="aspect-video bg-page border border-border rounded-xl flex items-center justify-center">
-        <p className="text-sm text-text-secondary">No images</p>
+      <div className="aspect-video bg-page/50 border border-dashed border-border rounded-xl flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 rounded-full bg-surface border border-border flex items-center justify-center mb-2 shadow-pb-subtle">
+          <ImageIcon size={20} className="text-text-muted" />
+        </div>
+        <p className="text-sm font-medium text-text-secondary">No images uploaded</p>
+        <p className="text-xs text-text-muted mt-0.5">The donor didn't attach photos for this item.</p>
       </div>
     );
   }
@@ -42,30 +46,40 @@ export function ImageGallery({ images = [], coverImage }) {
   return (
     <>
       {/* Gallery Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {allImages.map((image, index) => (
           <div
             key={index}
             onClick={() => handleImageClick(index)}
             className={`
-              aspect-square rounded-xl overflow-hidden cursor-pointer
-              ${index === 0 ? 'col-span-2 row-span-2' : ''}
-              hover:opacity-90 transition-opacity
+              group relative aspect-square rounded-xl overflow-hidden cursor-pointer border border-border/60 bg-surface shadow-pb-subtle
+              ${index === 0 && allImages.length > 1 ? 'col-span-2 row-span-2 aspect-square sm:aspect-auto sm:h-full' : ''}
+              hover:border-dash-primary/50 transition-all duration-200 hover:shadow-pb-elevated
             `}
           >
             <img
               src={image}
-              alt={`Donation image ${index + 1}`}
-              className="w-full h-full object-cover"
+              alt={`Donation item ${index + 1}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
             />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+              <span className="p-2 rounded-full bg-white/90 text-text-primary shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-200">
+                <Maximize2 size={16} />
+              </span>
+            </div>
+            {index === 0 && (
+              <span className="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold uppercase tracking-wider">
+                Cover Photo
+              </span>
+            )}
           </div>
         ))}
       </div>
 
-      {/* Fullscreen Modal */}
+      {/* Fullscreen Lightbox Modal */}
       {selectedIndex !== null && (
         <div
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
           onClick={handleClose}
           onKeyDown={handleKeyDown}
           tabIndex={0}
@@ -74,9 +88,9 @@ export function ImageGallery({ images = [], coverImage }) {
           <button
             onClick={handleClose}
             aria-label="Close image viewer"
-            className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
 
           {/* Navigation Buttons */}
@@ -88,9 +102,9 @@ export function ImageGallery({ images = [], coverImage }) {
                   handlePrevious();
                 }}
                 aria-label="Previous image"
-                className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
               >
-                <ChevronLeft size={28} />
+                <ChevronLeft size={24} />
               </button>
               <button
                 onClick={(e) => {
@@ -98,25 +112,27 @@ export function ImageGallery({ images = [], coverImage }) {
                   handleNext();
                 }}
                 aria-label="Next image"
-                className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/25 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
               >
-                <ChevronRight size={28} />
+                <ChevronRight size={24} />
               </button>
             </>
           )}
 
-          {/* Image */}
-          <img
-            src={allImages[selectedIndex]}
-            alt={`Donation image ${selectedIndex + 1}`}
-            className="max-w-full max-h-full object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          {/* Main Focused Image */}
+          <div className="relative max-w-4xl max-h-[85vh] flex items-center justify-center p-2">
+            <img
+              src={allImages[selectedIndex]}
+              alt={`Donation photo ${selectedIndex + 1}`}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
 
-          {/* Image Counter */}
+          {/* Image Counter Badge */}
           {allImages.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/50 text-white text-sm">
-              {selectedIndex + 1} / {allImages.length}
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-white text-xs font-medium tracking-wide">
+              {selectedIndex + 1} of {allImages.length}
             </div>
           )}
         </div>
@@ -124,3 +140,4 @@ export function ImageGallery({ images = [], coverImage }) {
     </>
   );
 }
+

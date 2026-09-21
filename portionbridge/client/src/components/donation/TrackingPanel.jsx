@@ -1,17 +1,8 @@
-import { MapPin, Clock, AlertCircle, Navigation } from 'lucide-react';
+import { MapPin, Clock, AlertCircle, Navigation, Radio } from 'lucide-react';
 import VolunteerMap from '../dashboard/donor/VolunteerMap';
 
 /**
- * TrackingPanel — shows live pickup tracking using only real data.
- *
- * Note: the backend does not geocode pickup addresses into coordinates
- * (pickup_location is a free-text string), so there is no real "distance"
- * or "ETA" figure available — a previous version of this component computed
- * those against a hardcoded Dhaka coordinate regardless of the donation's
- * actual location, which was fabricated data. That's been removed. This
- * panel shows the volunteer's real last-known location (from the
- * `volunteer_location_updated` socket event) and how long ago it arrived,
- * with an honest "not shared yet" state when no location update has come in.
+ * TrackingPanel — shows live pickup tracking using real location updates.
  */
 export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
   const getStatusMessage = () => {
@@ -44,9 +35,9 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
   // Empty state: no volunteer assigned
   if (!volunteer && donation?.status === 'pending') {
     return (
-      <div className="flex items-center gap-2.5 text-text-secondary text-sm">
-        <AlertCircle size={16} />
-        <p>Waiting for volunteer assignment...</p>
+      <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-page/60 border border-dashed border-border text-text-secondary text-xs">
+        <AlertCircle size={16} className="text-warning shrink-0" />
+        <p>Waiting for volunteer assignment to begin live tracking.</p>
       </div>
     );
   }
@@ -54,8 +45,8 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
   // Empty state: assigned but pickup not yet in motion
   if (donation?.status === 'accepted' || donation?.status === 'scheduled') {
     return (
-      <div className="flex items-center gap-2.5 text-text-secondary text-sm">
-        <Clock size={16} />
+      <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-info-soft/40 border border-info/20 text-info text-xs font-medium">
+        <Clock size={16} className="shrink-0" />
         <p>Pickup scheduled for {donation.pickup_time ? new Date(donation.pickup_time).toLocaleString() : 'a scheduled time'}</p>
       </div>
     );
@@ -64,25 +55,30 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
   // Completed state
   if (donation?.status === 'completed') {
     return (
-      <div className="flex items-center gap-2.5 text-success text-sm font-medium">
-        <MapPin size={16} />
-        <p>Pickup completed successfully</p>
+      <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-success-soft/50 border border-success/20 text-success text-xs font-medium">
+        <MapPin size={16} className="shrink-0" />
+        <p>Pickup completed successfully.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <span className={`text-sm font-medium ${getStatusTone()}`}>
+    <div className="space-y-3.5">
+      <div className="flex items-center justify-between pb-2 border-b border-border/60">
+        <span className={`text-xs font-bold uppercase tracking-wider ${getStatusTone()}`}>
           {getStatusMessage()}
         </span>
+        {volunteerLocation?.latitude && (
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-dash-primary-soft text-dash-primary text-[10px] font-bold uppercase tracking-wider animate-pulse">
+            <Radio size={12} /> Live Active
+          </span>
+        )}
       </div>
 
       {/* Real last-known volunteer location, or an honest "not shared yet" state */}
       {volunteerLocation?.latitude ? (
         <>
-          <div className="rounded-lg overflow-hidden border border-border">
+          <div className="rounded-xl overflow-hidden border border-border/80 shadow-pb-card">
             <VolunteerMap
               volunteers={[{
                 ...volunteer,
@@ -95,25 +91,27 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
             />
           </div>
           {volunteerLocation.timestamp && (
-            <p className="text-xs text-text-secondary flex items-center gap-1.5">
-              <Navigation size={12} />
-              Last location update: {new Date(volunteerLocation.timestamp).toLocaleTimeString()}
+            <p className="text-[11px] text-text-muted flex items-center gap-1.5 px-1 font-medium">
+              <Navigation size={12} className="text-dash-primary" />
+              Last updated: {new Date(volunteerLocation.timestamp).toLocaleTimeString()}
             </p>
           )}
         </>
       ) : (
-        <div className="flex items-center gap-2.5 p-3 rounded-lg bg-page border border-border text-sm text-text-secondary">
-          <MapPin size={16} className="shrink-0" />
-          <p>The volunteer hasn't shared their live location yet.</p>
+        <div className="flex items-center gap-2.5 p-3.5 rounded-xl bg-page/80 border border-border/80 text-xs text-text-secondary">
+          <MapPin size={16} className="text-dash-primary shrink-0" />
+          <p>The volunteer hasn't shared their live GPS location yet.</p>
         </div>
       )}
 
-      {/* Pickup Location (real, from the donation record) */}
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-page border border-border">
-        <MapPin size={16} className="text-text-secondary shrink-0" />
+      {/* Pickup Location */}
+      <div className="flex items-start gap-3 p-3 rounded-xl bg-surface border border-border/60 shadow-pb-subtle">
+        <div className="w-8 h-8 rounded-lg bg-dash-primary-soft text-dash-primary flex items-center justify-center shrink-0 mt-0.5">
+          <MapPin size={16} />
+        </div>
         <div className="min-w-0">
-          <p className="text-xs text-text-secondary">Pickup Location</p>
-          <p className="text-sm font-medium text-text-primary truncate">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Pickup Location</p>
+          <p className="text-xs font-semibold text-text-primary truncate mt-0.5">
             {donation?.pickup_location || 'Not specified'}
           </p>
         </div>
@@ -121,3 +119,4 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation }) {
     </div>
   );
 }
+

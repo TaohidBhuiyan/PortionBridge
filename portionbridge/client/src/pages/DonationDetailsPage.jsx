@@ -19,11 +19,20 @@ import {
   CheckCircle2,
   Users,
   UserCircle2,
-  Image,
   Clock,
-  MessageCircle,
+  Copy,
+  Check,
+  ExternalLink,
+  ShieldCheck,
+  Leaf,
+  Thermometer,
+  AlertTriangle,
   Info,
-  Navigation2
+  Sparkles,
+  Layers,
+  FileText,
+  Activity,
+  MessageCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { donationApi } from '../services/donationApi';
@@ -35,6 +44,7 @@ import { ImageGallery } from '../components/donation/ImageGallery';
 import { VolunteerCard } from '../components/donation/VolunteerCard';
 import { ActivityTimeline } from '../components/donation/ActivityTimeline';
 import { ErrorState } from '../components/dashboard/ErrorState';
+import { DashboardLayout } from '../components/dashboard/DashboardLayout';
 import { LoadingSkeleton } from '../components/dashboard/skeletons/LoadingSkeleton';
 import { CancelConfirmationModal } from '../components/common/CancelConfirmationModal';
 import { SchedulePickupModal } from '../components/donation/SchedulePickupModal';
@@ -61,12 +71,12 @@ export function DonationDetailsPage() {
   const [volunteerLocation, setVolunteerLocation] = useState(null);
   const [existingRating, setExistingRating] = useState(null);
   const [activityHistory, setActivityHistory] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
+  const [, setHistoryLoading] = useState(true);
 
-  // PHASE 3 — volunteer mission-action state. A single `actionInProgress`
-  // flag (rather than one per action) is enough since only one of these
-  // buttons is ever visible at a time for a given donation status, and it
-  // doubles as the double-click guard the audit brief calls for.
+  const [copiedId, setCopiedId] = useState(false);
+  const [copiedPhone, setCopiedPhone] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
   const [actionInProgress, setActionInProgress] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -83,7 +93,6 @@ export function DonationDetailsPage() {
 
       if (result.success) {
         setDonation(result.data);
-        // Check if donation has existing rating
         if (result.data.rating) {
           setExistingRating(result.data.rating);
         }
@@ -109,7 +118,6 @@ export function DonationDetailsPage() {
         setActivityHistory(result.data || []);
       }
     } catch {
-      // History loading failure should not block the page
       setActivityHistory([]);
     } finally {
       setHistoryLoading(false);
@@ -117,22 +125,10 @@ export function DonationDetailsPage() {
   }, [id]);
 
   useEffect(() => {
-    // loadDonationDetails is also called from real-time update handlers and
-    // post-action callbacks below, so it can't be inlined into this effect
-    // alone — it has to stay a shared function. Now memoized via useCallback
-    // (keyed on `id`), so it's safe to include as a dependency here and at
-    // every other call site without causing extra re-runs.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDonationDetails();
     loadDonationHistory();
   }, [id, loadDonationDetails, loadDonationHistory]);
 
-  // Phase 4: fetch the current user's own team roster (if any) so the
-  // "Assign Pickup Member" picker has real members to choose from. Guarded
-  // to only actually fetch for a team-mode donation and a volunteer viewer
-  // — a donor or an unrelated volunteer viewing this page never triggers
-  // it, and myTeamMembers simply stays empty for anyone who isn't the
-  // leader of THIS donation's team (checked again below via team_id match).
   useEffect(() => {
     if (!donation || donation.assignment_mode !== 'team' || currentUser?.role !== 'volunteer') {
       return;
@@ -144,13 +140,12 @@ export function DonationDetailsPage() {
       }
     }).catch(() => {});
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally scoped to just these two fields, not the whole `donation` object identity (which changes on every poll/refresh)
   }, [donation?.assignment_mode, donation?.team_id, currentUser?.role]);
 
   // Real-time tracking
   useDonationTracking(id, {
     onStatusUpdate: () => {
-      loadDonationDetails(); // Reload donation details on status change
+      loadDonationDetails();
     },
     onLocationUpdate: (data) => {
       setVolunteerLocation({
@@ -160,6 +155,24 @@ export function DonationDetailsPage() {
       });
     },
   });
+
+  const handleCopy = (text, type) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    if (type === 'id') {
+      setCopiedId(true);
+      toast.success('Donation ID copied!');
+      setTimeout(() => setCopiedId(false), 2000);
+    } else if (type === 'phone') {
+      setCopiedPhone(true);
+      toast.success('Phone number copied!');
+      setTimeout(() => setCopiedPhone(false), 2000);
+    } else if (type === 'address') {
+      setCopiedAddress(true);
+      toast.success('Address copied!');
+      setTimeout(() => setCopiedAddress(false), 2000);
+    }
+  };
 
   const handleCancel = async () => {
     setShowCancelModal(true);
@@ -176,10 +189,6 @@ export function DonationDetailsPage() {
         toast.success('Donation cancelled.');
         loadDonationDetails();
       } else {
-        // Incidental fix while touching this file for Phase 3: replaced the
-        // pre-existing alert() here with the same toast pattern used by the
-        // new volunteer actions below, so no alert() remains anywhere on
-        // this page's action flows.
         toast.error(result.error || 'Failed to cancel donation');
       }
     } catch {
@@ -193,17 +202,8 @@ export function DonationDetailsPage() {
     navigate(`/donation/create?edit=${id}`);
   };
 
-  // ==========================================================================
-  // PHASE 3 — Volunteer mission actions.
-  // Each calls the existing backend endpoint audited in Phase 3 (accept,
-  // schedule, on-the-way, picked-up — see donationApi.js). There is
-  // deliberately no "Complete" handler: the backend authorizes /complete to
-  // the donor only (restrictToDonationOwner), so no volunteer-facing
-  // Complete button exists anywhere on this page.
-  // ==========================================================================
-
   const handleAccept = async () => {
-    if (actionInProgress) return; // guards against double-click / double-submit
+    if (actionInProgress) return;
     setActionInProgress(true);
 
     const result = await donationApi.acceptDonation(id);
@@ -212,7 +212,6 @@ export function DonationDetailsPage() {
       toast.success('Donation accepted! This is now your active mission.');
       loadDonationDetails();
     } else if (result.status === 409) {
-      // Someone else accepted it first — required "already accepted" case.
       toast.error('This donation is no longer available.');
       loadDonationDetails();
     } else if (result.status === 401) {
@@ -241,8 +240,6 @@ export function DonationDetailsPage() {
       setShowScheduleModal(false);
       loadDonationDetails();
     } else {
-      // Keep the modal open on validation/network errors so the volunteer
-      // can correct the date without re-opening it.
       toast.error(result.error || 'Failed to schedule pickup. Please try again.');
     }
 
@@ -304,29 +301,37 @@ export function DonationDetailsPage() {
 
   const handleRatingSubmitted = (rating) => {
     setExistingRating(rating);
-    loadDonationDetails(); // Reload to get updated donation details
+    loadDonationDetails();
   };
 
   if (loading) {
-    return <LoadingSkeleton />;
+    return (
+      <DashboardLayout>
+        <LoadingSkeleton />
+      </DashboardLayout>
+    );
   }
 
   if (error) {
     return (
-      <ErrorState
-        title="Failed to load donation"
-        message={error}
-        onRetry={loadDonationDetails}
-      />
+      <DashboardLayout>
+        <ErrorState
+          title="Failed to load donation"
+          message={error}
+          onRetry={loadDonationDetails}
+        />
+      </DashboardLayout>
     );
   }
 
   if (!donation) {
     return (
-      <ErrorState
-        title="Donation not found"
-        message="The donation you're looking for doesn't exist or you don't have permission to view it."
-      />
+      <DashboardLayout>
+        <ErrorState
+          title="Donation not found"
+          message="The donation you're looking for doesn't exist or you don't have permission to view it."
+        />
+      </DashboardLayout>
     );
   }
 
@@ -346,7 +351,6 @@ export function DonationDetailsPage() {
     pickup_time_slot,
     contact_phone,
     special_instructions,
-    // Food specific
     food_type,
     food_name,
     ingredients,
@@ -355,7 +359,6 @@ export function DonationDetailsPage() {
     is_vegetarian,
     is_halal,
     expiry_date,
-    // Clothes specific
     clothing_category,
     gender,
     age_group,
@@ -364,7 +367,6 @@ export function DonationDetailsPage() {
     size,
     color,
     season,
-    // Volunteer
     volunteer_id,
     volunteer_name,
     volunteer_photo,
@@ -375,9 +377,6 @@ export function DonationDetailsPage() {
     assigned_member_name,
   } = donation;
 
-  // Only real fields — no fabricated rating, completed-pickup count, or
-  // status message. VolunteerCard renders gracefully without rating/
-  // completed_pickups when they're not provided.
   const volunteer = volunteer_name ? {
     name: volunteer_name,
     profile_photo: volunteer_photo,
@@ -387,10 +386,6 @@ export function DonationDetailsPage() {
   const isTeamMission = assignment_mode === 'team';
   const isVolunteerAssigned = Boolean(volunteer_id) && status !== 'pending';
 
-  // Phase 4: only the leader of THIS donation's team may (re)assign the
-  // pickup member — checked against the roster fetched above (which itself
-  // only ever populates when getMyTeam()'s team.id matches this donation's
-  // team_id), never just "is a volunteer".
   const isLeaderOfDonationTeam = isTeamMission && myTeamMembers.some(
     (m) => m.role === 'leader' && m.user_id === currentUser?.id
   );
@@ -410,10 +405,6 @@ export function DonationDetailsPage() {
     setAssigning(false);
   };
 
-  // A real, sparse timeline built only from timestamp columns the backend
-  // actually stores (created_at, accepted_at, scheduled_at, completed_at).
-  // Use the activity history fetched from backend (donation_status_history table)
-  // instead of generating it from timestamp columns
   const activities = activityHistory;
 
   const formatDate = (dateString) => {
@@ -427,29 +418,8 @@ export function DonationDetailsPage() {
   };
 
   const canEdit = status === 'pending';
-  // Matches the backend's assertEditable check exactly: cancellation (and
-  // editing) is only allowed while a donation is still 'pending'. The
-  // previous version also allowed 'accepted', which the backend would
-  // always reject with a 409.
   const canCancel = status === 'pending';
 
-  // PHASE 3/4 — volunteer mission-action visibility. Each flag mirrors the
-  // exact backend authorization/status precondition for that transition
-  // (see donationService.assertAssignedVolunteer / assertAcceptedStatus /
-  // assertScheduledStatus / assertOnTheWayStatus in donation.service.js),
-  // so the UI never offers an action the backend would reject. There is no
-  // canComplete flag — /complete is donor-only server-side, so no
-  // "Complete" button is ever shown to a volunteer, matching the audit's
-  // explicit requirement not to expose a step the backend doesn't allow.
-  //
-  // Phase 4 fix: this used to check only volunteer_id === currentUser.id.
-  // For a team mission, volunteer_id is the team LEADER (set by
-  // acceptDonationForTeam), not the actual pickup member — assigned_member_id
-  // is. That made the schedule/on-the-way/picked-up buttons appear (and,
-  // via the backend's independent check, promptly fail) for a leader who
-  // isn't the assigned member, while never appearing at all for the real
-  // assigned member if they aren't the leader — exactly mirroring
-  // assertAssignedVolunteer's own team-vs-individual distinction fixes that.
   const isVolunteer = currentUser?.role === 'volunteer';
   const isAssignedVolunteer = isVolunteer && (
     isTeamMission
@@ -463,509 +433,575 @@ export function DonationDetailsPage() {
   const canMarkPickedUp = isAssignedVolunteer && status === 'on_the_way';
   const canComplete = (isDonorOwner || currentUser?.role === 'donor') && status === 'picked_up';
 
-  return (
-    <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-text-secondary hover:text-text-primary transition-colors mb-3 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2 rounded-lg px-2 py-1 text-sm"
-        >
-          <ArrowLeft size={16} />
-          <span className="font-medium">Back</span>
-        </button>
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-xl font-semibold text-text-primary">
-                {title}
-              </h1>
-              <StatusBadge status={status} />
-            </div>
-            <p className="text-sm text-text-secondary">
-              ID: #{donationId} • Created {formatDate(created_at)}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {canEdit && (
-              <button
-                onClick={handleEdit}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-surface border border-border text-text-primary hover:bg-surface-hover transition-colors focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                <Edit size={15} />
-                Edit
-              </button>
-            )}
-            {canCancel && (
-              <button
-                onClick={handleCancel}
-                disabled={cancelling}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-danger-soft text-danger hover:opacity-80 transition-opacity disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2"
-              >
-                {cancelling ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
-                Cancel
-              </button>
-            )}
+  const fullAddress = pickup_address_details?.fullAddress || '';
 
-            {/* PHASE 3 — volunteer mission actions. Exactly one of these is
-                visible at a time, matching the donation's current status and
-                the backend's authorization rules (see the can* flags above). */}
-            {canAccept && (
-              <button
-                onClick={handleAccept}
-                disabled={actionInProgress}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <HandHeart size={15} />}
-                {actionInProgress ? 'Accepting...' : 'Accept Mission'}
-              </button>
-            )}
-            {canSchedule && (
-              <button
-                onClick={() => setShowScheduleModal(true)}
-                disabled={actionInProgress}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                <CalendarClock size={15} />
-                Schedule Pickup
-              </button>
-            )}
-            {canMarkOnTheWay && (
-              <button
-                onClick={handleMarkOnTheWay}
-                disabled={actionInProgress}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <Truck size={15} />}
-                {actionInProgress ? 'Updating...' : 'Mark On The Way'}
-              </button>
-            )}
-            {canMarkPickedUp && (
-              <button
-                onClick={handleMarkPickedUp}
-                disabled={actionInProgress}
-                className="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2"
-              >
-                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <PackageCheck size={15} />}
-                {actionInProgress ? 'Updating...' : 'Mark Picked Up'}
-              </button>
-            )}
-            {canComplete && (
-              <button
-                onClick={handleMarkCompleted}
-                disabled={actionInProgress}
-                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 shadow-sm"
-              >
-                {actionInProgress ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                {actionInProgress ? 'Completing...' : 'Confirm Pickup & Complete'}
-              </button>
-            )}
+  return (
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-6 pb-12">
+        {/* Top Navigation Bar */}
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-surface border border-border text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-all text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-dash-primary shadow-pb-subtle"
+          >
+            <ArrowLeft size={14} />
+            <span>Back to Donations</span>
+          </button>
+
+          <div className="flex items-center gap-2 text-xs text-text-muted">
+            <Clock size={13} />
+            <span>Created {formatDate(created_at)}</span>
           </div>
         </div>
 
-      </div>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Left Column - Main Details */}
-        <div className="xl:col-span-2 space-y-6">
-          {/* Donation Overview */}
-          <SectionCard title="Donation Overview">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm text-text-secondary">
-                {category === 'food' ? <Utensils size={16} /> : <Shirt size={16} />}
-                <span className="capitalize">{category}</span>
-              </div>
-              
-              <p className="text-text-primary">{description}</p>
-              
-              <div className="flex items-center gap-2 text-sm">
-                <Package size={16} className="text-text-secondary" />
-                <span className="text-text-primary">
-                  {quantity} {quantity_unit}
-                </span>
+        {/* Hero Header Banner */}
+        <div className="relative overflow-hidden rounded-2xl bg-surface border border-border p-6 sm:p-7 shadow-pb-card">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-dash-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
+          
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border ${
+                category === 'food' 
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' 
+                  : 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+              }`}>
+                {category === 'food' ? <Utensils size={26} /> : <Shirt size={26} />}
               </div>
 
-              {category === 'food' && (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  {food_type && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Type:</span>
-                      <span className="text-text-primary capitalize">{food_type}</span>
-                    </div>
-                  )}
-                  {food_name && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Name:</span>
-                      <span className="text-text-primary">{food_name}</span>
-                    </div>
-                  )}
-                  {ingredients && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Ingredients:</span>
-                      <span className="text-text-primary">{ingredients}</span>
-                    </div>
-                  )}
-                  {allergens && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Allergens:</span>
-                      <span className="text-text-primary">{allergens}</span>
-                    </div>
-                  )}
-                  {storage_requirement && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Storage:</span>
-                      <span className="text-text-primary capitalize">{storage_requirement}</span>
-                    </div>
-                  )}
-                  {expiry_date && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Expiry:</span>
-                      <span className="text-text-primary">{formatDate(expiry_date)}</span>
-                    </div>
-                  )}
-                  {is_vegetarian !== undefined && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Vegetarian:</span>
-                      <span className="text-text-primary">{is_vegetarian ? 'Yes' : 'No'}</span>
-                    </div>
-                  )}
-                  {is_halal !== undefined && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Halal:</span>
-                      <span className="text-text-primary">{is_halal ? 'Yes' : 'No'}</span>
-                    </div>
-                  )}
+              <div className="space-y-1.5 min-w-0">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-text-primary tracking-tight truncate">
+                    {title}
+                  </h1>
+                  <StatusBadge status={status} size="medium" />
                 </div>
+
+                <div className="flex items-center gap-3 text-xs text-text-secondary flex-wrap">
+                  <button
+                    onClick={() => handleCopy(donationId, 'id')}
+                    className="inline-flex items-center gap-1.5 font-mono px-2.5 py-1 rounded-lg bg-page border border-border hover:border-dash-primary text-text-primary transition-colors group"
+                    title="Click to copy ID"
+                  >
+                    <span className="font-semibold text-text-muted">ID:</span>
+                    <span>#{donationId}</span>
+                    {copiedId ? <Check size={12} className="text-success" /> : <Copy size={12} className="text-text-muted group-hover:text-dash-primary" />}
+                  </button>
+
+                  <span className="text-border">•</span>
+
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-page border border-border font-semibold text-text-primary capitalize">
+                    {category}
+                  </span>
+
+                  <span className="text-border">•</span>
+
+                  <span className="inline-flex items-center gap-1 text-text-primary font-medium">
+                    <Package size={13} className="text-dash-primary" />
+                    {quantity} {quantity_unit}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="flex items-center gap-2.5 flex-wrap self-start md:self-center">
+              {canEdit && (
+                <button
+                  onClick={handleEdit}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-surface border border-border text-text-primary hover:bg-surface-hover transition-all focus:outline-none focus:ring-2 focus:ring-dash-primary shadow-pb-subtle"
+                >
+                  <Edit size={14} />
+                  Edit Request
+                </button>
               )}
 
-              {category === 'clothes' && (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  {clothing_category && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Category:</span>
-                      <span className="text-text-primary capitalize">{clothing_category}</span>
-                    </div>
-                  )}
-                  {gender && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Gender:</span>
-                      <span className="text-text-primary capitalize">{gender}</span>
-                    </div>
-                  )}
-                  {age_group && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Age Group:</span>
-                      <span className="text-text-primary capitalize">{age_group}</span>
-                    </div>
-                  )}
-                  {item_condition && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Condition:</span>
-                      <span className="text-text-primary capitalize">{item_condition}</span>
-                    </div>
-                  )}
-                  {brand && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Brand:</span>
-                      <span className="text-text-primary">{brand}</span>
-                    </div>
-                  )}
-                  {size && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Size:</span>
-                      <span className="text-text-primary capitalize">{size}</span>
-                    </div>
-                  )}
-                  {color && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Color:</span>
-                      <span className="text-text-primary">{color}</span>
-                    </div>
-                  )}
-                  {season && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <span className="text-text-secondary w-24 shrink-0">Season:</span>
-                      <span className="text-text-primary capitalize">{season}</span>
-                    </div>
-                  )}
-                </div>
+              {canCancel && (
+                <button
+                  onClick={handleCancel}
+                  disabled={cancelling}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl bg-danger-soft text-danger hover:bg-danger/10 border border-danger/20 transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-danger shadow-pb-subtle"
+                >
+                  {cancelling ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                  Cancel Request
+                </button>
               )}
 
-              {special_instructions && (
-                <div className="pt-4 border-t border-border">
-                  <p className="text-xs text-text-secondary mb-1">Special Instructions:</p>
-                  <p className="text-text-primary">{special_instructions}</p>
-                </div>
+              {/* Volunteer Mission Primary Actions */}
+              {canAccept && (
+                <button
+                  onClick={handleAccept}
+                  disabled={actionInProgress}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-dash-primary text-white hover:bg-dash-primary-hover shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary"
+                >
+                  {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <HandHeart size={15} />}
+                  {actionInProgress ? 'Accepting...' : 'Accept Mission'}
+                </button>
+              )}
+
+              {canSchedule && (
+                <button
+                  onClick={() => setShowScheduleModal(true)}
+                  disabled={actionInProgress}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-dash-primary text-white hover:bg-dash-primary-hover shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary"
+                >
+                  <CalendarClock size={15} />
+                  Schedule Pickup
+                </button>
+              )}
+
+              {canMarkOnTheWay && (
+                <button
+                  onClick={handleMarkOnTheWay}
+                  disabled={actionInProgress}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-dash-primary text-white hover:bg-dash-primary-hover shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary"
+                >
+                  {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <Truck size={15} />}
+                  {actionInProgress ? 'Updating...' : 'Mark On The Way'}
+                </button>
+              )}
+
+              {canMarkPickedUp && (
+                <button
+                  onClick={handleMarkPickedUp}
+                  disabled={actionInProgress}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-dash-primary text-white hover:bg-dash-primary-hover shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-dash-primary"
+                >
+                  {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <PackageCheck size={15} />}
+                  {actionInProgress ? 'Updating...' : 'Mark Picked Up'}
+                </button>
+              )}
+
+              {canComplete && (
+                <button
+                  onClick={handleMarkCompleted}
+                  disabled={actionInProgress}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
+                  {actionInProgress ? 'Completing...' : 'Confirm Pickup & Complete'}
+                </button>
               )}
             </div>
-          </SectionCard>
+          </div>
+        </div>
 
-          {/* Pickup Information */}
-          <SectionCard title="Pickup Information">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-text-secondary flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-text-primary">
-                    {pickup_address_details?.fullAddress || 'Address not specified'}
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Left Column — Core Details */}
+          <div className="xl:col-span-2 space-y-6">
+            
+            {/* Donation Overview */}
+            <SectionCard title="Donation Overview" icon={FileText}>
+              <div className="space-y-5">
+                {/* Description Callout */}
+                <div className="p-4 rounded-xl bg-page/70 border border-border text-text-primary text-sm leading-relaxed">
+                  <p className="font-normal">{description || 'No additional description provided.'}</p>
+                </div>
+
+                {/* Quantity Chip */}
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-dash-primary-soft text-dash-primary text-xs font-bold">
+                  <Package size={15} />
+                  <span>Quantity: {quantity} {quantity_unit}</span>
+                </div>
+
+                {/* Food Category Specifications */}
+                {category === 'food' && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+                      <Sparkles size={12} className="text-amber-500" /> Food Attributes & Safety
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {food_type && (
+                        <SpecChip label="Food Type" value={food_type} icon={Utensils} capitalize />
+                      )}
+                      {food_name && (
+                        <SpecChip label="Item Name" value={food_name} icon={Package} />
+                      )}
+                      {storage_requirement && (
+                        <SpecChip label="Storage Requirement" value={storage_requirement} icon={Thermometer} capitalize tone="info" />
+                      )}
+                      {expiry_date && (
+                        <SpecChip label="Expiry Date" value={formatDate(expiry_date)} icon={Clock} tone="warning" />
+                      )}
+                    </div>
+
+                    {/* Dietary Badges */}
+                    <div className="flex items-center gap-2 flex-wrap pt-1">
+                      {is_halal !== undefined && is_halal && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold">
+                          <ShieldCheck size={14} /> Halal Certified
+                        </span>
+                      )}
+                      {is_vegetarian !== undefined && is_vegetarian && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-xs font-bold">
+                          <Leaf size={14} /> Vegetarian
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Ingredients & Allergens Callouts */}
+                    {ingredients && (
+                      <div className="p-3.5 rounded-xl bg-info-soft/40 border border-info/20 text-xs text-text-primary flex items-start gap-2.5">
+                        <Info size={16} className="text-info shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-info block mb-0.5">Ingredients:</span>
+                          <p>{ingredients}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {allergens && (
+                      <div className="p-3.5 rounded-xl bg-warning-soft/50 border border-warning/30 text-xs text-text-primary flex items-start gap-2.5">
+                        <AlertTriangle size={16} className="text-warning shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-warning block mb-0.5">Allergen Notice:</span>
+                          <p>{allergens}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Clothes Category Specifications */}
+                {category === 'clothes' && (
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1.5">
+                      <Sparkles size={12} className="text-indigo-500" /> Clothing Item Details
+                    </h3>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {clothing_category && <SpecChip label="Category" value={clothing_category} icon={Shirt} capitalize />}
+                      {gender && <SpecChip label="Gender" value={gender} capitalize />}
+                      {age_group && <SpecChip label="Age Group" value={age_group} capitalize />}
+                      {item_condition && <SpecChip label="Condition" value={item_condition} capitalize tone="success" />}
+                      {brand && <SpecChip label="Brand" value={brand} />}
+                      {size && <SpecChip label="Size" value={size} capitalize />}
+                      {color && <SpecChip label="Color" value={color} />}
+                      {season && <SpecChip label="Season" value={season} capitalize />}
+                    </div>
+                  </div>
+                )}
+
+                {/* Special Instructions */}
+                {special_instructions && (
+                  <div className="pt-4 border-t border-border">
+                    <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-1.5">Special Instructions</p>
+                    <div className="p-3.5 rounded-xl bg-page border border-border text-xs text-text-primary leading-relaxed italic">
+                      "{special_instructions}"
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+
+            {/* Pickup Information */}
+            <SectionCard title="Pickup & Contact Information" icon={MapPin}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Address Card */}
+                <div className="p-4 rounded-xl bg-page/70 border border-border shadow-pb-subtle space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-dash-primary flex items-center gap-1">
+                      <MapPin size={12} /> Address
+                    </span>
+                    {fullAddress && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleCopy(fullAddress, 'address')}
+                          className="p-1 rounded text-text-muted hover:text-dash-primary transition-colors"
+                          title="Copy address"
+                        >
+                          {copiedAddress ? <Check size={13} className="text-success" /> : <Copy size={13} />}
+                        </button>
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1 rounded text-text-muted hover:text-dash-primary transition-colors"
+                          title="Open in Google Maps"
+                        >
+                          <ExternalLink size={13} />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-xs font-semibold text-text-primary leading-snug">
+                    {fullAddress || 'Address not specified'}
                   </p>
+
                   {pickup_address_details && (
-                    <p className="text-sm text-text-secondary mt-1">
+                    <p className="text-[11px] text-text-muted pt-1">
                       {pickup_address_details.area}, {pickup_address_details.district}, {pickup_address_details.division}
                     </p>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-text-secondary flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-text-primary">
-                    {pickup_date ? formatDate(pickup_date) : 'Date not specified'}
-                  </p>
-                  {pickup_time_slot && (
-                    <p className="text-sm text-text-secondary">
-                      Time slot: {pickup_time_slot}
+                {/* Date & Time Slot */}
+                <div className="p-4 rounded-xl bg-page/70 border border-border shadow-pb-subtle space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-dash-primary flex items-center gap-1">
+                    <Calendar size={12} /> Schedule
+                  </span>
+
+                  <div>
+                    <p className="text-xs font-semibold text-text-primary">
+                      {pickup_date ? formatDate(pickup_date) : 'Date not specified'}
                     </p>
-                  )}
+                    {pickup_time_slot && (
+                      <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded-full bg-info-soft text-info text-[11px] font-semibold">
+                        Time Slot: {pickup_time_slot}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              {contact_phone && (
-                <div className="flex items-center gap-3">
-                  <Phone className="w-5 h-5 text-text-secondary flex-shrink-0" />
-                  <p className="text-text-primary">{contact_phone}</p>
-                </div>
-              )}
-            </div>
-          </SectionCard>
+                {/* Phone Contact */}
+                {contact_phone && (
+                  <div className="md:col-span-2 p-3.5 rounded-xl bg-page/70 border border-border shadow-pb-subtle flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                        <Phone size={15} />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Contact Phone</p>
+                        <p className="text-xs font-bold text-text-primary">{contact_phone}</p>
+                      </div>
+                    </div>
 
-          {/* Images */}
-          <SectionCard title="Donation Images">
-            <ImageGallery 
-              coverImage={photo} 
-              images={images || []} 
-            />
-          </SectionCard>
-
-          {/* Timeline — built only from real timestamp columns */}
-          <SectionCard title="Timeline">
-            <ActivityTimeline activities={activities} />
-          </SectionCard>
-        </div>
-
-        {/* Right Column - Sidebar */}
-        <div className="space-y-6">
-          {/* Status Timeline — always visible, shows the real lifecycle stage */}
-          <SectionCard title="Status Timeline">
-            <StatusTimeline currentStatus={status} donation={donation} />
-          </SectionCard>
-
-          {/* Live Tracking Panel - real socket-driven data, honest fallbacks */}
-          {(status === 'scheduled' || status === 'on_the_way' || status === 'picked_up') && (
-            <SectionCard title="Live Tracking">
-              <TrackingPanel
-                donation={donation}
-                volunteer={volunteer}
-                volunteerLocation={volunteerLocation}
-              />
-            </SectionCard>
-          )}
-
-          {/* Volunteer Information */}
-          <SectionCard title="Volunteer" icon={UserCircle2}>
-            {isTeamMission && (
-              <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold uppercase tracking-wide">
-                  <Users size={11} /> Team Mission{team_name ? ` · ${team_name}` : ''}
-                </span>
-                <span
-                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold ${
-                    assigned_member_name
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                  }`}
-                >
-                  <UserCircle2 size={11} />
-                  {assigned_member_name ? `Pickup: ${assigned_member_name}` : 'Pickup Member: Not assigned'}
-                </span>
-                {canAssignMember && (
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-dash-primary text-dash-primary text-[11px] font-semibold hover:bg-dash-primary-soft transition-colors"
-                  >
-                    <UserCircle2 size={11} />
-                    {assigned_member_name ? 'Reassign' : 'Assign Member'}
-                  </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleCopy(contact_phone, 'phone')}
+                        className="px-2.5 py-1 rounded-lg bg-surface border border-border text-xs font-medium text-text-secondary hover:text-text-primary transition-colors flex items-center gap-1"
+                      >
+                        {copiedPhone ? <Check size={12} className="text-success" /> : <Copy size={12} />}
+                        <span>Copy</span>
+                      </button>
+                      <a
+                        href={`tel:${contact_phone}`}
+                        className="px-3 py-1 rounded-lg bg-dash-primary text-white text-xs font-bold hover:bg-dash-primary-hover transition-colors"
+                      >
+                        Call Now
+                      </a>
+                    </div>
+                  </div>
                 )}
               </div>
-            )}
-            <VolunteerCard volunteer={volunteer} />
-          </SectionCard>
-
-          {isLeaderOfDonationTeam && (
-            <AssignMemberModal
-              isOpen={showAssignModal}
-              onClose={() => setShowAssignModal(false)}
-              onAssign={handleAssignMember}
-              members={myTeamMembers}
-              currentAssignedId={assigned_member_id}
-              assigning={assigning}
-            />
-          )}
-
-          {/* Chat Window - Only show when volunteer is assigned */}
-          {isVolunteerAssigned && (
-            <SectionCard title="Chat with Volunteer">
-              <ChatWindow donation={donation} currentUser={currentUser} />
             </SectionCard>
-          )}
 
-          {/* Rating Submission - Only show when donation is completed and user hasn't rated */}
-          {status === 'completed' && !existingRating && currentUser?.role === 'donor' && (
-            <SectionCard title="Rate Your Experience">
-              <RatingSubmission 
-                donation={donation} 
-                onRatingSubmitted={handleRatingSubmitted}
+            {/* Donation Images */}
+            <SectionCard title="Donation Images" icon={Shirt}>
+              <ImageGallery 
+                coverImage={photo} 
+                images={images || []} 
               />
             </SectionCard>
-          )}
 
-          {/* Existing Rating Display - Show if user has already rated */}
-          {existingRating && (
-            <SectionCard title="Your Rating">
-              <div className="flex items-center gap-4">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={20}
-                      className={`${
-                        star <= existingRating.stars
-                          ? 'text-warning fill-warning'
-                          : 'text-border'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-text-primary">
-                    {existingRating.stars} / 5
-                  </p>
-                  <p className="text-xs text-text-secondary">
-                    Rated on {formatDate(existingRating.created_at)}
-                  </p>
-                </div>
-              </div>
-              {existingRating.comment && (
-                <p className="mt-3 text-text-primary text-sm italic">
-                  "{existingRating.comment}"
-                </p>
-              )}
+            {/* Chronological Activity Timeline */}
+            <SectionCard title="Activity History" icon={Activity}>
+              <ActivityTimeline activities={activities} />
             </SectionCard>
-          )}
+          </div>
 
-          {/* Report an Issue — donors and volunteers on this donation only;
-              backend enforces participant authorization either way. */}
-          {status !== 'pending' && (currentUser?.role === 'donor' || isAssignedVolunteer) && (
-            <div className="text-center">
-              <button
-                onClick={() => setShowReportModal(true)}
-                className="text-xs text-text-muted hover:text-danger transition-colors underline underline-offset-2"
-              >
-                Report an issue with this donation
-              </button>
+          {/* Right Sidebar Column */}
+          <div className="space-y-6">
+            {/* Status Timeline */}
+            <SectionCard title="Lifecycle Progression" icon={Layers}>
+              <StatusTimeline currentStatus={status} donation={donation} />
+            </SectionCard>
+
+            {/* Live Tracking Panel */}
+            {(status === 'scheduled' || status === 'on_the_way' || status === 'picked_up') && (
+              <SectionCard title="Live Pickup Tracking" icon={Truck}>
+                <TrackingPanel
+                  donation={donation}
+                  volunteer={volunteer}
+                  volunteerLocation={volunteerLocation}
+                />
+              </SectionCard>
+            )}
+
+            {/* Volunteer Information */}
+            <SectionCard title="Assigned Volunteer" icon={UserCircle2}>
+              {isTeamMission && (
+                <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+                  <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold uppercase tracking-wide border border-indigo-500/20">
+                    <Users size={11} /> Team Mission{team_name ? ` · ${team_name}` : ''}
+                  </span>
+                  <span
+                    className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
+                      assigned_member_name
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                        : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20'
+                    }`}
+                  >
+                    <UserCircle2 size={11} />
+                    {assigned_member_name ? `Pickup: ${assigned_member_name}` : 'Pickup Member: Unassigned'}
+                  </span>
+                  {canAssignMember && (
+                    <button
+                      onClick={() => setShowAssignModal(true)}
+                      className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-dash-primary text-dash-primary text-[11px] font-bold hover:bg-dash-primary-soft transition-colors"
+                    >
+                      <UserCircle2 size={11} />
+                      {assigned_member_name ? 'Reassign' : 'Assign Member'}
+                    </button>
+                  )}
+                </div>
+              )}
+              <VolunteerCard volunteer={volunteer} />
+            </SectionCard>
+
+            {isLeaderOfDonationTeam && (
+              <AssignMemberModal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                onAssign={handleAssignMember}
+                members={myTeamMembers}
+                currentAssignedId={assigned_member_id}
+                assigning={assigning}
+              />
+            )}
+
+            {/* Chat Window */}
+            {isVolunteerAssigned && (
+              <SectionCard title="Live Chat with Volunteer" icon={MessageCircle}>
+                <ChatWindow donation={donation} currentUser={currentUser} />
+              </SectionCard>
+            )}
+
+            {/* Rating Submission */}
+            {status === 'completed' && !existingRating && currentUser?.role === 'donor' && (
+              <SectionCard title="Rate Experience" icon={Star}>
+                <RatingSubmission 
+                  donation={donation} 
+                  onRatingSubmitted={handleRatingSubmitted}
+                />
+              </SectionCard>
+            )}
+
+            {/* Existing Rating Display */}
+            {existingRating && (
+              <SectionCard title="Your Rating" icon={Star}>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-warning-soft/30 border border-warning/20">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star
+                        key={star}
+                        size={18}
+                        className={`${
+                          star <= existingRating.stars
+                            ? 'text-warning fill-warning'
+                            : 'text-border'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-text-primary">
+                      {existingRating.stars} / 5 Stars
+                    </p>
+                    <p className="text-[10px] text-text-muted">
+                      Rated on {formatDate(existingRating.created_at)}
+                    </p>
+                  </div>
+                </div>
+                {existingRating.comment && (
+                  <p className="mt-3 text-xs text-text-primary italic p-3 rounded-lg bg-page border border-border">
+                    "{existingRating.comment}"
+                  </p>
+                )}
+              </SectionCard>
+            )}
+
+            {/* Report an Issue Link */}
+            {status !== 'pending' && (currentUser?.role === 'donor' || isAssignedVolunteer) && (
+              <div className="text-center pt-2">
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="text-xs text-text-muted hover:text-danger transition-colors underline underline-offset-4 font-medium"
+                >
+                  Report an issue with this donation
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {showReportModal && (
+          <ReportIssueModal
+            donationId={id}
+            onClose={() => setShowReportModal(false)}
+          />
+        )}
+
+        {/* Cancel Confirmation Modal */}
+        <CancelConfirmationModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={confirmCancel}
+          donationTitle={title}
+          isLoading={cancelling}
+        />
+
+        {/* Schedule Pickup Modal */}
+        <SchedulePickupModal
+          isOpen={showScheduleModal}
+          onClose={() => setShowScheduleModal(false)}
+          onConfirm={handleScheduleConfirm}
+          donationTitle={title}
+          isLoading={actionInProgress}
+        />
+      </div>
+    </DashboardLayout>
+  );
+}
+
+/**
+ * SectionCard component with header icon and card styling
+ */
+function SectionCard({ title, icon: Icon, action, children }) {
+  return (
+    <div className="bg-surface rounded-2xl border border-border shadow-pb-card overflow-hidden transition-all duration-200 hover:shadow-pb-elevated">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between bg-page/40">
+        <div className="flex items-center gap-2.5">
+          {Icon && (
+            <div className="w-7 h-7 rounded-lg bg-dash-primary-soft text-dash-primary flex items-center justify-center shrink-0">
+              <Icon size={15} />
             </div>
           )}
+          <h2 className="text-sm font-bold text-text-primary tracking-tight">{title}</h2>
         </div>
+        {action && <div>{action}</div>}
       </div>
-
-      {showReportModal && (
-        <ReportIssueModal
-          donationId={id}
-          onClose={() => setShowReportModal(false)}
-        />
-      )}
-
-      {/* Cancel Confirmation Modal */}
-      <CancelConfirmationModal
-        isOpen={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={confirmCancel}
-        donationTitle={title}
-        isLoading={cancelling}
-      />
-
-      {/* PHASE 3 — Schedule Pickup Modal */}
-      <SchedulePickupModal
-        isOpen={showScheduleModal}
-        onClose={() => setShowScheduleModal(false)}
-        onConfirm={handleScheduleConfirm}
-        donationTitle={title}
-        isLoading={actionInProgress}
-      />
+      <div className="p-5">{children}</div>
     </div>
   );
 }
 
 /**
- * SectionCard component for consistent section styling
+ * SpecChip helper for rendering specification key-value pills
  */
-function SectionCard({ title, children }) {
+function SpecChip({ label, value, icon: Icon, capitalize = false, tone = 'default' }) {
+  const toneClasses = {
+    default: 'bg-page/70 border-border text-text-primary',
+    info: 'bg-info-soft/60 border-info/20 text-info',
+    warning: 'bg-warning-soft/60 border-warning/20 text-warning',
+    success: 'bg-success-soft/60 border-success/20 text-success',
+  };
+
+  const formattedValue = typeof value === 'string' ? value.replace(/_/g, ' ') : value;
+
   return (
-    <div className="bg-surface rounded-xl border border-border p-5">
-      <h2 className="text-sm font-semibold text-text-primary mb-3">{title}</h2>
-      {children}
+    <div className={`p-2.5 rounded-xl border ${toneClasses[tone]} space-y-0.5`}>
+      <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted flex items-center gap-1">
+        {Icon && <Icon size={12} className="shrink-0 text-dash-primary" />}
+        {label}
+      </span>
+      <p className={`text-xs font-semibold ${capitalize ? 'capitalize' : ''}`}>
+        {formattedValue}
+      </p>
     </div>
   );
 }
 
-/**
- * Builds a small, real activity timeline from the only timestamp columns
- * the backend actually stores on a donation: created_at, accepted_at,
- * scheduled_at, completed_at. No entry is invented for statuses that don't
- * have a dedicated timestamp column (on_the_way, picked_up) — the status
- * timeline elsewhere on the page already conveys the current stage.
- */
-function generateRealTimeline(donation) {
-  const activities = [
-    {
-      type: 'created',
-      title: 'Donation Created',
-      description: 'You created this donation request',
-      timestamp: donation.created_at,
-    },
-  ];
 
-  if (donation.accepted_at) {
-    activities.push({
-      type: 'assigned',
-      title: 'Volunteer Accepted',
-      description: donation.volunteer_name
-        ? `${donation.volunteer_name} accepted this donation`
-        : 'A volunteer accepted this donation',
-      timestamp: donation.accepted_at,
-    });
-  }
-
-  if (donation.scheduled_at) {
-    activities.push({
-      type: 'scheduled',
-      title: 'Pickup Scheduled',
-      description: 'Pickup was scheduled for this donation',
-      timestamp: donation.scheduled_at,
-    });
-  }
-
-  if (donation.completed_at) {
-    activities.push({
-      type: 'status_change',
-      title: 'Donation Completed',
-      description: 'Donation has been successfully delivered',
-      timestamp: donation.completed_at,
-    });
-  }
-
-  return activities.reverse();
-}

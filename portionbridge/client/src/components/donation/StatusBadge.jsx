@@ -1,10 +1,7 @@
 import { Clock, CheckCircle2, CalendarClock, Truck, PackageCheck, CheckCheck, XCircle } from 'lucide-react';
 
 /**
- * StatusBadge component for displaying donation status with consistent,
- * semantic dashboard colors (see index.css design tokens). Statuses that
- * share a color family (accepted/scheduled/on_the_way are all "in progress")
- * are still distinguishable by icon + label, not color alone.
+ * StatusBadge component for displaying donation status with semantic dashboard colors
  */
 export function StatusBadge({ status, size = 'medium' }) {
   const statusConfig = {
@@ -21,26 +18,26 @@ export function StatusBadge({ status, size = 'medium' }) {
   const Icon = config.icon;
 
   const toneClasses = {
-    warning: 'bg-warning-soft text-warning',
-    info: 'bg-info-soft text-info',
-    success: 'bg-success-soft text-success',
-    danger: 'bg-danger-soft text-danger',
+    warning: 'bg-warning-soft/90 text-warning border-warning/20',
+    info: 'bg-info-soft/90 text-info border-info/20',
+    success: 'bg-success-soft/90 text-success border-success/20',
+    danger: 'bg-danger-soft/90 text-danger border-danger/20',
   };
 
   const sizeClasses = {
-    small: 'px-2 py-0.5 text-xs gap-1',
-    medium: 'px-2.5 py-1 text-xs gap-1.5',
-    large: 'px-3 py-1.5 text-sm gap-1.5',
+    small: 'px-2 py-0.5 text-[11px] gap-1',
+    medium: 'px-3 py-1 text-xs gap-1.5',
+    large: 'px-3.5 py-1.5 text-sm gap-2',
   };
 
-  const iconSize = size === 'large' ? 14 : 12;
+  const iconSize = size === 'large' ? 15 : size === 'small' ? 11 : 13;
 
   return (
     <span
-      className={`inline-flex items-center font-medium rounded-full transition-colors duration-200 ${toneClasses[config.tone]} ${sizeClasses[size]}`}
+      className={`inline-flex items-center font-bold tracking-tight rounded-full border shadow-pb-subtle transition-all duration-200 ${toneClasses[config.tone]} ${sizeClasses[size]}`}
     >
-      <Icon size={iconSize} />
-      {config.label}
+      <Icon size={iconSize} className="shrink-0" />
+      <span>{config.label}</span>
     </span>
   );
 }

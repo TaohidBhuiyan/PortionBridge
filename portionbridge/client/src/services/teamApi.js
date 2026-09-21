@@ -403,4 +403,59 @@ export const teamApi = {
       return { success: false, error: message, status: error.response?.status || null };
     }
   },
+
+  /**
+   * Delete / Disband team (leader only).
+   * DELETE /teams/:id
+   */
+  deleteTeam: async (teamId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(
+        `${API_BASE}/teams/${teamId}`,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to delete team';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * List pending invitations sent by team (leader only).
+   * GET /teams/:id/invitations
+   */
+  listTeamInvitations: async (teamId) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/teams/${teamId}/invitations`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch team invitations';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
+
+  /**
+   * Cancel a pending invitation sent by team (leader only).
+   * DELETE /teams/:id/invitations/:invitationId
+   */
+  cancelInvitation: async (teamId, invitationId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.delete(
+        `${API_BASE}/teams/${teamId}/invitations/${invitationId}`,
+        { headers: { Authorization: `Bearer ${token}`, 'x-csrf-token': csrfToken } }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to cancel invitation';
+      return { success: false, error: message, status: error.response?.status || null };
+    }
+  },
 };
