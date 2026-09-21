@@ -111,6 +111,7 @@ export function ActiveMissionCard() {
   const CategoryIcon = CATEGORY_ICON[mission.category] || Package;
   const scheduledLabel = formatDateTime(mission.scheduled_at);
   const pickupTimeLabel = formatDateTime(mission.pickup_time);
+  const isTeamMission = mission.assignment_mode === 'team';
 
   return (
     <div className="pb-glass-card rounded-2xl p-5 border border-dash-primary/30 shadow-md relative overflow-hidden group">
@@ -162,6 +163,24 @@ export function ActiveMissionCard() {
               <StatusBadge status={mission.status} size="small" />
             </div>
 
+            {isTeamMission && (
+              <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold uppercase tracking-wide">
+                  <Users size={11} /> Team Mission{mission.team_name ? ` · ${mission.team_name}` : ''}
+                </span>
+                <span
+                  className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                    mission.assigned_member_name
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                  }`}
+                >
+                  <UserCircle2 size={11} />
+                  {mission.assigned_member_name ? `Pickup: ${mission.assigned_member_name}` : 'Pickup Member: Not assigned'}
+                </span>
+              </div>
+            )}
+
             {mission.description && (
               <p className="text-xs text-text-secondary mb-3 line-clamp-2">
                 {mission.description}
@@ -169,18 +188,6 @@ export function ActiveMissionCard() {
             )}
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
-              {mission.assignment_mode === 'team' && (
-                <span className="flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 px-2.5 py-1 rounded-md border border-indigo-200 dark:border-indigo-700/50">
-                  <Users size={13} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <span className="font-medium text-indigo-700 dark:text-indigo-300">Team Mission · {mission.team_name || 'Unknown Team'}</span>
-                </span>
-              )}
-              {mission.assignment_mode === 'team' && (
-                <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
-                  <UserCircle2 size={13} className="text-dash-primary shrink-0" />
-                  <span>Pickup: {mission.assigned_member_name || 'Not assigned'}</span>
-                </span>
-              )}
               {mission.pickup_location && (
                 <span className="flex items-center gap-1.5 bg-page px-2.5 py-1 rounded-md border border-border/60">
                   <MapPin size={13} className="text-rose-500 shrink-0" />

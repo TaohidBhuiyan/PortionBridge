@@ -143,19 +143,25 @@ export function VolunteerActiveMissions() {
                       <StatusBadge status={mission.status} size="small" />
                     </div>
 
+                    {mission.assignment_mode === 'team' && (
+                      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                        <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold uppercase tracking-wide">
+                          <Users size={11} /> Team{mission.team_name ? ` · ${mission.team_name}` : ''}
+                        </span>
+                        <span
+                          className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                            mission.assigned_member_name
+                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                          }`}
+                        >
+                          <UserCircle2 size={11} />
+                          {mission.assigned_member_name ? mission.assigned_member_name : 'Not assigned'}
+                        </span>
+                      </div>
+                    )}
+
                     <div className="space-y-2 py-2">
-                      {mission.assignment_mode === 'team' && (
-                        <div className="flex items-center gap-2 text-xs bg-indigo-50 dark:bg-indigo-900/30 p-2.5 rounded-xl border border-indigo-200 dark:border-indigo-700/50">
-                          <Users size={14} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
-                          <span className="font-medium text-indigo-700 dark:text-indigo-300">Team Mission · {mission.team_name || 'Unknown Team'}</span>
-                        </div>
-                      )}
-                      {mission.assignment_mode === 'team' && (
-                        <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface/80 p-2.5 rounded-xl border border-border/60">
-                          <UserCircle2 size={14} className="text-dash-primary shrink-0" />
-                          <span>Pickup: {mission.assigned_member_name || 'Not assigned'}</span>
-                        </div>
-                      )}
                       {mission.pickup_location && (
                         <div className="flex items-center gap-2 text-xs text-text-secondary bg-surface/80 p-2.5 rounded-xl border border-border/60">
                           <MapPin size={14} className="text-rose-500 shrink-0" />

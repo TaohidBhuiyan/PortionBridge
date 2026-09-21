@@ -28,11 +28,13 @@ import {
   Check,
   X,
   Sparkles,
+  UserCircle2,
 } from 'lucide-react';
 import { DashboardLayout } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { useAuthSocket } from '../context/SocketContext';
 import { teamApi } from '../services/teamApi';
+import { donationApi } from '../services/donationApi';
 import { useTeamRoom } from '../hooks/useTeamRoom';
 import { Avatar } from '../components/common/Avatar';
 import { StatusBadge } from '../components/donation/StatusBadge';
@@ -41,6 +43,7 @@ import { ErrorState } from '../components/dashboard/ErrorState';
 import { SkeletonCard } from '../components/dashboard/skeletons';
 import { AnnouncementComposer } from '../components/team/AnnouncementComposer';
 import { InviteMemberModal } from '../components/team/InviteMemberModal';
+import { AssignMemberModal } from '../components/team/AssignMemberModal';
 import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
 import { BaseLocationCard } from '../components/dashboard/volunteer';
 
@@ -80,6 +83,8 @@ export function VolunteerTeam() {
   const [inviting, setInviting] = useState(false);
   const [confirmModal, setConfirmModal] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [assignModalDonation, setAssignModalDonation] = useState(null);
+  const [assigningMember, setAssigningMember] = useState(false);
 
   // Discovery / Filters
   const [noTeamTab, setNoTeamTab] = useState('discover'); // 'discover' | 'requests' | 'invitations'
@@ -193,6 +198,20 @@ export function VolunteerTeam() {
       toast.error(result.error || 'Failed to create team.');
     }
     setCreatingTeam(false);
+  };
+
+  const handleAssignMember = async (memberId) => {
+    if (!assignModalDonation) return;
+    setAssigningMember(true);
+    const result = await donationApi.assignTeamMember(assignModalDonation.id, team.id, memberId);
+    if (result.success) {
+      toast.success('Pickup member assigned.');
+      setAssignModalDonation(null);
+      setRefreshTrigger((t) => t + 1);
+    } else {
+      toast.error(result.error || 'Failed to assign pickup member.');
+    }
+    setAssigningMember(false);
   };
 
   const handleSendJoinRequest = async () => {
@@ -1299,9 +1318,33 @@ export function VolunteerTeam() {
                             {donation.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-2 text-[11px] text-text-secondary">
+                        <div className="flex items-center gap-2 text-[11px] text-text-secondary mb-2">
                           <Package size={10} />
                           {donation.quantity} {donation.quantity_unit}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold ${
+                              donation.assigned_member_name
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                            }`}
+                          >
+                            <UserCircle2 size={11} />
+                            {donation.assigned_member_name ? `Pickup: ${donation.assigned_member_name}` : 'Not assigned'}
+                          </span>
+                          {isLeader && ['accepted', 'scheduled', 'on_the_way'].includes(donation.status) && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAssignModalDonation(donation);
+                              }}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-md border border-dash-primary text-dash-primary text-[11px] font-semibold hover:bg-dash-primary-soft transition-colors"
+                            >
+                              <UserCircle2 size={11} />
+                              {donation.assigned_member_name ? 'Reassign' : 'Assign Member'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1366,6 +1409,17 @@ export function VolunteerTeam() {
           onInvite={handleInviteMember}
           onClose={() => setShowInviteModal(false)}
           loading={inviting}
+        />
+      )}
+
+      {assignModalDonation && (
+        <AssignMemberModal
+          isOpen={!!assignModalDonation}
+          onClose={() => setAssignModalDonation(null)}
+          onAssign={handleAssignMember}
+          members={team?.members || []}
+          currentAssignedId={assignModalDonation?.assigned_member_id}
+          assigning={assigningMember}
         />
       )}
 

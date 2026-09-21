@@ -8,10 +8,12 @@ const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers')
 
 /**
  * Creates a report tied to a donation. Only a participant in that donation
- * (its donor or its assigned volunteer) may file a report, and only once
- * per donation (pre-checked here; guaranteed by the DB's UNIQUE KEY added
- * in migration_006 against races). If a target user is named, they must be
- * the OTHER participant in the same donation, not an arbitrary user.
+ * (its donor, its volunteer/team-leader, or the actual assigned team
+ * member — Phase 5) may file a report, and only once per donation
+ * (pre-checked here; guaranteed by the DB's UNIQUE KEY added in
+ * migration_006 against races). If a target user is named, they must be
+ * one of the OTHER genuine participants in the same donation, not an
+ * arbitrary user.
  * @param {number} reporterId - ID of the user filing the report
  * @param {Object} params
  * @param {number} params.donationId - Donation the report relates to
@@ -30,7 +32,13 @@ async function createReport(reporterId, { donationId, reportedUserId, reason, de
     throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
   }
 
-  const isParticipant = donation.donor_id === reporterId || donation.volunteer_id === reporterId;
+  // Phase 5 fix: same team-mission gap as chat — for a team-accepted
+  // donation, volunteer_id is the team leader, not necessarily the actual
+  // pickup person (assigned_member_id). Both are checked, additively, so
+  // this only adds the missing assigned-member case.
+  const isParticipant = donation.donor_id === reporterId
+    || donation.volunteer_id === reporterId
+    || donation.assigned_member_id === reporterId;
   if (!isParticipant) {
     throw new AppError('You are not allowed to report this donation request.', HTTP_STATUS.FORBIDDEN);
   }
@@ -38,11 +46,13 @@ async function createReport(reporterId, { donationId, reportedUserId, reason, de
   if (reportedUserId) {
     const isValidTarget =
       reportedUserId !== reporterId &&
-      (reportedUserId === donation.donor_id || reportedUserId === donation.volunteer_id);
+      (reportedUserId === donation.donor_id
+        || reportedUserId === donation.volunteer_id
+        || reportedUserId === donation.assigned_member_id);
 
     if (!isValidTarget) {
       throw new AppError(
-        'reportedUserId must be the other participant in this donation request.',
+        'reportedUserId must be another genuine participant in this donation request.',
         HTTP_STATUS.BAD_REQUEST
       );
     }

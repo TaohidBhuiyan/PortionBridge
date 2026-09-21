@@ -124,15 +124,19 @@ async function countUnread(donationRequestId, userId) {
 
 /**
  * Total unread message count across EVERY donation chat this user
- * participates in (as donor or assigned volunteer), excluding soft-deleted
- * donations. Powers a single "unread messages" badge total, distinct from
- * countUnread's per-conversation breakdown.
+ * participates in (as donor, volunteer/team-leader, or the actual assigned
+ * team member), excluding soft-deleted donations. Powers a single "unread
+ * messages" badge total, distinct from countUnread's per-conversation
+ * breakdown.
  *
  * The join condition itself IS the authorization boundary here — a user
- * can only ever be counted against donations where they're the donor or
- * the assigned volunteer, so there's no separate access check needed at
- * the service layer for this one query (unlike every other chat function,
- * which authorizes against a single donationId first).
+ * can only ever be counted against donations where they're the donor, the
+ * volunteer_id (individual volunteer or team leader), or the
+ * assigned_member_id (actual team pickup member) — matching
+ * chatService.authorizeRoomAccess's participant check exactly, so there's
+ * no separate access check needed at the service layer for this one query
+ * (unlike every other chat function, which authorizes against a single
+ * donationId first).
  * @param {number} userId - ID of the user
  * @returns {Promise<number>} Total unread message count across all chats
  */
@@ -141,7 +145,7 @@ async function countUnreadForUser(userId) {
     `SELECT COUNT(*) AS total
      FROM chat_messages cm
      JOIN donation_requests dr ON dr.id = cm.donation_request_id
-     WHERE (dr.donor_id = :userId OR dr.volunteer_id = :userId)
+     WHERE (dr.donor_id = :userId OR dr.volunteer_id = :userId OR dr.assigned_member_id = :userId)
        AND dr.is_deleted = 0
        AND cm.sender_id <> :userId
        AND cm.is_read = 0`,

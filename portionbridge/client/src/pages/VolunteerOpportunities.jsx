@@ -5,11 +5,11 @@ import { DashboardLayout } from '../components/dashboard';
 import { donationApi } from '../services/donationApi';
 import { profileApi } from '../services/profileApi';
 import { teamApi } from '../services/teamApi';
+import { useAuth } from '../context/AuthContext';
 import { DonationCard } from '../components/donation/DonationCard';
 import { EmptyState } from '../components/dashboard/EmptyState';
 import { ErrorState } from '../components/dashboard/ErrorState';
 import { SkeletonCard } from '../components/dashboard/skeletons';
-import { useAuth } from '../context/AuthContext';
 
 const CATEGORY_OPTIONS = [
   { value: '', label: 'All Categories' },
@@ -35,8 +35,22 @@ export function VolunteerOpportunities() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [acceptingId, setAcceptingId] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Phase 4: team leaders can accept a donation on behalf of their team
+  // instead of (or as well as) individually — fetched once, not part of
+  // the donation-list refresh cycle.
   const [myTeam, setMyTeam] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    teamApi.getMyTeam().then((result) => {
+      if (!cancelled && result.success && result.data?.team) {
+        setMyTeam(result.data.team);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  const isTeamLeader = Boolean(myTeam && user && myTeam.leader_id === user.id);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const [search, setSearch] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
@@ -47,6 +61,10 @@ export function VolunteerOpportunities() {
   const [radius, setRadius] = useState(DEFAULT_RADIUS_KM);
   const [radiusTouched, setRadiusTouched] = useState(false);
 
+  // Phase 3: nearby-donation discovery is always centered on the
+  // volunteer's own persisted base location — never a client-sent/live-GPS
+  // coordinate (the backend ignores those now; only `nearby`+`radius` are
+  // sent). radius is still the volunteer's own choice.
   const [savedLocation, setSavedLocation] = useState(null);
   useEffect(() => {
     let cancelled = false;
@@ -63,19 +81,7 @@ export function VolunteerOpportunities() {
     return () => { cancelled = true; };
   }, []);
 
-  // Fetch volunteer's team on mount
-  useEffect(() => {
-    let cancelled = false;
-    teamApi.getMyTeam().then((result) => {
-      if (!cancelled && result.success) {
-        setMyTeam(result.data);
-      }
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-
   const hasLocation = savedLocation !== null;
-
   const effectiveRadius = radiusTouched || !savedLocation ? radius : savedLocation.coverageRadius;
 
   const [debouncedRadius, setDebouncedRadius] = useState(DEFAULT_RADIUS_KM);
@@ -147,40 +153,9 @@ export function VolunteerOpportunities() {
     setPage(1);
   };
 
-  const sortOptions = SORT_OPTIONS;
-
-  const isTeamLeader = myTeam && myTeam.leader_id === user?.id;
-
-  const handleAcceptForTeam = async (donationId) => {
-    if (acceptingId) return;
-    setAcceptingId(donationId);
-
-    const result = await donationApi.acceptDonationForTeam(donationId, myTeam.id);
-
-    if (result.success) {
-      toast.success('Donation accepted for your team! Check your Team Activity.');
-      setRefreshTrigger((t) => t + 1);
-    } else if (result.status === 409) {
-      toast.error('This donation is no longer available.');
-      setRefreshTrigger((t) => t + 1);
-    } else if (result.status === 401) {
-      toast.error('Your session has expired. Please log in again.');
-    } else if (result.status === 403) {
-      if (result.error?.includes('coverage radius')) {
-        toast.error('This donation is outside your team\'s coverage radius.');
-      } else if (result.error?.includes('no pickup location on file')) {
-        toast.error('This donation has no pickup location on file.');
-      } else if (result.error?.includes('team\'s base location')) {
-        toast.error('This donation is outside your team\'s base location radius.');
-      } else {
-        toast.error("You don't have permission to accept this donation for your team.");
-      }
-    } else {
-      toast.error(result.error || 'Failed to accept donation for team. Please try again.');
-    }
-
-    setAcceptingId(null);
-  };
+  const sortOptions = hasLocation
+    ? [{ value: 'distance', label: 'Nearest First' }, ...SORT_OPTIONS]
+    : SORT_OPTIONS;
 
   const handleAccept = async (donationId) => {
     if (acceptingId) return;
@@ -196,18 +171,51 @@ export function VolunteerOpportunities() {
       setRefreshTrigger((t) => t + 1);
     } else if (result.status === 401) {
       toast.error('Your session has expired. Please log in again.');
+    } else if (result.status === 403 && result.error?.includes('coverage radius')) {
+      // Phase 3: accept-time radius check — this donation was outside the
+      // volunteer's own coverage radius (can happen even for a donation
+      // seen in the unfiltered/full list, since browsing without `nearby`
+      // isn't itself a radius guarantee).
+      toast.error(result.error);
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 403 && result.error?.includes('no pickup location on file')) {
+      toast.error(result.error);
+    } else if (result.status === 403 && result.error?.includes('Set your base address')) {
+      toast.error(result.error);
     } else if (result.status === 403) {
-      if (result.error?.includes('coverage radius')) {
-        toast.error('This donation is outside your coverage radius.');
-      } else if (result.error?.includes('no pickup location on file')) {
-        toast.error('This donation has no pickup location on file.');
-      } else if (result.error?.includes('Set your base address')) {
-        toast.error('Set your base address first before accepting donations.');
-      } else {
-        toast.error("You don't have permission to accept this donation.");
-      }
+      toast.error("You don't have permission to accept this donation.");
     } else {
       toast.error(result.error || 'Failed to accept donation. Please try again.');
+    }
+
+    setAcceptingId(null);
+  };
+
+  const handleAcceptForTeam = async (donationId) => {
+    if (acceptingId || !myTeam) return;
+    setAcceptingId(donationId);
+
+    const result = await donationApi.acceptDonationForTeam(donationId, myTeam.id);
+
+    if (result.success) {
+      toast.success(`Donation accepted for ${myTeam.name}! Assign a pickup member from the mission page.`);
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 409) {
+      toast.error('This donation is no longer available.');
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 401) {
+      toast.error('Your session has expired. Please log in again.');
+    } else if (result.status === 403 && result.error?.includes('coverage radius')) {
+      toast.error(result.error);
+      setRefreshTrigger((t) => t + 1);
+    } else if (result.status === 403 && result.error?.includes('no pickup location on file')) {
+      toast.error(result.error);
+    } else if (result.status === 403 && result.error?.includes("team's base location")) {
+      toast.error(result.error);
+    } else if (result.status === 403) {
+      toast.error("Your team doesn't have permission to accept this donation.");
+    } else {
+      toast.error(result.error || 'Failed to accept donation for your team. Please try again.');
     }
 
     setAcceptingId(null);

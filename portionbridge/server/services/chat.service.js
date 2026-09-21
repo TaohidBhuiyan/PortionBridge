@@ -85,7 +85,17 @@ async function authorizeRoomAccess(rawDonationId, userId) {
     );
   }
 
-  const isParticipant = donation.donor_id === userId || donation.volunteer_id === userId;
+  // Phase 5 fix: for a team-accepted donation, volunteer_id is the team
+  // LEADER (set by acceptDonationForTeam), not necessarily the actual
+  // pickup person — assigned_member_id is. Checking only volunteer_id
+  // incorrectly denied the real assigned member chat access entirely.
+  // Both are checked (not one replacing the other) so the leader — who
+  // accepted the mission and remains its volunteer_id — keeps the access
+  // they already had; this only adds the missing assigned-member case,
+  // never removes anything that already worked.
+  const isParticipant = donation.donor_id === userId
+    || donation.volunteer_id === userId
+    || donation.assigned_member_id === userId;
   if (!isParticipant) {
     throw new AppError('You are not authorized to access this donation\'s chat.', HTTP_STATUS.FORBIDDEN);
   }
@@ -116,7 +126,13 @@ async function sendMessage({ donationId, senderId, message }) {
 
   const savedMessage = await chatMessageModel.findByIdWithSender(insertId);
 
-  const recipientId = donation.donor_id === senderId ? donation.volunteer_id : donation.donor_id;
+  // Phase 5 fix: for a team mission, the donor's counterpart is whoever is
+  // actually handling the pickup (assigned_member_id) once assigned — not
+  // always the leader (volunteer_id). A message FROM the assigned member
+  // or the leader still always notifies the donor either way.
+  const recipientId = donation.donor_id === senderId
+    ? (donation.assigned_member_id || donation.volunteer_id)
+    : donation.donor_id;
 
   if (recipientId) {
     const notificationId = await notificationModel.create(pool, {

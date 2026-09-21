@@ -710,7 +710,7 @@ async function schedulePickup(donation, volunteerId, scheduledAt) {
     // validated `scheduledDate` above was computed but never actually used.
     // Passing the Date object lets mysql2 format it correctly, the same
     // pattern already used elsewhere in this file (e.g. completeDonation).
-    const updatedDonation = await donationModel.schedulePickup(connection, donation.id, scheduledDate);
+    const updatedDonation = await donationModel.schedulePickup(connection, donation.id, scheduledDate, volunteerId);
 
     if (!updatedDonation) {
       throw new AppError(
@@ -771,7 +771,7 @@ async function markOnTheWay(donation, volunteerId, { ipAddress, userAgent } = {}
   try {
     await connection.beginTransaction();
 
-    updatedDonation = await donationModel.markOnTheWay(connection, donation.id);
+    updatedDonation = await donationModel.markOnTheWay(connection, donation.id, volunteerId);
 
     if (!updatedDonation) {
       throw new AppError(
@@ -838,7 +838,7 @@ async function markPickedUp(donation, volunteerId, { ipAddress, userAgent } = {}
   try {
     await connection.beginTransaction();
 
-    updatedDonation = await donationModel.markPickedUp(connection, donation.id);
+    updatedDonation = await donationModel.markPickedUp(connection, donation.id, volunteerId);
 
     if (!updatedDonation) {
       throw new AppError(
@@ -919,7 +919,7 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     assertDonationOwner(donation, donorId);
     assertPickedUpStatus(donation);
 
-    updatedDonation = await donationModel.completeDonation(connection, donationId);
+    updatedDonation = await donationModel.completeDonation(connection, donationId, donorId);
 
     await connection.commit();
 
@@ -1292,7 +1292,22 @@ async function getTeamDonations(teamId, userId, status = null) {
   if (!membership) {
     throw new AppError('You are not a member of this team.', HTTP_STATUS.FORBIDDEN);
   }
-  return await donationModel.findByTeamId(teamId, status);
+  const donations = await donationModel.findByTeamId(teamId, status);
+
+  // Enrich with the assigned member's name for the team dashboard's mission
+  // list — findByTeamId only returns raw donation_requests columns
+  // (assigned_member_id), and the UI needs a real name, not just an ID.
+  // Batched/deduped rather than one lookup per donation (bounded by how
+  // many distinct members a team actually has assigned, not donation count).
+  const userModel = require('../models/user.model');
+  const memberIds = [...new Set(donations.map((d) => d.assigned_member_id).filter(Boolean))];
+  const members = await Promise.all(memberIds.map((id) => userModel.findById(id)));
+  const memberNameById = new Map(members.filter(Boolean).map((m) => [m.id, m.name]));
+
+  return donations.map((d) => ({
+    ...d,
+    assigned_member_name: d.assigned_member_id ? (memberNameById.get(d.assigned_member_id) || null) : null,
+  }));
 }
 
 /**

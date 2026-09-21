@@ -7,6 +7,25 @@ const { DONATION_STATUS } = require('../constants');
  * Note: updated_at is auto-managed by MySQL via ON UPDATE CURRENT_TIMESTAMP.
  */
 
+/**
+ * Sets a per-connection MySQL session variable that trg_donation_status_update
+ * reads to attribute a status change to the real actor, instead of guessing
+ * NEW.volunteer_id (which is wrong whenever the donor makes the change —
+ * cancel/complete are donor-only — or, for a team mission, whenever the
+ * real assigned member rather than the leader does). Call this on the same
+ * connection immediately before any query that changes `status`.
+ * @param {Object} connection - Active connection/transaction (must be the
+ *   same one the following status-changing UPDATE runs on — session
+ *   variables are per-connection, so calling this via the plain `pool`
+ *   would not reliably reach the same underlying connection as a
+ *   subsequent pool.query()).
+ * @param {number} actorId - The authenticated user ID actually performing this change
+ * @returns {Promise<void>}
+ */
+async function setStatusChangeActor(connection, actorId) {
+  await connection.query('SET @status_change_actor_id = :actorId', { actorId });
+}
+
 const BASE_COLUMNS = `
   id, donor_id, volunteer_id, assignment_mode, team_id, assigned_member_id,
   title, category, food_type, food_name, quantity,
@@ -471,7 +490,7 @@ async function acceptDonation(connection, donationId, volunteerId) {
  * @param {string} scheduledAt - ISO 8601 datetime for scheduled pickup
  * @returns {Promise<Object|null>} Updated donation object or null if not eligible
  */
-async function schedulePickup(connection, donationId, scheduledAt) {
+async function schedulePickup(connection, donationId, scheduledAt, actorId) {
   const [rows] = await connection.query(
     `SELECT id, status, volunteer_id, is_deleted
      FROM donation_requests
@@ -485,6 +504,8 @@ async function schedulePickup(connection, donationId, scheduledAt) {
   if (!donation || donation.is_deleted || donation.status !== DONATION_STATUS.ACCEPTED) {
     return null;
   }
+
+  if (actorId) await setStatusChangeActor(connection, actorId);
 
   await connection.query(
     `UPDATE donation_requests
@@ -514,7 +535,7 @@ async function schedulePickup(connection, donationId, scheduledAt) {
  * @param {number} donationId - Donation ID to update
  * @returns {Promise<Object|null>} Updated donation object or null if not eligible
  */
-async function markOnTheWay(connection, donationId) {
+async function markOnTheWay(connection, donationId, actorId) {
   const [rows] = await connection.query(
     `SELECT id, status, volunteer_id, is_deleted
      FROM donation_requests
@@ -528,6 +549,8 @@ async function markOnTheWay(connection, donationId) {
   if (!donation || donation.is_deleted || donation.status !== DONATION_STATUS.SCHEDULED) {
     return null;
   }
+
+  if (actorId) await setStatusChangeActor(connection, actorId);
 
   await connection.query(
     `UPDATE donation_requests SET status = :onTheWayStatus WHERE id = :id`,
@@ -553,7 +576,7 @@ async function markOnTheWay(connection, donationId) {
  * @param {number} donationId - Donation ID to update
  * @returns {Promise<Object|null>} Updated donation object or null if not eligible
  */
-async function markPickedUp(connection, donationId) {
+async function markPickedUp(connection, donationId, actorId) {
   const [rows] = await connection.query(
     `SELECT id, status, volunteer_id, is_deleted
      FROM donation_requests
@@ -567,6 +590,8 @@ async function markPickedUp(connection, donationId) {
   if (!donation || donation.is_deleted || donation.status !== DONATION_STATUS.ON_THE_WAY) {
     return null;
   }
+
+  if (actorId) await setStatusChangeActor(connection, actorId);
 
   await connection.query(
     `UPDATE donation_requests SET status = :pickedUpStatus WHERE id = :id`,
@@ -615,9 +640,12 @@ async function findByIdForUpdate(connection, id) {
  * unchanged, since it never encoded the precondition itself.
  * @param {Object} connection - Active transaction connection
  * @param {number} id - Donation ID to complete
+ * @param {number} actorId - The authenticated user ID performing this change
  * @returns {Promise<Object>} The updated donation object
  */
-async function completeDonation(connection, id) {
+async function completeDonation(connection, id, actorId) {
+  if (actorId) await setStatusChangeActor(connection, actorId);
+
   await connection.query(
     `UPDATE donation_requests
      SET status = :completedStatus,
@@ -1074,4 +1102,5 @@ module.exports = {
   updateAssignmentStatus,
   PICKUP_LAT_EXPR,
   PICKUP_LNG_EXPR,
+  setStatusChangeActor,
 };

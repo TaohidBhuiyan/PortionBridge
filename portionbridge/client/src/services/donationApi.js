@@ -220,7 +220,7 @@ export const donationApi = {
         }
       );
       
-      return { success: true, data: response.data.data?.summary || response.data.data };
+      return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to fetch donation summary';
       return { success: false, error: message };
@@ -280,8 +280,7 @@ export const donationApi = {
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to update donation';
-      const errors = error.response?.data?.errors || null;
-      return { success: false, error: message, errors };
+      return { success: false, error: message };
     }
   },
 
@@ -314,7 +313,9 @@ export const donationApi = {
       if (filters.sortOrder) params.append('sortOrder', filters.sortOrder);
       if (filters.page) params.append('page', filters.page);
       if (filters.limit) params.append('limit', filters.limit);
-      // Nearby-opportunity radius filter — backend now uses volunteer's persisted location
+      // Nearby-opportunity radius filter. Phase 3: the backend always uses
+      // the volunteer's own persisted base location for this — the client
+      // only signals *that* it wants distance filtering and how far.
       if (filters.nearby) {
         params.append('nearby', 'true');
         if (filters.radius !== undefined) params.append('radius', filters.radius);
@@ -366,6 +367,71 @@ export const donationApi = {
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to accept donation';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Accept a pending donation on behalf of the current user's team (team
+   * leader only). POST /donations/:id/accept-team — same row-lock/atomicity
+   * guarantee as acceptDonation, plus a server-side radius check against
+   * the TEAM's own base location (not the leader's personal one).
+   * @param {number} donationId
+   * @param {number} teamId
+   * @returns {Promise<Object>} { success, data: { donation } } or { success:false, error, status }
+   */
+  acceptDonationForTeam: async (donationId, teamId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+
+      const response = await axios.post(
+        `${API_BASE}/donations/${donationId}/accept-team`,
+        { teamId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+          },
+        }
+      );
+
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to accept donation for your team';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
+   * Assign the actual pickup member for a team-accepted donation (team
+   * leader only). POST /donations/:id/assign-member.
+   * @param {number} donationId
+   * @param {number} teamId
+   * @param {number} memberId
+   * @returns {Promise<Object>} { success, data: { donation } } or { success:false, error, status }
+   */
+  assignTeamMember: async (donationId, teamId, memberId) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+
+      const response = await axios.post(
+        `${API_BASE}/donations/${donationId}/assign-member`,
+        { teamId, memberId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+          },
+        }
+      );
+
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to assign team member';
       const status = error.response?.status || null;
       return { success: false, error: message, status };
     }
@@ -539,7 +605,7 @@ export const donationApi = {
     try {
       const token = getAuthToken();
       const csrfToken = getCsrfToken();
-
+      
       const response = await axios.patch(
         `${API_BASE}/donations/${donationId}/complete`,
         {},
@@ -550,75 +616,10 @@ export const donationApi = {
           },
         }
       );
-
+      
       return { success: true, data: response.data.data };
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to complete donation';
-      const status = error.response?.status || null;
-      return { success: false, error: message, status };
-    }
-  },
-
-  /**
-   * PHASE 4 — Accept a donation on behalf of a team.
-   * POST /donations/:id/accept-team, body: { teamId }
-   * @param {number} donationId - Donation ID
-   * @param {number} teamId - Team ID accepting the donation
-   * @returns {Promise<Object>}
-   */
-  acceptDonationForTeam: async (donationId, teamId) => {
-    try {
-      const token = getAuthToken();
-      const csrfToken = getCsrfToken();
-
-      const response = await axios.post(
-        `${API_BASE}/donations/${donationId}/accept-team`,
-        { teamId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'x-csrf-token': csrfToken,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      return { success: true, data: response.data.data };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to accept donation for team';
-      const status = error.response?.status || null;
-      return { success: false, error: message, status };
-    }
-  },
-
-  /**
-   * PHASE 4 — Assign a team member to a team-assigned donation.
-   * POST /donations/:id/assign-member, body: { teamId, memberId }
-   * @param {number} donationId - Donation ID
-   * @param {number} teamId - Team ID
-   * @param {number} memberId - Member user ID to assign
-   * @returns {Promise<Object>}
-   */
-  assignTeamMember: async (donationId, teamId, memberId) => {
-    try {
-      const token = getAuthToken();
-      const csrfToken = getCsrfToken();
-
-      const response = await axios.post(
-        `${API_BASE}/donations/${donationId}/assign-member`,
-        { teamId, memberId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'x-csrf-token': csrfToken,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      return { success: true, data: response.data.data };
-    } catch (error) {
-      const message = error.response?.data?.message || 'Failed to assign team member';
       const status = error.response?.status || null;
       return { success: false, error: message, status };
     }
@@ -631,12 +632,6 @@ export const donationApi = {
  * @returns {Object} API request body
  */
 export const transformFormDataToApi = (formData) => {
-  const pickupHourBySlot = {
-    morning: '10:00:00',
-    afternoon: '14:00:00',
-    evening: '18:00:00',
-  };
-
   const apiData = {
     title: formData.title,
     category: formData.category,
@@ -645,9 +640,6 @@ export const transformFormDataToApi = (formData) => {
     quantityUnit: formData.quantityUnit,
     contactPhone: formData.contactPhone,
     pickupDate: formData.pickupDate,
-    pickupTime: formData.pickupDate && formData.pickupTimeSlot
-      ? `${formData.pickupDate}T${pickupHourBySlot[formData.pickupTimeSlot] || '10:00:00'}`
-      : undefined,
     pickupTimeSlot: formData.pickupTimeSlot,
     specialInstructions: formData.specialInstructions,
   };

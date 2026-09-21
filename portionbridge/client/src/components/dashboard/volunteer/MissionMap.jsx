@@ -183,6 +183,7 @@ export function MissionMap({ mission, onStatusChange }) {
           userLocation={volunteerPosition}
           markers={markers}
           routeLine={routeLine}
+          viewerIsVolunteer={true}
           className="h-80"
         />
       </div>

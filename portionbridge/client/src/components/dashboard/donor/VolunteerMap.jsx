@@ -28,6 +28,8 @@ const VolunteerMap = ({
   routeLine = null,
   onVolunteerClick,
   onTeamClick,
+  onMarkerClick,
+  viewerIsVolunteer = false,
   className = ''
 }) => {
   const mapRef = useRef(null);
@@ -116,6 +118,65 @@ const VolunteerMap = ({
       routeLineRef.current = null;
     }
 
+    // Generic point markers (e.g. MissionMap.jsx's donor pickup pin) —
+    // real bug fix: this prop was accepted but never actually rendered;
+    // only the volunteers/teams arrays below were ever drawn, so any
+    // caller relying on `markers` (the volunteer's own mission map,
+    // showing where the donor is) silently showed nothing for it.
+    markers.forEach((markerDef) => {
+      if (typeof markerDef.latitude !== 'number' || typeof markerDef.longitude !== 'number') return;
+
+      const color = markerDef.color || '#f97316';
+      const emoji = markerDef.emoji || '📍';
+      const genericIcon = L.divIcon({
+        className: 'custom-generic-marker',
+        html: `
+          <div style="
+            width: 32px;
+            height: 32px;
+            background: ${color};
+            border: 2.5px solid white;
+            border-radius: 50%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            cursor: pointer;
+          ">${emoji}</div>
+        `,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+
+      const marker = L.marker([markerDef.latitude, markerDef.longitude], { icon: genericIcon }).addTo(map);
+
+      if (markerDef.popupHtml) {
+        marker.bindPopup(`<div style="font-family: inherit; padding: 4px; min-width: 140px;">${markerDef.popupHtml}</div>`);
+      }
+
+      marker.on('click', () => {
+        if (typeof markerDef.onClick === 'function') {
+          markerDef.onClick();
+        } else {
+          onMarkerClick?.(markerDef);
+        }
+      });
+      markersRef.current.push(marker);
+    });
+
+    // Route line between the volunteer's live position and the pickup
+    // point — same real bug: accepted as a prop, cleaned up on re-render,
+    // but never actually drawn onto the map anywhere.
+    if (routeLine?.points?.length >= 2) {
+      routeLineRef.current = L.polyline(routeLine.points, {
+        color: routeLine.color || '#3b82f6',
+        weight: 4,
+        opacity: 0.75,
+        dashArray: '8, 8',
+      }).addTo(map);
+    }
+
     // Add user donor location marker with radar wave aura
     if (userLocation?.latitude && userLocation?.longitude) {
       const userIcon = L.divIcon({
@@ -153,14 +214,17 @@ const VolunteerMap = ({
         icon: userIcon,
       }).addTo(map);
 
-      userMarker.bindTooltip('<strong>Your Location</strong> (Donor)', { direction: 'top', offset: [0, -17] });
+      userMarker.bindTooltip(
+        viewerIsVolunteer ? '<strong>Your Location</strong>' : '<strong>Your Location</strong> (Donor)',
+        { direction: 'top', offset: [0, -17] }
+      );
       userMarker.bindPopup(`
         <div style="font-family: inherit; padding: 6px; min-width: 150px;">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
             <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></span>
-            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; tracking: 0.5px; color: #2563eb;">Your Radar Pin</span>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; tracking: 0.5px; color: #2563eb;">${viewerIsVolunteer ? 'Your Position' : 'Your Radar Pin'}</span>
           </div>
-          <div style="font-size: 13px; font-weight: 700; color: #111827;">Pickup Zone (Donor)</div>
+          <div style="font-size: 13px; font-weight: 700; color: #111827;">${viewerIsVolunteer ? 'Your Current Location' : 'Pickup Zone (Donor)'}</div>
         </div>
       `);
       markersRef.current.push(userMarker);
@@ -330,7 +394,7 @@ const VolunteerMap = ({
     return () => {
       resizeObserver.disconnect();
     };
-  }, [mapLoaded, userLocation, volunteers, teams, markers, routeLine, onVolunteerClick, onTeamClick]);
+  }, [mapLoaded, userLocation, volunteers, teams, markers, routeLine, onVolunteerClick, onTeamClick, onMarkerClick, viewerIsVolunteer]);
 
   const centerOnUser = () => {
     if (mapInstanceRef.current && userLocation?.latitude && userLocation?.longitude) {
@@ -396,37 +460,55 @@ const VolunteerMap = ({
 
         {isLegendOpen && (
           <div className="mt-3 space-y-2 border-t border-border/50 pt-2.5 text-xs animate-fadeIn">
-            <div className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-2xs shrink-0" />
-              <div className="leading-tight">
-                <span className="font-bold text-text-primary">You (Donor)</span>
-                <p className="text-[10px] text-text-muted">Radar Origin</p>
+            {userLocation?.latitude && userLocation?.longitude && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-2xs shrink-0" />
+                <div className="leading-tight">
+                  <span className="font-bold text-text-primary">{viewerIsVolunteer ? 'You' : 'You (Donor)'}</span>
+                  <p className="text-[10px] text-text-muted">{viewerIsVolunteer ? 'Your current position' : 'Radar Origin'}</p>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-2xs shrink-0" />
-              <div className="leading-tight">
-                <span className="font-bold text-text-primary">Online Volunteer</span>
-                <p className="text-[10px] text-emerald-600 font-semibold">Ready for pickup</p>
+            {markers.length > 0 && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-full bg-orange-500 border-2 border-white shadow-2xs shrink-0 flex items-center justify-center text-[8px]">📦</div>
+                <div className="leading-tight">
+                  <span className="font-bold text-text-primary">Pickup Location</span>
+                  <p className="text-[10px] text-text-muted">Donor's address</p>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-full bg-gray-500 border-2 border-white shadow-2xs shrink-0" />
-              <div className="leading-tight">
-                <span className="font-bold text-text-primary">Offline Volunteer</span>
-                <p className="text-[10px] text-text-muted">Inactive</p>
-              </div>
-            </div>
+            {volunteers.length > 0 && (
+              <>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-2xs shrink-0" />
+                  <div className="leading-tight">
+                    <span className="font-bold text-text-primary">Online Volunteer</span>
+                    <p className="text-[10px] text-emerald-600 font-semibold">Ready for pickup</p>
+                  </div>
+                </div>
 
-            <div className="flex items-center gap-2.5">
-              <div className="w-4 h-4 rounded-md bg-purple-600 border-2 border-white shadow-2xs shrink-0" />
-              <div className="leading-tight">
-                <span className="font-bold text-text-primary">Volunteer Squad</span>
-                <p className="text-[10px] text-purple-600 font-semibold">Team Squad</p>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-4 h-4 rounded-full bg-gray-500 border-2 border-white shadow-2xs shrink-0" />
+                  <div className="leading-tight">
+                    <span className="font-bold text-text-primary">Offline Volunteer</span>
+                    <p className="text-[10px] text-text-muted">Inactive</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {teams.length > 0 && (
+              <div className="flex items-center gap-2.5">
+                <div className="w-4 h-4 rounded-md bg-purple-600 border-2 border-white shadow-2xs shrink-0" />
+                <div className="leading-tight">
+                  <span className="font-bold text-text-primary">Volunteer Squad</span>
+                  <p className="text-[10px] text-purple-600 font-semibold">Team Squad</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

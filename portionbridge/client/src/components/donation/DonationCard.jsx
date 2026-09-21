@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Loader2, Users } from 'lucide-react';
+import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Users, Loader2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
 
 /**
@@ -12,9 +12,10 @@ import { StatusBadge } from './StatusBadge';
  * passed). `pickup_location` and `accepting` are additive/optional too, so
  * every existing caller keeps working unchanged.
  *
- * PHASE 4: extended with optional `onAcceptForTeam` and `teamName` props
- * for team-leader-only "Accept for [Team Name]" button. When both onAccept
- * and onAcceptForTeam are present, two buttons are shown.
+ * PHASE 4: further extended with an optional `onAcceptForTeam` prop
+ * (passed only when the current user leads a team) so a leader can accept
+ * a donation on the team's behalf instead of individually. Purely
+ * additive — every existing caller without it renders exactly as before.
  */
 export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAccept, onAcceptForTeam, teamName, accepting = false }) {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
   const canEdit = status === 'pending' && !onAccept;
   const canCancel = (status === 'pending' || status === 'accepted') && !onAccept;
   const canAccept = Boolean(onAccept) && status === 'pending';
+  const canAcceptForTeam = Boolean(onAcceptForTeam) && status === 'pending';
 
   return (
     <div className="bg-surface rounded-xl shadow-pb-card border border-border overflow-hidden transition-[box-shadow,transform] duration-200 hover:shadow-pb-elevated hover:-translate-y-0.5">
@@ -188,59 +190,56 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
         </div>
 
         {/* Quick Actions */}
-        <div className="flex items-center gap-2 pt-4 border-t border-border">
-          <button
-            onClick={handleViewDetails}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary-soft text-dash-primary hover:bg-dash-primary-soft/70 transition-colors text-sm font-medium"
-          >
-            <Eye size={16} />
-            View
-          </button>
-          {canEdit && (
+        <div className="flex flex-col gap-2 pt-4 border-t border-border">
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleEdit}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-page border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+              onClick={handleViewDetails}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary-soft text-dash-primary hover:bg-dash-primary-soft/70 transition-colors text-sm font-medium"
             >
-              <Edit size={16} />
-              Edit
+              <Eye size={16} />
+              View
             </button>
-          )}
-          {canCancel && (
-            <button
-              onClick={handleCancel}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-danger-soft text-danger hover:bg-danger-soft/70 transition-colors text-sm font-medium"
-            >
-              <Trash2 size={16} />
-              Cancel
-            </button>
-          )}
-          {canAccept && onAcceptForTeam ? (
-            <>
+            {canEdit && (
+              <button
+                onClick={handleEdit}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-page border border-border text-text-primary hover:bg-surface-hover transition-colors text-sm font-medium"
+              >
+                <Edit size={16} />
+                Edit
+              </button>
+            )}
+            {canCancel && (
+              <button
+                onClick={handleCancel}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-danger-soft text-danger hover:bg-danger-soft/70 transition-colors text-sm font-medium"
+              >
+                <Trash2 size={16} />
+                Cancel
+              </button>
+            )}
+            {canAccept && (
               <button
                 onClick={handleAccept}
                 disabled={accepting}
                 className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {accepting ? <Loader2 size={16} className="animate-spin" /> : <HandHeart size={16} />}
-                {accepting ? 'Accepting...' : 'Accept (You)'}
+                {accepting ? 'Accepting...' : canAcceptForTeam ? 'Accept (You)' : 'Accept'}
               </button>
-              <button
-                onClick={handleAcceptForTeam}
-                disabled={accepting}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {accepting ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
-                {accepting ? 'Accepting...' : `Accept for ${teamName || 'Team'}`}
-              </button>
-            </>
-          ) : canAccept && (
+            )}
+          </div>
+          {/* Phase 4: only rendered when the current user leads a team —
+              lets a leader accept on the team's behalf as a distinct
+              action from accepting individually, rather than guessing
+              which one "Accept" should mean. */}
+          {canAcceptForTeam && (
             <button
-              onClick={handleAccept}
+              onClick={handleAcceptForTeam}
               disabled={accepting}
-              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-dash-primary text-white hover:bg-dash-primary-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dash-primary text-dash-primary hover:bg-dash-primary-soft transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {accepting ? <Loader2 size={16} className="animate-spin" /> : <HandHeart size={16} />}
-              {accepting ? 'Accepting...' : 'Accept'}
+              {accepting ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+              {accepting ? 'Accepting...' : `Accept for ${teamName || 'Team'}`}
             </button>
           )}
         </div>

@@ -1,83 +1,69 @@
 import { useState } from 'react';
 import { Modal } from '../common/Modal';
-import { UserCheck } from 'lucide-react';
+import { UserCircle2 } from 'lucide-react';
 
 /**
- * AssignMemberModal — PHASE 4. Team-leader-only, assigns a team member
- * to a team-assigned donation via the existing POST /donations/:id/assign-member
- * endpoint (donationApi.assignTeamMember). Displays members as radio options
- * and calls onAssign(memberId) on submit.
+ * AssignMemberModal — PHASE 4. Team-leader-only, assigns the actual pickup
+ * member for a team-accepted donation via POST /donations/:id/assign-member
+ * (donationApi.assignTeamMember). The member list comes from the team's own
+ * roster (teamApi.getMyTeam()'s `members`, passed in as-is by the caller) —
+ * this modal doesn't fetch or fabricate anything itself. The backend
+ * remains the source of truth on eligibility (must be a current member,
+ * donation must still be in an assignable status); this is just the
+ * picker UI that was missing.
  */
-export function AssignMemberModal({ isOpen, onClose, onAssign, members, currentAssignedId, assigning = false }) {
-  const [selectedMemberId, setSelectedMemberId] = useState(null);
+export function AssignMemberModal({ isOpen, onClose, onAssign, members = [], currentAssignedId = null, assigning = false }) {
+  const [selectedId, setSelectedId] = useState(currentAssignedId ? String(currentAssignedId) : '');
 
   if (!isOpen) return null;
 
   const handleClose = () => {
-    setSelectedMemberId(null);
     onClose();
   };
 
   const handleSubmit = () => {
-    if (selectedMemberId === null) {
-      return;
-    }
-    onAssign(selectedMemberId);
+    if (!selectedId) return;
+    onAssign(Number(selectedId));
   };
 
   return (
-    <Modal title="Assign Team Member" onClose={handleClose}>
+    <Modal title="Assign Pickup Member" onClose={handleClose}>
       <div className="space-y-4">
-        <div>
-          <p className="text-sm text-text-secondary mb-3">
-            Select a team member to assign to this donation pickup:
-          </p>
+        <p className="text-sm text-text-secondary">
+          Choose which team member will actually handle this pickup.
+        </p>
+
+        {members.length === 0 ? (
+          <p className="text-sm text-text-secondary italic">No team members to assign yet.</p>
+        ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {members && members.length > 0 ? (
-              members.map((member) => (
-                <label
-                  key={member.user_id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    selectedMemberId === member.user_id
-                      ? 'bg-dash-primary/10 border-dash-primary'
-                      : 'bg-page border-border hover:border-dash-primary/50'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="assign-member"
-                    value={member.user_id}
-                    checked={selectedMemberId === member.user_id}
-                    onChange={() => setSelectedMemberId(member.user_id)}
-                    disabled={assigning}
-                    className="w-4 h-4 text-dash-primary focus:ring-dash-primary focus:ring-offset-0"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-text-primary">
-                        {member.name}
-                      </span>
-                      {member.role === 'leader' && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium">
-                          Leader
-                        </span>
-                      )}
-                    </div>
-                    {currentAssignedId === member.user_id && (
-                      <span className="text-xs text-text-secondary">
-                        Currently assigned
-                      </span>
-                    )}
-                  </div>
-                </label>
-              ))
-            ) : (
-              <p className="text-sm text-text-secondary text-center py-4">
-                No team members available.
-              </p>
-            )}
+            {members.map((member) => (
+              <label
+                key={member.user_id}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
+                  selectedId === String(member.user_id)
+                    ? 'border-dash-primary bg-dash-primary-soft'
+                    : 'border-border hover:bg-surface-hover'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="assign-member"
+                  value={member.user_id}
+                  checked={selectedId === String(member.user_id)}
+                  onChange={(e) => setSelectedId(e.target.value)}
+                  disabled={assigning}
+                  className="accent-dash-primary"
+                />
+                <UserCircle2 size={18} className="text-text-secondary shrink-0" />
+                <span className="text-sm text-text-primary font-medium truncate">{member.name}</span>
+                {member.role === 'leader' && (
+                  <span className="ml-auto text-[10px] font-bold uppercase tracking-wide text-dash-primary shrink-0">Leader</span>
+                )}
+              </label>
+            ))}
           </div>
-        </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button
@@ -89,7 +75,7 @@ export function AssignMemberModal({ isOpen, onClose, onAssign, members, currentA
           </button>
           <button
             onClick={handleSubmit}
-            disabled={assigning || selectedMemberId === null}
+            disabled={assigning || !selectedId}
             className="flex-1 px-4 py-2.5 rounded-lg bg-dash-primary text-white text-sm font-medium hover:bg-dash-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {assigning ? (
@@ -99,8 +85,8 @@ export function AssignMemberModal({ isOpen, onClose, onAssign, members, currentA
               </>
             ) : (
               <>
-                <UserCheck size={15} />
-                Assign Member
+                <UserCircle2 size={15} />
+                Assign
               </>
             )}
           </button>
