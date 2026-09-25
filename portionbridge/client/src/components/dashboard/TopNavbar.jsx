@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, MessageSquare, Sun, Moon, ChevronDown, Menu } from 'lucide-react';
+import { Bell, MessageSquare, Sun, Moon, ChevronDown, Menu, ShieldCheck } from 'lucide-react';
 import { ProfileDropdown } from './ProfileDropdown';
 import { NotificationDropdown } from './NotificationDropdown';
 import { useAuthSocket } from '../../context/SocketContext';
 import { Avatar } from '../common/Avatar';
 
-// Maps known dashboard routes to a short, human page title. Falls back to a
-// capitalized version of the last path segment for anything not listed here,
-// so new routes don't end up with a blank title.
+// Maps known dashboard routes to a short, human page title.
 const PAGE_TITLES = {
   '/donor/dashboard': 'Dashboard',
   '/volunteer/dashboard': 'Dashboard',
@@ -21,6 +19,16 @@ const PAGE_TITLES = {
   '/donor/settings': 'Settings',
   '/notifications': 'Notifications',
   '/messages': 'Messages',
+  '/admin/users': 'Users',
+  '/admin/donations': 'Donations',
+  '/admin/volunteers-teams': 'Volunteers & Teams',
+  '/admin/live-operations': 'Live Operations',
+  '/admin/attention-center': 'Attention Center',
+  '/admin/reports': 'Reports',
+  '/admin/analytics': 'Analytics',
+  '/admin/audit-logs': 'Audit Logs',
+  '/admin/notifications': 'Notifications',
+  '/admin/settings': 'Settings',
 };
 
 function getPageTitle(pathname) {
@@ -32,7 +40,7 @@ function getPageTitle(pathname) {
 }
 
 /**
- * TopNavbar component with page title, search, notifications, profile, and dark mode toggle
+ * TopNavbar — with admin role indicator badge and subtle admin-tinted bg.
  */
 export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, user, onLogout }) {
   const location = useLocation();
@@ -44,26 +52,54 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
   const pageTitle = getPageTitle(location.pathname);
   const isMessagesActive = location.pathname === '/messages' || location.pathname.startsWith('/messages/');
   const messagesBadge = unreadMessageCount > 99 ? '99+' : unreadMessageCount;
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
-    <header className="sticky top-0 z-20 h-14 bg-surface border-b border-border/50 shadow-pb-subtle">
+    <header
+      className={`sticky top-0 z-20 h-14 border-b shadow-pb-subtle transition-colors ${
+        isAdminRoute
+          ? 'bg-[oklch(18%_0.04_285)]/95 backdrop-blur-sm border-white/8'
+          : 'bg-surface border-border/50'
+      }`}
+    >
       <div className="flex items-center justify-between h-full px-4 md:px-5 gap-4">
-        {/* Left Section - Mobile Menu Toggle & Page Title */}
+
+        {/* Left — mobile toggle + page title + admin badge */}
         <div className="flex items-center gap-3">
-          {/* Mobile Menu Toggle (Phase 2 is desktop-focused; kept functional for mobile) */}
           <button
             onClick={onMobileSidebarToggle}
             aria-label="Open menu"
-            className="lg:hidden p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors"
+            className={`lg:hidden p-1.5 rounded-md transition-colors ${
+              isAdminRoute
+                ? 'hover:bg-white/10 text-white/60 hover:text-white'
+                : 'hover:bg-surface-hover text-text-secondary'
+            }`}
           >
             <Menu size={18} />
           </button>
 
-          <h1 className="text-sm font-semibold text-text-primary">{pageTitle}</h1>
+          <div className="flex items-center gap-2.5">
+            <h1
+              className={`text-sm font-bold ${
+                isAdminRoute ? 'text-white/80' : 'text-text-primary'
+              }`}
+            >
+              {pageTitle}
+            </h1>
+
+            {/* Admin badge pill */}
+            {isAdminRoute && (
+              <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/30 text-[10px] font-bold text-violet-300 uppercase tracking-wide">
+                <ShieldCheck size={10} />
+                Admin
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Right Section - Notifications, Dark Mode, Profile */}
+        {/* Right — action icons */}
         <div className="flex items-center gap-1 ml-auto">
+
           {/* Messages */}
           <div className="relative">
             <button
@@ -72,7 +108,11 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
               title="Messages"
               aria-current={isMessagesActive ? 'page' : undefined}
               className={`relative p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
-                isMessagesActive
+                isAdminRoute
+                  ? isMessagesActive
+                    ? 'bg-white/15 text-white'
+                    : 'text-white/50 hover:bg-white/10 hover:text-white/80'
+                  : isMessagesActive
                   ? 'bg-dash-primary-soft text-dash-primary'
                   : 'text-text-secondary hover:bg-surface-hover'
               }`}
@@ -91,7 +131,11 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
             <button
               onClick={() => setShowNotificationDropdown((v) => !v)}
               aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
-              className="relative p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
+              className={`relative p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
+                isAdminRoute
+                  ? 'text-white/50 hover:bg-white/10 hover:text-white/80'
+                  : 'text-text-secondary hover:bg-surface-hover'
+              }`}
             >
               <Bell size={16} />
               {unreadCount > 0 && (
@@ -111,7 +155,11 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
           <button
             onClick={onDarkModeToggle}
             aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
+            className={`p-1.5 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
+              isAdminRoute
+                ? 'text-white/50 hover:bg-white/10 hover:text-white/80'
+                : 'text-text-secondary hover:bg-surface-hover'
+            }`}
           >
             {darkMode ? <Sun size={16} /> : <Moon size={16} />}
           </button>
@@ -121,10 +169,15 @@ export function TopNavbar({ onMobileSidebarToggle, darkMode, onDarkModeToggle, u
             <button
               onClick={() => setShowProfileDropdown((v) => !v)}
               aria-label="Open profile menu"
-              className="flex items-center gap-1 p-1 pr-1 rounded-md hover:bg-surface-hover transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50"
+              className={`flex items-center gap-1 p-1 pr-1 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-dash-primary/50 ${
+                isAdminRoute ? 'hover:bg-white/10' : 'hover:bg-surface-hover'
+              }`}
             >
               <Avatar item={user} tone="dash" className="w-7 h-7 text-xs" />
-              <ChevronDown size={12} className="text-text-secondary hidden sm:block" />
+              <ChevronDown
+                size={12}
+                className={`hidden sm:block ${isAdminRoute ? 'text-white/40' : 'text-text-secondary'}`}
+              />
             </button>
 
             {showProfileDropdown && (

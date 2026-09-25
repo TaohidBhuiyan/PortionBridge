@@ -37,6 +37,7 @@ const VolunteerMap = ({
   const markersRef = useRef([]);
   const routeLineRef = useRef(null);
   const hasCenteredRef = useRef(false);
+  const hasCenteredOnMarkersRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isLegendOpen, setIsLegendOpen] = useState(true);
@@ -108,6 +109,11 @@ const VolunteerMap = ({
 
     const map = mapInstanceRef.current;
     map.invalidateSize();
+
+    console.log('[VolunteerMap] re-rendering markers — volunteers:', volunteers.length, '| teams:', teams.length);
+    if (volunteers.length > 0) {
+      console.log('[VolunteerMap] first volunteer sample:', JSON.stringify(volunteers[0]));
+    }
 
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
@@ -232,7 +238,9 @@ const VolunteerMap = ({
 
     // Add volunteer markers
     volunteers.forEach(volunteer => {
-      if (volunteer.latitude && volunteer.longitude) {
+      const lat = parseFloat(volunteer.latitude);
+      const lng = parseFloat(volunteer.longitude);
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
         const isOnline = volunteer.is_online === 1 || volunteer.is_online === true;
         const markerColor = isOnline ? '#10b981' : '#6b7280';
         
@@ -273,9 +281,7 @@ const VolunteerMap = ({
           iconAnchor: [18, 18],
         });
 
-        const marker = L.marker([volunteer.latitude, volunteer.longitude], {
-          icon: volunteerIcon,
-        }).addTo(map);
+        const marker = L.marker([lat, lng], { icon: volunteerIcon }).addTo(map);
 
         marker.bindTooltip(`
           <div style="font-size: 12px; line-height: 1.3;">
@@ -311,7 +317,9 @@ const VolunteerMap = ({
 
     // Add team markers
     teams.forEach(team => {
-      if (team.latitude && team.longitude) {
+      const lat = parseFloat(team.latitude);
+      const lng = parseFloat(team.longitude);
+      if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
         const teamIcon = L.divIcon({
           className: 'custom-team-marker',
           html: `
@@ -339,9 +347,7 @@ const VolunteerMap = ({
           iconAnchor: [19, 19],
         });
 
-        const marker = L.marker([team.latitude, team.longitude], {
-          icon: teamIcon,
-        }).addTo(map);
+        const marker = L.marker([lat, lng], { icon: teamIcon }).addTo(map);
 
         marker.bindTooltip(`
           <div style="font-size: 12px; line-height: 1.3;">
@@ -373,15 +379,17 @@ const VolunteerMap = ({
       }
     });
 
-    if (!hasCenteredRef.current) {
-      if (markersRef.current.length > 0) {
-        const group = L.featureGroup(markersRef.current);
-        map.fitBounds(group.getBounds().pad(0.15));
-        hasCenteredRef.current = true;
-      } else if (userLocation?.latitude && userLocation?.longitude) {
-        map.setView([userLocation.latitude, userLocation.longitude], 13);
-        hasCenteredRef.current = true;
-      }
+    // Auto-center: fit all markers the FIRST TIME markers actually appear,
+    // even if we already centered on user location (markers load async).
+    const hasMarkers = markersRef.current.length > 0;
+    if (hasMarkers && !hasCenteredOnMarkersRef.current) {
+      const group = L.featureGroup(markersRef.current);
+      map.fitBounds(group.getBounds().pad(0.15));
+      hasCenteredOnMarkersRef.current = true;
+      hasCenteredRef.current = true;
+    } else if (!hasCenteredRef.current && userLocation?.latitude && userLocation?.longitude) {
+      map.setView([userLocation.latitude, userLocation.longitude], 13);
+      hasCenteredRef.current = true;
     }
 
     const resizeObserver = new ResizeObserver(() => {

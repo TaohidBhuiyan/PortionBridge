@@ -19,10 +19,12 @@ function authHeaders() {
  */
 export const achievementApi = {
   /**
-   * Get current user's achievements
+   * Get achievements for the current user or for a specific user by id.
+   * @param {number} [userId] - Optional user id. Defaults to the logged-in user.
    */
-  async getUserAchievements() {
+  async getUserAchievements(userId) {
     const response = await axios.get(`${API_BASE_URL}/achievements`, {
+      params: userId ? { userId } : undefined,
       withCredentials: true,
       headers: authHeaders(),
     });

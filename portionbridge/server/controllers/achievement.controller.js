@@ -5,10 +5,14 @@ const achievementService = require('../services/achievement.service');
 
 /**
  * GET /api/v1/achievements
- * Get current user's achievements
+ * Get achievements for current user or for a specific user when ?userId= is provided.
+ * A logged-in user can view any other user's achievements (read-only, public profile use).
  */
 const getUserAchievements = asyncHandler(async (req, res) => {
-  const { achievements, summary } = await achievementService.getUserAchievements(req.user.id);
+  // Allow viewing another user's achievements (e.g., volunteer profile page).
+  // Falls back to the authenticated user's own id when the param is absent.
+  const targetUserId = req.query.userId ? Number(req.query.userId) : req.user.id;
+  const { achievements, summary } = await achievementService.getUserAchievements(targetUserId);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,

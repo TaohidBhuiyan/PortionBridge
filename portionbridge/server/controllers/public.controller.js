@@ -403,6 +403,7 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
        vp.latitude,
        vp.longitude,
        vp.coverage_radius,
+       vp.base_address,
        vp.is_online,
        vp.last_location_update
      FROM users u

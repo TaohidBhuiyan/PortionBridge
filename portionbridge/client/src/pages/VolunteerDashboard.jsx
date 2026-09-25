@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout, ProfileCard } from '../components/dashboard';
 import { useAuth } from '../context/AuthContext';
 import {
-  VolunteerWelcomeHeader,
   VolunteerStatisticsCards,
   ActiveMissionCard,
   UpcomingMissions,
@@ -56,8 +55,6 @@ export function VolunteerDashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Hero Banner greeting */}
-        <VolunteerWelcomeHeader user={user} />
 
         {/* Hero Row — Profile identity + Active mission radar card */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">

@@ -928,7 +928,17 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
       await achievementService.checkAndUnlockAchievements(donorId, 'donor');
     } catch (err) {
       // Don't let achievement errors block the completion flow
-      console.error('Achievement check failed:', err);
+      console.error('Achievement check failed (donor):', err);
+    }
+
+    // Check and unlock achievements for the assigned volunteer
+    if (updatedDonation.volunteer_id) {
+      try {
+        await achievementService.checkAndUnlockAchievements(updatedDonation.volunteer_id, 'volunteer');
+      } catch (err) {
+        // Don't let achievement errors block the completion flow
+        console.error('Achievement check failed (volunteer):', err);
+      }
     }
 
     // trg_donation_status_update already inserted the 'completed'

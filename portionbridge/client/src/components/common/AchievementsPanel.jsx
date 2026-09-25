@@ -6,7 +6,7 @@ import { AchievementBadge } from './AchievementBadge';
 /**
  * AchievementsPanel - Displays user's achievements with summary
  */
-export function AchievementsPanel() {
+export function AchievementsPanel({ userId, userRole } = {}) {
   const [achievements, setAchievements] = useState([]);
   const [summary, setSummary] = useState({ totalPoints: 0, totalCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,7 @@ export function AchievementsPanel() {
     setError(null);
 
     try {
-      const result = await achievementApi.getUserAchievements();
+      const result = await achievementApi.getUserAchievements(userId);
       
       if (result.success) {
         setAchievements(result.data.achievements || []);
@@ -30,7 +30,7 @@ export function AchievementsPanel() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
     // Standard fetch-on-mount pattern used throughout this codebase.

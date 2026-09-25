@@ -35,9 +35,11 @@ const VolunteerDiscoveryPage = () => {
   const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
   const [showManualLocationModal, setShowManualLocationModal] = useState(false);
   
-  // Data state
+  // Data state — list results (paginated) vs map markers (all in radius)
   const [volunteers, setVolunteers] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [mapVolunteers, setMapVolunteers] = useState([]);
+  const [mapTeams, setMapTeams] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -87,28 +89,28 @@ const VolunteerDiscoveryPage = () => {
     const [volunteersResult, teamsResult] = await Promise.all([
       volunteerDiscoveryApi.findNearbyVolunteers(
         {
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          radius: filtersToUse.radius,
+          latitude:      locationData.latitude,
+          longitude:     locationData.longitude,
+          radius:        filtersToUse.radius,
           availableOnly: filtersToUse.availableOnly,
-          onlineOnly: filtersToUse.onlineOnly,
-          specialty: filtersToUse.specialty,
-          search: filtersToUse.search,
-          sortBy: filtersToUse.sortBy,
-          sortOrder: filtersToUse.sortOrder,
-          page: filtersToUse.page,
-          limit: filtersToUse.limit,
+          onlineOnly:    filtersToUse.onlineOnly,
+          specialty:     filtersToUse.specialty,
+          search:        filtersToUse.search,
+          sortBy:        filtersToUse.sortBy,
+          sortOrder:     filtersToUse.sortOrder,
+          page:          1,
+          limit:         200,   // fetch all in radius; list shows first 20 visually
         },
         { signal: controller.signal }
       ),
       volunteerDiscoveryApi.findNearbyTeams(
         {
-          latitude: locationData.latitude,
+          latitude:  locationData.latitude,
           longitude: locationData.longitude,
-          radius: filtersToUse.radius,
-          search: filtersToUse.search,
-          page: filtersToUse.page,
-          limit: filtersToUse.limit,
+          radius:    filtersToUse.radius,
+          search:    filtersToUse.search,
+          page:      1,
+          limit:     200,
         },
         { signal: controller.signal }
       ),
@@ -117,13 +119,20 @@ const VolunteerDiscoveryPage = () => {
     if (controller.signal.aborted) return;
 
     if (volunteersResult.success) {
-      setVolunteers(volunteersResult.data.volunteers || []);
+      const vols = volunteersResult.data?.volunteers || [];
+      console.log('[Discovery] volunteers fetched:', vols.length, vols.slice(0, 3));
+      setVolunteers(vols);
+      setMapVolunteers(vols);
     } else if (!volunteersResult.aborted) {
+      console.error('[Discovery] volunteers error:', volunteersResult.error);
       setError(volunteersResult.error);
     }
 
     if (teamsResult.success) {
-      setTeams(teamsResult.data.teams || []);
+      const tms = teamsResult.data?.teams || [];
+      console.log('[Discovery] teams fetched:', tms.length, tms.slice(0, 3));
+      setTeams(tms);
+      setMapTeams(tms);
     }
 
     setLoading(false);
@@ -521,8 +530,8 @@ const VolunteerDiscoveryPage = () => {
                 }`}>
                   <VolunteerMap
                     userLocation={location}
-                    volunteers={volunteers}
-                    teams={teams}
+                    volunteers={mapVolunteers}
+                    teams={mapTeams}
                     onVolunteerClick={handleVolunteerClick}
                     onTeamClick={handleTeamClick}
                     className="h-[520px] lg:h-[680px]"

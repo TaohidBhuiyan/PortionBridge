@@ -24,13 +24,22 @@ import { chatApi } from '../../services/chatApi';
 import { Avatar } from '../common/Avatar';
 import { StatusBadge } from './StatusBadge';
 
-const QUICK_REPLIES = [
+const DONOR_QUICK_REPLIES = [
   '👋 Hi, thanks for volunteering!',
   '📦 Donation is packed and ready for pickup.',
   '📍 What is your current location?',
   '⏰ What is your estimated arrival time?',
   '🔔 Please ring the bell when you arrive.',
   '🙏 Thank you so much for your support!',
+];
+
+const VOLUNTEER_QUICK_REPLIES = [
+  '👋 Hi! I am on my way to pick up the donation.',
+  '📍 I have arrived at the pickup location.',
+  '⏰ I will be there in about 10 minutes.',
+  '✅ Donation picked up successfully!',
+  '📦 Can you confirm the package is ready?',
+  '🙏 Thank you for your kind donation!',
 ];
 
 const EMOJI_OPTIONS = ['👍', '🙏', '📦', '🚚', '⏰', '🥗', '😊', '❤️'];
@@ -427,7 +436,7 @@ export function ChatWindow({ donation, currentUser, onBack }) {
               Send a message to coordinate pickup timing, give directions, or share instructions with {counterpartName}.
             </p>
             <div className="flex flex-wrap justify-center gap-2 max-w-md">
-              {QUICK_REPLIES.slice(0, 3).map((reply, idx) => (
+              {(isCurrentUserDonor ? DONOR_QUICK_REPLIES : VOLUNTEER_QUICK_REPLIES).slice(0, 3).map((reply, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleQuickReply(reply)}
@@ -566,7 +575,7 @@ export function ChatWindow({ donation, currentUser, onBack }) {
           <Sparkles size={12} className="text-dash-primary" />
           Quick:
         </span>
-        {QUICK_REPLIES.map((reply, idx) => (
+        {(isCurrentUserDonor ? DONOR_QUICK_REPLIES : VOLUNTEER_QUICK_REPLIES).map((reply, idx) => (
           <button
             key={idx}
             onClick={() => handleQuickReply(reply)}

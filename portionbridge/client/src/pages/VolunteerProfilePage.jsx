@@ -9,7 +9,9 @@ import VolunteerGallery from '../components/dashboard/donor/VolunteerGallery';
 import VolunteerTeamInfo from '../components/dashboard/donor/VolunteerTeamInfo';
 import VolunteerQuickActions from '../components/dashboard/donor/VolunteerQuickActions';
 import { AchievementsPanel } from '../components/common/AchievementsPanel';
+import { BaseLocationCard } from '../components/dashboard/volunteer/BaseLocationCard';
 import { volunteerProfileApi } from '../services/volunteerProfileApi';
+import { profileApi } from '../services/profileApi';
 import { useAuth } from '../context/AuthContext';
 
 const VolunteerProfilePage = () => {
@@ -21,6 +23,10 @@ const VolunteerProfilePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [distance, setDistance] = useState(null);
+  // Tracks live base_address / coverage_radius when the volunteer edits their own profile
+  const [ownVolunteerProfile, setOwnVolunteerProfile] = useState(null);
+
+  const isOwnProfile = user?.id === Number(id);
 
   const fetchVolunteerProfile = useCallback(async () => {
     setLoading(true);
@@ -42,12 +48,36 @@ const VolunteerProfilePage = () => {
     setLoading(false);
   }, [id]);
 
+  // When viewing own profile, fetch authenticated profile data for location fields
+  useEffect(() => {
+    if (!isOwnProfile) return;
+    profileApi.getProfile().then((result) => {
+      if (result?.data?.volunteerProfile) {
+        setOwnVolunteerProfile(result.data.volunteerProfile);
+      }
+    }).catch(() => {});
+  }, [isOwnProfile]);
+
   useEffect(() => {
     fetchVolunteerProfile();
   }, [fetchVolunteerProfile]);
 
   const handleRequestPickup = (volunteerData) => {
     navigate('/donation/create', { state: { preferredVolunteerId: volunteerData.id } });
+  };
+
+  // Save updated base location for own volunteer profile
+  const handleSaveLocation = async (data) => {
+    try {
+      const result = await profileApi.updateVolunteerLocation(data);
+      if (result?.data?.volunteerProfile) {
+        setOwnVolunteerProfile(result.data.volunteerProfile);
+        return { success: true };
+      }
+      return { success: false, error: result?.message || 'Failed to save location.' };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message || 'Failed to save location.' };
+    }
   };
 
   if (loading) {
@@ -157,7 +187,7 @@ const VolunteerProfilePage = () => {
           <VolunteerProfileHeader
             volunteer={volunteer}
             distance={distance}
-            isOwnProfile={user?.id === Number(id)}
+            isOwnProfile={isOwnProfile}
             onPhotoUpdated={(updatedUser) => setVolunteer((prev) => ({ ...prev, profile_photo: updatedUser.profile_photo }))}
           />
 
@@ -176,6 +206,22 @@ const VolunteerProfilePage = () => {
             {/* Right Column - Sidebar */}
             <div className="space-y-6">
               <VolunteerTeamInfo team={volunteer.team} />
+
+              {/* Base Location — only shown to the volunteer on their own profile when not in a team */}
+              {isOwnProfile && !volunteer.team && (
+                <BaseLocationCard
+                  savedLocation={
+                    ownVolunteerProfile
+                      ? { baseAddress: ownVolunteerProfile.base_address, coverageRadius: ownVolunteerProfile.coverage_radius }
+                      : volunteer.base_address
+                        ? { baseAddress: volunteer.base_address, coverageRadius: volunteer.coverage_radius }
+                        : null
+                  }
+                  onSave={handleSaveLocation}
+                  title="My Base Location"
+                />
+              )}
+
               <AchievementsPanel userId={volunteer.id} userRole="volunteer" />
               <VolunteerQuickActions
                 volunteer={volunteer}

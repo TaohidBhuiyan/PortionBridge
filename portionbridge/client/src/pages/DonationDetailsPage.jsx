@@ -809,13 +809,18 @@ export function DonationDetailsPage() {
               <StatusTimeline currentStatus={status} donation={donation} />
             </SectionCard>
 
-            {/* Live Tracking Panel */}
-            {(status === 'scheduled' || status === 'on_the_way' || status === 'picked_up') && (
+            {/* Live Tracking Panel — for donors AND volunteers */}
+            {(isAssignedVolunteer
+              ? ['accepted', 'scheduled', 'on_the_way', 'picked_up'].includes(status)
+              : ['scheduled', 'on_the_way', 'picked_up'].includes(status)
+            ) && (
               <SectionCard title="Live Pickup Tracking" icon={Truck}>
                 <TrackingPanel
                   donation={donation}
                   volunteer={volunteer}
                   volunteerLocation={volunteerLocation}
+                  isVolunteer={isVolunteer}
+                  currentUserId={currentUser?.id}
                 />
               </SectionCard>
             )}
