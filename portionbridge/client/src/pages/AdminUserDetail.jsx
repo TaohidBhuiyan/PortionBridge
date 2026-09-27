@@ -149,7 +149,7 @@ export function AdminUserDetail() {
             </div>
             <div className="flex items-center gap-3">
               <AdminUserStatusBadge isBanned={!!user.is_banned} isDeleted={!!user.is_deleted} size="large" />
-              {!user.is_deleted && (
+              {!user.is_deleted && user.role !== 'admin' && (
                 <button
                   onClick={() => setConfirmOpen(true)}
                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${

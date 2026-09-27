@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Clock, Star, CheckCircle, Users, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
+import { resolveMediaUrl } from '../../../utils/mediaUrl';
 
 /**
  * Volunteer Selection Component
@@ -55,8 +56,8 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
   };
 
   const getProfileImage = (volunteer) => {
-    if (volunteer.profile_photo) return volunteer.profile_photo;
-    if (volunteer.profile_picture) return volunteer.profile_picture;
+    if (volunteer.profile_photo) return resolveMediaUrl(volunteer.profile_photo);
+    if (volunteer.profile_picture) return resolveMediaUrl(volunteer.profile_picture);
     return null;
   };
 

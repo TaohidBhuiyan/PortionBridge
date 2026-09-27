@@ -271,10 +271,8 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     </button>
   );
 
-  /* Admin sidebar uses dark premium bg */
-  const desktopBg = isAdmin
-    ? 'bg-[oklch(18%_0.04_285)] border-white/8'
-    : 'bg-surface border-border/50';
+  /* Admin uses dark background, others use white */
+  const desktopBg = isAdmin ? 'bg-slate-900 border-white/10' : 'bg-surface border-border/50';
 
   return (
     <>
@@ -382,7 +380,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
       <aside
         className={`lg:hidden fixed left-0 top-0 h-full border-r transition-transform duration-300 z-50 ${
           open ? 'translate-x-0' : '-translate-x-full'
-        } w-64 flex flex-col justify-between ${desktopBg}`}
+        } w-64 flex flex-col justify-between ${isAdmin ? 'bg-slate-900 border-white/10' : 'bg-surface border-border'}`}
       >
         {/* Mobile Header */}
         <div

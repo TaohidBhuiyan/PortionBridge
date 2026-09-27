@@ -5,7 +5,6 @@ import { ActiveMissionCard } from '../components/dashboard/volunteer';
 import { MissionMap } from '../components/dashboard/volunteer/MissionMap';
 import { volunteerApi } from '../services/volunteerApi';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 const TRACKABLE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_up']);
 
 export function VolunteerMission() {
@@ -18,12 +17,8 @@ export function VolunteerMission() {
     const loadActiveMission = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE}/volunteer/assignments?limit=1`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const json = await response.json();
-        const assignment = json?.data?.assignments?.[0];
+        const listResult = await volunteerApi.getAssignments({ limit: 1 });
+        const assignment = listResult.success ? listResult.data?.[0] : null;
 
         if (!assignment || cancelled) {
           if (!cancelled) setMission(null);

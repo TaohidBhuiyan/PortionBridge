@@ -54,9 +54,15 @@ export function AdminReports() {
       setLoading(true);
       setError(null);
       // The queue tab spans two statuses (pending + reviewed); the list
-      // endpoint only filters on one at a time, so fetch both and merge
-      // client-side rather than adding a multi-status filter server-side
-      // for what's otherwise a single-value `status` param everywhere else.
+      // endpoint only filters on one at a time, so fetch both (up to the
+      // API's max page size each) and merge+paginate client-side, rather
+      // than adding a multi-status filter server-side for what's otherwise
+      // a single-value `status` param everywhere else. Real server-side
+      // pagination across two independently-paginated result sets isn't
+      // sound here (page N of status A and page N of status B don't merge
+      // into a correct page N of the combined, sorted list), so this
+      // fetches everything up to the cap in one shot and paginates the
+      // merged array instead of forwarding `page` to the API.
       const results = await Promise.all(
         tab.statuses.map((status) => adminApi.listReports({
           status,
@@ -65,7 +71,7 @@ export function AdminReports() {
           sortBy: 'created_at',
           sortOrder: 'desc',
           page: 1,
-          limit: PAGE_SIZE,
+          limit: 200,
         }))
       );
       if (cancelled) return;
@@ -77,8 +83,10 @@ export function AdminReports() {
       } else {
         const merged = results.flatMap((r) => r.data || [])
           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        setReports(merged);
-        setMeta({ totalPages: 1 });
+        const totalPages = Math.max(1, Math.ceil(merged.length / PAGE_SIZE));
+        const pageItems = merged.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+        setReports(pageItems);
+        setMeta({ totalPages });
       }
       setLoading(false);
     };

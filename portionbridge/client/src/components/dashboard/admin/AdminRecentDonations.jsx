@@ -103,7 +103,7 @@ export function AdminRecentDonations({ donations, loading }) {
                 return (
                   <tr
                     key={donation.id}
-                    onClick={() => navigate(`/donations/${donation.id}`)}
+                    onClick={() => navigate(`/admin/donations/${donation.id}`)}
                     className="group hover:bg-surface-hover/60 transition-colors cursor-pointer"
                     style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${i * 30}ms` }}
                   >

@@ -15,6 +15,29 @@ const getAuthToken = () => localStorage.getItem('accessToken');
  */
 export const volunteerApi = {
   /**
+   * Get the volunteer's own active assignments (accepted through
+   * picked_up) for the Active Missions page. Was previously fetched via
+   * raw axios directly in VolunteerActiveMissions.jsx, bypassing this
+   * service layer — the same anti-pattern already fixed elsewhere in the
+   * app (e.g. ProfileCompletion.jsx). Moved here for consistency.
+   * GET /volunteer/assignments
+   */
+  getAssignments: async (params = {}) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/volunteer/assignments`, {
+        params,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.assignments, meta: response.data.meta };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch active missions';
+      const status = error.response?.status || null;
+      return { success: false, error: message, status };
+    }
+  },
+
+  /**
    * Get full mission detail for the volunteer's own assignment — donor
    * contact, pickup coordinates (may be null — see server-side docs),
    * status, and team info if applicable.

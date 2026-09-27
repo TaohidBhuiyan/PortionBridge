@@ -97,6 +97,55 @@ const ACTION_META = {
     iconColor: 'text-rose-600 dark:text-rose-400',
     dot: 'bg-rose-500',
   },
+  user_banned: {
+    label: 'Disabled a user account',
+    icon: ShieldAlert,
+    iconBg: 'bg-red-500/15 dark:bg-red-500/20',
+    iconColor: 'text-red-600 dark:text-red-400',
+    dot: 'bg-red-500',
+  },
+  user_unbanned: {
+    label: 'Re-enabled a user account',
+    icon: ShieldAlert,
+    iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/20',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    dot: 'bg-emerald-500',
+  },
+  report_investigated: {
+    label: 'Started investigating a report',
+    icon: Flag,
+    iconBg: 'bg-amber-500/15 dark:bg-amber-500/20',
+    iconColor: 'text-amber-600 dark:text-amber-400',
+    dot: 'bg-amber-500',
+  },
+  report_resolved: {
+    label: 'Resolved a report',
+    icon: Flag,
+    iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/20',
+    iconColor: 'text-emerald-600 dark:text-emerald-400',
+    dot: 'bg-emerald-500',
+  },
+  report_dismissed: {
+    label: 'Dismissed a report',
+    icon: Flag,
+    iconBg: 'bg-surface-hover',
+    iconColor: 'text-text-secondary',
+    dot: 'bg-border',
+  },
+  admin_announcement_sent: {
+    label: 'Sent an announcement',
+    icon: UserPlus,
+    iconBg: 'bg-indigo-500/15 dark:bg-indigo-500/20',
+    iconColor: 'text-indigo-600 dark:text-indigo-400',
+    dot: 'bg-indigo-500',
+  },
+  refresh_token_reuse_detected: {
+    label: 'Suspicious token reuse detected',
+    icon: ShieldAlert,
+    iconBg: 'bg-red-500/15 dark:bg-red-500/20',
+    iconColor: 'text-red-600 dark:text-red-400',
+    dot: 'bg-red-500',
+  },
 };
 
 const FALLBACK_META = {

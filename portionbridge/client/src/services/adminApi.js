@@ -593,15 +593,19 @@ export const adminApi = {
    * Paginated, filterable audit log listing.
    * GET /admin/audit-logs
    */
-  listAuditLogs: async (params = {}) => {
+  listAuditLogs: async ({ signal, ...params } = {}) => {
     try {
       const token = getAuthToken();
       const response = await axios.get(`${API_BASE}/admin/audit-logs`, {
         params,
+        signal,
         headers: { Authorization: `Bearer ${token}` },
       });
       return { success: true, data: response.data.data?.logs, meta: response.data.meta };
     } catch (error) {
+      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+        return { success: false, error: 'cancelled', cancelled: true };
+      }
       const message = error.response?.data?.message || 'Failed to fetch audit logs';
       const status = error.response?.status || null;
       return { success: false, error: message, status };

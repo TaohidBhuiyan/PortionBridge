@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MapPin, Clock, Star, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { volunteerDiscoveryApi } from '../../../services/volunteerDiscoveryApi';
+import { resolveMediaUrl } from '../../../utils/mediaUrl';
 
 /**
  * Auto Assign Recommendation Component
@@ -50,8 +51,8 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
   };
 
   const getProfileImage = () => {
-    if (recommendation?.profile_photo) return recommendation.profile_photo;
-    if (recommendation?.profile_picture) return recommendation.profile_picture;
+    if (recommendation?.profile_photo) return resolveMediaUrl(recommendation.profile_photo);
+    if (recommendation?.profile_picture) return resolveMediaUrl(recommendation.profile_picture);
     return null;
   };
 

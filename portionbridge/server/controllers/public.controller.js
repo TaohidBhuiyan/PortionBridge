@@ -450,7 +450,11 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
     team = teamData[0];
   }
 
-  // Get volunteer statistics
+  // Get volunteer statistics. Matched on volunteer_id OR assigned_member_id
+  // (not just volunteer_id) so a team-assigned member's own public profile
+  // shows the missions they actually worked, not just ones where they were
+  // recorded as the team leader — same team-aware pattern used throughout
+  // the volunteer/admin stats queries elsewhere in this codebase.
   const [statsResult] = await pool.query(
     `SELECT 
        COUNT(DISTINCT CASE WHEN dr.status IN ('accepted', 'scheduled') THEN dr.id END) as active_pickups,
@@ -458,7 +462,7 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
        COUNT(DISTINCT CASE WHEN dr.is_deleted = 1 THEN dr.id END) as cancelled_pickups,
        COUNT(DISTINCT dr.id) as total_assignments
      FROM donation_requests dr
-     WHERE dr.volunteer_id = :id`,
+     WHERE dr.volunteer_id = :id OR dr.assigned_member_id = :id`,
     { id }
   );
 

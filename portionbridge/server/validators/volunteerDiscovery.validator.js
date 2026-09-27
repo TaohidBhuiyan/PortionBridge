@@ -20,11 +20,25 @@ const nearbyVolunteersValidationRules = [
     .withMessage('Radius must be between 1 and 100 km'),
   query('availableOnly')
     .optional()
-    .isBoolean()
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      const validValues = ['true', 'false', '0', '1', true, false, 0, 1];
+      if (!validValues.includes(value)) {
+        throw new Error('availableOnly must be a boolean');
+      }
+      return true;
+    })
     .withMessage('availableOnly must be a boolean'),
   query('onlineOnly')
     .optional()
-    .isBoolean()
+    .custom((value) => {
+      if (value === undefined || value === null || value === '') return true;
+      const validValues = ['true', 'false', '0', '1', true, false, 0, 1];
+      if (!validValues.includes(value)) {
+        throw new Error('onlineOnly must be a boolean');
+      }
+      return true;
+    })
     .withMessage('onlineOnly must be a boolean'),
   query('specialty')
     .optional()
@@ -49,8 +63,8 @@ const nearbyVolunteersValidationRules = [
     .withMessage('Page must be a positive integer'),
   query('limit')
     .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
+    .isInt({ min: 1, max: 200 })
+    .withMessage('Limit must be between 1 and 200'),
 ];
 
 /**
@@ -82,8 +96,8 @@ const nearbyTeamsValidationRules = [
     .withMessage('Page must be a positive integer'),
   query('limit')
     .optional()
-    .isInt({ min: 1, max: 100 })
-    .withMessage('Limit must be between 1 and 100'),
+    .isInt({ min: 1, max: 200 })
+    .withMessage('Limit must be between 1 and 200'),
 ];
 
 /**

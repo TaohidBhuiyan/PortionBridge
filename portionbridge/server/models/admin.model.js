@@ -73,11 +73,14 @@ async function getUserCounts() {
 
 /**
  * Single aggregate query for donation counts by status, plus the
- * soft-deleted ("cancelled") count. totalDonationRequests intentionally
- * includes cancelled donations — it's the all-time total, broken down
- * by the buckets below. `active` is every non-terminal, non-cancelled
- * status (accepted through picked_up) — added for the Phase 2 Overview
- * "Active Donations" KPI.
+ * cancelled count. totalDonationRequests intentionally includes
+ * cancelled donations — it's the all-time total, broken down by the
+ * buckets below. `active` is every non-terminal, non-cancelled status
+ * (accepted through picked_up) — added for the Phase 2 Overview "Active
+ * Donations" KPI. `cancelled` counts by status = 'cancelled' rather than
+ * is_deleted = 1 — the semantically correct signal (the two currently
+ * always co-occur, see donation.model.js#cancelDonation), matching the
+ * same fix applied to findVolunteersWithStats/getVolunteerCancelledCount.
  * @returns {Promise<Object>} Status-bucketed donation counts
  */
 async function getDonationCounts() {
@@ -89,7 +92,7 @@ async function getDonationCounts() {
        SUM(status = :scheduled AND is_deleted = 0) AS scheduled,
        SUM(status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND is_deleted = 0) AS active,
        SUM(status = :completed AND is_deleted = 0) AS completed,
-       SUM(is_deleted = 1) AS cancelled
+       SUM(status = :cancelled) AS cancelled
      FROM donation_requests`,
     {
       pending: DONATION_STATUS.PENDING,
@@ -98,6 +101,7 @@ async function getDonationCounts() {
       onTheWay: DONATION_STATUS.ON_THE_WAY,
       pickedUp: DONATION_STATUS.PICKED_UP,
       completed: DONATION_STATUS.COMPLETED,
+      cancelled: DONATION_STATUS.CANCELLED,
     }
   );
   return rows[0];
@@ -106,14 +110,18 @@ async function getDonationCounts() {
 /**
  * Count of distinct volunteers currently holding at least one non-terminal
  * assignment (accepted/scheduled/on_the_way/picked_up, not soft-deleted).
+ * Team-aware: for team-mode donations, credits the actual assigned member
+ * (assigned_member_id) rather than the team leader (volunteer_id), same
+ * COALESCE(assigned_member_id, volunteer_id) pattern as migration_021's
+ * top_volunteers view.
  * Backs the Phase 2 Overview "Active Volunteers" KPI.
  * @returns {Promise<number>} Count of active volunteers
  */
 async function getActiveVolunteersCount() {
   const [rows] = await pool.query(
-    `SELECT COUNT(DISTINCT volunteer_id) AS activeVolunteers
+    `SELECT COUNT(DISTINCT COALESCE(assigned_member_id, volunteer_id)) AS activeVolunteers
      FROM donation_requests
-     WHERE volunteer_id IS NOT NULL AND is_deleted = 0
+     WHERE (volunteer_id IS NOT NULL OR assigned_member_id IS NOT NULL) AND is_deleted = 0
        AND status IN (:accepted, :scheduled, :onTheWay, :pickedUp)`,
     {
       accepted: DONATION_STATUS.ACCEPTED,
@@ -223,7 +231,7 @@ async function getVolunteerActivityTrend(since) {
   const [rows] = await pool.query(
     `SELECT DATE_FORMAT(completed_at, '%Y-%m') AS month,
        COUNT(*) AS completedPickups,
-       COUNT(DISTINCT volunteer_id) AS activeVolunteers
+       COUNT(DISTINCT COALESCE(assigned_member_id, volunteer_id)) AS activeVolunteers
      FROM donation_requests
      WHERE status = :completed AND completed_at >= :since AND is_deleted = 0
      GROUP BY month
@@ -416,7 +424,10 @@ async function setUserBanned(id, isBanned) {
  * Builds the shared WHERE clause + params for the admin donation list.
  * `deleted` is left unfiltered (shows both) unless explicitly passed as
  * a boolean — this endpoint intentionally has broader visibility than
- * the donor/volunteer-facing donation lists. `reported` filters to
+ * the donor/volunteer-facing donation lists. `volunteerId` matches either
+ * volunteer_id or assigned_member_id, so filtering by a team member finds
+ * the missions they actually worked, not just ones where they were the
+ * team leader on record. `reported` filters to
  * donations with (true) or without (false) at least one row in `reports`
  * — reuses the existing reports table via EXISTS rather than a JOIN, so
  * a donation with multiple reports isn't duplicated in the result set.
@@ -444,7 +455,7 @@ function buildAdminDonationFilter({ status, category, donorId, volunteerId, date
     params.donorId = donorId;
   }
   if (volunteerId) {
-    conditions.push('dr.volunteer_id = :volunteerId');
+    conditions.push('(dr.volunteer_id = :volunteerId OR dr.assigned_member_id = :volunteerId)');
     params.volunteerId = volunteerId;
   }
   if (dateFrom) {
@@ -611,11 +622,19 @@ function buildVolunteerFilter({ search }) {
 /**
  * Lists volunteers with per-volunteer assignment stats computed in a single
  * aggregate query (LEFT JOIN + GROUP BY) — avoids one query per volunteer.
+ * Joined on COALESCE(dr.assigned_member_id, dr.volunteer_id) = u.id so a
+ * team-assigned member gets credit for the missions they actually worked,
+ * not the team leader (same gap/fix pattern as migration_021's
+ * top_volunteers view and Phase 5/6 of the volunteer audit).
  * `activeAssignments` uses the same 4-status definition (accepted through
  * picked_up) as Phase 2's getActiveVolunteersCount, so "how many active
  * volunteers" means the same thing on the Overview KPI and here.
- * `cancelledPickups`/`totalAssigned` (Phase 4) back the completion/
- * cancellation rate shown on the volunteer list and detail pages.
+ * `cancelledPickups` counts by status = 'cancelled' rather than
+ * is_deleted = 1 — the two currently always co-occur, but status is the
+ * semantically correct signal and matches the (is_deleted = 0 OR
+ * status = 'cancelled') pattern already used elsewhere in the codebase.
+ * `totalAssigned` (Phase 4) backs the completion/cancellation rate shown
+ * on the volunteer list and detail pages.
  * @param {Object} options - Query options
  * @returns {Promise<Array>} Array of volunteer rows with stats
  */
@@ -627,10 +646,10 @@ async function findVolunteersWithStats({ search, limit, offset }) {
        u.id, u.name, u.email, u.phone, u.is_banned, u.created_at,
        SUM(dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND dr.is_deleted = 0) AS activeAssignments,
        SUM(dr.status = :completed AND dr.is_deleted = 0) AS completedPickups,
-       SUM(dr.is_deleted = 1) AS cancelledPickups,
+       SUM(dr.status = :cancelled) AS cancelledPickups,
        COUNT(dr.id) AS totalAssigned
      FROM users u
-     LEFT JOIN donation_requests dr ON dr.volunteer_id = u.id
+     LEFT JOIN donation_requests dr ON COALESCE(dr.assigned_member_id, dr.volunteer_id) = u.id
      WHERE ${whereClause}
      GROUP BY u.id, u.name, u.email, u.phone, u.is_banned, u.created_at
      ORDER BY u.created_at DESC
@@ -642,6 +661,7 @@ async function findVolunteersWithStats({ search, limit, offset }) {
       onTheWay: DONATION_STATUS.ON_THE_WAY,
       pickedUp: DONATION_STATUS.PICKED_UP,
       completed: DONATION_STATUS.COMPLETED,
+      cancelled: DONATION_STATUS.CANCELLED,
       limit,
       offset,
     }
@@ -740,10 +760,14 @@ async function findRecentActivity(limit) {
 
 /**
  * Cancelled-pickup count for a single volunteer (donations that were
- * assigned to them and later soft-deleted). Used by getVolunteerDetail
- * for the Phase 4 completion/cancellation rate — kept separate from
- * donationModel.getVolunteerSummary (shared across the app) rather than
- * modifying that shared query's bucket list.
+ * assigned to them and later cancelled). Matched on
+ * COALESCE(assigned_member_id, volunteer_id) so a team-assigned member's
+ * own cancelled missions count against them rather than their team leader,
+ * and on status = 'cancelled' rather than is_deleted = 1 — the semantically
+ * correct signal, matching findVolunteersWithStats above. Used by
+ * getVolunteerDetail for the Phase 4 completion/cancellation rate — kept
+ * separate from donationModel.getVolunteerSummary (shared across the app)
+ * rather than modifying that shared query's bucket list.
  * @param {number} volunteerId - Volunteer's user ID
  * @returns {Promise<number>} Count of cancelled donations ever assigned to them
  */
@@ -751,8 +775,8 @@ async function getVolunteerCancelledCount(volunteerId) {
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS cancelledPickups
      FROM donation_requests
-     WHERE volunteer_id = :volunteerId AND is_deleted = 1`,
-    { volunteerId }
+     WHERE COALESCE(assigned_member_id, volunteer_id) = :volunteerId AND status = :cancelled`,
+    { volunteerId, cancelled: DONATION_STATUS.CANCELLED }
   );
   return rows[0].cancelledPickups;
 }
@@ -1132,7 +1156,7 @@ async function findAreaDonationStats() {
     `SELECT sa.area,
        COUNT(*) AS totalDonations,
        SUM(x.status = :completed) AS completed,
-       SUM(x.is_deleted = 1) AS cancelled,
+       SUM(x.status = :cancelled) AS cancelled,
        SUM(
          x.is_deleted = 0
          AND x.status IN (:accepted, :scheduled)
@@ -1158,6 +1182,7 @@ async function findAreaDonationStats() {
      LIMIT 50`,
     {
       completed: DONATION_STATUS.COMPLETED,
+      cancelled: DONATION_STATUS.CANCELLED,
       accepted: DONATION_STATUS.ACCEPTED,
       scheduled: DONATION_STATUS.SCHEDULED,
       pickedUp: DONATION_STATUS.PICKED_UP,

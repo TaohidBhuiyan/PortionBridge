@@ -1,12 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Utensils, Shirt, MapPin, CalendarClock, Package, Navigation, ArrowRight, Truck, Users, UserCircle2 } from 'lucide-react';
 import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
 import { SkeletonCard } from '../components/dashboard/skeletons';
 import { StatusBadge } from '../components/donation/StatusBadge';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+import { volunteerApi } from '../services/volunteerApi';
 
 const CATEGORY_ICON = {
   food: Utensils,
@@ -34,26 +32,16 @@ export function VolunteerActiveMissions() {
     let cancelled = false;
 
     const fetchMissions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const token = localStorage.getItem('accessToken');
-        const response = await axios.get(`${API_BASE}/volunteer/assignments`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (cancelled) return;
-        if (response.data?.success) {
-          setMissions(response.data.data?.assignments || []);
-        } else {
-          throw new Error('Failed to fetch active missions');
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setError(err.response?.data?.message || err.message);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+      setLoading(true);
+      setError(null);
+      const result = await volunteerApi.getAssignments();
+      if (cancelled) return;
+      if (result.success) {
+        setMissions(result.data || []);
+      } else {
+        setError(result.error || 'Failed to fetch active missions');
       }
+      setLoading(false);
     };
 
     fetchMissions();

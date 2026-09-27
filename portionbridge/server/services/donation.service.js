@@ -533,11 +533,12 @@ async function acceptDonation(donationId, volunteerId) {
   assertDonationWithinRadius(donation, { coverageRadius: profile.coverage_radius, latitude: profile.latitude, longitude: profile.longitude }, 'volunteer');
 
   const connection = await pool.getConnection();
+  let acceptedDonation;
 
   try {
     await connection.beginTransaction();
 
-    const acceptedDonation = await donationModel.acceptDonation(connection, donationId, volunteerId);
+    acceptedDonation = await donationModel.acceptDonation(connection, donationId, volunteerId);
 
     if (!acceptedDonation) {
       throw new AppError(
@@ -547,19 +548,26 @@ async function acceptDonation(donationId, volunteerId) {
     }
 
     await connection.commit();
-
-    // trg_donation_status_update already inserted a 'donation_accepted'
-    // notification for the donor as part of this same transaction —
-    // fetch and deliver it now rather than inserting a duplicate.
-    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
-
-    return acceptedDonation;
   } catch (err) {
     await connection.rollback();
     throw err;
   } finally {
     connection.release();
   }
+
+  // Runs after commit — a notification failure here must never report a
+  // failed accept back to the volunteer when the donation was already
+  // successfully accepted and committed.
+  try {
+    // trg_donation_status_update already inserted a 'donation_accepted'
+    // notification for the donor as part of this same transaction —
+    // fetch and deliver it now rather than inserting a duplicate.
+    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
+  } catch (err) {
+    console.error('Post-accept notification step failed:', err);
+  }
+
+  return acceptedDonation;
 }
 
 /**
@@ -922,25 +930,45 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
     updatedDonation = await donationModel.completeDonation(connection, donationId, donorId);
 
     await connection.commit();
+  } catch (err) {
+    await connection.rollback();
+    throw err;
+  } finally {
+    connection.release();
+  }
 
-    // Check and unlock achievements for donor
+  // Everything below this point runs AFTER the transaction has already
+  // committed and the connection has been released — the donation is
+  // completed no matter what happens next. None of this belongs inside
+  // the try/catch above: that catch calls connection.rollback(), which is
+  // meaningless (and can itself throw) once commit() has already
+  // succeeded. Previously all of this — two unguarded notificationModel
+  // .create() calls, two unguarded leaderboard pool.query() calls, and a
+  // third notification create — sat inside that try block, so any one of
+  // them failing would roll back nothing but still throw, making the API
+  // report a failed completion to the donor even though their donation
+  // had already been marked completed. A retry would then fail against
+  // an already-completed donation, with no clear explanation why.
+
+  // Check and unlock achievements for donor
+  try {
+    await achievementService.checkAndUnlockAchievements(donorId, 'donor');
+  } catch (err) {
+    // Don't let achievement errors block the completion flow
+    console.error('Achievement check failed (donor):', err);
+  }
+
+  // Check and unlock achievements for the assigned volunteer
+  if (updatedDonation.volunteer_id) {
     try {
-      await achievementService.checkAndUnlockAchievements(donorId, 'donor');
+      await achievementService.checkAndUnlockAchievements(updatedDonation.volunteer_id, 'volunteer');
     } catch (err) {
       // Don't let achievement errors block the completion flow
-      console.error('Achievement check failed (donor):', err);
+      console.error('Achievement check failed (volunteer):', err);
     }
+  }
 
-    // Check and unlock achievements for the assigned volunteer
-    if (updatedDonation.volunteer_id) {
-      try {
-        await achievementService.checkAndUnlockAchievements(updatedDonation.volunteer_id, 'volunteer');
-      } catch (err) {
-        // Don't let achievement errors block the completion flow
-        console.error('Achievement check failed (volunteer):', err);
-      }
-    }
-
+  try {
     // trg_donation_status_update already inserted the 'completed'
     // notifications (donor always, volunteer too when assigned) as part
     // of this same transaction — fetch and deliver both now rather than
@@ -1038,10 +1066,10 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
       });
     }
   } catch (err) {
-    await connection.rollback();
-    throw err;
-  } finally {
-    connection.release();
+    // Same reasoning as the achievement checks above: the donation is
+    // already completed and committed, so a notification/broadcast
+    // failure here must never surface as a failed completion to the donor.
+    console.error('Post-completion notification/broadcast step failed:', err);
   }
 
   await auditService.record({
@@ -1163,11 +1191,12 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
   assertDonationWithinRadius(donation, { coverageRadius: team.coverage_radius, latitude: team.latitude, longitude: team.longitude }, 'team');
 
   const connection = await pool.getConnection();
+  let acceptedDonation;
 
   try {
     await connection.beginTransaction();
 
-    const acceptedDonation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
+    acceptedDonation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
 
     if (!acceptedDonation) {
       throw new AppError(
@@ -1177,22 +1206,29 @@ async function acceptDonationForTeam(donationId, teamId, leaderId) {
     }
 
     await connection.commit();
-
-    // trg_donation_status_update already inserted a 'donation_accepted'
-    // notification for the donor as part of this same transaction —
-    // fetch and deliver it now rather than inserting a duplicate.
-    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
-
-    // Log audit
-    await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
-
-    return acceptedDonation;
   } catch (err) {
     await connection.rollback();
     throw err;
   } finally {
     connection.release();
   }
+
+  // Runs after commit — a notification/audit failure here must never
+  // report a failed team-accept back to the leader when the donation was
+  // already successfully accepted and committed.
+  try {
+    // trg_donation_status_update already inserted a 'donation_accepted'
+    // notification for the donor as part of this same transaction —
+    // fetch and deliver it now rather than inserting a duplicate.
+    await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
+  } catch (err) {
+    console.error('Post-team-accept notification step failed:', err);
+  }
+
+  // Log audit
+  await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
+
+  return acceptedDonation;
 }
 
 /**

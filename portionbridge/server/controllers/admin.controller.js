@@ -60,7 +60,7 @@ const disableUser = asyncHandler(async (req, res) => {
  * PATCH /api/v1/admin/users/:id/enable
  */
 const enableUser = asyncHandler(async (req, res) => {
-  const user = await adminService.enableUser(req.params.id);
+  const user = await adminService.enableUser(req.params.id, req.user.id);
 
   return success(res, {
     statusCode: HTTP_STATUS.OK,

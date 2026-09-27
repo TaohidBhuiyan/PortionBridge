@@ -356,7 +356,7 @@ async function acceptInvitation(invitationId, userId) {
   }
 
   const connection = await require('../config/db').pool.getConnection();
-  
+
   try {
     await connection.beginTransaction();
 
@@ -371,7 +371,23 @@ async function acceptInvitation(invitationId, userId) {
     }, connection);
 
     await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 
+  // Everything below runs after the transaction has already committed and
+  // the connection has been released — the user has already joined the
+  // team no matter what happens next. None of this belongs inside the
+  // try/catch above: that catch calls connection.rollback(), which is
+  // meaningless (and can itself throw) once commit() has already
+  // succeeded — previously a failure in any of these steps (notification,
+  // broadcast, audit log, or the getTeam re-fetch) would report a failed
+  // "accept invitation" to the user even though they'd already been added
+  // to the team, and a retry would then fail with "already a member".
+  try {
     // Notify team leader
     const team = await teamModel.findById(invitation.team_id);
     await notificationService.createNotification(team.leader_id, {
@@ -389,17 +405,14 @@ async function acceptInvitation(invitationId, userId) {
         userName: (await userModel.findById(userId)).name,
       });
     }
-
-    // Log audit
-    await auditService.record({ userId, action: 'team_invitation_accepted', metadata: { teamId: invitation.team_id, invitationId } });
-
-    return await getTeam(invitation.team_id, userId);
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+  } catch (err) {
+    console.error('Post-accept-invitation notification/broadcast step failed:', err);
   }
+
+  // Log audit
+  await auditService.record({ userId, action: 'team_invitation_accepted', metadata: { teamId: invitation.team_id, invitationId } });
+
+  return await getTeam(invitation.team_id, userId);
 }
 
 /**
@@ -552,7 +565,16 @@ async function promoteMember(teamId, memberId, userId) {
     await teamModel.updateLeader(teamId, memberId, connection);
 
     await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 
+  // Runs after commit — see acceptInvitation above for why this can't stay
+  // inside the try/catch that rolls back.
+  try {
     // Notify the promoted member
     await notificationService.createNotification(memberId, {
       type: NOTIFICATION_TYPES.TEAM_MEMBER_PROMOTED,
@@ -570,16 +592,12 @@ async function promoteMember(teamId, memberId, userId) {
         newLeaderName: (await userModel.findById(memberId)).name,
       });
     }
-
-    // Log audit
-    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
-
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+  } catch (err) {
+    console.error('Post-promote-member notification/broadcast step failed:', err);
   }
+
+  // Log audit
+  await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
 }
 
 /**
@@ -624,7 +642,16 @@ async function transferLeadership(teamId, memberId, userId) {
     await teamModel.updateLeader(teamId, memberId, connection);
 
     await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 
+  // Runs after commit — see acceptInvitation above for why this can't stay
+  // inside the try/catch that rolls back.
+  try {
     // Notify the new leader
     await notificationService.createNotification(memberId, {
       type: NOTIFICATION_TYPES.TEAM_LEADERSHIP_TRANSFERRED,
@@ -642,16 +669,12 @@ async function transferLeadership(teamId, memberId, userId) {
         newLeaderName: (await userModel.findById(memberId)).name,
       });
     }
-
-    // Log audit
-    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
-
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+  } catch (err) {
+    console.error('Post-transfer-leadership notification/broadcast step failed:', err);
   }
+
+  // Log audit
+  await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
 }
 
 /**
@@ -863,7 +886,16 @@ async function acceptJoinRequest(teamId, requestId, userId) {
     }, connection);
 
     await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 
+  // Runs after commit — see acceptInvitation above for why this can't stay
+  // inside the try/catch that rolls back.
+  try {
     // Notify requesting volunteer
     const targetUser = await userModel.findById(request.user_id);
     await notificationService.createNotification(request.user_id, {
@@ -881,16 +913,13 @@ async function acceptJoinRequest(teamId, requestId, userId) {
         userName: targetUser.name,
       });
     }
-
-    await auditService.record({ userId, action: 'team_join_request_accepted', metadata: { teamId, requestId, volunteerId: request.user_id } });
-
-    return await teamMemberModel.findByTeamAndUser(teamId, request.user_id);
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
+  } catch (err) {
+    console.error('Post-accept-join-request notification/broadcast step failed:', err);
   }
+
+  await auditService.record({ userId, action: 'team_join_request_accepted', metadata: { teamId, requestId, volunteerId: request.user_id } });
+
+  return await teamMemberModel.findByTeamAndUser(teamId, request.user_id);
 }
 
 /**

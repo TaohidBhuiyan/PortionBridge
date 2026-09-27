@@ -159,7 +159,7 @@ export function AdminDonations() {
                           </td>
                           <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[140px]">{d.donor_name || '—'}</td>
                           <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[140px]">
-                            {d.volunteer_name || <span className="italic">Not yet assigned</span>}
+                            {(d.assignment_mode === 'team' ? d.assigned_member_name : d.volunteer_name) || <span className="italic">Not yet assigned</span>}
                           </td>
                           <td className="py-2.5 px-4">
                             <StatusBadge status={displayStatus} size="small" />

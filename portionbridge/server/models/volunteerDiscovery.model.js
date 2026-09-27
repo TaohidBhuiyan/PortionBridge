@@ -28,6 +28,16 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 /**
  * Finds nearby volunteers based on donor's location.
+ * `total_pickups`/`active_pickups` are computed live via correlated
+ * subqueries (COALESCE(assigned_member_id, volunteer_id), matching the
+ * top_volunteers view's convention) rather than read from
+ * volunteer_profiles.total_pickups — that column is never written to
+ * anywhere in the app and always reads back as its DB default (0), which
+ * silently zeroed out both the "sort by experience" option here and 10%
+ * of getRecommendedVolunteer's scoring in volunteerDiscovery.controller.js.
+ * `rating` (live AVG(stars) from the ratings table) was previously absent
+ * from this query entirely, similarly zeroing out getRecommendedVolunteer's
+ * rating factor (10% of its score) for every volunteer.
  * @param {Object} options - Query options
  * @param {number} options.latitude - Donor's latitude
  * @param {number} options.longitude - Donor's longitude
@@ -40,7 +50,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
  * @param {string} options.sortOrder - Sort direction asc/desc (default: asc)
  * @param {number} options.limit - Result limit
  * @param {number} options.offset - Result offset
- * @returns {Promise<Array>} Array of nearby volunteers with distance
+ * @returns {Promise<Array>} Array of nearby volunteers with distance, total_pickups, active_pickups, rating
  */
 async function findNearbyVolunteers({ 
   latitude, 
@@ -93,13 +103,15 @@ async function findNearbyVolunteers({
   // Haversine formula for distance calculation in SQL
   const distanceFormula = `
     (6371 * ACOS(
-      COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
-      COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
-      SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
+      LEAST(1, GREATEST(-1,
+        COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
+        COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
+        SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
+      ))
     ))
   `;
 
-  const orderColumn = sortBy === 'distance' ? 'distance' : 'vp.total_pickups';
+  const orderColumn = sortBy === 'distance' ? 'distance' : 'total_pickups';
   const orderDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
 
   const [rows] = await pool.query(
@@ -118,7 +130,14 @@ async function findNearbyVolunteers({
       vp.latitude,
       vp.longitude,
       vp.is_online,
-      vp.total_pickups,
+      (SELECT COUNT(*) FROM donation_requests dr2
+         WHERE COALESCE(dr2.assigned_member_id, dr2.volunteer_id) = u.id
+           AND dr2.is_deleted = 0) AS total_pickups,
+      (SELECT COUNT(*) FROM donation_requests dr3
+         WHERE COALESCE(dr3.assigned_member_id, dr3.volunteer_id) = u.id
+           AND dr3.is_deleted = 0
+           AND dr3.status IN ('accepted', 'scheduled', 'on_the_way', 'picked_up')) AS active_pickups,
+      (SELECT ROUND(AVG(r.stars), 2) FROM ratings r WHERE r.rated_user = u.id) AS rating,
       ${distanceFormula} AS distance,
       t.id AS team_id,
       t.name AS team_name,
@@ -134,12 +153,15 @@ async function findNearbyVolunteers({
     { ...params, limit, offset }
   );
 
-  // Parse JSON fields
+  // Parse JSON fields and ensure numeric types
   return rows.map(row => {
     if (row.availability) row.availability = JSON.parse(row.availability);
     if (row.skills) row.skills = JSON.parse(row.skills);
     if (row.service_areas) row.service_areas = JSON.parse(row.service_areas);
     row.distance = Number(row.distance).toFixed(2);
+    if (row.rating !== null && row.rating !== undefined) {
+      row.rating = Number(row.rating);
+    }
     return row;
   });
 }
@@ -195,9 +217,11 @@ async function countNearbyVolunteers({
 
   const distanceFormula = `
     (6371 * ACOS(
-      COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
-      COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
-      SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
+      LEAST(1, GREATEST(-1,
+        COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
+        COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
+        SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
+      ))
     ))
   `;
 
@@ -256,9 +280,11 @@ async function findNearbyTeams({
 
   const distanceFormula = `
     (6371 * ACOS(
-      COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
-      COS(RADIANS(t.longitude) - RADIANS(:lng)) +
-      SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
+      LEAST(1, GREATEST(-1,
+        COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
+        COS(RADIANS(t.longitude) - RADIANS(:lng)) +
+        SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
+      ))
     ))
   `;
 
@@ -322,9 +348,11 @@ async function countNearbyTeams({
 
   const distanceFormula = `
     (6371 * ACOS(
-      COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
-      COS(RADIANS(t.longitude) - RADIANS(:lng)) +
-      SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
+      LEAST(1, GREATEST(-1,
+        COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
+        COS(RADIANS(t.longitude) - RADIANS(:lng)) +
+        SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
+      ))
     ))
   `;
 

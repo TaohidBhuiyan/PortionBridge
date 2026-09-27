@@ -70,14 +70,25 @@ const ALLOWED_SORT_COLUMNS = ['created_at', 'pickup_time', 'quantity', 'distance
  * coordinates. Donations with no coordinates on file (legacy rows, or a
  * geocode that never resolved) simply can't produce a distance and are
  * excluded by the HAVING clause below rather than guessed at.
+ *
+ * The ACOS argument is clamped to [-1, 1] with LEAST/GREATEST — without
+ * it, a pickup at (or extremely close to, within floating-point rounding
+ * error of) the volunteer's own coordinates can push the argument
+ * fractionally above 1, making MySQL's ACOS() return NULL instead of ~0.
+ * A NULL distance fails the HAVING clause silently, so the single
+ * closest possible match — distance 0 — was the one case guaranteed to
+ * vanish from results. Same fix applied to the identical formula in
+ * volunteerDiscovery.model.js.
  */
 const PICKUP_LAT_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.latitude')) AS DECIMAL(10,8))`;
 const PICKUP_LNG_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.longitude')) AS DECIMAL(11,8))`;
 const DISTANCE_FORMULA = `
   (6371 * ACOS(
-    COS(RADIANS(:lat)) * COS(RADIANS(${PICKUP_LAT_EXPR})) *
-    COS(RADIANS(${PICKUP_LNG_EXPR}) - RADIANS(:lng)) +
-    SIN(RADIANS(:lat)) * SIN(RADIANS(${PICKUP_LAT_EXPR}))
+    LEAST(1, GREATEST(-1,
+      COS(RADIANS(:lat)) * COS(RADIANS(${PICKUP_LAT_EXPR})) *
+      COS(RADIANS(${PICKUP_LNG_EXPR}) - RADIANS(:lng)) +
+      SIN(RADIANS(:lat)) * SIN(RADIANS(${PICKUP_LAT_EXPR}))
+    ))
   ))
 `;
 

@@ -75,6 +75,7 @@ const AdminReportDetail = safeLazy(() => import("./pages/AdminReportDetail"));
 const AdminNotifications = safeLazy(() => import("./pages/AdminNotifications"));
 const AdminAnalytics = safeLazy(() => import("./pages/AdminAnalytics"));
 const AdminAuditLogs = safeLazy(() => import("./pages/AdminAuditLogs"));
+const AdminSettingsPage = safeLazy(() => import("./pages/AdminSettingsPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -422,6 +423,16 @@ function App() {
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminAuditLogs />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminSettingsPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 }

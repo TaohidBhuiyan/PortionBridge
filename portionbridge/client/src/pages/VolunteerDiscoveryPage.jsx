@@ -120,17 +120,14 @@ const VolunteerDiscoveryPage = () => {
 
     if (volunteersResult.success) {
       const vols = volunteersResult.data?.volunteers || [];
-      console.log('[Discovery] volunteers fetched:', vols.length, vols.slice(0, 3));
       setVolunteers(vols);
       setMapVolunteers(vols);
     } else if (!volunteersResult.aborted) {
-      console.error('[Discovery] volunteers error:', volunteersResult.error);
       setError(volunteersResult.error);
     }
 
     if (teamsResult.success) {
       const tms = teamsResult.data?.teams || [];
-      console.log('[Discovery] teams fetched:', tms.length, tms.slice(0, 3));
       setTeams(tms);
       setMapTeams(tms);
     }

@@ -49,6 +49,11 @@ export function AdminAnalyticsSection({ analytics, loading }) {
     color: CATEGORY_COLORS[c.category] || '#94a3b8',
   }));
 
+  // Remove duplicate labels from legend
+  const uniqueLegendData = pieData.filter((item, index, self) =>
+    index === self.findIndex((t) => t.label === item.label)
+  );
+
   const completionRate = analytics?.completionRate ?? 0;
 
   return (
@@ -76,9 +81,9 @@ export function AdminAnalyticsSection({ analytics, loading }) {
         >
           {hasCategoryData ? (
             <>
-              <PieChart data={pieData} size={160} />
+              <PieChart data={pieData} size={160} showLegend={false} />
               <div className="flex items-center justify-center gap-5 mt-3 text-xs text-text-secondary">
-                {pieData.map((d) => (
+                {uniqueLegendData.map((d) => (
                   <span key={d.label} className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
                     {d.label}
@@ -98,9 +103,15 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           title="User Growth"
           subtitle="New donors vs. volunteers — last 6 months"
         >
-          <LineChart data={userGrowth} dataKey="donors" height={140} color="#f97316" />
-          <div className="mt-1">
-            <LineChart data={userGrowth} dataKey="volunteers" height={140} color="#3b82f6" />
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1">Donors</p>
+              <LineChart data={userGrowth} dataKey="donors" height={100} color="#f97316" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1">Volunteers</p>
+              <LineChart data={userGrowth} dataKey="volunteers" height={100} color="#3b82f6" />
+            </div>
           </div>
           <div className="flex items-center gap-5 mt-3 text-xs text-text-secondary">
             <span className="flex items-center gap-1.5">
@@ -119,9 +130,15 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           title="Volunteer Activity"
           subtitle="Completed pickups vs. active volunteers — last 6 months"
         >
-          <LineChart data={volunteerActivity} dataKey="completedPickups" height={140} color="#22c55e" />
-          <div className="mt-1">
-            <LineChart data={volunteerActivity} dataKey="activeVolunteers" height={140} color="#0ea5e9" />
+          <div className="space-y-3">
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1">Completed Pickups</p>
+              <LineChart data={volunteerActivity} dataKey="completedPickups" height={100} color="#22c55e" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-text-secondary mb-1">Active Volunteers</p>
+              <LineChart data={volunteerActivity} dataKey="activeVolunteers" height={100} color="#0ea5e9" />
+            </div>
           </div>
           <div className="flex items-center gap-5 mt-3 text-xs text-text-secondary">
             <span className="flex items-center gap-1.5">

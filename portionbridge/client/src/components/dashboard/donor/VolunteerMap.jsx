@@ -110,11 +110,6 @@ const VolunteerMap = ({
     const map = mapInstanceRef.current;
     map.invalidateSize();
 
-    console.log('[VolunteerMap] re-rendering markers — volunteers:', volunteers.length, '| teams:', teams.length);
-    if (volunteers.length > 0) {
-      console.log('[VolunteerMap] first volunteer sample:', JSON.stringify(volunteers[0]));
-    }
-
     // Clear existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];

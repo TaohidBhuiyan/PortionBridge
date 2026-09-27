@@ -52,10 +52,10 @@ export function VolunteerCard({ volunteer }) {
 
       {(rating !== undefined || completed_pickups !== undefined) && (
         <div className="flex items-center justify-between pt-2.5 border-t border-border/60 text-xs">
-          {rating !== undefined && (
+          {rating !== undefined && rating !== null && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-warning-soft/60">
               <Star size={13} className="text-warning fill-warning" />
-              <span className="font-bold text-text-primary">{rating.toFixed(1)}</span>
+              <span className="font-bold text-text-primary">{Number(rating).toFixed(1)}</span>
               <span className="text-text-muted text-[11px]">rating</span>
             </div>
           )}

@@ -149,10 +149,23 @@ async function deleteByUserId(userId) {
   await pool.query(`DELETE FROM volunteer_profiles WHERE user_id = :userId`, { userId });
 }
 
+/**
+ * Finds all volunteer profiles with service areas.
+ * Used by admin area intelligence to map volunteer coverage by area.
+ * @returns {Promise<Array>} Array of volunteer profile objects with service_areas
+ */
+async function findAllWithServiceAreas() {
+  const [rows] = await pool.query(
+    `SELECT user_id, service_areas FROM volunteer_profiles WHERE service_areas IS NOT NULL`
+  );
+  return rows;
+}
+
 module.exports = {
   upsert,
   upsertLocation,
   findByUserId,
   updateByUserId,
   deleteByUserId,
+  findAllWithServiceAreas,
 };

@@ -234,7 +234,10 @@ export function AdminLiveOperations() {
     color: '#3b82f6',
   } : null;
 
-  const activeVolunteerCount = new Set(individualMissions.map((m) => m.volunteer_id).filter(Boolean)).size;
+  const activeVolunteerCount = new Set([
+    ...individualMissions.map((m) => m.volunteer_id).filter(Boolean),
+    ...teamMissions.map((m) => m.assigned_member_id).filter(Boolean),
+  ]).size;
   const activeTeamCount = new Set(teamMissions.map((m) => m.team_id).filter(Boolean)).size;
 
   if (loading) {

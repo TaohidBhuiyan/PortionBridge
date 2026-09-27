@@ -108,6 +108,21 @@ describe('admin: user management business rules', () => {
     );
   });
 
+  test('an admin cannot disable another admin account', async (t) => {
+    if (!dbReady) return t.skip('no test database reachable');
+
+    const { user: admin } = await createVerifiedUser({ role: 'admin' });
+    const { user: otherAdmin } = await createVerifiedUser({ role: 'admin' });
+
+    await assert.rejects(
+      () => adminService.disableUser(otherAdmin.id, admin.id),
+      (err) => {
+        assert.equal(err.statusCode, 403);
+        return true;
+      }
+    );
+  });
+
   test('disabling a non-existent user returns 404', async (t) => {
     if (!dbReady) return t.skip('no test database reachable');
 

@@ -140,6 +140,12 @@ async function countAssignments({ volunteerId, status, category, search }) {
  * non-null, not-yet-past scheduled_at — "upcoming" only ever means the
  * future. `today`/`week` are rolling windows from NOW(), not calendar
  * boundaries; combining both narrows to `today` (a subset of `week`).
+ * Matched on volunteer_id OR assigned_member_id — same team-aware check
+ * as buildAssignmentFilter above and getUpcomingCounts below — otherwise
+ * a team-assigned member's own upcoming scheduled pickups (where they're
+ * assigned_member_id, not volunteer_id/the team leader) would silently
+ * disappear from this list while still counting correctly in
+ * getUpcomingCounts's dashboard numbers.
  * @param {Object} filters - Filter options
  * @param {number} filters.volunteerId - ID of the volunteer
  * @param {boolean} [filters.today] - Restrict to the next 24 hours
@@ -148,7 +154,7 @@ async function countAssignments({ volunteerId, status, category, search }) {
  */
 function buildUpcomingFilter({ volunteerId, today, week }) {
   const conditions = [
-    'volunteer_id = :volunteerId',
+    '(volunteer_id = :volunteerId OR assigned_member_id = :volunteerId)',
     'status = :scheduledStatus',
     'scheduled_at IS NOT NULL',
     'scheduled_at >= NOW()',

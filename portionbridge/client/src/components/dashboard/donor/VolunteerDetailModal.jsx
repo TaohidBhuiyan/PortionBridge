@@ -14,6 +14,7 @@ import {
   ExternalLink,
   Zap
 } from 'lucide-react';
+import { resolveMediaUrl } from '../../../utils/mediaUrl';
 import { useNavigate } from 'react-router-dom';
 
 /**
@@ -27,7 +28,9 @@ const VolunteerDetailModal = ({ item, isTeam = false, isOpen, onClose, onRequest
 
   const getProfileImage = () => {
     if (isTeam) return null;
-    return item.profile_photo || item.profile_picture || null;
+    if (item.profile_photo) return resolveMediaUrl(item.profile_photo);
+    if (item.profile_picture) return resolveMediaUrl(item.profile_picture);
+    return null;
   };
 
   const getInitials = (name) => {
@@ -46,7 +49,7 @@ const VolunteerDetailModal = ({ item, isTeam = false, isOpen, onClose, onRequest
     if (num < 1) {
       return `${Math.round(num * 1000)}m`;
     }
-    return `${num.toFixed(1)} km`;
+    return `${Number(num).toFixed(1)} km`;
   };
 
   const calculateETA = (distance) => {
@@ -184,7 +187,7 @@ const VolunteerDetailModal = ({ item, isTeam = false, isOpen, onClose, onRequest
               <p className="text-[11px] font-medium text-text-muted uppercase tracking-wider">Rating</p>
               <div className="flex items-center justify-center gap-1 mt-0.5 text-text-primary font-bold text-base">
                 <Star className="w-4 h-4 text-warning fill-warning" />
-                <span>{item.rating ? item.rating.toFixed(1) : '5.0'}</span>
+                <span>{item.rating !== undefined && item.rating !== null ? Number(item.rating).toFixed(1) : '5.0'}</span>
               </div>
             </div>
 

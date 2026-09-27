@@ -206,7 +206,7 @@ const VolunteerProfileHeader = ({ volunteer, distance, isOwnProfile, onPhotoUpda
                 <Star className="w-3 h-3 text-amber-500" /> Success Rate
               </div>
               <p className="text-base sm:text-lg font-extrabold text-text-primary">
-                {volunteer.statistics?.acceptance_rate ? `${volunteer.statistics.acceptance_rate.toFixed(0)}%` : '100%'}
+                {volunteer.statistics?.acceptance_rate ? `${Number(volunteer.statistics.acceptance_rate).toFixed(0)}%` : '100%'}
               </p>
             </div>
           </div>

@@ -3,7 +3,7 @@
  * Simple CSS-based Pie Chart component
  * Displays category breakdown or percentage data
  */
-export function PieChart({ data, size = 200 }) {
+export function PieChart({ data, size = 200, showLegend = false }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex items-center justify-center" style={{ width: size, height: size }}>
@@ -71,19 +71,21 @@ export function PieChart({ data, size = 200 }) {
           </path>
         ))}
       </svg>
-      <div className="mt-4 flex flex-wrap justify-center gap-3">
-        {segments.map((segment, index) => (
-          <div key={index} className="flex items-center gap-1">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: segment.color }}
-            />
-            <span className="text-xs text-gray-600 dark:text-gray-400">
-              {segment.label}
-            </span>
-          </div>
-        ))}
-      </div>
+      {showLegend && (
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          {segments.map((segment, index) => (
+            <div key={index} className="flex items-center gap-1">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ backgroundColor: segment.color }}
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                {segment.label}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Clock, Star, CheckCircle, Users, Eye, EyeOff, ShieldCheck, MapPin, Zap, ChevronRight, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { resolveMediaUrl } from '../../../utils/mediaUrl';
 
 /**
  * Volunteer Card Component
@@ -22,7 +23,9 @@ const VolunteerCard = ({ volunteer, onViewDetails, onRequestPickup, disabled = f
   };
 
   const getProfileImage = () => {
-    return volunteer.profile_photo || volunteer.profile_picture || null;
+    if (volunteer.profile_photo) return resolveMediaUrl(volunteer.profile_photo);
+    if (volunteer.profile_picture) return resolveMediaUrl(volunteer.profile_picture);
+    return null;
   };
 
   const getInitials = (name) => {
@@ -136,10 +139,10 @@ const VolunteerCard = ({ volunteer, onViewDetails, onRequestPickup, disabled = f
               <span>{calculateETA(volunteer.distance)} away</span>
             </span>
 
-            {volunteer.rating !== undefined && (
+            {volunteer.rating !== undefined && volunteer.rating !== null && (
               <span className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-warning-soft text-warning font-semibold">
                 <Star className="w-3 h-3 fill-warning" />
-                <span>{volunteer.rating ? volunteer.rating.toFixed(1) : '5.0'}</span>
+                <span>{Number(volunteer.rating).toFixed(1)}</span>
               </span>
             )}
             
@@ -220,7 +223,7 @@ const VolunteerCard = ({ volunteer, onViewDetails, onRequestPickup, disabled = f
               <p className="text-text-muted text-[10px] uppercase font-bold">Rating</p>
               <p className="font-semibold text-text-primary mt-0.5 flex items-center gap-1">
                 <Star className="w-3 h-3 text-warning fill-warning" />
-                {volunteer.rating ? volunteer.rating.toFixed(1) : '5.0'}
+                {volunteer.rating !== undefined && volunteer.rating !== null ? Number(volunteer.rating).toFixed(1) : '5.0'}
               </p>
             </div>
             <div className="p-2 bg-page rounded-lg">

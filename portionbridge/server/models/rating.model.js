@@ -103,4 +103,21 @@ async function findPendingReminders(donorId) {
   return rows;
 }
 
-module.exports = { findByDonationId, findById, create, findByRatedUserId, findPendingReminders };
+/**
+ * Live average star rating for a user (a volunteer, typically), computed
+ * directly from the ratings table so it's always current — unlike a
+ * cached column, it reflects every new rating immediately. Same
+ * ROUND(AVG(stars), 2) formula as the top_volunteers/top_donors views.
+ * @param {number} userId - ID of the rated user
+ * @returns {Promise<number|null>} Average rating (2 decimal places), or null if never rated
+ */
+async function getAverageRating(userId) {
+  const [rows] = await pool.query(
+    `SELECT ROUND(AVG(stars), 2) AS average_rating FROM ratings WHERE rated_user = :userId`,
+    { userId }
+  );
+  const value = rows[0]?.average_rating;
+  return value === null || value === undefined ? null : Number(value);
+}
+
+module.exports = { findByDonationId, findById, create, findByRatedUserId, findPendingReminders, getAverageRating };

@@ -210,12 +210,72 @@ async function getVolunteerStats(volunteerId) {
   const liveRating = await ratingsModel.getAverageRating(volunteerId);
 
   return {
-    totalPickups: profile.total_pickups || 0,
+    // Was profile.total_pickups — that column is never written to anywhere
+    // in the app, so it always read back as its DB default (0). summary.total
+    // is live-computed and already team-aware (volunteer_id OR
+    // assigned_member_id), matching the fix applied to findNearbyVolunteers.
+    totalPickups: Number(summary.total) || 0,
     activePickups: Number(summary.accepted) + Number(summary.scheduled),
     completedPickups: Number(summary.completed),
     rating: liveRating || null,
     isOnline: profile.is_online || false,
     lastLocationUpdate: profile.last_location_update || null,
+  };
+}
+
+/**
+ * Resolves a free-text address into coordinates via OpenStreetMap Nominatim
+ * — a server-side proxy so ManualLocationModal-style flows can resolve an
+ * address without relying on browser geolocation. Mirrors the params/
+ * response shape of the client-side searchAddressNominatim helper
+ * (client/src/utils/geocoding.js), just returning a single best match
+ * instead of a suggestion list, matching what volunteerDiscoveryApi.js's
+ * geocodeAddress wrapper expects ({ latitude, longitude, displayName }).
+ *
+ * This function was previously missing entirely even though the
+ * controller (getVolunteerStats's neighbor, geocodeAddress), route
+ * (GET /volunteer-discovery/geocode), and validator already existed and
+ * called it — every request would have thrown "geocodeAddress is not a
+ * function" (500). No frontend component calls the API wrapper yet, so
+ * this was dormant rather than user-visible, but fixed now so it works
+ * the moment something does.
+ * @param {string} address - Free-text address/place name
+ * @returns {Promise<{latitude: number, longitude: number, displayName: string}>}
+ * @throws {AppError} 400 if address is blank, 404 if no match found, 500 if the geocoding service itself fails
+ */
+async function geocodeAddress(address) {
+  const trimmed = (address || '').trim();
+  if (!trimmed) {
+    throw new AppError('address is required.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  let response;
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(trimmed)}&countrycodes=bd&limit=1&accept-language=en`;
+    response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'PortionBridge/1.0 (donation pickup coordination)',
+      },
+    });
+  } catch {
+    throw new AppError('Failed to reach the geocoding service.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+
+  if (!response.ok) {
+    throw new AppError('Failed to reach the geocoding service.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+
+  const results = await response.json();
+  if (!Array.isArray(results) || results.length === 0) {
+    throw new AppError('No location found for that address.', HTTP_STATUS.NOT_FOUND);
+  }
+
+  const match = results[0];
+  return {
+    latitude: parseFloat(match.lat),
+    longitude: parseFloat(match.lon),
+    displayName: match.display_name || trimmed,
   };
 }
 
@@ -225,4 +285,5 @@ module.exports = {
   updateVolunteerLocation,
   updateTeamLocation,
   getVolunteerStats,
+  geocodeAddress,
 };

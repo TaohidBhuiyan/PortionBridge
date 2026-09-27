@@ -219,13 +219,14 @@ async function getUserDetail(userId) {
 
 /**
  * Soft-disables (bans) a user. Guards against an admin disabling their own
- * account (self-lockout prevention) and against redundant state transitions.
+ * account (self-lockout prevention), against one admin disabling another
+ * admin account, and against redundant state transitions.
  * Records the action in audit_logs (Phase 8) — this previously wasn't
  * logged at all despite being a real moderation action.
  * @param {number} userId - User ID to disable
  * @param {number} requestingAdminId - ID of the admin making the request
  * @returns {Promise<Object>} The updated user object
- * @throws {AppError} 403 self-disable, 404 not found, 409 already in that state
+ * @throws {AppError} 403 self-disable/target-is-admin, 404 not found, 409 already in that state
  */
 async function disableUser(userId, requestingAdminId) {
   if (Number(userId) === Number(requestingAdminId)) {
@@ -235,6 +236,9 @@ async function disableUser(userId, requestingAdminId) {
   const user = await adminModel.findUserById(userId);
   if (!user) {
     throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+  }
+  if (user.role === USER_ROLES.ADMIN) {
+    throw new AppError('Admin accounts cannot be disabled from here.', HTTP_STATUS.FORBIDDEN);
   }
   if (user.is_deleted) {
     throw new AppError('This user account no longer exists.', HTTP_STATUS.CONFLICT);
@@ -305,15 +309,6 @@ async function listDonations(query) {
   return { donations, meta };
 }
 
-/**
- * Gets full details for a single donation, regardless of soft-delete state,
- * plus any reports filed against it (Phase 3 — reuses report.model.js,
- * the same table/rows the donor/volunteer-facing report feature already
- * writes to; no duplicate report logic).
- * @param {number} donationId - Donation ID
- * @returns {Promise<Object>} Donation object with a `reports` array
- * @throws {AppError} 404 if no such donation exists
- */
 /**
  * Gets full details for a single donation, regardless of soft-delete state,
  * plus any reports filed against it (Phase 3 — reuses report.model.js,
@@ -462,8 +457,16 @@ async function getVolunteerDetail(volunteerId) {
       cancelledPickups: cancelled,
       totalCompletedDonations: completed,
       totalAssigned: toInt(summary.total) + cancelled,
-      isActive: activeAssignments > 0,
-      currentStatus: activeAssignments > 0 ? 'On a Mission' : 'Available',
+      // isActive/currentStatus intentionally use currentAssignments.length
+      // (findAssignments — already covers all 4 non-terminal statuses,
+      // accepted through picked_up, and is team-aware via
+      // volunteer_id OR assigned_member_id) rather than the narrower
+      // `activeAssignments` above (accepted+scheduled only, matching its
+      // established meaning elsewhere in the app, e.g. the volunteer's own
+      // dashboard summary) — otherwise a volunteer who is on_the_way or has
+      // already picked up a donation would incorrectly show as "Available".
+      isActive: currentAssignments.length > 0,
+      currentStatus: currentAssignments.length > 0 ? 'On a Mission' : 'Available',
       completionRate: attempted > 0 ? Number(((completed / attempted) * 100).toFixed(1)) : 0,
       cancellationRate: attempted > 0 ? Number(((cancelled / attempted) * 100).toFixed(1)) : 0,
     },
@@ -785,7 +788,7 @@ async function getAttentionCenter() {
     }
     if (flags.isDelayedPickup) {
       items.push(buildAttentionItem('delayed_pickup', donation.id, link, {
-        description: `#${donation.id} was scheduled for pickup by ${donation.volunteer_name || 'the assigned volunteer'} and is now overdue.`,
+        description: `#${donation.id} was scheduled for pickup by ${personName || 'the assigned volunteer'} and is now overdue.`,
       }));
     }
     if (flags.isDelayedDelivery) {

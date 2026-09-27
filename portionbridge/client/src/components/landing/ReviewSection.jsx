@@ -127,7 +127,7 @@ export function ReviewSection() {
             <Reveal>
               <div className="flex items-baseline gap-2 mb-1">
                 <span className="font-serif text-4xl font-semibold text-slate-900">
-                  {(ratingSummary?.averageRating ?? 0).toFixed(1)}
+                  {Number(ratingSummary?.averageRating ?? 0).toFixed(1)}
                 </span>
                 <Stars rating={ratingSummary?.averageRating || 0} size="w-4 h-4" />
               </div>
