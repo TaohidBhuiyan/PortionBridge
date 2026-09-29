@@ -4,7 +4,7 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const database = process.env.DB_NAME || 'portionbridge';
-const migrationsDirectory = path.join(__dirname, '..', '..', 'database');
+const migrationsDirectory = path.join(__dirname, '..', '..', 'database', 'migrations');
 
 const migrations = [
   {
@@ -39,6 +39,82 @@ const migrations = [
       ['column', 'users', 'google_id'],
       ['column', 'users', 'profile_picture'],
     ],
+  },
+  {
+    id: 'migration_013_service_areas_fix',
+    file: 'migration_013_service_areas_fix.sql',
+    checks: [['column', 'volunteer_profiles', 'service_areas']],
+  },
+  {
+    id: 'migration_014_admin_announcement_type',
+    file: 'migration_014_admin_announcement_type.sql',
+    checks: [['enumValue', 'notifications', 'type', 'admin_announcement']],
+  },
+  {
+    id: 'migration_015_report_moderation_fields',
+    file: 'migration_015_report_moderation_fields.sql',
+    checks: [
+      ['enumValue', 'reports', 'status', 'dismissed'],
+      ['column', 'reports', 'resolution_notes'],
+      ['column', 'reports', 'resolved_by'],
+      ['column', 'reports', 'resolved_at'],
+    ],
+  },
+  {
+    id: 'migration_016_donation_cancelled_status',
+    file: 'migration_016_donation_cancelled_status.sql',
+    checks: [['enumValue', 'donation_requests', 'status', 'cancelled']],
+  },
+  {
+    id: 'migration_017_leaderboard_opt_out',
+    file: 'migration_017_leaderboard_opt_out.sql',
+    checks: [['column', 'users', 'show_on_leaderboard']],
+  },
+  {
+    id: 'migration_018_notification_templates',
+    file: 'migration_018_notification_templates.sql',
+    checks: [['table', 'notification_templates']],
+  },
+  {
+    id: 'migration_019_recurring_donations',
+    file: 'migration_019_recurring_donations.sql',
+    checks: [['table', 'recurring_donations']],
+  },
+  {
+    id: 'migration_020_volunteer_team_base_location',
+    file: 'migration_020_volunteer_team_base_location.sql',
+    checks: [
+      ['column', 'volunteer_profiles', 'base_address'],
+      ['column', 'teams', 'base_address'],
+    ],
+  },
+  {
+    id: 'migration_021_fix_volunteer_leaderboard_team_credits',
+    file: 'migration_021_fix_volunteer_leaderboard_team_credits.sql',
+    checks: [['index', 'top_volunteers', 'top_volunteers']], // View exists check
+  },
+  {
+    id: 'migration_022_volunteer_team_join_requests',
+    file: 'migration_022_volunteer_team_join_requests.sql',
+    checks: [['table', 'team_join_requests']],
+  },
+  {
+    id: 'migration_023_team_join_request_notifications_and_constraint',
+    file: 'migration_023_team_join_request_notifications_and_constraint.sql',
+    checks: [
+      ['enumValue', 'notifications', 'type', 'team_join_request_received'],
+      ['column', 'team_join_requests', 'pending_flag'],
+    ],
+  },
+  {
+    id: 'migration_024_add_is_deleted_to_donation_requests',
+    file: 'migration_024_add_is_deleted_to_donation_requests.sql',
+    checks: [['column', 'donation_requests', 'is_deleted']],
+  },
+  {
+    id: 'migration_025_status_history_actor_attribution_fix',
+    file: 'migration_025_status_history_actor_attribution_fix.sql',
+    checks: [], // Trigger migration - no schema checks needed
   },
 ];
 

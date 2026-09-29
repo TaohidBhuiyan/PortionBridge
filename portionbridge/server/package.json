@@ -11,6 +11,14 @@
     "dev:admin": "nodemon server.js .env.admin",
     "migrate": "node scripts/migrate.js",
     "seed:admin": "node scripts/seedAdmin.js",
+    "seed:demo": "node scripts/seedDemoUsers.js",
+    "seed:dummy": "node scripts/seedDummyData.js",
+    "seed:interactions": "node scripts/seedUserInteractions.js",
+    "seed:random": "node scripts/seedRandomUsers.js",
+    "seed:nearby": "node scripts/seedNearbyOpportunities.js",
+    "backup": "node scripts/simpleBackup.js",
+    "backup:list": "node scripts/simpleBackup.js list",
+    "backup:restore": "node scripts/simpleBackup.js restore"
     "test": "node --test --test-force-exit \"tests/unit/**/*.test.js\" \"tests/integration/**/*.test.js\"",
     "test:unit": "node --test --test-force-exit \"tests/unit/**/*.test.js\"",
     "test:integration": "node --test --test-force-exit \"tests/integration/**/*.test.js\""
