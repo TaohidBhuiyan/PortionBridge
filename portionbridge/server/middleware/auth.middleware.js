@@ -45,6 +45,7 @@ async function protect(req, res, next) {
       return error(res, {
         statusCode: HTTP_STATUS.FORBIDDEN,
         message: 'Your account has been banned. Contact support for assistance.',
+        code: 'ACCOUNT_BANNED',
       });
     }
 

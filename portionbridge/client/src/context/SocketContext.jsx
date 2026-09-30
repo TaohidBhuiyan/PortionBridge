@@ -71,6 +71,7 @@ export function createPublicSocketConnection({ onConnect, onDisconnect, onConnec
  * @param {Function} options.onDisconnect - Callback when socket disconnects
  * @param {Function} options.onConnectError - Callback on connection error
  * @param {Function} options.onTokenExpired - Callback when token expires
+ * @param {Function} options.onAccountBanned - Callback when account is banned
  * @param {Function} options.onNotification - Callback for new notifications
  * @param {Function} options.onNotificationCountUpdated - Callback for unread count updates
  * @param {Function} options.onNotificationRead - Callback for notification read events
@@ -87,6 +88,7 @@ export function createAuthSocketConnection({
   onDisconnect,
   onConnectError,
   onTokenExpired,
+  onAccountBanned,
   onNotification,
   onNotificationCountUpdated,
   onNotificationRead,
@@ -123,6 +125,11 @@ export function createAuthSocketConnection({
   socketInstance.on('token_expired', () => {
     devLog('[Auth Socket] Token expired, disconnecting');
     onTokenExpired?.(socketInstance);
+  });
+
+  socketInstance.on('account_banned', () => {
+    devLog('[Auth Socket] Account banned, forcing logout');
+    onAccountBanned?.(socketInstance);
   });
 
   socketInstance.on('notification', (notification) => {
@@ -262,6 +269,13 @@ export function AuthSocketProvider({ children }) {
       onTokenExpired: (socket) => {
         socket.disconnect();
         socketRef.current = null;
+      },
+      onAccountBanned: (socket) => {
+        socket.disconnect();
+        socketRef.current = null;
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user');
+        window.location.href = '/login?banned=1';
       },
       onNotification: (notification) => {
         setUnreadCount(prev => prev + 1);

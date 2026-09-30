@@ -9,6 +9,8 @@ const teamMemberModel = require('../models/teamMember.model');
 const teamModel = require('../models/team.model');
 const volunteerProfileModel = require('../models/volunteerProfile.model');
 const socketRegistry = require('../sockets/socketRegistry');
+const { getIO } = require('../sockets/ioInstance');
+const refreshTokenModel = require('../models/refreshToken.model');
 const { getLastLocationUpdateAt, getLastKnownLocation } = require('../sockets/handlers/tracking.handler');
 const { deriveDonationFlags, computeDonationHealthScore } = require('../utils/donationHealthScore');
 const auditService = require('./audit.service');
@@ -41,6 +43,18 @@ function toInt(value) {
  * @param {string[]} fields - Numeric field names to default to 0 when missing
  * @returns {Array} Exactly `months` entries, oldest first, gaps zero-filled
  */
+/**
+ * 'YYYY-MM' key for a Date in the SERVER'S LOCAL timezone. Never use
+ * toISOString() for this: it converts to UTC, so in any timezone ahead of UTC
+ * (e.g. Bangladesh, UTC+6) local midnight on the 1st becomes the previous
+ * month and no key ever matches the DB's DATE_FORMAT month.
+ * @param {Date} date
+ * @returns {string}
+ */
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 function fillMonthlyGaps(rows, months, fields) {
   const byMonth = new Map(rows.map((row) => [row.month, row]));
   const now = new Date();
@@ -48,7 +62,7 @@ function fillMonthlyGaps(rows, months, fields) {
 
   for (let i = months - 1; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = date.toISOString().slice(0, 7);
+    const key = monthKey(date);
     const existing = byMonth.get(key);
     const entry = { month: key };
     fields.forEach((field) => {
@@ -69,7 +83,9 @@ function fillMonthlyGaps(rows, months, fields) {
  */
 function monthsAgoStart(months) {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth() - (months - 1), 1).toISOString();
+  const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+  // Local 'YYYY-MM-DD 00:00:00' (what MySQL compares against), not a UTC ISO string.
+  return `${monthKey(start)}-01 00:00:00`;
 }
 
 const TREND_MONTHS = 6;
@@ -218,6 +234,25 @@ async function getUserDetail(userId) {
 }
 
 /**
+ * Tells every live socket of a user that their account was banned, then
+ * disconnects them. No-op if the user has no sockets or io isn't ready.
+ * @param {number} userId
+ */
+function forceDisconnectUser(userId) {
+  const io = getIO();
+  if (!io) return;
+
+  socketRegistry.getSocketIds(userId).forEach((socketId) => {
+    const s = io.sockets.sockets.get(socketId);
+    if (!s) return;
+    s.emit('account_banned', {
+      message: 'Your account has been banned. Contact support for assistance.',
+    });
+    s.disconnect(true);
+  });
+}
+
+/**
  * Soft-disables (bans) a user. Guards against an admin disabling their own
  * account (self-lockout prevention), against one admin disabling another
  * admin account, and against redundant state transitions.
@@ -248,6 +283,13 @@ async function disableUser(userId, requestingAdminId) {
   }
 
   await adminModel.setUserBanned(userId, true);
+
+  // Force logout: kill every refresh token (so the client can't silently
+  // mint a new access token) and drop any live sockets right now. REST
+  // calls are already rejected by `protect` via the is_banned check.
+  await refreshTokenModel.revokeAllForUser(userId);
+  forceDisconnectUser(userId);
+
   await auditService.record({
     userId: requestingAdminId,
     action: AUDIT_ACTIONS.USER_BANNED,

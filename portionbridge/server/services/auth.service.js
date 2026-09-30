@@ -211,7 +211,7 @@ async function loginWithGoogle({ idToken, role, ipAddress, userAgent }) {
   }
 
   if (user.is_banned) {
-    throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN);
+    throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN, 'ACCOUNT_BANNED');
   }
 
   if (user.lock_until && new Date(user.lock_until).getTime() > Date.now()) {
@@ -371,7 +371,7 @@ async function login({ email, password, role, ipAddress, userAgent }) {
       userAgent,
       metadata: { reason: 'banned' },
     });
-    throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN);
+    throw new AppError('Your account has been banned. Contact support for assistance.', HTTP_STATUS.FORBIDDEN, 'ACCOUNT_BANNED');
   }
 
   // PRODUCTION AUDIT: account lockout was previously commented out

@@ -107,6 +107,15 @@ export function AuthProvider({ children }) {
         const originalRequest = error.config;
         const isAuthEndpoint = originalRequest?.url && NO_REFRESH_PATHS.some((p) => originalRequest.url.includes(p));
 
+        // Admin banned this account: log out immediately, no refresh attempt.
+        if (error.response?.status === 403 && error.response?.data?.code === 'ACCOUNT_BANNED' && !isAuthEndpoint) {
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          setUser(null);
+          window.location.href = '/login?banned=1';
+          return Promise.reject(error);
+        }
+
         if (error.response?.status === 401 && !isAuthEndpoint && !originalRequest._retried) {
           originalRequest._retried = true;
           try {

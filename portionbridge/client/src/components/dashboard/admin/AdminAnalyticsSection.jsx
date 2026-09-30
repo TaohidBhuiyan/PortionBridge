@@ -1,38 +1,190 @@
-import { LineChart } from '../../common/LineChart';
-import { PieChart } from '../../common/PieChart';
-import { SkeletonCard } from '../skeletons';
-import { TrendingUp } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import {
+  Activity,
+  CheckCircle2,
+  Gift,
+  Minus,
+  PieChart as PieChartIcon,
+  TrendingDown,
+  TrendingUp,
+  UserPlus,
+  Users,
+} from 'lucide-react';
+import {
+  AreaChart,
+  DonutChart,
+  GroupedBarChart,
+  RadialGauge,
+  Sparkline,
+} from '../../common/AnalyticsCharts';
 
-const CATEGORY_COLORS = { food: '#f97316', clothes: '#3b82f6' };
-const CATEGORY_LABELS = { food: 'Food', clothes: 'Clothes' };
+/* Theme-aware colours (CSS variables follow light/dark mode). */
+const COLOR = {
+  primary: 'var(--pb-primary)',
+  success: 'var(--pb-success)',
+  info: 'var(--pb-info)',
+  donor: 'var(--pb-donor)',
+  volunteer: 'var(--pb-volunteer)',
+  food: 'oklch(72% 0.17 55)',
+  clothes: 'var(--pb-info)',
+};
 
-function ChartCard({ title, subtitle, children, className = '' }) {
+const CATEGORY_META = {
+  food: { label: 'Food', color: COLOR.food },
+  clothes: { label: 'Clothes', color: COLOR.clothes },
+};
+
+/** Change between the last two months of a series. */
+function monthDelta(rows, pick) {
+  const cur = pick(rows[rows.length - 1] || {});
+  const prev = pick(rows[rows.length - 2] || {});
+  if (prev === 0 && cur === 0) return { dir: 'flat', text: 'No change' };
+  if (prev === 0) return { dir: 'up', text: 'New this month' };
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  if (pct === 0) return { dir: 'flat', text: 'No change' };
+  return { dir: pct > 0 ? 'up' : 'down', text: `${pct > 0 ? '+' : ''}${pct}%` };
+}
+
+const DELTA_STYLE = {
+  up: { cls: 'bg-success-soft text-success', Icon: TrendingUp },
+  down: { cls: 'bg-danger-soft text-danger', Icon: TrendingDown },
+  flat: { cls: 'bg-surface-hover text-text-muted', Icon: Minus },
+};
+
+function DeltaPill({ delta }) {
+  const { cls, Icon } = DELTA_STYLE[delta.dir];
   return (
-    <div className={`bg-surface rounded-xl border border-border/60 overflow-hidden hover:border-border transition-colors duration-200 hover:shadow-pb-card ${className}`}>
-      <div className="px-5 pt-4 pb-3 border-b border-border/50">
-        <h3 className="text-sm font-bold text-text-primary">{title}</h3>
-        {subtitle && (
-          <p className="text-xs text-text-secondary mt-0.5">{subtitle}</p>
-        )}
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${cls}`}>
+      <Icon size={11} strokeWidth={2.5} />
+      {delta.text}
+    </span>
+  );
+}
+
+function Reveal({ index = 0, className = '', children }) {
+  const reduce = useReducedMotion();
+  return (
+    <motion.div
+      className={className}
+      initial={reduce ? false : { opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: index * 0.07, ease: 'easeOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function StatTile({ icon: Icon, label, value, delta, footnote, values, color, index }) {
+  return (
+    <Reveal index={index}>
+      <div className="group relative h-full overflow-hidden rounded-2xl border border-border/60 bg-surface p-5 shadow-pb-card transition duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-pb-elevated">
+        <div
+          className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-[0.12] blur-2xl transition-opacity duration-300 group-hover:opacity-25"
+          style={{ backgroundColor: color }}
+        />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="flex h-9 w-9 items-center justify-center rounded-xl"
+              style={{ color, backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` }}
+            >
+              <Icon size={17} />
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{label}</span>
+          </div>
+        </div>
+        <div className="relative mt-4 flex items-end justify-between gap-3">
+          <div>
+            <p className="text-3xl font-bold leading-none tabular-nums text-text-primary">{value}</p>
+            <div className="mt-2.5 flex items-center gap-2">
+              <DeltaPill delta={delta} />
+              <span className="text-[11px] text-text-muted">vs last month</span>
+            </div>
+          </div>
+          <Sparkline values={values} color={color} />
+        </div>
+        <p className="relative mt-3 border-t border-border/50 pt-2.5 text-[11px] text-text-muted">{footnote}</p>
       </div>
-      <div className="p-5">{children}</div>
+    </Reveal>
+  );
+}
+
+function ChartCard({ icon: Icon, title, subtitle, legend, index = 0, className = '', children }) {
+  return (
+    <Reveal index={index} className={className}>
+      <section className="flex h-full flex-col rounded-2xl border border-border/60 bg-surface shadow-pb-card transition-colors duration-200 hover:border-border">
+        <header className="flex flex-wrap items-start justify-between gap-3 px-5 pb-1 pt-5">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-dash-primary-soft text-dash-primary">
+              <Icon size={17} />
+            </span>
+            <div>
+              <h3 className="text-sm font-bold text-text-primary">{title}</h3>
+              {subtitle && <p className="mt-0.5 text-xs text-text-secondary">{subtitle}</p>}
+            </div>
+          </div>
+          {legend && <div className="flex flex-wrap items-center gap-2">{legend}</div>}
+        </header>
+        <div className="flex-1 px-3 pb-4 pt-3 sm:px-5 sm:pb-5">{children}</div>
+      </section>
+    </Reveal>
+  );
+}
+
+function LegendPills({ items }) {
+  return items.map((s) => (
+    <span
+      key={s.key || s.label}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-hover/60 px-2.5 py-1 text-[11px] font-medium text-text-secondary"
+    >
+      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
+      {s.label}
+    </span>
+  ));
+}
+
+function CardSkeleton({ className = '', height = 240 }) {
+  return (
+    <div className={`animate-pulse rounded-2xl border border-border/60 bg-surface p-5 shadow-pb-card ${className}`}>
+      <div className="mb-5 flex items-center gap-3">
+        <div className="h-9 w-9 rounded-xl bg-surface-hover" />
+        <div className="space-y-2">
+          <div className="h-3 w-32 rounded bg-surface-hover" />
+          <div className="h-2.5 w-48 rounded bg-surface-hover/70" />
+        </div>
+      </div>
+      <div className="rounded-xl bg-surface-hover/60" style={{ height }} />
     </div>
   );
 }
 
+function completionTier(rate) {
+  if (rate >= 80) return { label: 'Excellent', cls: 'bg-success-soft text-success' };
+  if (rate >= 60) return { label: 'Healthy', cls: 'bg-info-soft text-info' };
+  if (rate >= 40) return { label: 'Needs attention', cls: 'bg-warning-soft text-warning' };
+  return { label: 'Low', cls: 'bg-danger-soft text-danger' };
+}
+
 /**
- * AdminAnalyticsSection — Phase 2 Overview analytics redesigned with
- * refined ChartCard headers and a hero completion-rate metric card.
+ * AdminAnalyticsSection — premium admin analytics: KPI tiles with month-over-
+ * month change, smooth trend charts with tooltips, a category donut and a
+ * completion-rate gauge. Same `analytics` payload as before
+ * (GET /admin/dashboard -> analytics); nothing changes on the API.
  */
 export function AdminAnalyticsSection({ analytics, loading }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="bg-surface rounded-xl border border-border/60 p-5">
-            <SkeletonCard count={1} />
-          </div>
-        ))}
+      <div className="space-y-5">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <CardSkeleton key={i} height={64} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <CardSkeleton className="lg:col-span-2" />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }
@@ -41,135 +193,179 @@ export function AdminAnalyticsSection({ analytics, loading }) {
   const userGrowth = analytics?.userGrowth || [];
   const volunteerActivity = analytics?.volunteerActivity || [];
   const categoryDistribution = analytics?.categoryDistribution || [];
-  const hasCategoryData = categoryDistribution.some((c) => c.count > 0);
+  const completionRate = Number(analytics?.completionRate) || 0;
 
-  const pieData = categoryDistribution.map((c) => ({
-    label: CATEGORY_LABELS[c.category] || c.category,
-    value: c.count,
-    color: CATEGORY_COLORS[c.category] || '#94a3b8',
-  }));
+  const num = (v) => Number(v) || 0;
+  const last = (rows) => rows[rows.length - 1] || {};
+  const sum = (rows, pick) => rows.reduce((t, r) => t + pick(r), 0);
 
-  // Remove duplicate labels from legend
-  const uniqueLegendData = pieData.filter((item, index, self) =>
-    index === self.findIndex((t) => t.label === item.label)
-  );
+  const newUsers = (r) => num(r.donors) + num(r.volunteers);
 
-  const completionRate = analytics?.completionRate ?? 0;
+  const donutData = categoryDistribution
+    .map((c) => ({
+      label: CATEGORY_META[c.category]?.label || c.category,
+      value: num(c.count),
+      color: CATEGORY_META[c.category]?.color || 'var(--pb-text-muted)',
+    }))
+    .filter((c, i, self) => self.findIndex((t) => t.label === c.label) === i);
+  const donutTotal = donutData.reduce((t, d) => t + d.value, 0);
+
+  const tier = completionTier(completionRate);
+
+  const trendSeries = [
+    { key: 'count', label: 'Total donations', color: COLOR.primary },
+    { key: 'completed', label: 'Completed', color: COLOR.success },
+  ];
+  const activitySeries = [
+    { key: 'completedPickups', label: 'Completed pickups', color: COLOR.success },
+    { key: 'activeVolunteers', label: 'Active volunteers', color: COLOR.info },
+  ];
+  const growthSeries = [
+    { key: 'donors', label: 'Donors', color: COLOR.donor },
+    { key: 'volunteers', label: 'Volunteers', color: COLOR.volunteer },
+  ];
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      {/* KPI tiles */}
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <StatTile
+          index={0}
+          icon={Gift}
+          label="Donations"
+          color={COLOR.primary}
+          value={num(last(donationTrend).count)}
+          delta={monthDelta(donationTrend, (r) => num(r.count))}
+          values={donationTrend.map((r) => num(r.count))}
+          footnote={`${sum(donationTrend, (r) => num(r.count))} in the last ${donationTrend.length || 6} months`}
+        />
+        <StatTile
+          index={1}
+          icon={CheckCircle2}
+          label="Completed"
+          color={COLOR.success}
+          value={num(last(donationTrend).completed)}
+          delta={monthDelta(donationTrend, (r) => num(r.completed))}
+          values={donationTrend.map((r) => num(r.completed))}
+          footnote={`${sum(donationTrend, (r) => num(r.completed))} completed in the last ${donationTrend.length || 6} months`}
+        />
+        <StatTile
+          index={2}
+          icon={UserPlus}
+          label="New users"
+          color={COLOR.donor}
+          value={newUsers(last(userGrowth))}
+          delta={monthDelta(userGrowth, newUsers)}
+          values={userGrowth.map(newUsers)}
+          footnote={`${sum(userGrowth, newUsers)} sign-ups in the last ${userGrowth.length || 6} months`}
+        />
+        <StatTile
+          index={3}
+          icon={Activity}
+          label="Pickups"
+          color={COLOR.info}
+          value={num(last(volunteerActivity).completedPickups)}
+          delta={monthDelta(volunteerActivity, (r) => num(r.completedPickups))}
+          values={volunteerActivity.map((r) => num(r.completedPickups))}
+          footnote={`${sum(volunteerActivity, (r) => num(r.completedPickups))} pickups in the last ${volunteerActivity.length || 6} months`}
+        />
+      </div>
 
-        {/* Donation Trend */}
+      {/* Donation trend + completion gauge */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <ChartCard
+          className="lg:col-span-2"
+          index={4}
+          icon={TrendingUp}
           title="Donation Trend"
-          subtitle="Total vs. completed donations — last 6 months"
+          subtitle="Total vs. completed donations, last 6 months"
+          legend={<LegendPills items={trendSeries} />}
         >
-          <LineChart data={donationTrend} dataKey="count" height={180} />
-          <div className="flex items-center gap-4 mt-3 text-xs text-text-secondary">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'rgb(147, 51, 234)' }} />
-              Total donations
-            </span>
-          </div>
+          <AreaChart data={donationTrend} series={trendSeries} height={264} ariaLabel="Donation trend, total versus completed, last 6 months" />
         </ChartCard>
 
-        {/* Category Distribution */}
         <ChartCard
-          title="Donation Category Split"
-          subtitle="All non-cancelled donations, all time"
+          index={5}
+          icon={CheckCircle2}
+          title="Completion Rate"
+          subtitle="Share of all-time donations completed"
         >
-          {hasCategoryData ? (
-            <>
-              <PieChart data={pieData} size={160} showLegend={false} />
-              <div className="flex items-center justify-center gap-5 mt-3 text-xs text-text-secondary">
-                {uniqueLegendData.map((d) => (
-                  <span key={d.label} className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                    {d.label}
-                  </span>
-                ))}
-              </div>
-            </>
+          <div className="flex h-full flex-col items-center justify-center gap-4 py-2">
+            <RadialGauge value={completionRate} label="completed" />
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tier.cls}`}>{tier.label}</span>
+            <p className="max-w-[220px] text-center text-xs leading-relaxed text-text-secondary">
+              Completed donations divided by every donation request ever made on the platform.
+            </p>
+          </div>
+        </ChartCard>
+      </div>
+
+      {/* Volunteer activity + category split */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <ChartCard
+          className="lg:col-span-2"
+          index={6}
+          icon={Activity}
+          title="Volunteer Activity"
+          subtitle="Completed pickups vs. active volunteers, last 6 months"
+          legend={<LegendPills items={activitySeries} />}
+        >
+          <AreaChart data={volunteerActivity} series={activitySeries} height={264} ariaLabel="Volunteer activity, completed pickups versus active volunteers, last 6 months" />
+        </ChartCard>
+
+        <ChartCard
+          index={7}
+          icon={PieChartIcon}
+          title="Category Split"
+          subtitle="All non-deleted donations, all time"
+        >
+          {donutTotal > 0 ? (
+            <div className="flex h-full flex-col items-center justify-center gap-5">
+              <DonutChart data={donutData} centerLabel="donations" ariaLabel="Donation category split" />
+              <ul className="w-full space-y-2.5">
+                {donutData.map((d) => {
+                  const pct = donutTotal ? Math.round((d.value / donutTotal) * 100) : 0;
+                  return (
+                    <li key={d.label}>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-2 font-medium text-text-primary">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                          {d.label}
+                        </span>
+                        <span className="tabular-nums text-text-secondary">
+                          <span className="font-semibold text-text-primary">{d.value}</span> · {pct}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded-full bg-surface-hover">
+                        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: d.color }} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ) : (
-            <div className="flex items-center justify-center h-[160px]">
-              <p className="text-sm text-text-secondary">No donations yet</p>
+            <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-2 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-hover text-text-muted">
+                <PieChartIcon size={22} />
+              </span>
+              <p className="text-sm font-medium text-text-primary">No donations yet</p>
+              <p className="text-xs text-text-secondary">The split appears once donations are posted.</p>
             </div>
           )}
         </ChartCard>
-
-        {/* User Growth */}
-        <ChartCard
-          title="User Growth"
-          subtitle="New donors vs. volunteers — last 6 months"
-        >
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-1">Donors</p>
-              <LineChart data={userGrowth} dataKey="donors" height={100} color="#f97316" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-1">Volunteers</p>
-              <LineChart data={userGrowth} dataKey="volunteers" height={100} color="#3b82f6" />
-            </div>
-          </div>
-          <div className="flex items-center gap-5 mt-3 text-xs text-text-secondary">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#f97316]" />
-              Donors
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]" />
-              Volunteers
-            </span>
-          </div>
-        </ChartCard>
-
-        {/* Volunteer Activity */}
-        <ChartCard
-          title="Volunteer Activity"
-          subtitle="Completed pickups vs. active volunteers — last 6 months"
-        >
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-1">Completed Pickups</p>
-              <LineChart data={volunteerActivity} dataKey="completedPickups" height={100} color="#22c55e" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-text-secondary mb-1">Active Volunteers</p>
-              <LineChart data={volunteerActivity} dataKey="activeVolunteers" height={100} color="#0ea5e9" />
-            </div>
-          </div>
-          <div className="flex items-center gap-5 mt-3 text-xs text-text-secondary">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#22c55e]" />
-              Completed Pickups
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#0ea5e9]" />
-              Active Volunteers
-            </span>
-          </div>
-        </ChartCard>
       </div>
 
-      {/* Completion Rate — hero metric card */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-dash-primary/10 via-dash-primary/5 to-transparent rounded-xl border border-dash-primary/20 p-5 flex items-center justify-between gap-4">
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-48 bg-gradient-to-l from-dash-primary/8 to-transparent" />
-        <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-dash-primary/15 border border-dash-primary/25">
-            <TrendingUp size={18} className="text-dash-primary" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-text-primary">Overall Completion Rate</h3>
-            <p className="text-xs text-text-secondary">Share of all-time donations that reached "completed"</p>
-          </div>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="text-4xl font-bold text-dash-primary tabular-nums">{completionRate}%</p>
-          <p className="text-xs text-text-secondary mt-0.5">completion</p>
-        </div>
-      </div>
+      {/* User growth */}
+      <ChartCard
+        index={8}
+        icon={Users}
+        title="User Growth"
+        subtitle="New donors vs. volunteers, last 6 months"
+        legend={<LegendPills items={growthSeries} />}
+      >
+        <GroupedBarChart data={userGrowth} series={growthSeries} height={248} ariaLabel="New donors versus volunteers, last 6 months" />
+      </ChartCard>
     </div>
   );
 }

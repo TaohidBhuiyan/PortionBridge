@@ -4,9 +4,14 @@
 -- Requires: MySQL 8.0.16+ or MariaDB 10.2.1+ (for CHECK constraint enforcement)
 -- Charset: utf8mb4 (full Unicode support, including emoji in chat messages)
 -- ============================================================================
--- This schema includes all structural changes from migrations 002-023.
--- Migration history INSERTs and existing-data cleanup statements are intentionally
--- excluded because this file creates a fresh database.
+-- This schema includes all structural changes from migrations 002-025
+-- (008 achievements, 012 google auth, 013 service areas, 014 announcement type,
+-- 015 report moderation, 016 cancelled status, 017 leaderboard opt-out,
+-- 018 notification templates, 019 recurring donations, 020 base location,
+-- 021 team-aware leaderboard, 022/023 team join requests, 024 donation
+-- is_deleted/deleted_at). Migration 025 is a trigger change and lives in
+-- triggers.sql. Migration history INSERTs and existing-data cleanup statements
+-- are intentionally excluded because this file creates a fresh database.
 -- ============================================================================
 --
 -- SETUP INSTRUCTIONS:

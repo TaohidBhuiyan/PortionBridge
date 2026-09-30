@@ -19,8 +19,10 @@ export function LineChart({ data, dataKey = 'count', color = 'rgb(2, 132, 199)',
   }
 
   const maxValue = Math.max(...data.map(d => parseFloat(d[dataKey]) || 0), 1);
+  // A single data point would divide by zero (NaN coordinates -> nothing drawn).
+  const xFor = (i) => (data.length === 1 ? 50 : (i / (data.length - 1)) * 100);
   const points = data.map((d, i) => {
-    const x = (i / (data.length - 1)) * 100;
+    const x = xFor(i);
     const y = 100 - (((parseFloat(d[dataKey]) || 0) / maxValue) * 100);
     return `${x},${y}`;
   }).join(' ');

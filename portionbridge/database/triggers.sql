@@ -1,11 +1,17 @@
 -- triggers.sql
 -- Contains all triggers for the PortionBridge database
 -- Import/run this AFTER importing main_schema.sql
+-- Includes the final state of migrations 008 and 025.
+-- Safe to re-import: every trigger is dropped before being recreated.
 --
 -- Usage: mysql -u root -p portionbridge < triggers.sql
 -- ============================================================================
 
 USE portionbridge;
+
+DROP TRIGGER IF EXISTS trg_donation_status_insert;
+DROP TRIGGER IF EXISTS trg_donation_status_update;
+DROP TRIGGER IF EXISTS trg_saved_addresses_limit;
 
 DELIMITER $$
 
@@ -27,6 +33,16 @@ END$$
 --   1. Logs the transition into donation_status_history.
 --   2. Auto-creates a notification for the relevant user(s)
 --      when the status becomes 'accepted' or 'completed'.
+--
+-- Migration 025 (actor attribution): the history row's changed_by prefers the
+-- session variable @status_change_actor_id, which the application sets to the
+-- real actor's user ID right before every status-changing UPDATE
+-- (donationModel.setStatusChangeActor, on the same connection/transaction).
+-- Without it a donor completing/cancelling, or a team member doing
+-- schedule/on-the-way/picked-up, was logged as the volunteer_id (team leader).
+-- Falls back to NEW.volunteer_id only for UPDATEs that bypass the app layer.
+-- The variable is reset to NULL after use so it can never leak into the next
+-- statement.
 -- ============================================================================
 CREATE TRIGGER trg_donation_status_update
 AFTER UPDATE ON donation_requests
@@ -34,9 +50,10 @@ FOR EACH ROW
 BEGIN
   IF OLD.status <> NEW.status THEN
 
-    -- 1. Log the status change into the audit trail
+    -- 1. Log the status change into the audit trail (migration 025)
     INSERT INTO donation_status_history (donation_request_id, changed_by, old_status, new_status)
-    VALUES (NEW.id, NEW.volunteer_id, OLD.status, NEW.status);
+    VALUES (NEW.id, COALESCE(@status_change_actor_id, NEW.volunteer_id), OLD.status, NEW.status);
+    SET @status_change_actor_id = NULL;
 
     -- 2. Notify the donor when a volunteer accepts their request
     IF NEW.status = 'accepted' THEN

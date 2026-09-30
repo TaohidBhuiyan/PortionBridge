@@ -52,7 +52,9 @@ Go to: `http://localhost/phpmyadmin`
 4. Click **Go**.
 
 **What this creates:**
-- 3 triggers: `trg_donation_status_insert`, `trg_donation_status_update`, and `trg_saved_addresses_limit`
+- 3 triggers: `trg_donation_status_insert`, `trg_donation_status_update` (includes the migration 025 actor-attribution fix), and `trg_saved_addresses_limit`
+
+The file drops each trigger before recreating it, so it is safe to import again.
 
 These triggers provide automatic audit logging, notification generation, and data integrity constraints at the database level.
 
@@ -66,11 +68,14 @@ These triggers provide automatic audit logging, notification generation, and dat
 4. Click **Go**.
 
 **What this creates:**
-- 7 users (1 admin, 3 donors, 3 volunteers)
-- 8 donation requests covering every status in the lifecycle, plus one soft-deleted example
-- Chat messages, ratings, and reports linked across those donations
+- 9 users (1 admin, 4 donors incl. 1 banned, 4 volunteers incl. 1 Google-linked without a team)
+- 9 donation requests covering every status in the lifecycle (including `cancelled`), 2 of them team missions, plus one soft-deleted example
+- 2 teams, members, invitations, join requests (pending / accepted / rejected / cancelled)
+- Recurring donations, admin notification templates, achievements, chat messages, ratings, and reports (including resolved and dismissed ones)
 
-> The triggers you imported in Step 4 will automatically populate `donation_status_history` and `notifications` as this sample data is inserted — you don't need to import anything extra for those two tables.
+> The triggers you imported in Step 4 populate `donation_status_history` (with the correct actor for every change) and the accepted/completed `notifications` while this file runs — you don't need to import anything extra for those tables. **Always import `triggers.sql` before `dummy_data.sql`**, otherwise those two tables stay empty.
+
+All sample accounts use the password `Password123!`. `banned.donor@example.com` is banned on purpose, to test the banned-login block and forced logout.
 
 ---
 
@@ -81,10 +86,10 @@ In phpMyAdmin, click on the `portionbridge` database in the left sidebar and con
 Quick verification queries (run these in the **SQL** tab):
 
 ```sql
--- Should return 7 users
+-- Should return 9 users
 SELECT COUNT(*) FROM users;
 
--- Should return 7 non-deleted donation requests (8 total, 1 soft-deleted)
+-- Should return 8 non-deleted donation requests (9 total, 1 soft-deleted)
 SELECT COUNT(*) FROM donation_requests WHERE is_deleted = 0;
 
 -- Should show 3 donors ranked by completed donations

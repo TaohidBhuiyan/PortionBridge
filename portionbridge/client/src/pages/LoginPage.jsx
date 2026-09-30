@@ -29,7 +29,11 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() =>
+    new URLSearchParams(window.location.search).get("banned")
+      ? "Your account has been banned. Contact support for assistance."
+      : ""
+  );
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

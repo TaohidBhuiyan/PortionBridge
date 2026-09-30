@@ -451,19 +451,21 @@ async function getDonationStatistics(userId, options = {}) {
  * @returns {Array} Array of monthly data points
  */
 function calculateMonthlyTrend(donations) {
+  // Local-timezone 'YYYY-MM' (toISOString() would shift months in UTC+ zones).
+  const toKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   const monthlyData = {};
-  
+
   // Initialize last 6 months
   const now = new Date();
   for (let i = 5; i >= 0; i--) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = date.toISOString().slice(0, 7); // YYYY-MM format
+    const key = toKey(date); // YYYY-MM format
     monthlyData[key] = { month: key, count: 0, completed: 0 };
   }
 
   // Populate with actual data
   donations.forEach(donation => {
-    const monthKey = new Date(donation.created_at).toISOString().slice(0, 7);
+    const monthKey = toKey(new Date(donation.created_at));
     if (monthlyData[monthKey]) {
       monthlyData[monthKey].count++;
       if (donation.status === DONATION_STATUS.COMPLETED) {
