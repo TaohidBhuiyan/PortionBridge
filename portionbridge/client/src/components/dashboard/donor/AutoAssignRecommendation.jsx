@@ -13,6 +13,13 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
   const [recommendation, setRecommendation] = useState(null);
 
   const fetchRecommendation = useCallback(async () => {
+    // Cannot recommend without coords — show the no-GPS fallback
+    if (!latitude || !longitude) {
+      setLoading(false);
+      setRecommendation(null);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -98,7 +105,17 @@ const AutoAssignRecommendation = ({ latitude, longitude, onConfirm, onAlternativ
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <div className="flex items-center gap-3 text-gray-600 dark:text-gray-400">
           <AlertCircle className="w-5 h-5" />
-          <p>No volunteers available nearby. Please try manual selection.</p>
+          {!latitude || !longitude ? (
+            <p>
+              Enable GPS location (using the tip above) to get an auto-recommended volunteer.
+              <br />
+              <span className="text-xs text-gray-400 dark:text-gray-500">
+                You can also skip this step — the system will assign a volunteer after you submit.
+              </span>
+            </p>
+          ) : (
+            <p>No volunteers available nearby. Please try manual selection.</p>
+          )}
         </div>
       </div>
     );

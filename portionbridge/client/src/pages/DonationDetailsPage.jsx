@@ -290,7 +290,7 @@ export function DonationDetailsPage() {
     const result = await donationApi.completeDonation(id);
 
     if (result.success) {
-      toast.success('Donation completed! Thank you for your generosity.');
+      toast.success('Mission completed! Thank you for delivering this donation.');
       loadDonationDetails();
     } else {
       toast.error(result.error || 'Failed to complete donation. Please try again.');
@@ -431,7 +431,7 @@ export function DonationDetailsPage() {
   const canSchedule = isAssignedVolunteer && status === 'accepted';
   const canMarkOnTheWay = isAssignedVolunteer && status === 'scheduled';
   const canMarkPickedUp = isAssignedVolunteer && status === 'on_the_way';
-  const canComplete = (isDonorOwner || currentUser?.role === 'donor') && status === 'picked_up';
+  const canComplete = isAssignedVolunteer && status === 'picked_up';
 
   const fullAddress = pickup_address_details?.fullAddress || '';
 
@@ -578,7 +578,7 @@ export function DonationDetailsPage() {
                   className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 shadow-pb-elevated transition-all disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   {actionInProgress ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={15} />}
-                  {actionInProgress ? 'Completing...' : 'Confirm Pickup & Complete'}
+                  {actionInProgress ? 'Completing...' : 'Mark Mission Complete'}
                 </button>
               )}
             </div>

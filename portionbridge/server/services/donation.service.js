@@ -887,31 +887,22 @@ async function markPickedUp(donation, volunteerId, { ipAddress, userAgent } = {}
 }
 
 /**
- * The donor marks a picked-up donation as completed (Module 9, final step:
- * picked_up -> completed).
- *
- * BEHAVIOR CHANGE (Module 9): previously the ASSIGNED VOLUNTEER completed a
- * SCHEDULED donation directly. The live status flow now runs
- * scheduled -> on_the_way -> picked_up -> completed, and completion is the
- * DONOR's confirmation step, not the volunteer's — see markOnTheWay/
- * markPickedUp above for the two new volunteer-driven steps in between.
+ * The assigned volunteer marks a picked-up donation as completed (final step:
+ * picked_up -> completed) after delivering/donating to beneficiaries.
  *
  * Same transaction-safe pattern as before: locks the row with
  * SELECT ... FOR UPDATE inside a real DB transaction before validating.
- * Ownership is checked before status, so a non-owning donor always gets
- * 403, never a 409 that would leak the donation's current status.
+ * Assigned volunteer check is performed before status check so unauthorized users
+ * get 403.
  *
- * Does NOT insert an app-level notification — trg_donation_status_update
- * already notifies both the donor and the volunteer when status becomes
- * 'completed', so doing it here too would duplicate it.
  * @param {number} donationId - Donation ID to complete
- * @param {number} donorId - ID of the donor completing it
+ * @param {number} volunteerId - ID of the assigned volunteer completing it
  * @param {Object} [auditContext]
  * @param {string} [auditContext.ipAddress]
  * @param {string} [auditContext.userAgent]
  * @returns {Promise<Object>} The updated donation object
  */
-async function completeDonation(donationId, donorId, { ipAddress, userAgent } = {}) {
+async function completeDonation(donationId, volunteerId, { ipAddress, userAgent } = {}) {
   const connection = await pool.getConnection();
   let updatedDonation;
 
@@ -924,10 +915,10 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
       throw new AppError('Donation request not found.', HTTP_STATUS.NOT_FOUND);
     }
 
-    assertDonationOwner(donation, donorId);
+    assertAssignedVolunteer(donation, volunteerId);
     assertPickedUpStatus(donation);
 
-    updatedDonation = await donationModel.completeDonation(connection, donationId, donorId);
+    updatedDonation = await donationModel.completeDonation(connection, donationId, volunteerId);
 
     await connection.commit();
   } catch (err) {
@@ -952,7 +943,7 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
 
   // Check and unlock achievements for donor
   try {
-    await achievementService.checkAndUnlockAchievements(donorId, 'donor');
+    await achievementService.checkAndUnlockAchievements(updatedDonation.donor_id, 'donor');
   } catch (err) {
     // Don't let achievement errors block the completion flow
     console.error('Achievement check failed (donor):', err);
@@ -992,7 +983,7 @@ async function completeDonation(donationId, donorId, { ipAddress, userAgent } = 
       if (io) {
         broadcastTeamActivity(updatedDonation.team_id, 'donation_completed', {
           donationId: updatedDonation.id,
-          completedBy: donorId,
+          completedBy: volunteerId,
         });
       }
     }

@@ -13,6 +13,13 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
   const [volunteers, setVolunteers] = useState([]);
 
   const fetchVolunteers = useCallback(async () => {
+    // If no coordinates available, show the no-GPS state without calling API
+    if (!latitude || !longitude) {
+      setLoading(false);
+      setVolunteers([]);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -115,7 +122,16 @@ const VolunteerSelection = ({ latitude, longitude, onSelect, selectedVolunteer }
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-6">
         <div className="text-center py-8">
           <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <p className="text-gray-500 dark:text-gray-400">No volunteers available nearby</p>
+          {!latitude || !longitude ? (
+            <>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">GPS location not available</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                Enable GPS in the tip above to find volunteers near you, or the system will auto-assign one after submission.
+              </p>
+            </>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">No volunteers available nearby</p>
+          )}
         </div>
       </div>
     );

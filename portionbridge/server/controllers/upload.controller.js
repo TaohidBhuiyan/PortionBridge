@@ -15,8 +15,8 @@ const uploadDonationImage = asyncHandler(async (req, res) => {
     throw new AppError('No file uploaded.', HTTP_STATUS.BAD_REQUEST);
   }
 
-  // Extract relative path from full file path
-  const relativePath = path.join(UPLOAD_SUBFOLDERS.DONATIONS, path.basename(req.file.path));
+  // Extract relative path from full file path (normalized for cross-platform compatibility)
+  const relativePath = path.join(UPLOAD_SUBFOLDERS.DONATIONS, path.basename(req.file.path)).replace(/\\/g, '/');
 
   const donation = await uploadService.uploadDonationImage(
     req.params.id,

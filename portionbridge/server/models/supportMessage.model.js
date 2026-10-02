@@ -29,7 +29,7 @@ async function findByTicketId(ticketId, { page = 1, limit = 100, forAdmin = fals
 
   const [rows] = await pool.query(
     `SELECT m.*,
-            u.full_name AS sender_name,
+            u.name AS sender_name,
             u.role AS sender_user_role,
             u.profile_picture AS sender_avatar
      FROM support_messages m

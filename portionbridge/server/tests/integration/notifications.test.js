@@ -93,7 +93,7 @@ describe('notifications: no duplicates, right recipients', () => {
     const onTheWayDonation = await donationModel.findById(donation.id);
     await donationService.markPickedUp(onTheWayDonation, member.id, {});
 
-    await donationService.completeDonation(donation.id, donor.id, {});
+    await donationService.completeDonation(donation.id, member.id, {});
 
     const leaderNotifs = await notificationModel.findByUserId({ userId: leader.id, limit: 50, offset: 0 });
     const memberNotifs = await notificationModel.findByUserId({ userId: member.id, limit: 50, offset: 0 });

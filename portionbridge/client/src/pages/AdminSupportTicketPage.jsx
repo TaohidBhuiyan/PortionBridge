@@ -106,8 +106,8 @@ export function AdminSupportTicketPage() {
     return (
       <DashboardLayout title="Admin Support Ticket">
         <div className="max-w-6xl mx-auto space-y-4 animate-pulse">
-          <div className="h-8 w-32 bg-slate-800 rounded-lg" />
-          <div className="h-96 bg-slate-900 rounded-2xl border border-slate-800" />
+          <div className="h-8 w-32 bg-surface rounded-lg border border-border" />
+          <div className="h-96 bg-surface rounded-2xl border border-border" />
         </div>
       </DashboardLayout>
     );
@@ -117,10 +117,10 @@ export function AdminSupportTicketPage() {
     return (
       <DashboardLayout title="Admin Support Ticket">
         <div className="max-w-6xl mx-auto p-12 text-center space-y-4">
-          <h2 className="text-xl font-bold text-white">Ticket Not Found</h2>
+          <h2 className="text-xl font-bold text-text-primary">Ticket Not Found</h2>
           <button
             onClick={() => navigate('/admin/support')}
-            className="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs"
+            className="px-4 py-2 bg-dash-primary text-white font-bold rounded-xl text-xs"
           >
             Back to Inbox
           </button>
@@ -134,7 +134,7 @@ export function AdminSupportTicketPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         <button
           onClick={() => navigate('/admin/support')}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-text-secondary hover:text-text-primary transition"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Support Inbox</span>
@@ -144,17 +144,17 @@ export function AdminSupportTicketPage() {
           {/* Main Chat Thread (Left 2 columns) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Header Card */}
-            <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+            <div className="p-6 rounded-2xl bg-surface border border-border shadow-pb-card space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                <span className="font-mono text-slate-500">Ticket #{ticket.id}</span>
-                <span className="text-slate-400">Created: {formatDate(ticket.created_at)}</span>
+                <span className="font-mono font-bold text-text-muted">Ticket #{ticket.id}</span>
+                <span className="text-text-muted">Created: {formatDate(ticket.created_at)}</span>
               </div>
-              <h1 className="text-xl font-bold text-white">{ticket.subject}</h1>
+              <h1 className="text-xl font-bold text-text-primary">{ticket.subject}</h1>
             </div>
 
             {/* Messages */}
             <div className="space-y-4">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Conversation Thread</h2>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted">Conversation Thread</h2>
 
               <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
                 {messages.map((msg) => {
@@ -164,27 +164,27 @@ export function AdminSupportTicketPage() {
                   return (
                     <div
                       key={msg.id}
-                      className={`flex gap-3 ${isAdmin ? 'justify-start' : 'justify-start'}`}
+                      className="flex gap-3 justify-start"
                     >
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                           isInternalMsg
-                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                            ? 'bg-warning-soft text-warning border border-warning/30'
                             : isAdmin
-                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                            : 'bg-slate-800 text-slate-300'
+                            ? 'bg-dash-primary-soft text-dash-primary border border-dash-primary/30'
+                            : 'bg-page border border-border text-text-secondary'
                         }`}
                       >
                         {isAdmin ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
                       </div>
 
                       <div className="max-w-xl space-y-1">
-                        <div className="flex items-center gap-2 text-[11px] text-slate-500">
-                          <span className="font-semibold text-slate-300">
+                        <div className="flex items-center gap-2 text-[11px] text-text-muted">
+                          <span className="font-semibold text-text-secondary">
                             {msg.sender_name || (isAdmin ? 'Admin' : 'User')}
                           </span>
                           {isInternalMsg && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[10px] font-bold">
+                            <span className="px-1.5 py-0.5 rounded bg-warning-soft text-warning text-[10px] font-bold">
                               INTERNAL NOTE
                             </span>
                           )}
@@ -193,12 +193,12 @@ export function AdminSupportTicketPage() {
                         </div>
 
                         <div
-                          className={`p-4 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed shadow-sm ${
+                          className={`p-4 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed shadow-xs ${
                             isInternalMsg
-                              ? 'bg-amber-950/30 border border-amber-500/40 text-amber-200'
+                              ? 'bg-warning-soft/60 border border-warning/30 text-text-primary font-medium'
                               : isAdmin
-                              ? 'bg-slate-900 border border-emerald-500/30 text-slate-200'
-                              : 'bg-slate-800 text-slate-100'
+                              ? 'bg-surface border border-dash-primary/30 text-text-primary'
+                              : 'bg-page border border-border text-text-primary'
                           }`}
                         >
                           {msg.message}
@@ -212,16 +212,16 @@ export function AdminSupportTicketPage() {
             </div>
 
             {/* Composer */}
-            <form onSubmit={handleSendReply} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <form onSubmit={handleSendReply} className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setIsInternal(false)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                       !isInternal
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-dash-primary text-white shadow-xs'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     Public Reply to User
@@ -229,10 +229,10 @@ export function AdminSupportTicketPage() {
                   <button
                     type="button"
                     onClick={() => setIsInternal(true)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
                       isInternal
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-white'
+                        ? 'bg-warning-soft text-warning border border-warning/30'
+                        : 'text-text-secondary hover:text-text-primary'
                     }`}
                   >
                     Internal Admin Note
@@ -242,7 +242,7 @@ export function AdminSupportTicketPage() {
                 <select
                   value={targetStatus}
                   onChange={(e) => setTargetStatus(e.target.value)}
-                  className="bg-slate-950 text-slate-300 text-xs px-2.5 py-1.5 rounded-lg border border-slate-800"
+                  className="bg-page text-text-primary text-xs px-2.5 py-1.5 rounded-lg border border-border focus:outline-none focus:border-dash-primary"
                 >
                   <option value="">Set Status on Send...</option>
                   <option value="in_progress">In Progress</option>
@@ -254,7 +254,7 @@ export function AdminSupportTicketPage() {
 
               {/* Canned replies dropdown */}
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-text-muted shrink-0" />
                 <select
                   onChange={(e) => {
                     if (e.target.value) {
@@ -262,7 +262,7 @@ export function AdminSupportTicketPage() {
                       e.target.value = '';
                     }
                   }}
-                  className="bg-slate-950 text-slate-400 text-xs px-2.5 py-1 rounded-lg border border-slate-800 w-full"
+                  className="bg-page text-text-secondary text-xs px-2.5 py-1 rounded-lg border border-border w-full focus:outline-none"
                 >
                   <option value="">Insert Quick Reply...</option>
                   {CANNED_REPLIES.map((c, i) => (
@@ -278,22 +278,22 @@ export function AdminSupportTicketPage() {
                 placeholder={isInternal ? 'Write an internal staff note (never visible to user)...' : 'Type reply to user...'}
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                className={`w-full bg-slate-950 text-slate-100 text-xs p-3 rounded-xl border focus:outline-none resize-y ${
-                  isInternal ? 'border-amber-500/30 focus:border-amber-500' : 'border-slate-800 focus:border-emerald-500'
+                className={`w-full bg-page text-text-primary text-xs p-3 rounded-xl border focus:outline-none resize-y ${
+                  isInternal ? 'border-warning/40 focus:border-warning' : 'border-border focus:border-dash-primary'
                 }`}
               />
 
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">
+                <span className="text-text-muted">
                   {isInternal ? 'Internal notes remain hidden from ticket owner.' : 'User will receive a notification and socket update.'}
                 </span>
                 <button
                   type="submit"
                   disabled={sending || !replyText.trim()}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition disabled:opacity-50 ${
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition disabled:opacity-50 shadow-xs ${
                     isInternal
-                      ? 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                      : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                      ? 'bg-warning text-slate-950 hover:bg-warning/90'
+                      : 'bg-dash-primary hover:bg-dash-primary-hover text-white'
                   }`}
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -306,17 +306,17 @@ export function AdminSupportTicketPage() {
           {/* Right Sidebar: Control Panel */}
           <div className="space-y-6">
             {/* Controls Card */}
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Ticket Management</h3>
+            <div className="p-5 rounded-2xl bg-surface border border-border shadow-pb-card space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">Ticket Management</h3>
 
               <div className="space-y-3 text-xs">
                 {/* Status */}
                 <div className="space-y-1">
-                  <label className="text-slate-400">Status</label>
+                  <label className="text-text-muted font-medium">Status</label>
                   <select
                     value={ticket.status}
                     onChange={(e) => handleUpdateTicket({ status: e.target.value })}
-                    className="w-full bg-slate-950 text-slate-200 p-2 rounded-xl border border-slate-800 capitalize"
+                    className="w-full bg-page text-text-primary p-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary capitalize"
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
@@ -328,11 +328,11 @@ export function AdminSupportTicketPage() {
 
                 {/* Priority */}
                 <div className="space-y-1">
-                  <label className="text-slate-400">Priority</label>
+                  <label className="text-text-muted font-medium">Priority</label>
                   <select
                     value={ticket.priority}
                     onChange={(e) => handleUpdateTicket({ priority: e.target.value })}
-                    className="w-full bg-slate-950 text-slate-200 p-2 rounded-xl border border-slate-800 capitalize"
+                    className="w-full bg-page text-text-primary p-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary capitalize"
                   >
                     <option value="low">Low</option>
                     <option value="normal">Normal</option>
@@ -343,12 +343,12 @@ export function AdminSupportTicketPage() {
 
                 {/* Assigned Admin */}
                 <div className="space-y-1">
-                  <label className="text-slate-400">Assigned Staff</label>
-                  <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-300 flex items-center justify-between">
-                    <span>{ticket.assigned_admin_name || 'Unassigned'}</span>
+                  <label className="text-text-muted font-medium">Assigned Staff</label>
+                  <div className="p-2.5 rounded-xl bg-page border border-border text-text-primary flex items-center justify-between">
+                    <span className="font-semibold">{ticket.assigned_admin_name || 'Unassigned'}</span>
                     <button
                       onClick={() => handleUpdateTicket({ assignedAdminId: ticket.assigned_admin_id ? null : 1 })}
-                      className="text-[11px] text-emerald-400 underline font-medium"
+                      className="text-[11px] text-dash-primary font-bold hover:underline"
                     >
                       {ticket.assigned_admin_id ? 'Unassign' : 'Assign to Me'}
                     </button>
@@ -358,16 +358,16 @@ export function AdminSupportTicketPage() {
             </div>
 
             {/* User Details Card */}
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-300">Ticket Requester</h3>
+            <div className="p-5 rounded-2xl bg-surface border border-border shadow-pb-card space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-text-primary">Ticket Requester</h3>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center font-bold">
+                <div className="w-10 h-10 rounded-full bg-dash-primary-soft text-dash-primary flex items-center justify-center font-bold">
                   {ticket.user_name ? ticket.user_name.charAt(0) : 'U'}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-100">{ticket.user_name}</div>
-                  <div className="text-xs text-slate-400">{ticket.user_email}</div>
-                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-400 capitalize">
+                  <div className="text-sm font-bold text-text-primary">{ticket.user_name}</div>
+                  <div className="text-xs text-text-muted">{ticket.user_email}</div>
+                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-page border border-border text-text-secondary capitalize font-semibold">
                     Role: {ticket.user_role}
                   </span>
                 </div>

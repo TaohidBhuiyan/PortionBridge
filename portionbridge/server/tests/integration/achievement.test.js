@@ -26,7 +26,7 @@ describe('achievement: eligibility, duplicate prevention, and N+1-fix correctnes
     const scheduled = await donationService.schedulePickup(accepted, volunteerId, futureTime);
     const onTheWay = await donationService.markOnTheWay(scheduled, volunteerId);
     const pickedUp = await donationService.markPickedUp(onTheWay, volunteerId);
-    return donationService.completeDonation(pickedUp.id, donorId);
+    return donationService.completeDonation(pickedUp.id, volunteerId);
   }
 
   test('a donor with zero completed donations unlocks nothing', async (t) => {

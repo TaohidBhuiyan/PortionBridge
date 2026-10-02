@@ -9,9 +9,10 @@ export function ImageGallery({ images = [], coverImage }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
 
   const rawList = coverImage ? [coverImage, ...(images || [])] : (images || []);
-  const allImages = rawList
+  const resolvedList = rawList
     .map((img) => (typeof img === 'string' ? resolveMediaUrl(img) : resolveMediaUrl(img?.url || img?.path)))
     .filter(Boolean);
+  const allImages = Array.from(new Set(resolvedList));
 
   if (allImages.length === 0) {
     return (

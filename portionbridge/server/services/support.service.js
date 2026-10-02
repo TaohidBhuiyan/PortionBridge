@@ -61,14 +61,12 @@ async function createTicket(userId, { subject, category, priority = 'normal', bo
     connection.release();
   }
 
-  await auditService.logAction({
+  await auditService.record({
     userId,
     action: AUDIT_ACTIONS.SUPPORT_TICKET_CREATED,
-    resource: 'support_tickets',
-    resourceId: ticketId,
-    details: { subject, category, priority: finalPriority },
     ipAddress,
     userAgent,
+    metadata: { ticketId, subject, category, priority: finalPriority },
   });
 
   emitSupportSocket(userId, { kind: 'ticket_created', ticketId });
@@ -150,14 +148,12 @@ async function addUserMessage(userId, ticketId, { body }, { ipAddress, userAgent
     connection.release();
   }
 
-  await auditService.logAction({
+  await auditService.record({
     userId,
     action: AUDIT_ACTIONS.SUPPORT_TICKET_REPLIED,
-    resource: 'support_tickets',
-    resourceId: ticketId,
-    details: { messageId, senderRole: 'user' },
     ipAddress,
     userAgent,
+    metadata: { ticketId, messageId, senderRole: 'user' },
   });
 
   if (ticket.assigned_admin_id) {
@@ -208,14 +204,12 @@ async function updateUserTicketStatus(userId, ticketId, { status }, { ipAddress,
     adminUnread: true,
   });
 
-  await auditService.logAction({
+  await auditService.record({
     userId,
     action: AUDIT_ACTIONS.SUPPORT_TICKET_UPDATED,
-    resource: 'support_tickets',
-    resourceId: ticketId,
-    details: { oldStatus: ticket.status, newStatus: status },
     ipAddress,
     userAgent,
+    metadata: { ticketId, oldStatus: ticket.status, newStatus: status },
   });
 
   emitSupportSocket(userId, { kind: 'status_updated', ticketId, status });
@@ -325,14 +319,12 @@ async function addAdminMessage(adminId, ticketId, { body, isInternal = false, st
     connection.release();
   }
 
-  await auditService.logAction({
+  await auditService.record({
     userId: adminId,
     action: AUDIT_ACTIONS.SUPPORT_TICKET_REPLIED,
-    resource: 'support_tickets',
-    resourceId: ticketId,
-    details: { messageId, isInternal, senderRole: 'admin' },
     ipAddress,
     userAgent,
+    metadata: { ticketId, messageId, isInternal, senderRole: 'admin' },
   });
 
   if (!isInternal) {
@@ -372,14 +364,12 @@ async function updateAdminTicket(adminId, ticketId, { status, priority, assigned
 
   await supportTicketModel.updateTicket(null, ticketId, updateFields);
 
-  await auditService.logAction({
+  await auditService.record({
     userId: adminId,
     action: AUDIT_ACTIONS.SUPPORT_TICKET_UPDATED,
-    resource: 'support_tickets',
-    resourceId: ticketId,
-    details: { changes: { status, priority, assignedAdminId } },
     ipAddress,
     userAgent,
+    metadata: { ticketId, changes: { status, priority, assignedAdminId } },
   });
 
   if (status !== undefined && status !== ticket.status) {

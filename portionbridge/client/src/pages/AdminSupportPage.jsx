@@ -17,18 +17,18 @@ import { DashboardLayout } from '../components/dashboard';
 import { supportApi } from '../services/supportApi';
 
 const STATUS_BADGES = {
-  open: { label: 'Open', bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-  in_progress: { label: 'In Progress', bg: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  awaiting_user: { label: 'Awaiting User', bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  resolved: { label: 'Resolved', bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  closed: { label: 'Closed', bg: 'bg-slate-800 text-slate-500 border-slate-700' },
+  open: { label: 'Open', className: 'bg-success-soft text-success border-success/20' },
+  in_progress: { label: 'In Progress', className: 'bg-info-soft text-info border-info/20' },
+  awaiting_user: { label: 'Awaiting User', className: 'bg-warning-soft text-warning border-warning/20' },
+  resolved: { label: 'Resolved', className: 'bg-surface-hover text-text-secondary border-border' },
+  closed: { label: 'Closed', className: 'bg-surface-hover text-text-muted border-border' },
 };
 
 const PRIORITY_BADGES = {
-  low: { label: 'Low', bg: 'bg-slate-800 text-slate-400 border-slate-700' },
-  normal: { label: 'Normal', bg: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  high: { label: 'High', bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  urgent: { label: 'Urgent', bg: 'bg-rose-500/10 text-rose-400 border-rose-500/20 font-semibold' },
+  low: { label: 'Low', className: 'bg-surface-hover text-text-muted border-border' },
+  normal: { label: 'Normal', className: 'bg-info-soft text-info border-info/20' },
+  high: { label: 'High', className: 'bg-warning-soft text-warning border-warning/20' },
+  urgent: { label: 'Urgent', className: 'bg-danger-soft text-danger border-danger/20 font-bold' },
 };
 
 export function AdminSupportPage() {
@@ -55,7 +55,7 @@ export function AdminSupportPage() {
       setTickets(ticketsRes.data.tickets || []);
       setPagination(ticketsRes.meta?.pagination || { page: 1, totalPages: 1 });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to load support data');
+      toast.error(err.response?.data?.errors?.[0]?.message || err.response?.data?.message || 'Failed to load support data');
     } finally {
       setLoading(false);
     }
@@ -81,15 +81,15 @@ export function AdminSupportPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <LifeBuoy className="w-6 h-6 text-emerald-400" />
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight flex items-center gap-2">
+              <LifeBuoy className="w-6 h-6 text-dash-primary" />
               <span>Support Ticket Desk</span>
             </h1>
-            <p className="text-slate-400 text-xs mt-1">Manage and resolve support tickets submitted by donors and volunteers.</p>
+            <p className="text-text-secondary text-xs mt-1">Manage and resolve support tickets submitted by donors and volunteers.</p>
           </div>
           <button
             onClick={fetchData}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:text-white transition shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-surface border border-border text-xs font-semibold text-text-secondary hover:text-text-primary transition shrink-0 shadow-xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Refresh</span>
@@ -98,57 +98,57 @@ export function AdminSupportPage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-1">
+            <div className="flex items-center justify-between text-xs text-text-muted font-medium">
               <span>Open Tickets</span>
-              <Inbox className="w-4 h-4 text-emerald-400" />
+              <Inbox className="w-4 h-4 text-success" />
             </div>
-            <div className="text-2xl font-bold text-white">{stats.open}</div>
+            <div className="text-2xl font-bold text-text-primary">{stats.open}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-1">
+            <div className="flex items-center justify-between text-xs text-text-muted font-medium">
               <span>Unassigned</span>
-              <Clock className="w-4 h-4 text-amber-400" />
+              <Clock className="w-4 h-4 text-warning" />
             </div>
-            <div className="text-2xl font-bold text-white">{stats.unassigned}</div>
+            <div className="text-2xl font-bold text-text-primary">{stats.unassigned}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-1">
+            <div className="flex items-center justify-between text-xs text-text-muted font-medium">
               <span>Assigned to Me</span>
-              <UserCheck className="w-4 h-4 text-blue-400" />
+              <UserCheck className="w-4 h-4 text-info" />
             </div>
-            <div className="text-2xl font-bold text-white">{stats.mine}</div>
+            <div className="text-2xl font-bold text-text-primary">{stats.mine}</div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-            <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-1">
+            <div className="flex items-center justify-between text-xs text-text-muted font-medium">
               <span>High Priority</span>
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
+              <AlertTriangle className="w-4 h-4 text-danger" />
             </div>
-            <div className="text-2xl font-bold text-white">{stats.highPriority}</div>
+            <div className="text-2xl font-bold text-text-primary">{stats.highPriority}</div>
           </div>
         </div>
 
         {/* Filters */}
-        <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-3">
+        <div className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-3">
           <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[200px]">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
               <input
                 type="text"
                 placeholder="Search ticket #, subject, or user..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-slate-950 text-slate-200 text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-800 focus:outline-none focus:border-emerald-500/50"
+                className="w-full bg-page text-text-primary text-xs pl-9 pr-3 py-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary"
               />
             </div>
 
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800"
+              className="bg-page text-text-primary text-xs px-3 py-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary"
             >
               <option value="">All Statuses</option>
               <option value="open">Open</option>
@@ -161,7 +161,7 @@ export function AdminSupportPage() {
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800"
+              className="bg-page text-text-primary text-xs px-3 py-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary"
             >
               <option value="">All Categories</option>
               <option value="account">Account</option>
@@ -176,7 +176,7 @@ export function AdminSupportPage() {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800"
+              className="bg-page text-text-primary text-xs px-3 py-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary"
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -188,7 +188,7 @@ export function AdminSupportPage() {
             <select
               value={assigned}
               onChange={(e) => setAssigned(e.target.value)}
-              className="bg-slate-950 text-slate-200 text-xs px-3 py-2 rounded-xl border border-slate-800"
+              className="bg-page text-text-primary text-xs px-3 py-2 rounded-xl border border-border focus:outline-none focus:border-dash-primary"
             >
               <option value="all">All Assignments</option>
               <option value="me">Assigned to Me</option>
@@ -201,13 +201,13 @@ export function AdminSupportPage() {
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-slate-900/40 rounded-xl border border-slate-800 animate-pulse" />
+              <div key={i} className="h-20 bg-surface rounded-2xl border border-border animate-pulse" />
             ))}
           </div>
         ) : tickets.length === 0 ? (
-          <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800 space-y-2">
-            <h3 className="text-base font-semibold text-slate-200">No support tickets match your filters</h3>
-            <p className="text-slate-400 text-xs">Try clearing filters or search query.</p>
+          <div className="p-12 text-center rounded-2xl bg-surface border border-border shadow-pb-card space-y-2">
+            <h3 className="text-base font-bold text-text-primary">No support tickets match your filters</h3>
+            <p className="text-text-muted text-xs">Try clearing filters or search query.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -219,45 +219,45 @@ export function AdminSupportPage() {
                 <div
                   key={t.id}
                   onClick={() => navigate(`/admin/support/${t.id}`)}
-                  className="group relative p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/40 transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className="group relative p-4 rounded-2xl bg-surface border border-border hover:border-dash-primary/40 transition cursor-pointer flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-pb-card hover:shadow-pb-elevated"
                 >
                   {t.admin_unread === 1 && (
-                    <span className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-emerald-500 ring-4 ring-slate-950 animate-pulse" />
+                    <span className="absolute -top-1 -left-1 w-3.5 h-3.5 rounded-full bg-dash-primary ring-4 ring-surface animate-pulse" />
                   )}
 
                   <div className="space-y-1.5 max-w-3xl">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-mono font-medium text-slate-500">#{t.id}</span>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full border ${statusBadge.bg}`}>
+                      <span className="text-xs font-mono font-bold text-text-muted">#{t.id}</span>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full border font-semibold ${statusBadge.className}`}>
                         {statusBadge.label}
                       </span>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full border ${priorityBadge.bg}`}>
+                      <span className={`text-[11px] px-2 py-0.5 rounded-full border font-semibold ${priorityBadge.className}`}>
                         {priorityBadge.label}
                       </span>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 capitalize">
+                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-page border border-border text-text-secondary capitalize font-medium">
                         {t.category}
                       </span>
                     </div>
 
-                    <h2 className="text-sm font-semibold text-slate-100 group-hover:text-emerald-400 transition-colors">
+                    <h2 className="text-sm font-bold text-text-primary group-hover:text-dash-primary transition-colors">
                       {t.subject}
                     </h2>
 
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                      <span className="font-medium text-slate-300">{t.user_name}</span>
-                      <span className="text-slate-600">({t.user_role})</span>
+                    <div className="flex items-center gap-2 text-xs text-text-muted">
+                      <span className="font-semibold text-text-secondary">{t.user_name}</span>
+                      <span className="text-text-muted">({t.user_role})</span>
                       {t.assigned_admin_name && (
                         <>
                           <span>•</span>
-                          <span className="text-emerald-400/80">Assigned: {t.assigned_admin_name}</span>
+                          <span className="text-dash-primary font-medium">Assigned: {t.assigned_admin_name}</span>
                         </>
                       )}
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between md:flex-col md:items-end gap-1.5 text-xs text-slate-500 shrink-0">
+                  <div className="flex items-center justify-between md:flex-col md:items-end gap-1.5 text-xs text-text-muted shrink-0">
                     <span>{formatDate(t.last_message_at)}</span>
-                    <span className="text-emerald-400 font-medium flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-dash-primary font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       Open Detail <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </div>

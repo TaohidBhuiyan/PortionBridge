@@ -49,7 +49,7 @@ export function ZoneSection() {
       try {
         setLoading(true);
         setError(null);
-        const res = await axios.get(`${API_BASE}/public/zones?limit=10`);
+        const res = await axios.get(`${API_BASE}/public/zones?limit=3`);
         setZones(res.data.data.zones?.length ? res.data.data.zones : DEMO_ZONES);
       } catch (err) {
         console.error('Failed to fetch zones:', err);
@@ -123,7 +123,7 @@ export function ZoneSection() {
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">
-            {zones.map((zone, i) => (
+            {zones.slice(0, 3).map((zone, i) => (
               <div
                 key={zone.id}
                 onClick={() => handleZoneClick(zone)}

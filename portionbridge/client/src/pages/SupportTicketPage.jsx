@@ -17,11 +17,11 @@ import { DashboardLayout } from '../components/dashboard';
 import { supportApi } from '../services/supportApi';
 
 const STATUS_BADGES = {
-  open: { label: 'Open', bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-  in_progress: { label: 'In Progress', bg: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  awaiting_user: { label: 'Awaiting Your Response', bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  resolved: { label: 'Resolved', bg: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
-  closed: { label: 'Closed', bg: 'bg-slate-800 text-slate-500 border-slate-700' },
+  open: { label: 'Open', className: 'bg-success-soft text-success border-success/20' },
+  in_progress: { label: 'In Progress', className: 'bg-info-soft text-info border-info/20' },
+  awaiting_user: { label: 'Awaiting Your Response', className: 'bg-warning-soft text-warning border-warning/20' },
+  resolved: { label: 'Resolved', className: 'bg-surface-hover text-text-secondary border-border' },
+  closed: { label: 'Closed', className: 'bg-surface-hover text-text-muted border-border' },
 };
 
 export function SupportTicketPage() {
@@ -97,9 +97,9 @@ export function SupportTicketPage() {
     return (
       <DashboardLayout title="Support Ticket">
         <div className="max-w-4xl mx-auto space-y-4 animate-pulse">
-          <div className="h-8 w-32 bg-slate-800 rounded-lg" />
-          <div className="h-40 bg-slate-900 rounded-2xl border border-slate-800" />
-          <div className="h-64 bg-slate-900 rounded-2xl border border-slate-800" />
+          <div className="h-8 w-32 bg-surface border border-border rounded-lg" />
+          <div className="h-40 bg-surface rounded-2xl border border-border" />
+          <div className="h-64 bg-surface rounded-2xl border border-border" />
         </div>
       </DashboardLayout>
     );
@@ -109,10 +109,10 @@ export function SupportTicketPage() {
     return (
       <DashboardLayout title="Support Ticket">
         <div className="max-w-4xl mx-auto p-12 text-center space-y-4">
-          <h2 className="text-xl font-bold text-white">Ticket Not Found</h2>
+          <h2 className="text-xl font-bold text-text-primary">Ticket Not Found</h2>
           <button
             onClick={() => navigate('/support')}
-            className="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs"
+            className="px-4 py-2 bg-dash-primary text-white font-bold rounded-xl text-xs"
           >
             Back to Support Desk
           </button>
@@ -130,7 +130,7 @@ export function SupportTicketPage() {
         <div className="flex items-center justify-between">
           <button
             onClick={() => navigate('/support')}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-text-secondary hover:text-text-primary transition"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Support Tickets</span>
@@ -140,7 +140,7 @@ export function SupportTicketPage() {
             {ticket.status === 'resolved' && (
               <button
                 onClick={() => handleStatusChange('open')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-semibold hover:bg-emerald-500/20 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-success-soft text-success border border-success/30 text-xs font-bold hover:bg-success-soft/80 transition"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reopen Ticket</span>
@@ -150,7 +150,7 @@ export function SupportTicketPage() {
             {!isClosed && (
               <button
                 onClick={() => handleStatusChange('closed')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold hover:bg-slate-700 transition"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface border border-border text-text-secondary hover:text-text-primary text-xs font-semibold hover:bg-surface-hover transition"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>Close Ticket</span>
@@ -160,24 +160,24 @@ export function SupportTicketPage() {
         </div>
 
         {/* Ticket Detail Card */}
-        <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+        <div className="p-6 rounded-2xl bg-surface border border-border shadow-pb-card space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-border">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-mono text-slate-500">#{ticket.id}</span>
-              <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${statusBadge.bg}`}>
+              <span className="text-xs font-mono font-bold text-text-muted">#{ticket.id}</span>
+              <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${statusBadge.className}`}>
                 {statusBadge.label}
               </span>
-              <span className="text-xs px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 capitalize font-medium">
+              <span className="text-xs px-2.5 py-0.5 rounded-md bg-page border border-border text-text-secondary capitalize font-medium">
                 {ticket.category}
               </span>
             </div>
-            <div className="text-xs text-slate-500">Created: {formatDate(ticket.created_at)}</div>
+            <div className="text-xs text-text-muted">Created: {formatDate(ticket.created_at)}</div>
           </div>
 
           <div>
-            <h1 className="text-xl font-bold text-white">{ticket.subject}</h1>
+            <h1 className="text-xl font-bold text-text-primary">{ticket.subject}</h1>
             {ticket.donation_title && (
-              <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+              <p className="text-xs text-dash-primary font-medium mt-1 flex items-center gap-1">
                 <FileText className="w-3.5 h-3.5" />
                 <span>Related Donation: {ticket.donation_title}</span>
               </p>
@@ -187,7 +187,7 @@ export function SupportTicketPage() {
 
         {/* Messages Thread */}
         <div className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 px-1">Message Thread</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-text-muted px-1">Message Thread</h2>
 
           <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
             {messages.map((msg) => {
@@ -198,14 +198,14 @@ export function SupportTicketPage() {
                   className={`flex gap-3 ${isAdmin ? 'justify-start' : 'justify-end'}`}
                 >
                   {isAdmin && (
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-dash-primary-soft border border-dash-primary/30 text-dash-primary flex items-center justify-center shrink-0">
                       <Shield className="w-4 h-4" />
                     </div>
                   )}
 
                   <div className={`max-w-xl space-y-1 ${isAdmin ? 'items-start' : 'items-end'}`}>
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500 px-1">
-                      <span className="font-semibold text-slate-300">
+                    <div className="flex items-center gap-2 text-[11px] text-text-muted px-1">
+                      <span className="font-semibold text-text-secondary">
                         {isAdmin ? (msg.sender_name || 'Support Admin') : 'You'}
                       </span>
                       <span>•</span>
@@ -213,10 +213,10 @@ export function SupportTicketPage() {
                     </div>
 
                     <div
-                      className={`p-4 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed shadow-sm ${
+                      className={`p-4 rounded-2xl text-xs whitespace-pre-wrap leading-relaxed shadow-xs ${
                         isAdmin
-                          ? 'bg-slate-900 border border-emerald-500/30 text-slate-200 rounded-tl-none'
-                          : 'bg-emerald-600 text-slate-950 font-medium rounded-tr-none'
+                          ? 'bg-surface border border-border text-text-primary rounded-tl-none'
+                          : 'bg-dash-primary text-white font-medium rounded-tr-none'
                       }`}
                     >
                       {msg.message}
@@ -224,7 +224,7 @@ export function SupportTicketPage() {
                   </div>
 
                   {!isAdmin && (
-                    <div className="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-full bg-page border border-border text-text-secondary flex items-center justify-center shrink-0">
                       <User className="w-4 h-4" />
                     </div>
                   )}
@@ -237,36 +237,36 @@ export function SupportTicketPage() {
 
         {/* Composer */}
         {isClosed ? (
-          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-center text-xs text-slate-400">
+          <div className="p-4 rounded-2xl bg-surface border border-border text-center text-xs text-text-muted">
             This support ticket has been closed. If you have additional questions, please{' '}
             <button
               onClick={() => navigate('/support/new')}
-              className="text-emerald-400 underline font-semibold hover:text-emerald-300"
+              className="text-dash-primary font-bold underline hover:text-dash-primary-hover"
             >
               open a new ticket
             </button>
             .
           </div>
         ) : (
-          <form onSubmit={handleSendReply} className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+          <form onSubmit={handleSendReply} className="p-4 rounded-2xl bg-surface border border-border shadow-pb-card space-y-3">
             <textarea
               rows={3}
               placeholder="Type your reply here..."
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              className="w-full bg-slate-950 text-slate-100 text-xs p-3 rounded-xl border border-slate-800 focus:outline-none focus:border-emerald-500/50 resize-y"
+              className="w-full bg-page text-text-primary text-xs p-3 rounded-xl border border-border focus:outline-none focus:border-dash-primary resize-y"
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && e.ctrlKey) {
                   handleSendReply(e);
                 }
               }}
             />
-            <div className="flex items-center justify-between text-xs text-slate-500">
+            <div className="flex items-center justify-between text-xs text-text-muted">
               <span>Press Ctrl+Enter to send</span>
               <button
                 type="submit"
                 disabled={sending || !replyText.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dash-primary hover:bg-dash-primary-hover text-white font-bold transition disabled:opacity-50 shadow-xs"
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>{sending ? 'Sending...' : 'Send Reply'}</span>

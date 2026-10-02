@@ -11,7 +11,8 @@ import {
   Check, 
   Utensils, 
   Shirt, 
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { DashboardLayout } from '../components/dashboard';
@@ -90,6 +91,7 @@ export function DonationFormPage() {
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
   const [confirmClearDraft, setConfirmClearDraft] = useState(false);
+  const [validationPopup, setValidationPopup] = useState(null); // { stepTitle, items: string[] }
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -369,15 +371,28 @@ export function DonationFormPage() {
       if (!data.pickupTimeSlot) {
         newErrors.pickupTimeSlot = 'Time slot is required';
       } else if (data.pickupDate) {
-        const pickupHourBySlot = {
-          morning: '10:00:00',
-          afternoon: '14:00:00',
-          evening: '18:00:00',
-        };
-        const [hours, minutes, seconds] = (pickupHourBySlot[data.pickupTimeSlot] || '10:00:00').split(':').map(Number);
-        const pickupTime = new Date(year, month - 1, day, hours, minutes, seconds);
-        if (pickupTime <= new Date()) {
-          newErrors.pickupTimeSlot = 'Please choose a future pickup time slot';
+        // Only check if the slot window has fully passed when the chosen date is TODAY.
+        // For future dates every slot is valid regardless of current time.
+        const today = new Date();
+        const isToday =
+          year === today.getFullYear() &&
+          month === today.getMonth() + 1 &&
+          day === today.getDate();
+
+        if (isToday) {
+          // Use the END time of each slot window so donors can still book the
+          // current slot as long as it hasn't ended yet.
+          // morning: 06:00–12:00, afternoon: 12:00–18:00, evening: 18:00–22:00
+          const slotEndHourBySlot = {
+            morning: 12,
+            afternoon: 18,
+            evening: 22,
+          };
+          const slotEndHour = slotEndHourBySlot[data.pickupTimeSlot] ?? 22;
+          const slotEndTime = new Date(year, month - 1, day, slotEndHour, 0, 0);
+          if (slotEndTime <= today) {
+            newErrors.pickupTimeSlot = 'This time slot has already ended for today. Please choose another slot or a future date.';
+          }
         }
       }
     }
@@ -391,7 +406,7 @@ export function DonationFormPage() {
       return updated;
     });
 
-    return isValid;
+    return { isValid, errorMap: newErrors };
   }, [formData]);
 
   const handleFieldChange = (field, value) => {
@@ -423,11 +438,45 @@ export function DonationFormPage() {
     });
   }, [currentStep]);
 
+  // Human-readable labels for every validated field key
+  const FIELD_LABELS = {
+    // Step 0
+    title: 'Donation title',
+    category: 'Donation category (Food or Clothes)',
+    description: 'Description',
+    quantity: 'Quantity (must be > 0)',
+    quantityUnit: 'Unit of quantity',
+    foodType: 'Food type',
+    foodName: 'Food name',
+    storageRequirement: 'Storage requirement',
+    clothingCategory: 'Garment category',
+    gender: 'Target gender',
+    ageGroup: 'Age group',
+    itemCondition: 'Item condition',
+    // Step 1
+    fullAddress: 'Pickup address',
+    contactPhone: 'Contact phone number',
+    pickupDate: 'Pickup date',
+    pickupTimeSlot: 'Pickup time slot',
+  };
+
   const handleNext = () => {
-    const isValid = validateStep(currentStep);
+    const { isValid, errorMap } = validateStep(currentStep);
     if (isValid) {
       setDirection(1);
       setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      // Build human-readable list of missing / invalid fields
+      const items = Object.entries(errorMap).map(([key, msg]) => ({
+        field: FIELD_LABELS[key] || key,
+        message: msg,
+      }));
+      setValidationPopup({
+        stepTitle: STEPS[currentStep].title,
+        items,
+      });
+      // Also scroll to top so inline red errors are visible
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -468,13 +517,24 @@ export function DonationFormPage() {
   };
 
   const handleSubmit = async () => {
-    const firstStepValid = validateStep(0);
-    const secondStepValid = validateStep(1);
+    const { isValid: firstStepValid, errorMap: firstErrors } = validateStep(0);
+    const { isValid: secondStepValid, errorMap: secondErrors } = validateStep(1);
 
     if (!firstStepValid || !secondStepValid) {
       const firstInvalidStep = firstStepValid ? 1 : 0;
       setDirection(firstInvalidStep > currentStep ? 1 : -1);
       setCurrentStep(firstInvalidStep);
+      // Show popup with errors from the first invalid step
+      const relevantErrors = firstStepValid ? secondErrors : firstErrors;
+      const items = Object.entries(relevantErrors).map(([key, msg]) => ({
+        field: FIELD_LABELS[key] || key,
+        message: msg,
+      }));
+      setValidationPopup({
+        stepTitle: STEPS[firstInvalidStep].title,
+        items,
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -966,6 +1026,71 @@ export function DonationFormPage() {
         confirmLabel="Clear Draft"
         tone="danger"
       />
+
+      {/* Validation Error Popup */}
+      {validationPopup && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm"
+          onClick={() => setValidationPopup(null)}
+        >
+          <div
+            className="bg-surface rounded-3xl max-w-sm w-full shadow-2xl border border-danger/30 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-border">
+              <div className="w-10 h-10 rounded-2xl bg-danger-soft flex items-center justify-center shrink-0">
+                <AlertTriangle size={20} className="text-danger" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold uppercase tracking-widest text-danger mb-0.5">Almost there!</p>
+                <h3 className="text-sm font-black text-text-primary truncate">
+                  Step: {validationPopup.stepTitle}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setValidationPopup(null)}
+                className="w-7 h-7 rounded-full bg-page hover:bg-surface-hover border border-border flex items-center justify-center text-text-muted hover:text-text-primary transition-colors shrink-0"
+                aria-label="Close"
+              >
+                <XCircle size={14} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-4">
+              <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+                Please complete the following fields before continuing:
+              </p>
+              <ul className="space-y-2.5">
+                {validationPopup.items.map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="mt-0.5 w-5 h-5 rounded-full bg-danger-soft text-danger flex items-center justify-center shrink-0 text-[10px] font-black">
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-text-primary">{item.field}</p>
+                      <p className="text-[11px] text-danger mt-0.5 leading-snug">{item.message}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 pt-2">
+              <button
+                type="button"
+                onClick={() => setValidationPopup(null)}
+                className="w-full py-2.5 bg-danger hover:bg-danger/90 text-white text-sm font-bold rounded-xl transition-all shadow-sm"
+              >
+                Got it — let me fix it
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

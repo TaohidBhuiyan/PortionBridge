@@ -1,4 +1,4 @@
-const { body, query, param } = require('express-validator');
+const { body, query } = require('express-validator');
 const { PAGINATION_DEFAULTS } = require('../constants');
 
 const CATEGORIES = ['account', 'donation', 'pickup', 'technical', 'safety', 'feedback', 'other'];
@@ -17,7 +17,7 @@ const createTicketValidationRules = [
     .isIn(CATEGORIES).withMessage(`category must be one of: ${CATEGORIES.join(', ')}.`),
 
   body('priority')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(PRIORITIES).withMessage(`priority must be one of: ${PRIORITIES.join(', ')}.`),
 
@@ -34,21 +34,21 @@ const createTicketValidationRules = [
 
 const listTicketsValidationRules = [
   query('group')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(['all', 'active', 'resolved']).withMessage('group must be one of: all, active, resolved.'),
 
   query('search')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim(),
 
   query('page')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1 }).withMessage('page must be a positive integer.')
     .toInt(),
 
   query('limit')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1, max: PAGINATION_DEFAULTS.MAX_LIMIT })
     .withMessage(`limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}.`)
     .toInt(),
@@ -70,36 +70,36 @@ const updateStatusValidationRules = [
 
 const adminListTicketsValidationRules = [
   query('status')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(STATUSES).withMessage(`status must be one of: ${STATUSES.join(', ')}.`),
 
   query('category')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(CATEGORIES).withMessage(`category must be one of: ${CATEGORIES.join(', ')}.`),
 
   query('priority')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(PRIORITIES).withMessage(`priority must be one of: ${PRIORITIES.join(', ')}.`),
 
   query('assigned')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(['all', 'me', 'unassigned']).withMessage('assigned must be one of: all, me, unassigned.'),
 
   query('search')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim(),
 
   query('page')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1 }).withMessage('page must be a positive integer.')
     .toInt(),
 
   query('limit')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1, max: PAGINATION_DEFAULTS.MAX_LIMIT })
     .withMessage(`limit must be between 1 and ${PAGINATION_DEFAULTS.MAX_LIMIT}.`)
     .toInt(),
@@ -117,24 +117,24 @@ const adminPostMessageValidationRules = [
     .toBoolean(),
 
   body('status')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(STATUSES).withMessage(`status must be one of: ${STATUSES.join(', ')}.`),
 ];
 
 const adminUpdateTicketValidationRules = [
   body('status')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(STATUSES).withMessage(`status must be one of: ${STATUSES.join(', ')}.`),
 
   body('priority')
-    .optional()
+    .optional({ checkFalsy: true })
     .trim()
     .isIn(PRIORITIES).withMessage(`priority must be one of: ${PRIORITIES.join(', ')}.`),
 
   body('assignedAdminId')
-    .optional({ nullable: true })
+    .optional({ nullable: true, checkFalsy: true })
     .custom((val) => val === null || (Number.isInteger(val) && val > 0))
     .withMessage('assignedAdminId must be null or a positive integer.'),
 ];

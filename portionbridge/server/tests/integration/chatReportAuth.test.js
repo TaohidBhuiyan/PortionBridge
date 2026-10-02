@@ -137,7 +137,7 @@ describe('Phase 5: chat/report authorization + notifications for team missions',
     donationRow = await require('../../models/donation.model').findById(donation.id);
     await donationService.markPickedUp(donationRow, member.id);
     donationRow = await require('../../models/donation.model').findById(donation.id);
-    await donationService.completeDonation(donation.id, donor.id);
+    await donationService.completeDonation(donation.id, member.id);
 
     const notificationModel = require('../../models/notification.model');
     const memberNotifications = await notificationModel.findByUserId({ userId: member.id, limit: 20, offset: 0 });

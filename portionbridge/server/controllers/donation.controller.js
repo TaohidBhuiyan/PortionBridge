@@ -280,10 +280,7 @@ const markPickedUp = asyncHandler(async (req, res) => {
 
 /**
  * PATCH /api/v1/donations/:id/complete
- * (Module 9 — BEHAVIOR CHANGE) The DONOR marks a picked-up donation as
- * completed. Previously this was the assigned volunteer completing a
- * scheduled donation directly — see donationService.completeDonation for
- * the full rationale.
+ * The assigned volunteer marks a picked-up donation as completed after delivery.
  */
 const completeDonation = asyncHandler(async (req, res) => {
   const ipAddress = getClientIp(req);

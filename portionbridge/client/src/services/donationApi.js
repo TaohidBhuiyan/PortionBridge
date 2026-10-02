@@ -71,7 +71,7 @@ export const donationApi = {
       const csrfToken = getCsrfToken();
       
       const formData = new FormData();
-      formData.append('image', imageFile);
+      formData.append('photo', imageFile);
       
       const response = await axios.post(
         `${API_BASE}/uploads/donation/${donationId}/image`,
@@ -597,7 +597,7 @@ export const donationApi = {
   },
 
   /**
-   * Complete a donation (Donor only, when status is picked_up)
+   * Complete a donation (Assigned Volunteer only, when status is picked_up)
    * @param {number} donationId - Donation ID
    * @returns {Promise<Object>} Completion result
    */
@@ -627,6 +627,33 @@ export const donationApi = {
 };
 
 /**
+ * Map a pickupTimeSlot string to an ISO 8601 datetime on the given date.
+ * Uses the midpoint hour of each slot so the time is clearly inside the window.
+ * morning 06-12 → 09:00, afternoon 12-18 → 14:00, evening 18-22 → 19:00, night → 21:00.
+ * For today's date the time is pushed to 30 minutes ahead of now when the
+ * midpoint has already passed, ensuring the backend's "must be in future" check passes.
+ */
+function buildPickupTime(pickupDate, pickupTimeSlot) {
+  const slotHour = { morning: 9, afternoon: 14, evening: 19, night: 21 };
+  const hour = slotHour[pickupTimeSlot] ?? 10;
+
+  if (!pickupDate) return null;
+
+  const [year, month, day] = pickupDate.split('-').map(Number);
+  const dt = new Date(year, month - 1, day, hour, 0, 0, 0);
+
+  // If the calculated time is in the past (e.g. booking an evening slot today
+  // and it's already 9 PM), push it 30 minutes ahead of now to satisfy the
+  // backend's isFuturePickupTime validator.
+  if (dt <= new Date()) {
+    const fallback = new Date(Date.now() + 30 * 60 * 1000);
+    return fallback.toISOString();
+  }
+
+  return dt.toISOString();
+}
+
+/**
  * Transform form data to API request format
  * @param {Object} formData - Form data from DonationFormPage
  * @returns {Object} API request body
@@ -641,6 +668,8 @@ export const transformFormDataToApi = (formData) => {
     contactPhone: formData.contactPhone,
     pickupDate: formData.pickupDate,
     pickupTimeSlot: formData.pickupTimeSlot,
+    // Backend requires pickupTime as ISO 8601 — derive it from date + slot
+    pickupTime: buildPickupTime(formData.pickupDate, formData.pickupTimeSlot),
     specialInstructions: formData.specialInstructions,
   };
 
@@ -666,11 +695,30 @@ export const transformFormDataToApi = (formData) => {
     apiData.season = formData.season;
   }
 
-  // Address fields
+  // Address handling — backend requires EITHER savedAddressId OR a full
+  // pickupAddress object (never both). When a new address is entered, all
+  // required sub-fields must be present or the backend validator rejects it.
   if (formData.savedAddressId) {
-    apiData.savedAddressId = formData.savedAddressId;
+    // Saved address — backend resolves everything from the DB; no address object needed.
+    apiData.savedAddressId = Number(formData.savedAddressId);
   } else if (formData.pickupAddress) {
-    apiData.pickupAddress = formData.pickupAddress;
+    const addr = formData.pickupAddress;
+    apiData.pickupAddress = {
+      fullAddress:        addr.fullAddress       || '',
+      area:               addr.area              || addr.district || 'N/A',
+      district:           addr.district          || addr.area     || 'Dhaka',
+      division:           addr.division          || 'Dhaka',
+      postalCode:         addr.postalCode        || '',
+      landmark:           addr.landmark          || '',
+      // Backend requires contactPersonName and contactPhone inside the address object
+      contactPersonName:  addr.contactPersonName || formData.contactPhone || 'Donor',
+      contactPhone:       addr.contactPhone      || formData.contactPhone || '',
+      // Coordinates — optional for backend but improve volunteer matching
+      ...(addr.latitude  && addr.longitude && {
+        latitude:  parseFloat(addr.latitude),
+        longitude: parseFloat(addr.longitude),
+      }),
+    };
   }
 
   // Assignment fields

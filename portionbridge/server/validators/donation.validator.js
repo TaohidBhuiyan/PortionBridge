@@ -271,7 +271,7 @@ const createDonationValidationRules = [
 
   body('pickupAddress.contactPersonName')
     .if(body('pickupAddress').exists())
-    .notEmpty().withMessage('Contact person name is required.')
+    .optional({ checkFalsy: true })
     .isLength({ max: 100 }).withMessage('Contact person name must not exceed 100 characters.'),
 
   body('pickupAddress.contactPhone')
@@ -279,11 +279,13 @@ const createDonationValidationRules = [
     .notEmpty().withMessage('Contact phone is required.')
     .matches(/^[+]?[\d\s-()]+$/).withMessage('Contact phone must be a valid phone number.'),
 
-  body('pickupAddress.latitude').if(body('pickupAddress').exists())
-    .notEmpty().withMessage('Pickup location must be set on the map (latitude missing).')
+  body('pickupAddress.latitude')
+    .if(body('pickupAddress').exists())
+    .optional({ checkFalsy: true })
     .isFloat({ min: -90, max: 90 }).toFloat(),
-  body('pickupAddress.longitude').if(body('pickupAddress').exists())
-    .notEmpty().withMessage('Pickup location must be set on the map (longitude missing).')
+  body('pickupAddress.longitude')
+    .if(body('pickupAddress').exists())
+    .optional({ checkFalsy: true })
     .isFloat({ min: -180, max: 180 }).toFloat(),
 
   body('saveForFuture')

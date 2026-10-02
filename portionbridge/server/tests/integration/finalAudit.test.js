@@ -149,7 +149,7 @@ describe('FINAL AUDIT: full A/B/C/D volunteer+team scenario', () => {
     await assert.rejects(() => reportService.createReport(D.id, { donationId: nearbyDonation.id, reason: 'other' }));
 
     // --- Complete the donation ---
-    await donationService.completeDonation(nearbyDonation.id, donor.id);
+    await donationService.completeDonation(nearbyDonation.id, C.id);
     donationRow = await donationModel.findById(nearbyDonation.id);
     assert.equal(donationRow.status, 'completed');
 
@@ -173,7 +173,7 @@ describe('FINAL AUDIT: full A/B/C/D volunteer+team scenario', () => {
     await donationService.markOnTheWay(secondRow, C.id);
     secondRow = await donationModel.findById(secondDonation.id);
     await donationService.markPickedUp(secondRow, C.id);
-    await donationService.completeDonation(secondDonation.id, donor.id);
+    await donationService.completeDonation(secondDonation.id, C.id);
 
     // --- A removes C ---
     await teamService.removeMember(team.id, C.id, A.id);

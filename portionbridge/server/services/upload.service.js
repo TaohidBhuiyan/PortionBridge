@@ -18,6 +18,9 @@ const { UPLOAD_SUBFOLDERS } = require('../utils/uploadConfig');
  * @returns {Promise<Object>} Updated donation object
  */
 async function uploadDonationImage(donationId, userId, filePath) {
+  // Normalize backslashes to forward slashes for cross-platform compatibility
+  const normalizedPath = (filePath || '').replace(/\\/g, '/');
+
   const donation = await donationModel.findById(donationId);
 
   if (!donation) {
@@ -37,8 +40,34 @@ async function uploadDonationImage(donationId, userId, filePath) {
     );
   }
 
-  // Update donation with new photo path
-  await donationModel.update(donationId, { photo: filePath });
+  // Parse existing images array if present
+  let existingImages = [];
+  if (Array.isArray(donation.images)) {
+    existingImages = [...donation.images];
+  } else if (typeof donation.images === 'string' && donation.images.trim()) {
+    try {
+      existingImages = JSON.parse(donation.images);
+    } catch (e) {
+      existingImages = [];
+    }
+  }
+
+  // Normalize existing images to forward slashes
+  existingImages = existingImages.map((img) => (typeof img === 'string' ? img.replace(/\\/g, '/') : img));
+
+  // Add new normalized path if not already present
+  if (!existingImages.includes(normalizedPath)) {
+    existingImages.push(normalizedPath);
+  }
+
+  // Cover photo: set if missing or normalize existing
+  const coverPhoto = donation.photo ? donation.photo.replace(/\\/g, '/') : normalizedPath;
+
+  // Update donation record with normalized photo and images array
+  await donationModel.update(donationId, {
+    photo: coverPhoto,
+    images: existingImages,
+  });
 
   // Return updated donation
   const updatedDonation = await donationModel.findById(donationId);

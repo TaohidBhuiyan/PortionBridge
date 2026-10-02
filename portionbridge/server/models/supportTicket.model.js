@@ -17,8 +17,8 @@ async function create(conn, { userId, subject, category, priority = 'normal', do
 async function findById(id) {
   const [rows] = await pool.query(
     `SELECT t.*,
-            u.full_name AS user_name, u.email AS user_email, u.role AS user_role, u.profile_picture AS user_avatar,
-            a.full_name AS assigned_admin_name, a.email AS assigned_admin_email,
+            u.name AS user_name, u.email AS user_email, u.role AS user_role, u.profile_picture AS user_avatar,
+            a.name AS assigned_admin_name, a.email AS assigned_admin_email,
             d.title AS donation_title
      FROM support_tickets t
      JOIN users u ON t.user_id = u.id
@@ -120,7 +120,7 @@ async function findForAdmin({ status, category, priority, assigned, search, page
   }
 
   if (search && search.trim()) {
-    whereClauses.push('(t.subject LIKE :search OR u.full_name LIKE :search OR u.email LIKE :search OR t.id = :searchId)');
+    whereClauses.push('(t.subject LIKE :search OR u.name LIKE :search OR u.email LIKE :search OR t.id = :searchId)');
     params.search = `%${search.trim()}%`;
     params.searchId = parseInt(search.trim(), 10) || 0;
   }
@@ -129,8 +129,8 @@ async function findForAdmin({ status, category, priority, assigned, search, page
 
   const [rows] = await pool.query(
     `SELECT t.*,
-            u.full_name AS user_name, u.email AS user_email, u.role AS user_role, u.profile_picture AS user_avatar,
-            a.full_name AS assigned_admin_name,
+            u.name AS user_name, u.email AS user_email, u.role AS user_role, u.profile_picture AS user_avatar,
+            a.name AS assigned_admin_name,
             (SELECT message FROM support_messages WHERE ticket_id = t.id ORDER BY id DESC LIMIT 1) AS last_message
      FROM support_tickets t
      JOIN users u ON t.user_id = u.id
@@ -173,7 +173,7 @@ async function countForAdmin({ status, category, priority, assigned, search, adm
   }
 
   if (search && search.trim()) {
-    whereClauses.push('(t.subject LIKE :search OR u.full_name LIKE :search OR u.email LIKE :search OR t.id = :searchId)');
+    whereClauses.push('(t.subject LIKE :search OR u.name LIKE :search OR u.email LIKE :search OR t.id = :searchId)');
     params.search = `%${search.trim()}%`;
     params.searchId = parseInt(search.trim(), 10) || 0;
   }

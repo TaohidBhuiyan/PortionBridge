@@ -36,7 +36,7 @@ describe('rating: creation rules, boundaries, and authorization', () => {
     const scheduled = await donationService.schedulePickup(accepted, volunteer.id, futureTime);
     const onTheWay = await donationService.markOnTheWay(scheduled, volunteer.id);
     const pickedUp = await donationService.markPickedUp(onTheWay, volunteer.id);
-    const completed = await donationService.completeDonation(pickedUp.id, donor.id);
+    const completed = await donationService.completeDonation(pickedUp.id, volunteer.id);
 
     return { donor, volunteer, donation: completed };
   }

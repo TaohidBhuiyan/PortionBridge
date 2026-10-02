@@ -191,19 +191,12 @@ router.patch(
   markPickedUp
 );
 
-// (Module 9 — BEHAVIOR CHANGE) The DONOR marks a picked-up donation as
-// completed. Previously this was authorize(VOLUNTEER) with no
-// restrictToDonationOwner — now it's the donor's confirmation step, so
-// restrictToDonationOwner (donor_id check) applies here just like
-// update/cancel. donationService.completeDonation still re-verifies
-// ownership + status against the freshly locked row inside its transaction,
-// since this middleware's read could be stale by the time it runs.
+// The assigned volunteer marks a picked-up donation as completed.
 router.patch(
   '/:id/complete',
   protect,
-  authorize('donor'),
+  authorize('volunteer'),
   loadDonation,
-  restrictToDonationOwner,
   completeDonation
 );
 

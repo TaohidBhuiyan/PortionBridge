@@ -22,11 +22,11 @@ const SERVER_ORIGIN = API_BASE.replace(/\/api\/v\d+\/?$/, '');
 
 export function resolveMediaUrl(path) {
   if (!path) return null;
+  const cleanPath = String(path).replace(/\\/g, '/');
   // Already a full URL (e.g. a Google-hosted profile picture) or a data URI
-  // used for a local preview before upload completes — pass through as-is.
-  if (/^(https?:)?\/\//.test(path) || path.startsWith('data:') || path.startsWith('blob:')) {
-    return path;
+  if (/^(https?:)?\/\//.test(cleanPath) || cleanPath.startsWith('data:') || cleanPath.startsWith('blob:')) {
+    return cleanPath;
   }
-  const normalized = path.startsWith('/') ? path : `/uploads/${path}`;
+  const normalized = cleanPath.startsWith('/') ? cleanPath : `/uploads/${cleanPath}`;
   return `${SERVER_ORIGIN}${normalized}`;
 }

@@ -211,7 +211,7 @@ describe('missionWorkflow: team mission assignment and status transitions', () =
     const onTheWay = await donationService.markOnTheWay(scheduledDonation, member.id);
     const onTheWayDonation = await donationModel.findById(onTheWay.id);
     const pickedUp = await donationService.markPickedUp(onTheWayDonation, member.id);
-    await donationService.completeDonation(pickedUp.id, donor.id);
+    await donationService.completeDonation(pickedUp.id, member.id);
 
     const history = await donationService.getVolunteerHistory(member.id, { status: 'completed' });
     const historyArray = Array.isArray(history) ? history : history.donations || [];
