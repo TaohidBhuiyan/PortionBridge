@@ -1,0 +1,1638 @@
+diff -ruN a/client/src/components/common/LineChart.jsx b/client/src/components/common/LineChart.jsx
+--- a/client/src/components/common/LineChart.jsx	2026-09-28 00:15:48.858152553 +0000
++++ b/client/src/components/common/LineChart.jsx	2026-09-28 00:15:48.876713154 +0000
+@@ -2,8 +2,14 @@
+ /**
+  * Simple CSS-based Line Chart component
+  * Displays monthly donation trend
++ * @param {Array} data - Array of data points
++ * @param {string} [dataKey='count'] - Which numeric field on each data point
++ *   to plot. Defaults to 'count' for backward compatibility with callers
++ *   (e.g. DonorAnalyticsPage) that pass rows already shaped as { count }.
++ * @param {string} [color='rgb(2, 132, 199)'] - Stroke/fill color for the
++ *   line, points, and area fill.
+  */
+-export function LineChart({ data, height = 200 }) {
++export function LineChart({ data, dataKey = 'count', color = 'rgb(2, 132, 199)', height = 200 }) {
+   if (!data || data.length === 0) {
+     return (
+       <div className="flex items-center justify-center" style={{ height }}>
+@@ -12,10 +18,10 @@
+     );
+   }
+ 
+-  const maxValue = Math.max(...data.map(d => d.count), 1);
++  const maxValue = Math.max(...data.map(d => Number(d[dataKey]) || 0), 1);
+   const points = data.map((d, i) => {
+     const x = (i / (data.length - 1)) * 100;
+-    const y = 100 - ((d.count / maxValue) * 100);
++    const y = 100 - (((Number(d[dataKey]) || 0) / maxValue) * 100);
+     return `${x},${y}`;
+   }).join(' ');
+ 
+@@ -31,30 +37,28 @@
+         {/* Area fill */}
+         <polygon
+           points={areaPoints}
+-          fill="rgba(2, 132, 199, 0.12)"
+-          className="dark:fill-sky-400/15"
++          fill={color}
++          fillOpacity="0.12"
+         />
+         {/* Line */}
+         <polyline
+           points={points}
+           fill="none"
+-          stroke="rgb(2, 132, 199)"
++          stroke={color}
+           strokeWidth="2"
+           vectorEffect="non-scaling-stroke"
+-          className="dark:stroke-sky-400"
+         />
+         {/* Data points */}
+         {data.map((d, i) => {
+           const x = (i / (data.length - 1)) * 100;
+-          const y = 100 - ((d.count / maxValue) * 100);
++          const y = 100 - (((Number(d[dataKey]) || 0) / maxValue) * 100);
+           return (
+             <circle
+               key={i}
+               cx={x}
+               cy={y}
+               r="2"
+-              fill="rgb(2, 132, 199)"
+-              className="dark:fill-sky-400"
++              fill={color}
+             />
+           );
+         })}
+diff -ruN a/client/src/components/dashboard/admin/AdminRecentActivity.jsx b/client/src/components/dashboard/admin/AdminRecentActivity.jsx
+--- a/client/src/components/dashboard/admin/AdminRecentActivity.jsx	2026-09-28 00:15:48.858605221 +0000
++++ b/client/src/components/dashboard/admin/AdminRecentActivity.jsx	2026-09-28 00:15:48.877066246 +0000
+@@ -97,6 +97,55 @@
+     iconColor: 'text-rose-600 dark:text-rose-400',
+     dot: 'bg-rose-500',
+   },
++  user_banned: {
++    label: 'Disabled a user account',
++    icon: ShieldAlert,
++    iconBg: 'bg-red-500/15 dark:bg-red-500/20',
++    iconColor: 'text-red-600 dark:text-red-400',
++    dot: 'bg-red-500',
++  },
++  user_unbanned: {
++    label: 'Re-enabled a user account',
++    icon: ShieldAlert,
++    iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/20',
++    iconColor: 'text-emerald-600 dark:text-emerald-400',
++    dot: 'bg-emerald-500',
++  },
++  report_investigated: {
++    label: 'Started investigating a report',
++    icon: Flag,
++    iconBg: 'bg-amber-500/15 dark:bg-amber-500/20',
++    iconColor: 'text-amber-600 dark:text-amber-400',
++    dot: 'bg-amber-500',
++  },
++  report_resolved: {
++    label: 'Resolved a report',
++    icon: Flag,
++    iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/20',
++    iconColor: 'text-emerald-600 dark:text-emerald-400',
++    dot: 'bg-emerald-500',
++  },
++  report_dismissed: {
++    label: 'Dismissed a report',
++    icon: Flag,
++    iconBg: 'bg-surface-hover',
++    iconColor: 'text-text-secondary',
++    dot: 'bg-border',
++  },
++  admin_announcement_sent: {
++    label: 'Sent an announcement',
++    icon: UserPlus,
++    iconBg: 'bg-indigo-500/15 dark:bg-indigo-500/20',
++    iconColor: 'text-indigo-600 dark:text-indigo-400',
++    dot: 'bg-indigo-500',
++  },
++  refresh_token_reuse_detected: {
++    label: 'Suspicious token reuse detected',
++    icon: ShieldAlert,
++    iconBg: 'bg-red-500/15 dark:bg-red-500/20',
++    iconColor: 'text-red-600 dark:text-red-400',
++    dot: 'bg-red-500',
++  },
+ };
+ 
+ const FALLBACK_META = {
+diff -ruN a/client/src/components/dashboard/admin/AdminRecentDonations.jsx b/client/src/components/dashboard/admin/AdminRecentDonations.jsx
+--- a/client/src/components/dashboard/admin/AdminRecentDonations.jsx	2026-09-28 00:15:48.858662313 +0000
++++ b/client/src/components/dashboard/admin/AdminRecentDonations.jsx	2026-09-28 00:15:48.877078680 +0000
+@@ -103,7 +103,7 @@
+                 return (
+                   <tr
+                     key={donation.id}
+-                    onClick={() => navigate(`/donations/${donation.id}`)}
++                    onClick={() => navigate(`/admin/donations/${donation.id}`)}
+                     className="group hover:bg-surface-hover/60 transition-colors cursor-pointer"
+                     style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${i * 30}ms` }}
+                   >
+diff -ruN a/client/src/components/dashboard/donor/VolunteerMap.jsx b/client/src/components/dashboard/donor/VolunteerMap.jsx
+--- a/client/src/components/dashboard/donor/VolunteerMap.jsx	2026-09-28 00:15:48.859221248 +0000
++++ b/client/src/components/dashboard/donor/VolunteerMap.jsx	2026-09-28 00:15:48.877600132 +0000
+@@ -110,11 +110,6 @@
+     const map = mapInstanceRef.current;
+     map.invalidateSize();
+ 
+-    console.log('[VolunteerMap] re-rendering markers — volunteers:', volunteers.length, '| teams:', teams.length);
+-    if (volunteers.length > 0) {
+-      console.log('[VolunteerMap] first volunteer sample:', JSON.stringify(volunteers[0]));
+-    }
+-
+     // Clear existing markers
+     markersRef.current.forEach(marker => marker.remove());
+     markersRef.current = [];
+diff -ruN a/client/src/pages/AdminDonations.jsx b/client/src/pages/AdminDonations.jsx
+--- a/client/src/pages/AdminDonations.jsx	2026-09-28 00:15:48.860869867 +0000
++++ b/client/src/pages/AdminDonations.jsx	2026-09-28 00:15:48.878947892 +0000
+@@ -159,7 +159,7 @@
+                           </td>
+                           <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[140px]">{d.donor_name || '—'}</td>
+                           <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[140px]">
+-                            {d.volunteer_name || <span className="italic">Not yet assigned</span>}
++                            {(d.assignment_mode === 'team' ? d.assigned_member_name : d.volunteer_name) || <span className="italic">Not yet assigned</span>}
+                           </td>
+                           <td className="py-2.5 px-4">
+                             <StatusBadge status={displayStatus} size="small" />
+diff -ruN a/client/src/pages/AdminLiveOperations.jsx b/client/src/pages/AdminLiveOperations.jsx
+--- a/client/src/pages/AdminLiveOperations.jsx	2026-09-28 00:15:48.860981698 +0000
++++ b/client/src/pages/AdminLiveOperations.jsx	2026-09-28 00:15:48.878961607 +0000
+@@ -234,7 +234,10 @@
+     color: '#3b82f6',
+   } : null;
+ 
+-  const activeVolunteerCount = new Set(individualMissions.map((m) => m.volunteer_id).filter(Boolean)).size;
++  const activeVolunteerCount = new Set([
++    ...individualMissions.map((m) => m.volunteer_id).filter(Boolean),
++    ...teamMissions.map((m) => m.assigned_member_id).filter(Boolean),
++  ]).size;
+   const activeTeamCount = new Set(teamMissions.map((m) => m.team_id).filter(Boolean)).size;
+ 
+   if (loading) {
+diff -ruN a/client/src/pages/AdminReports.jsx b/client/src/pages/AdminReports.jsx
+--- a/client/src/pages/AdminReports.jsx	2026-09-28 00:15:48.861071775 +0000
++++ b/client/src/pages/AdminReports.jsx	2026-09-28 00:15:48.879003750 +0000
+@@ -54,9 +54,15 @@
+       setLoading(true);
+       setError(null);
+       // The queue tab spans two statuses (pending + reviewed); the list
+-      // endpoint only filters on one at a time, so fetch both and merge
+-      // client-side rather than adding a multi-status filter server-side
+-      // for what's otherwise a single-value `status` param everywhere else.
++      // endpoint only filters on one at a time, so fetch both (up to the
++      // API's max page size each) and merge+paginate client-side, rather
++      // than adding a multi-status filter server-side for what's otherwise
++      // a single-value `status` param everywhere else. Real server-side
++      // pagination across two independently-paginated result sets isn't
++      // sound here (page N of status A and page N of status B don't merge
++      // into a correct page N of the combined, sorted list), so this
++      // fetches everything up to the cap in one shot and paginates the
++      // merged array instead of forwarding `page` to the API.
+       const results = await Promise.all(
+         tab.statuses.map((status) => adminApi.listReports({
+           status,
+@@ -65,7 +71,7 @@
+           sortBy: 'created_at',
+           sortOrder: 'desc',
+           page: 1,
+-          limit: PAGE_SIZE,
++          limit: 200,
+         }))
+       );
+       if (cancelled) return;
+@@ -77,8 +83,10 @@
+       } else {
+         const merged = results.flatMap((r) => r.data || [])
+           .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+-        setReports(merged);
+-        setMeta({ totalPages: 1 });
++        const totalPages = Math.max(1, Math.ceil(merged.length / PAGE_SIZE));
++        const pageItems = merged.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
++        setReports(pageItems);
++        setMeta({ totalPages });
+       }
+       setLoading(false);
+     };
+diff -ruN a/client/src/pages/AdminSectionPage.jsx b/client/src/pages/AdminSectionPage.jsx
+--- a/client/src/pages/AdminSectionPage.jsx	2026-09-28 00:15:48.861139023 +0000
++++ b/client/src/pages/AdminSectionPage.jsx	2026-09-28 00:15:48.879018747 +0000
+@@ -1,13 +1,16 @@
+ import { useState, useRef } from 'react';
+-import { useParams, Navigate } from 'react-router-dom';
++import { useParams, Navigate, useNavigate } from 'react-router-dom';
+ import {
+   Settings,
+   Camera,
+   Loader2,
+-  Image as ImageIcon,
+   Lock,
+   Bell,
+   Moon,
++  ShieldCheck,
++  Users,
++  Flag,
++  ScrollText,
+ } from 'lucide-react';
+ import { DashboardLayout } from '../components/dashboard';
+ import { Avatar } from '../components/common/Avatar';
+@@ -16,6 +19,7 @@
+ import { AppearanceSettings } from '../components/dashboard/settings/AppearanceSettings';
+ import { profileApi } from '../services/profileApi';
+ import { useAuth } from '../context/AuthContext';
++import toast from 'react-hot-toast';
+ 
+ // One entry per admin sidebar section that isn't built yet. Each later
+ // phase will replace its entry here with a real, dedicated page + route
+@@ -45,12 +49,22 @@
+ // a real route (AdminAuditLogs) backed by a real GET /admin/audit-logs API.
+ const SECTIONS = {
+   settings: {
+-    title: 'Settings',
++    title: 'Admin Settings',
+     icon: Settings,
+-    description: 'Platform-wide configuration and preferences.',
++    description: 'Your account, security, and how the platform reaches you.',
+   },
+ };
+ 
++// Quick shortcuts surfaced on the settings hero — the tools an
++// administrator visiting their own account page is most likely to want
++// next, rather than a donor-style "Edit public profile" link (admins
++// don't have one).
++const QUICK_LINKS = [
++  { label: 'Manage users', icon: Users, path: '/admin/users' },
++  { label: 'Reports queue', icon: Flag, path: '/admin/reports' },
++  { label: 'Audit log', icon: ScrollText, path: '/admin/audit-logs' },
++];
++
+ /**
+  * AdminSectionPage — shell for the /admin/:section catch-all. Currently
+  * only 'settings' is a real, wired-up destination (Profile Photo,
+@@ -62,10 +76,10 @@
+   const { section } = useParams();
+   const config = SECTIONS[section];
+   const { user, updateUser } = useAuth();
++  const navigate = useNavigate();
+   const fileInputRef = useRef(null);
+   const [photoUploading, setPhotoUploading] = useState(false);
+-  const [photoError, setPhotoError] = useState(null);
+-  const [activeTab, setActiveTab] = useState('photo');
++  const [activeTab, setActiveTab] = useState('security');
+ 
+   if (!config) {
+     return <Navigate to="/admin/dashboard" replace />;
+@@ -75,17 +89,17 @@
+     const file = e.target.files?.[0];
+     e.target.value = '';
+     if (!file) return;
+-    setPhotoError(null);
+     setPhotoUploading(true);
+     try {
+       const result = await profileApi.uploadPhoto(file);
+       if (result.success) {
+         updateUser(result.data.user);
++        toast.success('Profile photo updated.');
+       } else {
+-        setPhotoError(result.message || 'Failed to upload photo.');
++        toast.error(result.message || 'Failed to upload photo.');
+       }
+     } catch (err) {
+-      setPhotoError(err.response?.data?.message || 'Failed to upload photo.');
++      toast.error(err.response?.data?.message || 'Failed to upload photo.');
+     } finally {
+       setPhotoUploading(false);
+     }
+@@ -95,77 +109,136 @@
+   // one generic <ComingSoon> panel below the (real) Profile Photo section.
+   // All three are now real, reusing the exact same components the
+   // donor/volunteer settings page renders — see components/dashboard/
+-  // settings/ for why each one was already role-agnostic.
++  // settings/ for why each one was already role-agnostic. Profile Photo
++  // moved into the hero banner below as an inline edit rather than its
++  // own tab, since it's a single control, not a settings panel.
+   const tabs = [
+-    { id: 'photo', label: 'Profile Photo', icon: ImageIcon },
+-    { id: 'security', label: 'Security', icon: Lock },
+-    { id: 'notifications', label: 'Notifications', icon: Bell },
+-    { id: 'appearance', label: 'Appearance', icon: Moon },
++    { id: 'security', label: 'Security & Passwords', icon: Lock, desc: 'Password, sessions & device security' },
++    { id: 'notifications', label: 'Notifications & Alerts', icon: Bell, desc: 'Email, SMS & push notification preferences' },
++    { id: 'appearance', label: 'Appearance & Theme', icon: Moon, desc: 'Light, dark & interface theme settings' },
+   ];
+ 
++  const joinedYear = user?.created_at ? new Date(user.created_at).getFullYear() : null;
++
+   return (
+     <DashboardLayout>
+-      <div className="max-w-4xl mx-auto space-y-6">
++      <div className="max-w-6xl mx-auto space-y-6 pb-12">
++        {/* Top title bar */}
+         <div>
+-          <h1 className="text-2xl font-bold text-text-primary mb-1">{config.title}</h1>
+-          <p className="text-sm text-text-secondary">{config.description}</p>
++          <h1 className="text-2xl font-black text-text-primary tracking-tight">{config.title}</h1>
++          <p className="text-xs text-text-secondary mt-0.5">{config.description}</p>
++        </div>
++
++        {/* Hero: identity + inline photo edit + admin quick links */}
++        <div className="bg-gradient-to-r from-dash-primary/15 via-dash-primary-soft to-surface rounded-2xl border border-border p-6 shadow-sm relative overflow-hidden">
++          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 z-10 relative">
++            <div className="relative shrink-0">
++              <Avatar item={user} tone="dash" className="w-16 h-16 text-xl border-2 border-surface shadow-md" />
++              <button
++                type="button"
++                onClick={() => fileInputRef.current?.click()}
++                disabled={photoUploading}
++                aria-label="Change profile photo"
++                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-dash-primary text-white flex items-center justify-center shadow-sm border-2 border-surface hover:brightness-110 transition-all disabled:opacity-60"
++              >
++                {photoUploading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
++              </button>
++              <input
++                ref={fileInputRef}
++                type="file"
++                accept="image/jpeg,image/png,image/webp"
++                onChange={handlePhotoChange}
++                className="hidden"
++              />
++            </div>
++
++            <div className="flex-1 min-w-0">
++              <div className="flex items-center gap-2 flex-wrap">
++                <h2 className="text-lg font-bold text-text-primary">{user?.name || 'Administrator'}</h2>
++                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-dash-primary text-white uppercase tracking-wider flex items-center gap-1">
++                  <ShieldCheck size={11} /> Admin
++                </span>
++              </div>
++              <p className="text-xs text-text-secondary mt-0.5 truncate">{user?.email}</p>
++              {joinedYear && (
++                <p className="text-[11px] text-text-muted mt-2">Administering PortionBridge since {joinedYear}</p>
++              )}
++            </div>
++          </div>
++
++          {/* Quick links row */}
++          <div className="flex flex-wrap gap-2 mt-5 z-10 relative">
++            {QUICK_LINKS.map((link) => {
++              const Icon = link.icon;
++              return (
++                <button
++                  key={link.path}
++                  onClick={() => navigate(link.path)}
++                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-surface-hover border border-border text-text-primary text-xs font-medium rounded-lg transition-all shadow-xs"
++                >
++                  <Icon size={13} className="text-dash-primary" />
++                  {link.label}
++                </button>
++              );
++            })}
++          </div>
+         </div>
+ 
+-        <div className="flex gap-6">
+-          <div className="w-48 flex-shrink-0">
+-            <div className="bg-surface rounded-2xl border border-border p-2 shadow-sm">
++        {/* Mobile horizontal tabs */}
++        <div className="lg:hidden flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
++          {tabs.map((tab) => {
++            const Icon = tab.icon;
++            const isSelected = activeTab === tab.id;
++            return (
++              <button
++                key={tab.id}
++                onClick={() => setActiveTab(tab.id)}
++                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
++                  isSelected
++                    ? 'bg-dash-primary text-white shadow-sm'
++                    : 'bg-surface text-text-secondary hover:bg-surface-hover border border-border'
++                }`}
++              >
++                <Icon size={16} />
++                <span>{tab.label}</span>
++              </button>
++            );
++          })}
++        </div>
++
++        {/* Desktop sidebar + content */}
++        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
++          <div className="hidden lg:block lg:col-span-4">
++            <div className="bg-surface rounded-2xl border border-border p-3 shadow-sm space-y-1">
+               {tabs.map((tab) => {
+                 const Icon = tab.icon;
++                const isSelected = activeTab === tab.id;
+                 return (
+                   <button
+                     key={tab.id}
+                     onClick={() => setActiveTab(tab.id)}
+-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+-                      activeTab === tab.id
+-                        ? 'bg-dash-primary-soft text-dash-primary shadow-sm'
+-                        : 'text-text-secondary hover:bg-surface-hover'
+-                    } focus:outline-none focus:ring-2 focus:ring-dash-primary focus:ring-offset-2`}
+-                    aria-label={`Switch to ${tab.label}`}
+-                    aria-selected={activeTab === tab.id}
++                    className={`w-full flex items-start gap-3 p-3.5 rounded-xl text-left transition-all ${
++                      isSelected
++                        ? 'bg-dash-primary-soft text-dash-primary font-bold shadow-xs border border-dash-primary/20'
++                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary border border-transparent'
++                    }`}
+                     role="tab"
++                    aria-selected={isSelected}
+                   >
+-                    <Icon size={18} />
+-                    {tab.label}
++                    <div className={`p-2 rounded-lg shrink-0 ${isSelected ? 'bg-dash-primary text-white' : 'bg-page text-text-secondary'}`}>
++                      <Icon size={18} />
++                    </div>
++                    <div className="min-w-0 flex-1">
++                      <p className="text-sm leading-tight">{tab.label}</p>
++                      <p className="text-[11px] text-text-muted font-normal mt-0.5 truncate">{tab.desc}</p>
++                    </div>
+                   </button>
+                 );
+               })}
+             </div>
+           </div>
+ 
+-          <div className="flex-1">
+-            {activeTab === 'photo' && (
+-              <div className="bg-surface rounded-2xl border border-border p-6 shadow-sm">
+-                <h2 className="text-lg font-semibold text-text-primary mb-4">Profile Photo</h2>
+-                <div className="flex items-center gap-4">
+-                  <Avatar item={user} tone="dash" className="w-16 h-16 text-xl" />
+-                  <div>
+-                    <button
+-                      type="button"
+-                      onClick={() => fileInputRef.current?.click()}
+-                      disabled={photoUploading}
+-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-page border border-border text-text-primary rounded-lg hover:bg-surface-hover transition-colors text-sm font-medium disabled:opacity-60"
+-                    >
+-                      {photoUploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+-                      {photoUploading ? 'Uploading...' : 'Change Photo'}
+-                    </button>
+-                    <input
+-                      ref={fileInputRef}
+-                      type="file"
+-                      accept="image/jpeg,image/png,image/webp"
+-                      onChange={handlePhotoChange}
+-                      className="hidden"
+-                    />
+-                    <p className="text-xs text-text-secondary mt-1.5">JPG, PNG, or WEBP. Max 5MB.</p>
+-                    {photoError && <p className="text-xs text-danger mt-1">{photoError}</p>}
+-                  </div>
+-                </div>
+-              </div>
+-            )}
++          <div className="col-span-1 lg:col-span-8 space-y-6">
+             {activeTab === 'security' && <SecuritySettings />}
+             {activeTab === 'notifications' && <NotificationSettings />}
+             {activeTab === 'appearance' && <AppearanceSettings />}
+diff -ruN a/client/src/pages/AdminUserDetail.jsx b/client/src/pages/AdminUserDetail.jsx
+--- a/client/src/pages/AdminUserDetail.jsx	2026-09-28 00:15:48.861230570 +0000
++++ b/client/src/pages/AdminUserDetail.jsx	2026-09-28 00:15:48.879044849 +0000
+@@ -149,7 +149,7 @@
+             </div>
+             <div className="flex items-center gap-3">
+               <AdminUserStatusBadge isBanned={!!user.is_banned} isDeleted={!!user.is_deleted} size="large" />
+-              {!user.is_deleted && (
++              {!user.is_deleted && user.role !== 'admin' && (
+                 <button
+                   onClick={() => setConfirmOpen(true)}
+                   className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+diff -ruN a/client/src/pages/VolunteerActiveMissions.jsx b/client/src/pages/VolunteerActiveMissions.jsx
+--- a/client/src/pages/VolunteerActiveMissions.jsx	2026-09-28 00:15:48.861816628 +0000
++++ b/client/src/pages/VolunteerActiveMissions.jsx	2026-09-28 00:15:48.879490440 +0000
+@@ -1,12 +1,10 @@
+ import { useState, useEffect } from 'react';
+ import { useNavigate } from 'react-router-dom';
+-import axios from 'axios';
+ import { Utensils, Shirt, MapPin, CalendarClock, Package, Navigation, ArrowRight, Truck, Users, UserCircle2 } from 'lucide-react';
+ import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
+ import { SkeletonCard } from '../components/dashboard/skeletons';
+ import { StatusBadge } from '../components/donation/StatusBadge';
+-
+-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
++import { volunteerApi } from '../services/volunteerApi';
+ 
+ const CATEGORY_ICON = {
+   food: Utensils,
+@@ -34,26 +32,16 @@
+     let cancelled = false;
+ 
+     const fetchMissions = async () => {
+-      try {
+-        setLoading(true);
+-        setError(null);
+-        const token = localStorage.getItem('accessToken');
+-        const response = await axios.get(`${API_BASE}/volunteer/assignments`, {
+-          headers: { Authorization: `Bearer ${token}` },
+-        });
+-        if (cancelled) return;
+-        if (response.data?.success) {
+-          setMissions(response.data.data?.assignments || []);
+-        } else {
+-          throw new Error('Failed to fetch active missions');
+-        }
+-      } catch (err) {
+-        if (!cancelled) {
+-          setError(err.response?.data?.message || err.message);
+-        }
+-      } finally {
+-        if (!cancelled) setLoading(false);
++      setLoading(true);
++      setError(null);
++      const result = await volunteerApi.getAssignments();
++      if (cancelled) return;
++      if (result.success) {
++        setMissions(result.data || []);
++      } else {
++        setError(result.error || 'Failed to fetch active missions');
+       }
++      setLoading(false);
+     };
+ 
+     fetchMissions();
+diff -ruN a/client/src/pages/VolunteerDiscoveryPage.jsx b/client/src/pages/VolunteerDiscoveryPage.jsx
+--- a/client/src/pages/VolunteerDiscoveryPage.jsx	2026-09-28 00:15:48.861902858 +0000
++++ b/client/src/pages/VolunteerDiscoveryPage.jsx	2026-09-28 00:15:48.879517513 +0000
+@@ -120,17 +120,14 @@
+ 
+     if (volunteersResult.success) {
+       const vols = volunteersResult.data?.volunteers || [];
+-      console.log('[Discovery] volunteers fetched:', vols.length, vols.slice(0, 3));
+       setVolunteers(vols);
+       setMapVolunteers(vols);
+     } else if (!volunteersResult.aborted) {
+-      console.error('[Discovery] volunteers error:', volunteersResult.error);
+       setError(volunteersResult.error);
+     }
+ 
+     if (teamsResult.success) {
+       const tms = teamsResult.data?.teams || [];
+-      console.log('[Discovery] teams fetched:', tms.length, tms.slice(0, 3));
+       setTeams(tms);
+       setMapTeams(tms);
+     }
+diff -ruN a/client/src/pages/VolunteerMission.jsx b/client/src/pages/VolunteerMission.jsx
+--- a/client/src/pages/VolunteerMission.jsx	2026-09-28 00:15:48.862023568 +0000
++++ b/client/src/pages/VolunteerMission.jsx	2026-09-28 00:15:48.879607845 +0000
+@@ -5,7 +5,6 @@
+ import { MissionMap } from '../components/dashboard/volunteer/MissionMap';
+ import { volunteerApi } from '../services/volunteerApi';
+ 
+-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
+ const TRACKABLE_STATUSES = new Set(['accepted', 'scheduled', 'on_the_way', 'picked_up']);
+ 
+ export function VolunteerMission() {
+@@ -18,12 +17,8 @@
+     const loadActiveMission = async () => {
+       setLoading(true);
+       try {
+-        const token = localStorage.getItem('accessToken');
+-        const response = await fetch(`${API_BASE}/volunteer/assignments?limit=1`, {
+-          headers: { Authorization: `Bearer ${token}` },
+-        });
+-        const json = await response.json();
+-        const assignment = json?.data?.assignments?.[0];
++        const listResult = await volunteerApi.getAssignments({ limit: 1 });
++        const assignment = listResult.success ? listResult.data?.[0] : null;
+ 
+         if (!assignment || cancelled) {
+           if (!cancelled) setMission(null);
+diff -ruN a/client/src/services/adminApi.js b/client/src/services/adminApi.js
+--- a/client/src/services/adminApi.js	2026-09-28 00:15:48.862182609 +0000
++++ b/client/src/services/adminApi.js	2026-09-28 00:15:48.879719827 +0000
+@@ -593,15 +593,19 @@
+    * Paginated, filterable audit log listing.
+    * GET /admin/audit-logs
+    */
+-  listAuditLogs: async (params = {}) => {
++  listAuditLogs: async ({ signal, ...params } = {}) => {
+     try {
+       const token = getAuthToken();
+       const response = await axios.get(`${API_BASE}/admin/audit-logs`, {
+         params,
++        signal,
+         headers: { Authorization: `Bearer ${token}` },
+       });
+       return { success: true, data: response.data.data?.logs, meta: response.data.meta };
+     } catch (error) {
++      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
++        return { success: false, error: 'cancelled', cancelled: true };
++      }
+       const message = error.response?.data?.message || 'Failed to fetch audit logs';
+       const status = error.response?.status || null;
+       return { success: false, error: message, status };
+diff -ruN a/client/src/services/volunteerApi.js b/client/src/services/volunteerApi.js
+--- a/client/src/services/volunteerApi.js	2026-09-28 00:15:48.862414588 +0000
++++ b/client/src/services/volunteerApi.js	2026-09-28 00:15:48.879840872 +0000
+@@ -15,6 +15,29 @@
+  */
+ export const volunteerApi = {
+   /**
++   * Get the volunteer's own active assignments (accepted through
++   * picked_up) for the Active Missions page. Was previously fetched via
++   * raw axios directly in VolunteerActiveMissions.jsx, bypassing this
++   * service layer — the same anti-pattern already fixed elsewhere in the
++   * app (e.g. ProfileCompletion.jsx). Moved here for consistency.
++   * GET /volunteer/assignments
++   */
++  getAssignments: async (params = {}) => {
++    try {
++      const token = getAuthToken();
++      const response = await axios.get(`${API_BASE}/volunteer/assignments`, {
++        params,
++        headers: { Authorization: `Bearer ${token}` },
++      });
++      return { success: true, data: response.data.data?.assignments, meta: response.data.meta };
++    } catch (error) {
++      const message = error.response?.data?.message || 'Failed to fetch active missions';
++      const status = error.response?.status || null;
++      return { success: false, error: message, status };
++    }
++  },
++
++  /**
+    * Get full mission detail for the volunteer's own assignment — donor
+    * contact, pickup coordinates (may be null — see server-side docs),
+    * status, and team info if applicable.
+diff -ruN a/server/controllers/admin.controller.js b/server/controllers/admin.controller.js
+--- a/server/controllers/admin.controller.js	2026-09-28 00:15:48.864756193 +0000
++++ b/server/controllers/admin.controller.js	2026-09-28 00:15:48.880615591 +0000
+@@ -60,7 +60,7 @@
+  * PATCH /api/v1/admin/users/:id/enable
+  */
+ const enableUser = asyncHandler(async (req, res) => {
+-  const user = await adminService.enableUser(req.params.id);
++  const user = await adminService.enableUser(req.params.id, req.user.id);
+ 
+   return success(res, {
+     statusCode: HTTP_STATUS.OK,
+diff -ruN a/server/controllers/public.controller.js b/server/controllers/public.controller.js
+--- a/server/controllers/public.controller.js	2026-09-28 00:15:48.865183565 +0000
++++ b/server/controllers/public.controller.js	2026-09-28 00:15:48.880728425 +0000
+@@ -450,7 +450,11 @@
+     team = teamData[0];
+   }
+ 
+-  // Get volunteer statistics
++  // Get volunteer statistics. Matched on volunteer_id OR assigned_member_id
++  // (not just volunteer_id) so a team-assigned member's own public profile
++  // shows the missions they actually worked, not just ones where they were
++  // recorded as the team leader — same team-aware pattern used throughout
++  // the volunteer/admin stats queries elsewhere in this codebase.
+   const [statsResult] = await pool.query(
+     `SELECT 
+        COUNT(DISTINCT CASE WHEN dr.status IN ('accepted', 'scheduled') THEN dr.id END) as active_pickups,
+@@ -458,7 +462,7 @@
+        COUNT(DISTINCT CASE WHEN dr.is_deleted = 1 THEN dr.id END) as cancelled_pickups,
+        COUNT(DISTINCT dr.id) as total_assignments
+      FROM donation_requests dr
+-     WHERE dr.volunteer_id = :id`,
++     WHERE dr.volunteer_id = :id OR dr.assigned_member_id = :id`,
+     { id }
+   );
+ 
+diff -ruN a/server/models/admin.model.js b/server/models/admin.model.js
+--- a/server/models/admin.model.js	2026-09-28 00:15:48.866264535 +0000
++++ b/server/models/admin.model.js	2026-09-28 00:15:48.881078513 +0000
+@@ -73,11 +73,14 @@
+ 
+ /**
+  * Single aggregate query for donation counts by status, plus the
+- * soft-deleted ("cancelled") count. totalDonationRequests intentionally
+- * includes cancelled donations — it's the all-time total, broken down
+- * by the buckets below. `active` is every non-terminal, non-cancelled
+- * status (accepted through picked_up) — added for the Phase 2 Overview
+- * "Active Donations" KPI.
++ * cancelled count. totalDonationRequests intentionally includes
++ * cancelled donations — it's the all-time total, broken down by the
++ * buckets below. `active` is every non-terminal, non-cancelled status
++ * (accepted through picked_up) — added for the Phase 2 Overview "Active
++ * Donations" KPI. `cancelled` counts by status = 'cancelled' rather than
++ * is_deleted = 1 — the semantically correct signal (the two currently
++ * always co-occur, see donation.model.js#cancelDonation), matching the
++ * same fix applied to findVolunteersWithStats/getVolunteerCancelledCount.
+  * @returns {Promise<Object>} Status-bucketed donation counts
+  */
+ async function getDonationCounts() {
+@@ -89,7 +92,7 @@
+        SUM(status = :scheduled AND is_deleted = 0) AS scheduled,
+        SUM(status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND is_deleted = 0) AS active,
+        SUM(status = :completed AND is_deleted = 0) AS completed,
+-       SUM(is_deleted = 1) AS cancelled
++       SUM(status = :cancelled) AS cancelled
+      FROM donation_requests`,
+     {
+       pending: DONATION_STATUS.PENDING,
+@@ -98,6 +101,7 @@
+       onTheWay: DONATION_STATUS.ON_THE_WAY,
+       pickedUp: DONATION_STATUS.PICKED_UP,
+       completed: DONATION_STATUS.COMPLETED,
++      cancelled: DONATION_STATUS.CANCELLED,
+     }
+   );
+   return rows[0];
+@@ -106,14 +110,18 @@
+ /**
+  * Count of distinct volunteers currently holding at least one non-terminal
+  * assignment (accepted/scheduled/on_the_way/picked_up, not soft-deleted).
++ * Team-aware: for team-mode donations, credits the actual assigned member
++ * (assigned_member_id) rather than the team leader (volunteer_id), same
++ * COALESCE(assigned_member_id, volunteer_id) pattern as migration_021's
++ * top_volunteers view.
+  * Backs the Phase 2 Overview "Active Volunteers" KPI.
+  * @returns {Promise<number>} Count of active volunteers
+  */
+ async function getActiveVolunteersCount() {
+   const [rows] = await pool.query(
+-    `SELECT COUNT(DISTINCT volunteer_id) AS activeVolunteers
++    `SELECT COUNT(DISTINCT COALESCE(assigned_member_id, volunteer_id)) AS activeVolunteers
+      FROM donation_requests
+-     WHERE volunteer_id IS NOT NULL AND is_deleted = 0
++     WHERE (volunteer_id IS NOT NULL OR assigned_member_id IS NOT NULL) AND is_deleted = 0
+        AND status IN (:accepted, :scheduled, :onTheWay, :pickedUp)`,
+     {
+       accepted: DONATION_STATUS.ACCEPTED,
+@@ -223,7 +231,7 @@
+   const [rows] = await pool.query(
+     `SELECT DATE_FORMAT(completed_at, '%Y-%m') AS month,
+        COUNT(*) AS completedPickups,
+-       COUNT(DISTINCT volunteer_id) AS activeVolunteers
++       COUNT(DISTINCT COALESCE(assigned_member_id, volunteer_id)) AS activeVolunteers
+      FROM donation_requests
+      WHERE status = :completed AND completed_at >= :since AND is_deleted = 0
+      GROUP BY month
+@@ -416,7 +424,10 @@
+  * Builds the shared WHERE clause + params for the admin donation list.
+  * `deleted` is left unfiltered (shows both) unless explicitly passed as
+  * a boolean — this endpoint intentionally has broader visibility than
+- * the donor/volunteer-facing donation lists. `reported` filters to
++ * the donor/volunteer-facing donation lists. `volunteerId` matches either
++ * volunteer_id or assigned_member_id, so filtering by a team member finds
++ * the missions they actually worked, not just ones where they were the
++ * team leader on record. `reported` filters to
+  * donations with (true) or without (false) at least one row in `reports`
+  * — reuses the existing reports table via EXISTS rather than a JOIN, so
+  * a donation with multiple reports isn't duplicated in the result set.
+@@ -444,7 +455,7 @@
+     params.donorId = donorId;
+   }
+   if (volunteerId) {
+-    conditions.push('dr.volunteer_id = :volunteerId');
++    conditions.push('(dr.volunteer_id = :volunteerId OR dr.assigned_member_id = :volunteerId)');
+     params.volunteerId = volunteerId;
+   }
+   if (dateFrom) {
+@@ -611,11 +622,19 @@
+ /**
+  * Lists volunteers with per-volunteer assignment stats computed in a single
+  * aggregate query (LEFT JOIN + GROUP BY) — avoids one query per volunteer.
++ * Joined on COALESCE(dr.assigned_member_id, dr.volunteer_id) = u.id so a
++ * team-assigned member gets credit for the missions they actually worked,
++ * not the team leader (same gap/fix pattern as migration_021's
++ * top_volunteers view and Phase 5/6 of the volunteer audit).
+  * `activeAssignments` uses the same 4-status definition (accepted through
+  * picked_up) as Phase 2's getActiveVolunteersCount, so "how many active
+  * volunteers" means the same thing on the Overview KPI and here.
+- * `cancelledPickups`/`totalAssigned` (Phase 4) back the completion/
+- * cancellation rate shown on the volunteer list and detail pages.
++ * `cancelledPickups` counts by status = 'cancelled' rather than
++ * is_deleted = 1 — the two currently always co-occur, but status is the
++ * semantically correct signal and matches the (is_deleted = 0 OR
++ * status = 'cancelled') pattern already used elsewhere in the codebase.
++ * `totalAssigned` (Phase 4) backs the completion/cancellation rate shown
++ * on the volunteer list and detail pages.
+  * @param {Object} options - Query options
+  * @returns {Promise<Array>} Array of volunteer rows with stats
+  */
+@@ -627,10 +646,10 @@
+        u.id, u.name, u.email, u.phone, u.is_banned, u.created_at,
+        SUM(dr.status IN (:accepted, :scheduled, :onTheWay, :pickedUp) AND dr.is_deleted = 0) AS activeAssignments,
+        SUM(dr.status = :completed AND dr.is_deleted = 0) AS completedPickups,
+-       SUM(dr.is_deleted = 1) AS cancelledPickups,
++       SUM(dr.status = :cancelled) AS cancelledPickups,
+        COUNT(dr.id) AS totalAssigned
+      FROM users u
+-     LEFT JOIN donation_requests dr ON dr.volunteer_id = u.id
++     LEFT JOIN donation_requests dr ON COALESCE(dr.assigned_member_id, dr.volunteer_id) = u.id
+      WHERE ${whereClause}
+      GROUP BY u.id, u.name, u.email, u.phone, u.is_banned, u.created_at
+      ORDER BY u.created_at DESC
+@@ -642,6 +661,7 @@
+       onTheWay: DONATION_STATUS.ON_THE_WAY,
+       pickedUp: DONATION_STATUS.PICKED_UP,
+       completed: DONATION_STATUS.COMPLETED,
++      cancelled: DONATION_STATUS.CANCELLED,
+       limit,
+       offset,
+     }
+@@ -740,10 +760,14 @@
+ 
+ /**
+  * Cancelled-pickup count for a single volunteer (donations that were
+- * assigned to them and later soft-deleted). Used by getVolunteerDetail
+- * for the Phase 4 completion/cancellation rate — kept separate from
+- * donationModel.getVolunteerSummary (shared across the app) rather than
+- * modifying that shared query's bucket list.
++ * assigned to them and later cancelled). Matched on
++ * COALESCE(assigned_member_id, volunteer_id) so a team-assigned member's
++ * own cancelled missions count against them rather than their team leader,
++ * and on status = 'cancelled' rather than is_deleted = 1 — the semantically
++ * correct signal, matching findVolunteersWithStats above. Used by
++ * getVolunteerDetail for the Phase 4 completion/cancellation rate — kept
++ * separate from donationModel.getVolunteerSummary (shared across the app)
++ * rather than modifying that shared query's bucket list.
+  * @param {number} volunteerId - Volunteer's user ID
+  * @returns {Promise<number>} Count of cancelled donations ever assigned to them
+  */
+@@ -751,8 +775,8 @@
+   const [rows] = await pool.query(
+     `SELECT COUNT(*) AS cancelledPickups
+      FROM donation_requests
+-     WHERE volunteer_id = :volunteerId AND is_deleted = 1`,
+-    { volunteerId }
++     WHERE COALESCE(assigned_member_id, volunteer_id) = :volunteerId AND status = :cancelled`,
++    { volunteerId, cancelled: DONATION_STATUS.CANCELLED }
+   );
+   return rows[0].cancelledPickups;
+ }
+@@ -1132,7 +1156,7 @@
+     `SELECT sa.area,
+        COUNT(*) AS totalDonations,
+        SUM(x.status = :completed) AS completed,
+-       SUM(x.is_deleted = 1) AS cancelled,
++       SUM(x.status = :cancelled) AS cancelled,
+        SUM(
+          x.is_deleted = 0
+          AND x.status IN (:accepted, :scheduled)
+@@ -1158,6 +1182,7 @@
+      LIMIT 50`,
+     {
+       completed: DONATION_STATUS.COMPLETED,
++      cancelled: DONATION_STATUS.CANCELLED,
+       accepted: DONATION_STATUS.ACCEPTED,
+       scheduled: DONATION_STATUS.SCHEDULED,
+       pickedUp: DONATION_STATUS.PICKED_UP,
+diff -ruN a/server/models/donation.model.js b/server/models/donation.model.js
+--- a/server/models/donation.model.js	2026-09-28 00:15:48.866593724 +0000
++++ b/server/models/donation.model.js	2026-09-28 00:15:48.881134678 +0000
+@@ -70,14 +70,25 @@
+  * coordinates. Donations with no coordinates on file (legacy rows, or a
+  * geocode that never resolved) simply can't produce a distance and are
+  * excluded by the HAVING clause below rather than guessed at.
++ *
++ * The ACOS argument is clamped to [-1, 1] with LEAST/GREATEST — without
++ * it, a pickup at (or extremely close to, within floating-point rounding
++ * error of) the volunteer's own coordinates can push the argument
++ * fractionally above 1, making MySQL's ACOS() return NULL instead of ~0.
++ * A NULL distance fails the HAVING clause silently, so the single
++ * closest possible match — distance 0 — was the one case guaranteed to
++ * vanish from results. Same fix applied to the identical formula in
++ * volunteerDiscovery.model.js.
+  */
+ const PICKUP_LAT_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.latitude')) AS DECIMAL(10,8))`;
+ const PICKUP_LNG_EXPR = `CAST(JSON_UNQUOTE(JSON_EXTRACT(pickup_address_details, '$.longitude')) AS DECIMAL(11,8))`;
+ const DISTANCE_FORMULA = `
+   (6371 * ACOS(
+-    COS(RADIANS(:lat)) * COS(RADIANS(${PICKUP_LAT_EXPR})) *
+-    COS(RADIANS(${PICKUP_LNG_EXPR}) - RADIANS(:lng)) +
+-    SIN(RADIANS(:lat)) * SIN(RADIANS(${PICKUP_LAT_EXPR}))
++    LEAST(1, GREATEST(-1,
++      COS(RADIANS(:lat)) * COS(RADIANS(${PICKUP_LAT_EXPR})) *
++      COS(RADIANS(${PICKUP_LNG_EXPR}) - RADIANS(:lng)) +
++      SIN(RADIANS(:lat)) * SIN(RADIANS(${PICKUP_LAT_EXPR}))
++    ))
+   ))
+ `;
+ 
+diff -ruN a/server/models/rating.model.js b/server/models/rating.model.js
+--- a/server/models/rating.model.js	2026-09-28 00:15:48.866929596 +0000
++++ b/server/models/rating.model.js	2026-09-28 00:15:48.881239956 +0000
+@@ -103,4 +103,21 @@
+   return rows;
+ }
+ 
+-module.exports = { findByDonationId, findById, create, findByRatedUserId, findPendingReminders };
++/**
++ * Live average star rating for a user (a volunteer, typically), computed
++ * directly from the ratings table so it's always current — unlike a
++ * cached column, it reflects every new rating immediately. Same
++ * ROUND(AVG(stars), 2) formula as the top_volunteers/top_donors views.
++ * @param {number} userId - ID of the rated user
++ * @returns {Promise<number|null>} Average rating (2 decimal places), or null if never rated
++ */
++async function getAverageRating(userId) {
++  const [rows] = await pool.query(
++    `SELECT ROUND(AVG(stars), 2) AS average_rating FROM ratings WHERE rated_user = :userId`,
++    { userId }
++  );
++  const value = rows[0]?.average_rating;
++  return value === null || value === undefined ? null : Number(value);
++}
++
++module.exports = { findByDonationId, findById, create, findByRatedUserId, findPendingReminders, getAverageRating };
+diff -ruN a/server/models/volunteer.model.js b/server/models/volunteer.model.js
+--- a/server/models/volunteer.model.js	2026-09-28 00:15:48.867541401 +0000
++++ b/server/models/volunteer.model.js	2026-09-28 00:15:48.881393557 +0000
+@@ -140,6 +140,12 @@
+  * non-null, not-yet-past scheduled_at — "upcoming" only ever means the
+  * future. `today`/`week` are rolling windows from NOW(), not calendar
+  * boundaries; combining both narrows to `today` (a subset of `week`).
++ * Matched on volunteer_id OR assigned_member_id — same team-aware check
++ * as buildAssignmentFilter above and getUpcomingCounts below — otherwise
++ * a team-assigned member's own upcoming scheduled pickups (where they're
++ * assigned_member_id, not volunteer_id/the team leader) would silently
++ * disappear from this list while still counting correctly in
++ * getUpcomingCounts's dashboard numbers.
+  * @param {Object} filters - Filter options
+  * @param {number} filters.volunteerId - ID of the volunteer
+  * @param {boolean} [filters.today] - Restrict to the next 24 hours
+@@ -148,7 +154,7 @@
+  */
+ function buildUpcomingFilter({ volunteerId, today, week }) {
+   const conditions = [
+-    'volunteer_id = :volunteerId',
++    '(volunteer_id = :volunteerId OR assigned_member_id = :volunteerId)',
+     'status = :scheduledStatus',
+     'scheduled_at IS NOT NULL',
+     'scheduled_at >= NOW()',
+diff -ruN a/server/models/volunteerDiscovery.model.js b/server/models/volunteerDiscovery.model.js
+--- a/server/models/volunteerDiscovery.model.js	2026-09-28 00:15:48.867592600 +0000
++++ b/server/models/volunteerDiscovery.model.js	2026-09-28 00:15:48.881411570 +0000
+@@ -28,6 +28,16 @@
+ 
+ /**
+  * Finds nearby volunteers based on donor's location.
++ * `total_pickups`/`active_pickups` are computed live via correlated
++ * subqueries (COALESCE(assigned_member_id, volunteer_id), matching the
++ * top_volunteers view's convention) rather than read from
++ * volunteer_profiles.total_pickups — that column is never written to
++ * anywhere in the app and always reads back as its DB default (0), which
++ * silently zeroed out both the "sort by experience" option here and 10%
++ * of getRecommendedVolunteer's scoring in volunteerDiscovery.controller.js.
++ * `rating` (live AVG(stars) from the ratings table) was previously absent
++ * from this query entirely, similarly zeroing out getRecommendedVolunteer's
++ * rating factor (10% of its score) for every volunteer.
+  * @param {Object} options - Query options
+  * @param {number} options.latitude - Donor's latitude
+  * @param {number} options.longitude - Donor's longitude
+@@ -40,7 +50,7 @@
+  * @param {string} options.sortOrder - Sort direction asc/desc (default: asc)
+  * @param {number} options.limit - Result limit
+  * @param {number} options.offset - Result offset
+- * @returns {Promise<Array>} Array of nearby volunteers with distance
++ * @returns {Promise<Array>} Array of nearby volunteers with distance, total_pickups, active_pickups, rating
+  */
+ async function findNearbyVolunteers({ 
+   latitude, 
+@@ -93,13 +103,15 @@
+   // Haversine formula for distance calculation in SQL
+   const distanceFormula = `
+     (6371 * ACOS(
+-      COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
+-      COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
+-      SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
++      LEAST(1, GREATEST(-1,
++        COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
++        COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
++        SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
++      ))
+     ))
+   `;
+ 
+-  const orderColumn = sortBy === 'distance' ? 'distance' : 'vp.total_pickups';
++  const orderColumn = sortBy === 'distance' ? 'distance' : 'total_pickups';
+   const orderDirection = sortOrder === 'desc' ? 'DESC' : 'ASC';
+ 
+   const [rows] = await pool.query(
+@@ -118,7 +130,14 @@
+       vp.latitude,
+       vp.longitude,
+       vp.is_online,
+-      vp.total_pickups,
++      (SELECT COUNT(*) FROM donation_requests dr2
++         WHERE COALESCE(dr2.assigned_member_id, dr2.volunteer_id) = u.id
++           AND dr2.is_deleted = 0) AS total_pickups,
++      (SELECT COUNT(*) FROM donation_requests dr3
++         WHERE COALESCE(dr3.assigned_member_id, dr3.volunteer_id) = u.id
++           AND dr3.is_deleted = 0
++           AND dr3.status IN ('accepted', 'scheduled', 'on_the_way', 'picked_up')) AS active_pickups,
++      (SELECT ROUND(AVG(r.stars), 2) FROM ratings r WHERE r.rated_user = u.id) AS rating,
+       ${distanceFormula} AS distance,
+       t.id AS team_id,
+       t.name AS team_name,
+@@ -195,9 +214,11 @@
+ 
+   const distanceFormula = `
+     (6371 * ACOS(
+-      COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
+-      COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
+-      SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
++      LEAST(1, GREATEST(-1,
++        COS(RADIANS(:lat)) * COS(RADIANS(vp.latitude)) *
++        COS(RADIANS(vp.longitude) - RADIANS(:lng)) +
++        SIN(RADIANS(:lat)) * SIN(RADIANS(vp.latitude))
++      ))
+     ))
+   `;
+ 
+@@ -256,9 +277,11 @@
+ 
+   const distanceFormula = `
+     (6371 * ACOS(
+-      COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
+-      COS(RADIANS(t.longitude) - RADIANS(:lng)) +
+-      SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
++      LEAST(1, GREATEST(-1,
++        COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
++        COS(RADIANS(t.longitude) - RADIANS(:lng)) +
++        SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
++      ))
+     ))
+   `;
+ 
+@@ -322,9 +345,11 @@
+ 
+   const distanceFormula = `
+     (6371 * ACOS(
+-      COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
+-      COS(RADIANS(t.longitude) - RADIANS(:lng)) +
+-      SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
++      LEAST(1, GREATEST(-1,
++        COS(RADIANS(:lat)) * COS(RADIANS(t.latitude)) *
++        COS(RADIANS(t.longitude) - RADIANS(:lng)) +
++        SIN(RADIANS(:lat)) * SIN(RADIANS(t.latitude))
++      ))
+     ))
+   `;
+ 
+diff -ruN a/server/services/admin.service.js b/server/services/admin.service.js
+--- a/server/services/admin.service.js	2026-09-28 00:15:48.869448069 +0000
++++ b/server/services/admin.service.js	2026-09-28 00:15:48.881935436 +0000
+@@ -219,13 +219,14 @@
+ 
+ /**
+  * Soft-disables (bans) a user. Guards against an admin disabling their own
+- * account (self-lockout prevention) and against redundant state transitions.
++ * account (self-lockout prevention), against one admin disabling another
++ * admin account, and against redundant state transitions.
+  * Records the action in audit_logs (Phase 8) — this previously wasn't
+  * logged at all despite being a real moderation action.
+  * @param {number} userId - User ID to disable
+  * @param {number} requestingAdminId - ID of the admin making the request
+  * @returns {Promise<Object>} The updated user object
+- * @throws {AppError} 403 self-disable, 404 not found, 409 already in that state
++ * @throws {AppError} 403 self-disable/target-is-admin, 404 not found, 409 already in that state
+  */
+ async function disableUser(userId, requestingAdminId) {
+   if (Number(userId) === Number(requestingAdminId)) {
+@@ -236,6 +237,9 @@
+   if (!user) {
+     throw new AppError('User not found.', HTTP_STATUS.NOT_FOUND);
+   }
++  if (user.role === USER_ROLES.ADMIN) {
++    throw new AppError('Admin accounts cannot be disabled from here.', HTTP_STATUS.FORBIDDEN);
++  }
+   if (user.is_deleted) {
+     throw new AppError('This user account no longer exists.', HTTP_STATUS.CONFLICT);
+   }
+@@ -309,15 +313,6 @@
+  * Gets full details for a single donation, regardless of soft-delete state,
+  * plus any reports filed against it (Phase 3 — reuses report.model.js,
+  * the same table/rows the donor/volunteer-facing report feature already
+- * writes to; no duplicate report logic).
+- * @param {number} donationId - Donation ID
+- * @returns {Promise<Object>} Donation object with a `reports` array
+- * @throws {AppError} 404 if no such donation exists
+- */
+-/**
+- * Gets full details for a single donation, regardless of soft-delete state,
+- * plus any reports filed against it (Phase 3 — reuses report.model.js,
+- * the same table/rows the donor/volunteer-facing report feature already
+  * writes to; no duplicate report logic), plus (Phase 7) a transparent,
+  * rule-based health score/risk level/reasons — see
+  * utils/donationHealthScore.js. Uses the SAME flag-derivation used by
+@@ -462,8 +457,16 @@
+       cancelledPickups: cancelled,
+       totalCompletedDonations: completed,
+       totalAssigned: toInt(summary.total) + cancelled,
+-      isActive: activeAssignments > 0,
+-      currentStatus: activeAssignments > 0 ? 'On a Mission' : 'Available',
++      // isActive/currentStatus intentionally use currentAssignments.length
++      // (findAssignments — already covers all 4 non-terminal statuses,
++      // accepted through picked_up, and is team-aware via
++      // volunteer_id OR assigned_member_id) rather than the narrower
++      // `activeAssignments` above (accepted+scheduled only, matching its
++      // established meaning elsewhere in the app, e.g. the volunteer's own
++      // dashboard summary) — otherwise a volunteer who is on_the_way or has
++      // already picked up a donation would incorrectly show as "Available".
++      isActive: currentAssignments.length > 0,
++      currentStatus: currentAssignments.length > 0 ? 'On a Mission' : 'Available',
+       completionRate: attempted > 0 ? Number(((completed / attempted) * 100).toFixed(1)) : 0,
+       cancellationRate: attempted > 0 ? Number(((cancelled / attempted) * 100).toFixed(1)) : 0,
+     },
+@@ -785,7 +788,7 @@
+     }
+     if (flags.isDelayedPickup) {
+       items.push(buildAttentionItem('delayed_pickup', donation.id, link, {
+-        description: `#${donation.id} was scheduled for pickup by ${donation.volunteer_name || 'the assigned volunteer'} and is now overdue.`,
++        description: `#${donation.id} was scheduled for pickup by ${personName || 'the assigned volunteer'} and is now overdue.`,
+       }));
+     }
+     if (flags.isDelayedDelivery) {
+diff -ruN a/server/services/donation.service.js b/server/services/donation.service.js
+--- a/server/services/donation.service.js	2026-09-28 00:15:48.869693025 +0000
++++ b/server/services/donation.service.js	2026-09-28 00:15:48.882010228 +0000
+@@ -533,11 +533,12 @@
+   assertDonationWithinRadius(donation, { coverageRadius: profile.coverage_radius, latitude: profile.latitude, longitude: profile.longitude }, 'volunteer');
+ 
+   const connection = await pool.getConnection();
++  let acceptedDonation;
+ 
+   try {
+     await connection.beginTransaction();
+ 
+-    const acceptedDonation = await donationModel.acceptDonation(connection, donationId, volunteerId);
++    acceptedDonation = await donationModel.acceptDonation(connection, donationId, volunteerId);
+ 
+     if (!acceptedDonation) {
+       throw new AppError(
+@@ -547,19 +548,26 @@
+     }
+ 
+     await connection.commit();
++  } catch (err) {
++    await connection.rollback();
++    throw err;
++  } finally {
++    connection.release();
++  }
+ 
++  // Runs after commit — a notification failure here must never report a
++  // failed accept back to the volunteer when the donation was already
++  // successfully accepted and committed.
++  try {
+     // trg_donation_status_update already inserted a 'donation_accepted'
+     // notification for the donor as part of this same transaction —
+     // fetch and deliver it now rather than inserting a duplicate.
+     await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
+-
+-    return acceptedDonation;
+   } catch (err) {
+-    await connection.rollback();
+-    throw err;
+-  } finally {
+-    connection.release();
++    console.error('Post-accept notification step failed:', err);
+   }
++
++  return acceptedDonation;
+ }
+ 
+ /**
+@@ -922,25 +930,45 @@
+     updatedDonation = await donationModel.completeDonation(connection, donationId, donorId);
+ 
+     await connection.commit();
++  } catch (err) {
++    await connection.rollback();
++    throw err;
++  } finally {
++    connection.release();
++  }
+ 
+-    // Check and unlock achievements for donor
++  // Everything below this point runs AFTER the transaction has already
++  // committed and the connection has been released — the donation is
++  // completed no matter what happens next. None of this belongs inside
++  // the try/catch above: that catch calls connection.rollback(), which is
++  // meaningless (and can itself throw) once commit() has already
++  // succeeded. Previously all of this — two unguarded notificationModel
++  // .create() calls, two unguarded leaderboard pool.query() calls, and a
++  // third notification create — sat inside that try block, so any one of
++  // them failing would roll back nothing but still throw, making the API
++  // report a failed completion to the donor even though their donation
++  // had already been marked completed. A retry would then fail against
++  // an already-completed donation, with no clear explanation why.
++
++  // Check and unlock achievements for donor
++  try {
++    await achievementService.checkAndUnlockAchievements(donorId, 'donor');
++  } catch (err) {
++    // Don't let achievement errors block the completion flow
++    console.error('Achievement check failed (donor):', err);
++  }
++
++  // Check and unlock achievements for the assigned volunteer
++  if (updatedDonation.volunteer_id) {
+     try {
+-      await achievementService.checkAndUnlockAchievements(donorId, 'donor');
++      await achievementService.checkAndUnlockAchievements(updatedDonation.volunteer_id, 'volunteer');
+     } catch (err) {
+       // Don't let achievement errors block the completion flow
+-      console.error('Achievement check failed (donor):', err);
+-    }
+-
+-    // Check and unlock achievements for the assigned volunteer
+-    if (updatedDonation.volunteer_id) {
+-      try {
+-        await achievementService.checkAndUnlockAchievements(updatedDonation.volunteer_id, 'volunteer');
+-      } catch (err) {
+-        // Don't let achievement errors block the completion flow
+-        console.error('Achievement check failed (volunteer):', err);
+-      }
++      console.error('Achievement check failed (volunteer):', err);
+     }
++  }
+ 
++  try {
+     // trg_donation_status_update already inserted the 'completed'
+     // notifications (donor always, volunteer too when assigned) as part
+     // of this same transaction — fetch and deliver both now rather than
+@@ -1038,10 +1066,10 @@
+       });
+     }
+   } catch (err) {
+-    await connection.rollback();
+-    throw err;
+-  } finally {
+-    connection.release();
++    // Same reasoning as the achievement checks above: the donation is
++    // already completed and committed, so a notification/broadcast
++    // failure here must never surface as a failed completion to the donor.
++    console.error('Post-completion notification/broadcast step failed:', err);
+   }
+ 
+   await auditService.record({
+@@ -1163,11 +1191,12 @@
+   assertDonationWithinRadius(donation, { coverageRadius: team.coverage_radius, latitude: team.latitude, longitude: team.longitude }, 'team');
+ 
+   const connection = await pool.getConnection();
++  let acceptedDonation;
+ 
+   try {
+     await connection.beginTransaction();
+ 
+-    const acceptedDonation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
++    acceptedDonation = await donationModel.acceptDonationForTeam(connection, donationId, teamId, leaderId);
+ 
+     if (!acceptedDonation) {
+       throw new AppError(
+@@ -1177,22 +1206,29 @@
+     }
+ 
+     await connection.commit();
++  } catch (err) {
++    await connection.rollback();
++    throw err;
++  } finally {
++    connection.release();
++  }
+ 
++  // Runs after commit — a notification/audit failure here must never
++  // report a failed team-accept back to the leader when the donation was
++  // already successfully accepted and committed.
++  try {
+     // trg_donation_status_update already inserted a 'donation_accepted'
+     // notification for the donor as part of this same transaction —
+     // fetch and deliver it now rather than inserting a duplicate.
+     await notificationService.deliverLatestForRelated(acceptedDonation.donor_id, acceptedDonation.id);
+-
+-    // Log audit
+-    await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
+-
+-    return acceptedDonation;
+   } catch (err) {
+-    await connection.rollback();
+-    throw err;
+-  } finally {
+-    connection.release();
++    console.error('Post-team-accept notification step failed:', err);
+   }
++
++  // Log audit
++  await auditService.record({ userId: leaderId, action: 'team_donation_accepted', metadata: { donationId, teamId } });
++
++  return acceptedDonation;
+ }
+ 
+ /**
+diff -ruN a/server/services/team.service.js b/server/services/team.service.js
+--- a/server/services/team.service.js	2026-09-28 00:15:48.870128167 +0000
++++ b/server/services/team.service.js	2026-09-28 00:15:48.882147608 +0000
+@@ -356,7 +356,7 @@
+   }
+ 
+   const connection = await require('../config/db').pool.getConnection();
+-  
++
+   try {
+     await connection.beginTransaction();
+ 
+@@ -371,7 +371,23 @@
+     }, connection);
+ 
+     await connection.commit();
++  } catch (error) {
++    await connection.rollback();
++    throw error;
++  } finally {
++    connection.release();
++  }
+ 
++  // Everything below runs after the transaction has already committed and
++  // the connection has been released — the user has already joined the
++  // team no matter what happens next. None of this belongs inside the
++  // try/catch above: that catch calls connection.rollback(), which is
++  // meaningless (and can itself throw) once commit() has already
++  // succeeded — previously a failure in any of these steps (notification,
++  // broadcast, audit log, or the getTeam re-fetch) would report a failed
++  // "accept invitation" to the user even though they'd already been added
++  // to the team, and a retry would then fail with "already a member".
++  try {
+     // Notify team leader
+     const team = await teamModel.findById(invitation.team_id);
+     await notificationService.createNotification(team.leader_id, {
+@@ -389,17 +405,14 @@
+         userName: (await userModel.findById(userId)).name,
+       });
+     }
++  } catch (err) {
++    console.error('Post-accept-invitation notification/broadcast step failed:', err);
++  }
+ 
+-    // Log audit
+-    await auditService.record({ userId, action: 'team_invitation_accepted', metadata: { teamId: invitation.team_id, invitationId } });
++  // Log audit
++  await auditService.record({ userId, action: 'team_invitation_accepted', metadata: { teamId: invitation.team_id, invitationId } });
+ 
+-    return await getTeam(invitation.team_id, userId);
+-  } catch (error) {
+-    await connection.rollback();
+-    throw error;
+-  } finally {
+-    connection.release();
+-  }
++  return await getTeam(invitation.team_id, userId);
+ }
+ 
+ /**
+@@ -552,7 +565,16 @@
+     await teamModel.updateLeader(teamId, memberId, connection);
+ 
+     await connection.commit();
++  } catch (error) {
++    await connection.rollback();
++    throw error;
++  } finally {
++    connection.release();
++  }
+ 
++  // Runs after commit — see acceptInvitation above for why this can't stay
++  // inside the try/catch that rolls back.
++  try {
+     // Notify the promoted member
+     await notificationService.createNotification(memberId, {
+       type: NOTIFICATION_TYPES.TEAM_MEMBER_PROMOTED,
+@@ -570,16 +592,12 @@
+         newLeaderName: (await userModel.findById(memberId)).name,
+       });
+     }
+-
+-    // Log audit
+-    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
+-
+-  } catch (error) {
+-    await connection.rollback();
+-    throw error;
+-  } finally {
+-    connection.release();
++  } catch (err) {
++    console.error('Post-promote-member notification/broadcast step failed:', err);
+   }
++
++  // Log audit
++  await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
+ }
+ 
+ /**
+@@ -624,7 +642,16 @@
+     await teamModel.updateLeader(teamId, memberId, connection);
+ 
+     await connection.commit();
++  } catch (error) {
++    await connection.rollback();
++    throw error;
++  } finally {
++    connection.release();
++  }
+ 
++  // Runs after commit — see acceptInvitation above for why this can't stay
++  // inside the try/catch that rolls back.
++  try {
+     // Notify the new leader
+     await notificationService.createNotification(memberId, {
+       type: NOTIFICATION_TYPES.TEAM_LEADERSHIP_TRANSFERRED,
+@@ -642,16 +669,12 @@
+         newLeaderName: (await userModel.findById(memberId)).name,
+       });
+     }
+-
+-    // Log audit
+-    await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
+-
+-  } catch (error) {
+-    await connection.rollback();
+-    throw error;
+-  } finally {
+-    connection.release();
++  } catch (err) {
++    console.error('Post-transfer-leadership notification/broadcast step failed:', err);
+   }
++
++  // Log audit
++  await auditService.record({ userId, action: 'team_leadership_transferred', metadata: { teamId, newLeaderId: memberId } });
+ }
+ 
+ /**
+@@ -863,7 +886,16 @@
+     }, connection);
+ 
+     await connection.commit();
++  } catch (error) {
++    await connection.rollback();
++    throw error;
++  } finally {
++    connection.release();
++  }
+ 
++  // Runs after commit — see acceptInvitation above for why this can't stay
++  // inside the try/catch that rolls back.
++  try {
+     // Notify requesting volunteer
+     const targetUser = await userModel.findById(request.user_id);
+     await notificationService.createNotification(request.user_id, {
+@@ -881,16 +913,13 @@
+         userName: targetUser.name,
+       });
+     }
++  } catch (err) {
++    console.error('Post-accept-join-request notification/broadcast step failed:', err);
++  }
+ 
+-    await auditService.record({ userId, action: 'team_join_request_accepted', metadata: { teamId, requestId, volunteerId: request.user_id } });
++  await auditService.record({ userId, action: 'team_join_request_accepted', metadata: { teamId, requestId, volunteerId: request.user_id } });
+ 
+-    return await teamMemberModel.findByTeamAndUser(teamId, request.user_id);
+-  } catch (error) {
+-    await connection.rollback();
+-    throw error;
+-  } finally {
+-    connection.release();
+-  }
++  return await teamMemberModel.findByTeamAndUser(teamId, request.user_id);
+ }
+ 
+ /**
+diff -ruN a/server/services/volunteer.service.js b/server/services/volunteer.service.js
+--- a/server/services/volunteer.service.js	2026-09-28 00:15:48.870301766 +0000
++++ b/server/services/volunteer.service.js	2026-09-28 00:15:48.882188585 +0000
+@@ -98,17 +98,6 @@
+ }
+ 
+ /**
+- * Gets full details for a single assignment, verifying the requesting
+- * volunteer owns it. Reuses donationModel.findById — no new SQL — and
+- * layers the ownership check in the service so a 404 (doesn't exist /
+- * soft-deleted) is always distinguishable from a 403 (exists, but isn't
+- * this volunteer's assignment).
+- * @param {number} volunteerId - ID of the requesting volunteer
+- * @param {number} donationId - Donation ID to look up
+- * @returns {Promise<Object>} The donation object
+- * @throws {AppError} 404 if not found, 403 if not owned by this volunteer
+- */
+-/**
+  * Gets full assignment detail for the Phase 5 mission map: donor
+  * name/phone, real pickup coordinates when available (via saved_addresses),
+  * and — for team-mode donations — the team roster with a live online/
+diff -ruN a/server/services/volunteerDiscovery.service.js b/server/services/volunteerDiscovery.service.js
+--- a/server/services/volunteerDiscovery.service.js	2026-09-28 00:15:48.870344710 +0000
++++ b/server/services/volunteerDiscovery.service.js	2026-09-28 00:15:48.882225729 +0000
+@@ -210,7 +210,11 @@
+   const liveRating = await ratingsModel.getAverageRating(volunteerId);
+ 
+   return {
+-    totalPickups: profile.total_pickups || 0,
++    // Was profile.total_pickups — that column is never written to anywhere
++    // in the app, so it always read back as its DB default (0). summary.total
++    // is live-computed and already team-aware (volunteer_id OR
++    // assigned_member_id), matching the fix applied to findNearbyVolunteers.
++    totalPickups: Number(summary.total) || 0,
+     activePickups: Number(summary.accepted) + Number(summary.scheduled),
+     completedPickups: Number(summary.completed),
+     rating: liveRating || null,
+@@ -219,10 +223,67 @@
+   };
+ }
+ 
++/**
++ * Resolves a free-text address into coordinates via OpenStreetMap Nominatim
++ * — a server-side proxy so ManualLocationModal-style flows can resolve an
++ * address without relying on browser geolocation. Mirrors the params/
++ * response shape of the client-side searchAddressNominatim helper
++ * (client/src/utils/geocoding.js), just returning a single best match
++ * instead of a suggestion list, matching what volunteerDiscoveryApi.js's
++ * geocodeAddress wrapper expects ({ latitude, longitude, displayName }).
++ *
++ * This function was previously missing entirely even though the
++ * controller (getVolunteerStats's neighbor, geocodeAddress), route
++ * (GET /volunteer-discovery/geocode), and validator already existed and
++ * called it — every request would have thrown "geocodeAddress is not a
++ * function" (500). No frontend component calls the API wrapper yet, so
++ * this was dormant rather than user-visible, but fixed now so it works
++ * the moment something does.
++ * @param {string} address - Free-text address/place name
++ * @returns {Promise<{latitude: number, longitude: number, displayName: string}>}
++ * @throws {AppError} 400 if address is blank, 404 if no match found, 500 if the geocoding service itself fails
++ */
++async function geocodeAddress(address) {
++  const trimmed = (address || '').trim();
++  if (!trimmed) {
++    throw new AppError('address is required.', HTTP_STATUS.BAD_REQUEST);
++  }
++
++  let response;
++  try {
++    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(trimmed)}&countrycodes=bd&limit=1&accept-language=en`;
++    response = await fetch(url, {
++      headers: {
++        Accept: 'application/json',
++        'User-Agent': 'PortionBridge/1.0 (donation pickup coordination)',
++      },
++    });
++  } catch {
++    throw new AppError('Failed to reach the geocoding service.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
++  }
++
++  if (!response.ok) {
++    throw new AppError('Failed to reach the geocoding service.', HTTP_STATUS.INTERNAL_SERVER_ERROR);
++  }
++
++  const results = await response.json();
++  if (!Array.isArray(results) || results.length === 0) {
++    throw new AppError('No location found for that address.', HTTP_STATUS.NOT_FOUND);
++  }
++
++  const match = results[0];
++  return {
++    latitude: parseFloat(match.lat),
++    longitude: parseFloat(match.lon),
++    displayName: match.display_name || trimmed,
++  };
++}
++
+ module.exports = {
+   findNearbyVolunteers,
+   findNearbyTeams,
+   updateVolunteerLocation,
+   updateTeamLocation,
+   getVolunteerStats,
++  geocodeAddress,
+ };
+diff -ruN a/server/tests/integration/admin.test.js b/server/tests/integration/admin.test.js
+--- a/server/tests/integration/admin.test.js	2026-09-28 00:15:48.871779148 +0000
++++ b/server/tests/integration/admin.test.js	2026-09-28 00:15:48.882621232 +0000
+@@ -108,6 +108,21 @@
+     );
+   });
+ 
++  test('an admin cannot disable another admin account', async (t) => {
++    if (!dbReady) return t.skip('no test database reachable');
++
++    const { user: admin } = await createVerifiedUser({ role: 'admin' });
++    const { user: otherAdmin } = await createVerifiedUser({ role: 'admin' });
++
++    await assert.rejects(
++      () => adminService.disableUser(otherAdmin.id, admin.id),
++      (err) => {
++        assert.equal(err.statusCode, 403);
++        return true;
++      }
++    );
++  });
++
+   test('disabling a non-existent user returns 404', async (t) => {
+     if (!dbReady) return t.skip('no test database reachable');
+ 

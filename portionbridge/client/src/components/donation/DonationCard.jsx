@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Utensils, Shirt, Calendar, User, Package, Eye, Edit, Trash2, MapPin, HandHeart, Users, Loader2 } from 'lucide-react';
 import { StatusBadge } from './StatusBadge';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 /**
  * DonationCard component for displaying donation in card view.
@@ -37,7 +38,8 @@ export function DonationCard({ donation, onViewDetails, onEdit, onCancel, onAcce
     distance,
   } = donation;
 
-  const coverImage = photo || (images && images.length > 0 ? images[0] : null);
+  const rawCover = photo || (images && images.length > 0 ? (typeof images[0] === 'string' ? images[0] : images[0]?.url) : null);
+  const coverImage = resolveMediaUrl(rawCover);
   const shortDescription = description && description.length > 100 
     ? description.substring(0, 100) + '...' 
     : description;

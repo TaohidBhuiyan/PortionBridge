@@ -29,6 +29,11 @@ const {
   deleteNotificationTemplate,
   getAreaIntelligence,
   listAuditLogs,
+  getAdminSettings,
+  updateAdminSettings,
+  listSessions,
+  revokeSession,
+  exportAuditLogs,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -314,4 +319,43 @@ router.get(
   listAuditLogs
 );
 
+// --- Admin Settings ---
+router.get(
+  '/settings',
+  protect,
+  authorize('admin'),
+  getAdminSettings
+);
+
+router.patch(
+  '/settings',
+  protect,
+  authorize('admin'),
+  updateAdminSettings
+);
+
+// --- Active Sessions ---
+router.get(
+  '/settings/sessions',
+  protect,
+  authorize('admin'),
+  listSessions
+);
+
+router.delete(
+  '/settings/sessions/:sessionId',
+  protect,
+  authorize('admin'),
+  revokeSession
+);
+
+// --- Audit Log Export ---
+router.get(
+  '/audit-logs/export',
+  protect,
+  authorize('admin'),
+  exportAuditLogs
+);
+
 module.exports = router;
+

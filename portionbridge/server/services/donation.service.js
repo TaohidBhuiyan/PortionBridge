@@ -1431,13 +1431,22 @@ async function getDonationDetails(donationId, userId, userRole) {
   }
   // Admins can view any donation - no restriction needed
 
-  // Enrich with human-readable names
+  // Enrich with human-readable names and photos
+  const userModel = require('../models/user.model');
+  if (donation.donor_id) {
+    const donorUser = await userModel.findById(donation.donor_id);
+    if (donorUser) {
+      donation.donor_name = donorUser.name;
+      donation.donor_photo = donorUser.profile_photo || donorUser.profile_picture;
+      donation.donor_phone = donorUser.phone;
+    }
+  }
   if (donation.volunteer_id) {
-    const userModel = require('../models/user.model');
     const volunteerUser = await userModel.findById(donation.volunteer_id);
     if (volunteerUser) {
       donation.volunteer_name = volunteerUser.name;
-      donation.volunteer_photo = volunteerUser.profile_photo;
+      donation.volunteer_photo = volunteerUser.profile_photo || volunteerUser.profile_picture;
+      donation.volunteer_phone = volunteerUser.phone;
     }
   }
   if (donation.assignment_mode === 'team' && donation.team_id) {
@@ -1445,11 +1454,11 @@ async function getDonationDetails(donationId, userId, userRole) {
     const team = await teamModel.findById(donation.team_id);
     if (team) donation.team_name = team.name;
     if (donation.assigned_member_id) {
-      const userModel = require('../models/user.model');
       const assignedUser = await userModel.findById(donation.assigned_member_id);
       if (assignedUser) {
         donation.assigned_member_name = assignedUser.name;
-        donation.assigned_member_photo = assignedUser.profile_photo;
+        donation.assigned_member_photo = assignedUser.profile_photo || assignedUser.profile_picture;
+        donation.assigned_member_phone = assignedUser.phone;
       }
     }
   }

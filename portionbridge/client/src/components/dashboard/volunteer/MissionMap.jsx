@@ -94,7 +94,10 @@ export function MissionMap({ mission, onStatusChange }) {
   } : null;
 
   const navigateTo = (lat, lng, address) => {
-    const url = (typeof lat === 'number' && typeof lng === 'number')
+    // `typeof NaN === 'number'` — must also check !isNaN to avoid
+    // building a destination=NaN,NaN URL when coordinates are missing.
+    const hasCoords = typeof lat === 'number' && !isNaN(lat) && typeof lng === 'number' && !isNaN(lng);
+    const url = hasCoords
       ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
       : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address || '')}`;
     window.open(url, '_blank', 'noopener,noreferrer');

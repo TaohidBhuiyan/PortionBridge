@@ -137,7 +137,7 @@ export function MessagesPage() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const titleMatch = item.title?.toLowerCase().includes(q);
-        const counterpartMatch = (item.volunteer_name || item.donor_name || '')
+        const counterpartMatch = (item.volunteer_name || item.assigned_member_name || item.donor_name || '')
           .toLowerCase()
           .includes(q);
         const categoryMatch = item.category?.toLowerCase().includes(q);
@@ -324,9 +324,13 @@ export function MessagesPage() {
               ) : (
                 filteredConversations.map((donation) => {
                   const isSelected = selectedDonation?.id === donation.id;
-                  const counterpart = userRole === 'volunteer'
-                    ? (donation.donor_name || 'Donor')
-                    : (donation.volunteer_name || 'Volunteer');
+                  const isCurrentUserDonor = userRole === 'donor' || donation.donor_id === user?.id;
+                  const counterpartName = isCurrentUserDonor
+                    ? (donation.volunteer_name || donation.assigned_member_name || 'Volunteer')
+                    : (donation.donor_name || 'Donor');
+                  const counterpartPhoto = isCurrentUserDonor
+                    ? (donation.volunteer_photo || donation.assigned_member_photo)
+                    : donation.donor_photo;
                   const hasUnread = donation.unreadCount > 0;
 
                   return (
@@ -342,7 +346,7 @@ export function MessagesPage() {
                       {/* Avatar */}
                       <div className="relative shrink-0">
                         <Avatar
-                          item={{ name: counterpart }}
+                          item={{ name: counterpartName, photo: counterpartPhoto }}
                           tone="dash"
                           className="w-10 h-10 text-xs font-bold mt-0.5 shadow-xs"
                         />
@@ -356,7 +360,7 @@ export function MessagesPage() {
                         {/* Top row: Counterpart & Status */}
                         <div className="flex items-center justify-between gap-1.5 mb-1">
                           <p className={`text-xs font-semibold truncate ${hasUnread ? 'text-text-primary font-bold' : 'text-text-primary'}`}>
-                            {counterpart}
+                            {counterpartName}
                           </p>
                           <StatusBadge status={donation.status} size="small" />
                         </div>

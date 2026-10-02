@@ -118,6 +118,19 @@ async function sendMessage({ donationId, senderId, message }) {
   const cleanMessage = validateMessage(message);
   const donation = await authorizeRoomAccess(donationId, senderId);
 
+  // When sender posts a new message, any previous messages from the other participant
+  // in this conversation are logically already read by the sender.
+  await chatMessageModel.markAsReadByOtherSender(donation.id, senderId);
+  await pool.query(
+    `UPDATE notifications
+     SET is_read = 1
+     WHERE user_id = :senderId
+       AND related_id = :donationId
+       AND type = :type
+       AND is_read = 0`,
+    { senderId, donationId: donation.id, type: NOTIFICATION_TYPES.NEW_MESSAGE }
+  );
+
   const insertId = await chatMessageModel.create({
     donationRequestId: donation.id,
     senderId,
@@ -229,6 +242,17 @@ async function getUnreadCountForUser(userId) {
 async function markConversationRead(donationId, readerId) {
   const donation = await authorizeRoomAccess(donationId, readerId);
   const markedReadCount = await chatMessageModel.markAsReadByOtherSender(donation.id, readerId);
+
+  await pool.query(
+    `UPDATE notifications
+     SET is_read = 1
+     WHERE user_id = :readerId
+       AND related_id = :donationId
+       AND type = :type
+       AND is_read = 0`,
+    { readerId, donationId: donation.id, type: NOTIFICATION_TYPES.NEW_MESSAGE }
+  );
+
   return { donation, markedReadCount };
 }
 

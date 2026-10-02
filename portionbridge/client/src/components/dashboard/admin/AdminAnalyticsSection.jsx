@@ -78,33 +78,33 @@ function Reveal({ index = 0, className = '', children }) {
 function StatTile({ icon: Icon, label, value, delta, footnote, values, color, index }) {
   return (
     <Reveal index={index}>
-      <div className="group relative h-full overflow-hidden rounded-2xl border border-border/60 bg-surface p-5 shadow-pb-card transition duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-pb-elevated">
+      <div className="group relative h-full overflow-hidden rounded-xl border border-border/60 bg-surface p-3.5 sm:p-4 shadow-pb-subtle transition duration-200 hover:-translate-y-0.5 hover:border-border hover:shadow-pb-card">
         <div
-          className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-[0.12] blur-2xl transition-opacity duration-300 group-hover:opacity-25"
+          className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-[0.10] blur-xl transition-opacity duration-300 group-hover:opacity-20"
           style={{ backgroundColor: color }}
         />
-        <div className="relative flex items-start justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+        <div className="relative flex items-start justify-between gap-2.5">
+          <div className="flex items-center gap-2">
             <span
-              className="flex h-9 w-9 items-center justify-center rounded-xl"
+              className="flex h-8 w-8 items-center justify-center rounded-lg"
               style={{ color, backgroundColor: `color-mix(in oklab, ${color} 14%, transparent)` }}
             >
-              <Icon size={17} />
+              <Icon size={16} />
             </span>
-            <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">{label}</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-text-secondary">{label}</span>
           </div>
         </div>
-        <div className="relative mt-4 flex items-end justify-between gap-3">
+        <div className="relative mt-3 flex items-end justify-between gap-2.5">
           <div>
-            <p className="text-3xl font-bold leading-none tabular-nums text-text-primary">{value}</p>
-            <div className="mt-2.5 flex items-center gap-2">
+            <p className="text-xl sm:text-2xl font-bold leading-none tabular-nums text-text-primary">{value}</p>
+            <div className="mt-2 flex items-center gap-1.5">
               <DeltaPill delta={delta} />
-              <span className="text-[11px] text-text-muted">vs last month</span>
+              <span className="text-[10px] sm:text-[11px] text-text-muted">vs last month</span>
             </div>
           </div>
-          <Sparkline values={values} color={color} />
+          <Sparkline values={values} color={color} width={80} height={28} />
         </div>
-        <p className="relative mt-3 border-t border-border/50 pt-2.5 text-[11px] text-text-muted">{footnote}</p>
+        <p className="relative mt-2.5 border-t border-border/50 pt-2 text-[11px] text-text-muted truncate">{footnote}</p>
       </div>
     </Reveal>
   );
@@ -113,20 +113,20 @@ function StatTile({ icon: Icon, label, value, delta, footnote, values, color, in
 function ChartCard({ icon: Icon, title, subtitle, legend, index = 0, className = '', children }) {
   return (
     <Reveal index={index} className={className}>
-      <section className="flex h-full flex-col rounded-2xl border border-border/60 bg-surface shadow-pb-card transition-colors duration-200 hover:border-border">
-        <header className="flex flex-wrap items-start justify-between gap-3 px-5 pb-1 pt-5">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-dash-primary-soft text-dash-primary">
-              <Icon size={17} />
+      <section className="flex h-full flex-col rounded-xl border border-border/60 bg-surface shadow-pb-subtle transition-colors duration-200 hover:border-border">
+        <header className="flex flex-wrap items-start justify-between gap-2.5 px-4 pb-1 pt-3.5 sm:px-5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-dash-primary-soft text-dash-primary">
+              <Icon size={16} />
             </span>
             <div>
               <h3 className="text-sm font-bold text-text-primary">{title}</h3>
               {subtitle && <p className="mt-0.5 text-xs text-text-secondary">{subtitle}</p>}
             </div>
           </div>
-          {legend && <div className="flex flex-wrap items-center gap-2">{legend}</div>}
+          {legend && <div className="flex flex-wrap items-center gap-1.5">{legend}</div>}
         </header>
-        <div className="flex-1 px-3 pb-4 pt-3 sm:px-5 sm:pb-5">{children}</div>
+        <div className="flex-1 px-3 pb-3.5 pt-2 sm:px-4 sm:pb-4">{children}</div>
       </section>
     </Reveal>
   );
@@ -272,7 +272,7 @@ export function AdminAnalyticsSection({ analytics, loading }) {
       </div>
 
       {/* Donation trend + completion gauge */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3">
         <ChartCard
           className="lg:col-span-2"
           index={4}
@@ -281,7 +281,7 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           subtitle="Total vs. completed donations, last 6 months"
           legend={<LegendPills items={trendSeries} />}
         >
-          <AreaChart data={donationTrend} series={trendSeries} height={264} ariaLabel="Donation trend, total versus completed, last 6 months" />
+          <AreaChart data={donationTrend} series={trendSeries} height={215} ariaLabel="Donation trend, total versus completed, last 6 months" />
         </ChartCard>
 
         <ChartCard
@@ -290,10 +290,10 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           title="Completion Rate"
           subtitle="Share of all-time donations completed"
         >
-          <div className="flex h-full flex-col items-center justify-center gap-4 py-2">
-            <RadialGauge value={completionRate} label="completed" />
-            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tier.cls}`}>{tier.label}</span>
-            <p className="max-w-[220px] text-center text-xs leading-relaxed text-text-secondary">
+          <div className="flex h-full flex-col items-center justify-center gap-3 py-2">
+            <RadialGauge value={completionRate} size={130} thickness={11} label="completed" />
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${tier.cls}`}>{tier.label}</span>
+            <p className="max-w-[210px] text-center text-xs leading-relaxed text-text-secondary">
               Completed donations divided by every donation request ever made on the platform.
             </p>
           </div>
@@ -301,7 +301,7 @@ export function AdminAnalyticsSection({ analytics, loading }) {
       </div>
 
       {/* Volunteer activity + category split */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3">
         <ChartCard
           className="lg:col-span-2"
           index={6}
@@ -310,7 +310,7 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           subtitle="Completed pickups vs. active volunteers, last 6 months"
           legend={<LegendPills items={activitySeries} />}
         >
-          <AreaChart data={volunteerActivity} series={activitySeries} height={264} ariaLabel="Volunteer activity, completed pickups versus active volunteers, last 6 months" />
+          <AreaChart data={volunteerActivity} series={activitySeries} height={215} ariaLabel="Volunteer activity, completed pickups versus active volunteers, last 6 months" />
         </ChartCard>
 
         <ChartCard
@@ -320,16 +320,16 @@ export function AdminAnalyticsSection({ analytics, loading }) {
           subtitle="All non-deleted donations, all time"
         >
           {donutTotal > 0 ? (
-            <div className="flex h-full flex-col items-center justify-center gap-5">
-              <DonutChart data={donutData} centerLabel="donations" ariaLabel="Donation category split" />
-              <ul className="w-full space-y-2.5">
+            <div className="flex h-full flex-col items-center justify-center gap-4 py-1">
+              <DonutChart data={donutData} size={144} thickness={15} centerLabel="donations" ariaLabel="Donation category split" />
+              <ul className="w-full space-y-2">
                 {donutData.map((d) => {
                   const pct = donutTotal ? Math.round((d.value / donutTotal) * 100) : 0;
                   return (
                     <li key={d.label}>
                       <div className="mb-1 flex items-center justify-between text-xs">
                         <span className="flex items-center gap-2 font-medium text-text-primary">
-                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                          <span className="h-2 w-2 rounded-full" style={{ backgroundColor: d.color }} />
                           {d.label}
                         </span>
                         <span className="tabular-nums text-text-secondary">
@@ -345,9 +345,9 @@ export function AdminAnalyticsSection({ analytics, loading }) {
               </ul>
             </div>
           ) : (
-            <div className="flex h-full min-h-[220px] flex-col items-center justify-center gap-2 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-surface-hover text-text-muted">
-                <PieChartIcon size={22} />
+            <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 text-center">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface-hover text-text-muted">
+                <PieChartIcon size={20} />
               </span>
               <p className="text-sm font-medium text-text-primary">No donations yet</p>
               <p className="text-xs text-text-secondary">The split appears once donations are posted.</p>
@@ -364,7 +364,7 @@ export function AdminAnalyticsSection({ analytics, loading }) {
         subtitle="New donors vs. volunteers, last 6 months"
         legend={<LegendPills items={growthSeries} />}
       >
-        <GroupedBarChart data={userGrowth} series={growthSeries} height={248} ariaLabel="New donors versus volunteers, last 6 months" />
+        <GroupedBarChart data={userGrowth} series={growthSeries} height={215} ariaLabel="New donors versus volunteers, last 6 months" />
       </ChartCard>
     </div>
   );

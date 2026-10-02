@@ -107,6 +107,24 @@ async function lockByTokenHash(connection, tokenHash) {
   return rows[0] || null;
 }
 
+async function findActiveByUserId(userId) {
+  const [rows] = await pool.query(
+    `SELECT id, user_agent, ip_address, created_at, expires_at 
+     FROM refresh_tokens 
+     WHERE user_id = :userId AND is_revoked = 0 AND expires_at > NOW() 
+     ORDER BY created_at DESC`,
+    { userId }
+  );
+  return rows;
+}
+
+async function revokeOneById(id, userId) {
+  await pool.query(
+    `UPDATE refresh_tokens SET is_revoked = 1 WHERE id = :id AND user_id = :userId AND is_revoked = 0`,
+    { id, userId }
+  );
+}
+
 module.exports = {
   createRefreshToken,
   findByTokenHash,
@@ -114,4 +132,6 @@ module.exports = {
   revokeAndReplace,
   revokeById,
   revokeAllForUser,
+  findActiveByUserId,
+  revokeOneById,
 };

@@ -71,7 +71,7 @@ export function DonorDashboard() {
         {/* 1. Hero Overview Row — ProfileCard (Untouched layout) + Active Donations */}
         <motion.div
           variants={itemVariants}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch"
+          className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
         >
           {/* ProfileCard — Maintained exactly as requested */}
           <div className="lg:col-span-1 h-full flex flex-col">

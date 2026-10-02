@@ -199,8 +199,8 @@ export function ActiveDonations() {
   }
 
   return (
-    <div className="bg-surface rounded-3xl border border-border/50 p-3.5 sm:p-4 h-full min-h-[230px] sm:min-h-[245px] flex flex-col justify-between shadow-pb-card">
-      <div className="flex items-center justify-between mb-3">
+    <div className="bg-surface rounded-3xl border border-border/50 p-3.5 sm:p-4 h-full flex flex-col shadow-pb-card">
+      <div className="flex items-center justify-between mb-3 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-dash-primary-soft flex items-center justify-center text-dash-primary">
             <Package size={16} />
@@ -225,7 +225,9 @@ export function ActiveDonations() {
         </button>
       </div>
 
-      <div className="space-y-3 flex-1 flex flex-col justify-start">
+      {/* Scrollable donations list — max-height keeps card flush with profile card */}
+      <div className="overflow-y-auto max-h-[184px] flex-1 min-h-0 pr-0.5 scrollbar-thin scrollbar-thumb-border/60 scrollbar-track-transparent">
+      <div className="space-y-3">
         {donations.map((donation, idx) => (
           <motion.div
             key={donation.id}
@@ -295,6 +297,7 @@ export function ActiveDonations() {
             </div>
           </motion.div>
         ))}
+      </div>
       </div>
     </div>
   );

@@ -88,38 +88,36 @@ const CARD_CONFIG = [
 function KpiCard({ icon: Icon, label, value, iconBg, iconColor, gradient, index }) {
   return (
     <div
-      className={`group relative overflow-hidden bg-surface rounded-xl border border-border/60 p-4 hover:border-dash-primary/30 hover:shadow-pb-card transition-all duration-200 cursor-default`}
-      style={{ animation: 'rowIn 0.3s ease backwards', animationDelay: `${index * 40}ms` }}
+      className="group relative overflow-hidden bg-surface rounded-xl border border-border/60 p-3.5 sm:p-4 hover:border-dash-primary/30 hover:shadow-pb-card transition-all duration-200 cursor-default"
+      style={{ animation: 'rowIn 0.3s ease backwards', animationDelay: `${index * 30}ms` }}
     >
       {/* Gradient tint */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
 
-      <div className="relative flex items-start justify-between gap-3">
-        <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconBg} shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-          <Icon size={18} className={iconColor} />
+      <div className="relative flex items-center justify-between gap-2.5">
+        <div className={`flex items-center justify-center w-8.5 h-8.5 rounded-lg ${iconBg} shrink-0 group-hover:scale-105 transition-transform duration-200`}>
+          <Icon size={16} className={iconColor} />
         </div>
         <div className="flex-1 min-w-0 text-right">
-          <p className="text-2xl font-bold text-text-primary tabular-nums leading-tight tracking-tight">
+          <p className="text-lg sm:text-xl font-bold text-text-primary tabular-nums leading-tight tracking-tight">
             {(value ?? 0).toLocaleString()}
           </p>
         </div>
       </div>
-      <p className="relative mt-2.5 text-xs font-medium text-text-secondary truncate">{label}</p>
+      <p className="relative mt-2 text-xs font-medium text-text-secondary truncate">{label}</p>
     </div>
   );
 }
 
 /**
- * AdminStatsCards — 8 premium KPI cards for the Admin Command Center.
- * Redesigned from a dense metric strip to individual tinted cards with
- * colored icon circles and hover animations.
+ * AdminStatsCards — 8 clean, proportional KPI cards for the Admin Dashboard.
  */
 export function AdminStatsCards({ dashboard, loading }) {
   if (loading) {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="bg-surface rounded-xl border border-border/60 p-4">
+          <div key={i} className="bg-surface rounded-xl border border-border/60 p-3.5">
             <SkeletonCard count={1} />
           </div>
         ))}
@@ -128,7 +126,7 @@ export function AdminStatsCards({ dashboard, loading }) {
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-3.5">
       {CARD_CONFIG.map((card, index) => (
         <KpiCard
           key={card.key}

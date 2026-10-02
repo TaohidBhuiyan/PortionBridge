@@ -72,11 +72,11 @@ export function ChatWindow({ donation, currentUser, onBack }) {
 
   const isCurrentUserDonor = currentUser?.role === 'donor' || donation?.donor_id === currentUser?.id;
   const counterpartName = isCurrentUserDonor
-    ? (donation?.volunteer_name || donation?.volunteer?.name || 'Assigned Volunteer')
+    ? (donation?.volunteer_name || donation?.assigned_member_name || donation?.volunteer?.name || 'Assigned Volunteer')
     : (donation?.donor_name || donation?.donor?.name || 'Donor');
   const counterpartRole = isCurrentUserDonor ? 'Volunteer' : 'Donor';
   const counterpartPhoto = isCurrentUserDonor
-    ? (donation?.volunteer_photo || donation?.volunteer?.photo)
+    ? (donation?.volunteer_photo || donation?.assigned_member_photo || donation?.volunteer?.photo)
     : (donation?.donor_photo || donation?.donor?.photo);
 
   const scrollToBottom = useCallback((behavior = 'smooth') => {
@@ -336,9 +336,9 @@ export function ChatWindow({ donation, currentUser, onBack }) {
 
         {/* Header Action Tools */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {donation.volunteer_phone && (
+          {(donation.volunteer_phone || donation.assigned_member_phone) && isCurrentUserDonor && (
             <a
-              href={`tel:${donation.volunteer_phone}`}
+              href={`tel:${donation.volunteer_phone || donation.assigned_member_phone}`}
               title="Call Volunteer"
               className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-text-secondary bg-surface-hover hover:text-text-primary transition-colors border border-border/50"
             >
@@ -477,7 +477,10 @@ export function ChatWindow({ donation, currentUser, onBack }) {
                   {/* Counterpart avatar for incoming messages */}
                   {!isOwnMessage && !isConsecutive && (
                     <Avatar
-                      item={{ name: counterpartName, photo: counterpartPhoto }}
+                      item={{
+                        name: message.sender_name || counterpartName,
+                        photo: message.sender_photo || counterpartPhoto,
+                      }}
                       tone="dash"
                       className="w-7 h-7 text-[10px] font-semibold shrink-0 mb-1"
                     />

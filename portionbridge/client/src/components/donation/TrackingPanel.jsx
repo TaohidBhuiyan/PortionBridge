@@ -74,11 +74,12 @@ export function TrackingPanel({ donation, volunteer, volunteerLocation, isVolunt
   } : null;
 
   const navigateToDonor = () => {
-    const lat = pickupLat;
-    const lng = pickupLng;
     const addr = donation?.pickup_location;
-    const url = (typeof lat === 'number' && typeof lng === 'number')
-      ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    // Use hasPickupCoords — `typeof NaN === 'number'` so the old
+    // `typeof lat === 'number'` check incorrectly passed NaN coordinates
+    // when pickup_address_details had no lat/lng, producing destination=NaN,NaN.
+    const url = hasPickupCoords
+      ? `https://www.google.com/maps/dir/?api=1&destination=${pickupLat},${pickupLng}`
       : `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr || '')}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };

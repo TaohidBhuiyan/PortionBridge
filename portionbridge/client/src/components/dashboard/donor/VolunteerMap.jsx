@@ -421,7 +421,7 @@ const VolunteerMap = ({
       <div
         ref={mapRef}
         className="w-full h-full rounded-2xl overflow-hidden bg-page border border-border shadow-pb-card"
-        style={{ minHeight: isFullscreen ? 'calc(100vh - 32px)' : '480px' }}
+        style={{ minHeight: isFullscreen ? 'calc(100vh - 32px)' : '300px' }}
       />
 
       {/* Map Controls */}

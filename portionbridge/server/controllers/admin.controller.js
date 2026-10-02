@@ -367,6 +367,64 @@ const deleteNotificationTemplate = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * GET /api/v1/admin/settings
+ */
+const getAdminSettings = asyncHandler(async (req, res) => {
+  const settings = await adminService.getAdminSettings();
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Admin settings retrieved successfully.',
+    data: { settings },
+  });
+});
+
+/**
+ * PATCH /api/v1/admin/settings
+ */
+const updateAdminSettings = asyncHandler(async (req, res) => {
+  const settings = await adminService.updateAdminSettings(req.body);
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Admin settings updated successfully.',
+    data: { settings },
+  });
+});
+
+/**
+ * GET /api/v1/admin/settings/sessions
+ */
+const listSessions = asyncHandler(async (req, res) => {
+  const sessions = await adminService.listActiveSessions(req.user.id);
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Active sessions retrieved successfully.',
+    data: { sessions },
+  });
+});
+
+/**
+ * DELETE /api/v1/admin/settings/sessions/:sessionId
+ */
+const revokeSession = asyncHandler(async (req, res) => {
+  await adminService.revokeSession(Number(req.params.sessionId), req.user.id);
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Session revoked successfully.',
+  });
+});
+
+/**
+ * GET /api/v1/admin/audit-logs/export
+ */
+const exportAuditLogs = asyncHandler(async (req, res) => {
+  const { action, userId, dateFrom, dateTo } = req.query;
+  const csv = await adminService.exportAuditLogs({ action, userId: userId ? Number(userId) : undefined, dateFrom, dateTo });
+  res.setHeader('Content-Type', 'text/csv');
+  res.setHeader('Content-Disposition', `attachment; filename="audit-logs-${Date.now()}.csv"`);
+  return res.send(csv);
+});
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -395,4 +453,9 @@ module.exports = {
   deleteNotificationTemplate,
   getAreaIntelligence,
   listAuditLogs,
+  getAdminSettings,
+  updateAdminSettings,
+  listSessions,
+  revokeSession,
+  exportAuditLogs,
 };

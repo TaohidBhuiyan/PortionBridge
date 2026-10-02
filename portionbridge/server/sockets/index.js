@@ -6,6 +6,7 @@ const { registerNotificationHandlers } = require('./handlers/notification.handle
 const { registerTeamHandlers } = require('./handlers/team.handler');
 const { registerPublicHandlers } = require('./handlers/public.handler');
 const { registerTrackingHandlers } = require('./handlers/tracking.handler');
+const volunteerProfileModel = require('../models/volunteerProfile.model');
 
 /**
  * Socket.io bootstrap. Called once from server.js with the shared `io` 
@@ -22,10 +23,17 @@ function initializeSocket(io) {
   io.use(socketAuthMiddleware);
 
   io.on('connection', (socket) => {
-    const { id: userId, name } = socket.user;
+    const { id: userId, name, role } = socket.user;
 
     socketRegistry.addSocket(userId, socket.id);
     console.log(`[Socket] Connected: ${name} (user ${userId}), socket ${socket.id}`);
+
+    // Update volunteer online status in database
+    if (role === 'volunteer') {
+      volunteerProfileModel.updateOnlineStatus(userId, true)
+        .then(() => console.log(`[Socket] Volunteer ${userId} marked as online`))
+        .catch((err) => console.error(`[Socket] Failed to mark volunteer ${userId} as online:`, err.message));
+    }
 
     registerChatHandlers(io, socket);
     registerNotificationHandlers(io, socket);
@@ -53,6 +61,13 @@ function initializeSocket(io) {
       clearTimeout(expiryTimer);
       socketRegistry.removeSocket(userId, socket.id);
       console.log(`[Socket] Disconnected: ${name} (user ${userId}), socket ${socket.id}`);
+
+      // Update volunteer offline status in database
+      if (role === 'volunteer') {
+        volunteerProfileModel.updateOnlineStatus(userId, false)
+          .then(() => console.log(`[Socket] Volunteer ${userId} marked as offline`))
+          .catch((err) => console.error(`[Socket] Failed to mark volunteer ${userId} as offline:`, err.message));
+      }
     });
   });
 

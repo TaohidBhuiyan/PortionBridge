@@ -1,4 +1,4 @@
-import { HeartHandshake, PackageCheck, Utensils, Shirt, Sparkles } from 'lucide-react';
+import { HeartHandshake, PackageCheck, Utensils, Shirt, Sparkles, CheckCircle2 } from 'lucide-react';
 import { SkeletonCard } from '../skeletons';
 
 const IMPACT_ITEMS = [
@@ -6,68 +6,72 @@ const IMPACT_ITEMS = [
     key: 'peopleHelped',
     label: 'People Helped',
     icon: HeartHandshake,
-    iconBg: 'bg-white/15',
-    suffix: '',
+    tone: 'emerald',
+    badgeBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    hoverBorder: 'hover:border-emerald-500/30',
   },
   {
     key: 'successfulDonations',
     label: 'Successful Donations',
     icon: PackageCheck,
-    iconBg: 'bg-white/15',
-    suffix: '',
+    tone: 'teal',
+    badgeBg: 'bg-teal-500/10 text-teal-600 dark:text-teal-400',
+    hoverBorder: 'hover:border-teal-500/30',
   },
   {
     key: 'completedPickups',
     label: 'Completed Pickups',
-    icon: PackageCheck,
-    iconBg: 'bg-white/15',
-    suffix: '',
+    icon: CheckCircle2,
+    tone: 'cyan',
+    badgeBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+    hoverBorder: 'hover:border-cyan-500/30',
   },
   {
     key: 'mealsShared',
     label: 'Meals Shared',
     icon: Utensils,
-    iconBg: 'bg-white/15',
-    suffix: '',
+    tone: 'amber',
+    badgeBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    hoverBorder: 'hover:border-amber-500/30',
   },
   {
     key: 'clothesDonated',
     label: 'Clothes Donated',
     icon: Shirt,
-    iconBg: 'bg-white/15',
-    suffix: ' items',
+    tone: 'indigo',
+    badgeBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+    hoverBorder: 'hover:border-indigo-500/30',
   },
 ];
 
-function ImpactItem({ label, value, icon: Icon, index }) {
+function ImpactItem({ label, value, icon: Icon, badgeBg, hoverBorder, index }) {
   return (
     <div
-      className="flex flex-col items-center text-center px-4 py-5"
-      style={{ animation: 'rowIn 0.35s ease backwards', animationDelay: `${index * 60}ms` }}
+      className={`group relative flex flex-col items-center text-center p-3 sm:p-3.5 rounded-xl bg-surface-hover/40 dark:bg-surface-hover/20 border border-border/50 ${hoverBorder} transition-all duration-200`}
+      style={{ animation: 'rowIn 0.3s ease backwards', animationDelay: `${index * 40}ms` }}
     >
-      <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-white/15 border border-white/20 mb-3 backdrop-blur-sm">
-        <Icon size={20} className="text-white" />
+      <div className={`flex items-center justify-center w-8 h-8 rounded-lg ${badgeBg} mb-2 group-hover:scale-105 transition-transform duration-200`}>
+        <Icon size={16} />
       </div>
-      <p className="text-3xl md:text-4xl font-bold text-white tabular-nums leading-none tracking-tight">
+      <p className="text-lg sm:text-xl font-bold text-text-primary tabular-nums leading-tight tracking-tight">
         {(value ?? 0).toLocaleString()}
       </p>
-      <p className="text-xs font-medium text-white/60 mt-2 leading-snug">{label}</p>
+      <p className="text-xs font-medium text-text-secondary mt-1 truncate max-w-full">{label}</p>
     </div>
   );
 }
 
 /**
- * AdminImpactSection — redesigned as a full-width vibrant gradient banner
- * with large bold metric numbers. Real platform-wide impact from
- * dashboard.impact (GET /admin/dashboard), no fake data.
+ * AdminImpactSection — cohesive, proportional impact section.
+ * Real platform-wide impact from dashboard.impact (GET /admin/dashboard).
  */
 export function AdminImpactSection({ impact, loading }) {
   if (loading) {
     return (
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-500 to-cyan-500 p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-5 divide-x divide-white/20">
+      <div className="bg-surface rounded-xl border border-border/60 p-4 shadow-pb-card">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="px-4 py-4">
+            <div key={i} className="p-3 bg-surface-hover/30 rounded-xl">
               <SkeletonCard count={1} />
             </div>
           ))}
@@ -77,32 +81,36 @@ export function AdminImpactSection({ impact, loading }) {
   }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-500 to-cyan-500 dark:from-emerald-700 dark:via-teal-600 dark:to-cyan-600 shadow-pb-elevated border border-white/10">
-      {/* Decorative blobs */}
-      <div className="pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full bg-white opacity-5 blur-2xl" />
-      <div className="pointer-events-none absolute bottom-0 left-1/4 w-64 h-24 rounded-full bg-white opacity-5 blur-3xl" />
-
-      {/* Header */}
-      <div className="relative flex items-center gap-3 px-6 pt-5 pb-3 border-b border-white/15">
-        <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-white/20 border border-white/25">
-          <Sparkles size={14} className="text-white" />
+    <div className="bg-surface rounded-xl border border-border/60 shadow-pb-card overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/50">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <Sparkles size={14} />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-text-primary">Platform Impact</h2>
+            <p className="text-[11px] text-text-secondary">
+              Real-world outcomes generated from verified completed donations
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-sm font-bold text-white">Platform Impact</h2>
-          <p className="text-xs text-white/55">
-            Real outcomes from completed donations across the platform
-          </p>
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          Verified Outcomes
         </div>
       </div>
 
-      {/* Metrics */}
-      <div className="relative grid grid-cols-2 sm:grid-cols-5 divide-x divide-white/15">
+      {/* Metrics Grid */}
+      <div className="p-3 sm:p-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         {IMPACT_ITEMS.map((item, i) => (
           <ImpactItem
             key={item.key}
             label={item.label}
             value={impact?.[item.key]}
             icon={item.icon}
+            badgeBg={item.badgeBg}
+            hoverBorder={item.hoverBorder}
             index={i}
           />
         ))}

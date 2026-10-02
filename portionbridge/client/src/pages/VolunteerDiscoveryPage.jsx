@@ -458,7 +458,7 @@ const VolunteerDiscoveryPage = () => {
               
               {/* Left Column - Filters & Cards List */}
               {viewMode !== 'map' && (
-                <div className={`space-y-4 ${viewMode === 'split' ? 'lg:col-span-6 xl:col-span-5' : ''}`}>
+                <div className={`space-y-4 ${viewMode === 'split' ? 'lg:col-span-6 xl:col-span-7' : ''}`}>
                   
                   {/* Filter Toolbar */}
                   <DiscoveryFilters
@@ -522,16 +522,17 @@ const VolunteerDiscoveryPage = () => {
               {(viewMode === 'map' || viewMode === 'split') && (
                 <div className={`${
                   viewMode === 'split' 
-                    ? 'lg:col-span-6 xl:col-span-7 lg:sticky lg:top-20 lg:self-start' 
+                    ? 'lg:col-span-6 xl:col-span-5 lg:sticky lg:top-20 lg:self-start' 
                     : 'w-full'
                 }`}>
                   <VolunteerMap
+                    key={viewMode}
                     userLocation={location}
                     volunteers={mapVolunteers}
                     teams={mapTeams}
                     onVolunteerClick={handleVolunteerClick}
                     onTeamClick={handleTeamClick}
-                    className="h-[520px] lg:h-[680px]"
+                    className={viewMode === 'split' ? 'h-[360px] lg:h-[460px]' : 'h-[420px] lg:h-[520px]'}
                   />
                 </div>
               )}

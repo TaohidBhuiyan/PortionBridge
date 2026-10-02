@@ -190,9 +190,9 @@ export function AdminRecentActivity({ activity, loading }) {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden hover:shadow-pb-card transition-shadow duration-200">
+    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden shadow-pb-subtle hover:shadow-pb-card transition-shadow duration-200">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-border/50">
+      <div className="px-4 sm:px-5 py-3 border-b border-border/50">
         <h2 className="text-sm font-bold text-text-primary">Live Activity</h2>
         <p className="text-[11px] text-text-secondary mt-0.5">Real-time platform events</p>
       </div>
@@ -208,7 +208,7 @@ export function AdminRecentActivity({ activity, loading }) {
           />
         </div>
       ) : (
-        <div className="p-4">
+        <div className="p-3.5 sm:p-4">
           <ul className="space-y-0">
             {activity.map((entry, i) => {
               const meta = ACTION_META[entry.action] || {
@@ -222,15 +222,15 @@ export function AdminRecentActivity({ activity, loading }) {
               return (
                 <li
                   key={entry.id}
-                  className="flex items-start gap-3 relative"
+                  className="flex items-start gap-2.5 relative"
                   style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${i * 30}ms` }}
                 >
                   {/* Timeline connector */}
                   <div className="flex flex-col items-center shrink-0">
                     <div
-                      className={`relative z-10 flex items-center justify-center w-8 h-8 rounded-xl border border-border/40 ${meta.iconBg} mt-0.5`}
+                      className={`relative z-10 flex items-center justify-center w-7 h-7 rounded-lg border border-border/40 ${meta.iconBg} mt-0.5`}
                     >
-                      <Icon size={13} className={meta.iconColor} />
+                      <Icon size={12} className={meta.iconColor} />
                     </div>
                     {!isLast && (
                       <div className="w-px flex-1 bg-border/50 my-1" style={{ minHeight: '12px' }} />
@@ -238,12 +238,12 @@ export function AdminRecentActivity({ activity, loading }) {
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0 pb-3">
+                  <div className="flex-1 min-w-0 pb-2.5">
                     <p className="text-xs text-text-primary leading-snug">
                       <span className="font-semibold">{entry.user_name || 'A user'}</span>{' '}
                       <span className="text-text-secondary">{meta.label.toLowerCase()}</span>
                     </p>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-0.5">
                       <span className={`w-1.5 h-1.5 rounded-full ${meta.dot}`} />
                       <p className="text-[10px] text-text-muted">{timeAgo(entry.created_at)}</p>
                     </div>

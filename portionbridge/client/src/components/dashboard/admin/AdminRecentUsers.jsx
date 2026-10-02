@@ -61,9 +61,9 @@ export function AdminRecentUsers({ users, loading }) {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden hover:shadow-pb-card transition-shadow duration-200">
+    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden shadow-pb-subtle hover:shadow-pb-card transition-shadow duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/50">
         <h2 className="text-sm font-bold text-text-primary">Recent Signups</h2>
         <button
           onClick={() => navigate('/admin/users')}
@@ -92,13 +92,13 @@ export function AdminRecentUsers({ users, loading }) {
               <li
                 key={user.id}
                 onClick={() => navigate('/admin/users')}
-                className="group flex items-center justify-between px-5 py-3 hover:bg-surface-hover/60 transition-colors cursor-pointer"
+                className="group flex items-center justify-between px-4 sm:px-5 py-2.5 hover:bg-surface-hover/60 transition-colors cursor-pointer"
                 style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${i * 30}ms` }}
               >
                 {/* Left — avatar + name/email */}
-                <div className="flex items-center gap-3 min-w-0">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-bold ${meta.avatarBg} group-hover:scale-105 transition-transform duration-150`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-white text-xs font-semibold ${meta.avatarBg} group-hover:scale-105 transition-transform duration-150`}
                   >
                     {getInitials(user.name)}
                   </div>
@@ -113,13 +113,13 @@ export function AdminRecentUsers({ users, loading }) {
                 </div>
 
                 {/* Right — role chip + date */}
-                <div className="flex flex-col items-end gap-1 shrink-0">
+                <div className="flex flex-col items-end gap-0.5 shrink-0">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${meta.chipBg} ${meta.chipText}`}
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${meta.chipBg} ${meta.chipText}`}
                   >
                     {meta.label}
                   </span>
-                  <span className="text-[11px] text-text-secondary">
+                  <span className="text-[10px] sm:text-[11px] text-text-secondary">
                     {formatDate(user.created_at)}
                   </span>
                 </div>

@@ -1327,6 +1327,100 @@ async function listAuditLogs(query) {
   return { logs, meta };
 }
 
+/* ============================================================
+ * Admin Settings (new)
+ * ============================================================ */
+
+/**
+ * Returns all persisted admin settings as a flat object.
+ * Falls back to hard-coded defaults for any key not yet in the DB.
+ */
+async function getAdminSettings() {
+  const adminSettingsModel = require('../models/adminSettings.model');
+  const stored = await adminSettingsModel.getAll();
+  const defaults = {
+    // Platform
+    maintenanceMode: false,
+    registrationEnabled: true,
+    platformName: 'PortionBridge',
+    // Notifications (system-wide)
+    emailNotifications: true,
+    pushNotifications: true,
+    smsNotifications: false,
+    // Moderation
+    autoModeration: true,
+    spamDetection: true,
+    // Audit
+    logRetentionDays: 90,
+  };
+  return { ...defaults, ...stored };
+}
+
+/**
+ * Persists one or more admin settings.
+ * @param {object} updates - Partial settings object e.g. { maintenanceMode: true }
+ */
+async function updateAdminSettings(updates) {
+  const adminSettingsModel = require('../models/adminSettings.model');
+  const ALLOWED_KEYS = [
+    'maintenanceMode', 'registrationEnabled', 'platformName',
+    'emailNotifications', 'pushNotifications', 'smsNotifications',
+    'autoModeration', 'spamDetection', 'logRetentionDays',
+  ];
+  const filtered = {};
+  for (const key of ALLOWED_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(updates, key)) {
+      filtered[key] = updates[key];
+    }
+  }
+  if (Object.keys(filtered).length === 0) {
+    throw new AppError('No valid settings provided.', HTTP_STATUS.BAD_REQUEST);
+  }
+  await adminSettingsModel.setMultiple(filtered);
+  return adminSettingsModel.getAll();
+}
+
+/**
+ * Lists active sessions for the current user (non-revoked, non-expired).
+ */
+async function listActiveSessions(userId) {
+  const { findActiveByUserId } = require('../models/refreshToken.model');
+  const sessions = await findActiveByUserId(userId);
+  return sessions.map((s) => ({
+    id: s.id,
+    userAgent: s.user_agent || 'Unknown device',
+    ipAddress: s.ip_address || 'Unknown',
+    createdAt: s.created_at,
+    expiresAt: s.expires_at,
+  }));
+}
+
+/**
+ * Revokes a specific session (refresh token) for the current user.
+ */
+async function revokeSession(sessionId, userId) {
+  const { revokeOneById } = require('../models/refreshToken.model');
+  await revokeOneById(sessionId, userId);
+}
+
+/**
+ * Exports audit logs as CSV string.
+ */
+async function exportAuditLogs(filters) {
+  const auditLogModel = require('../models/auditLog.model');
+  // Get up to 10 000 rows for export (no pagination).
+  const rows = await auditLogModel.findAll({ ...filters, limit: 10000, offset: 0 });
+  if (!rows.length) return 'id,user_name,user_email,user_role,action,ip_address,created_at\n';
+  const escape = (v) => (v == null ? '' : String(v).replace(/"/g, '""'));
+  const header = 'id,user_name,user_email,user_role,action,ip_address,created_at';
+  const lines = rows.map((r) =>
+    [r.id, escape(r.user_name), escape(r.user_email), escape(r.user_role),
+     escape(r.action), escape(r.ip_address), escape(r.created_at)]
+      .map((v) => `"${v}"`).join(',')
+  );
+  return [header, ...lines].join('\n');
+}
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -1355,4 +1449,9 @@ module.exports = {
   getAreaIntelligence,
   getUserActivity,
   listAuditLogs,
+  getAdminSettings,
+  updateAdminSettings,
+  listActiveSessions,
+  revokeSession,
+  exportAuditLogs,
 };

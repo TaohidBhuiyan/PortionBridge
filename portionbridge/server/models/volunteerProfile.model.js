@@ -150,6 +150,22 @@ async function deleteByUserId(userId) {
 }
 
 /**
+ * Updates the online status of a volunteer.
+ * @param {number} userId - User ID
+ * @param {boolean} isOnline - Online status (true for online, false for offline)
+ * @returns {Promise<void>}
+ */
+async function updateOnlineStatus(userId, isOnline) {
+  await pool.query(
+    `UPDATE volunteer_profiles 
+     SET is_online = :isOnline, 
+         last_location_update = NOW()
+     WHERE user_id = :userId`,
+    { userId, isOnline: isOnline ? 1 : 0 }
+  );
+}
+
+/**
  * Finds all volunteer profiles with service areas.
  * Used by admin area intelligence to map volunteer coverage by area.
  * @returns {Promise<Array>} Array of volunteer profile objects with service_areas
@@ -168,4 +184,5 @@ module.exports = {
   updateByUserId,
   deleteByUserId,
   findAllWithServiceAreas,
+  updateOnlineStatus,
 };

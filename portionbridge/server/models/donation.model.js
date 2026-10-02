@@ -689,13 +689,13 @@ async function completeDonation(connection, id, actorId) {
  * @returns {Object} Object containing whereClause string and params object
  */
 function buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember = false }) {
-  const conditions = [`(is_deleted = 0 OR status = 'cancelled')`];
+  const conditions = [`(dr.is_deleted = 0 OR dr.status = 'cancelled')`];
   const params = { ownerId };
 
   if (includeAssignedMember) {
-    conditions.push(`(${ownerColumn} = :ownerId OR assigned_member_id = :ownerId)`);
+    conditions.push(`(dr.${ownerColumn} = :ownerId OR dr.assigned_member_id = :ownerId)`);
   } else {
-    conditions.push(`${ownerColumn} = :ownerId`);
+    conditions.push(`dr.${ownerColumn} = :ownerId`);
   }
 
   if (status) {
@@ -705,11 +705,11 @@ function buildHistoryFilter({ ownerColumn, ownerId, status, category, search, in
       .filter(Boolean);
 
     if (statuses.length === 1) {
-      conditions.push(`status = :status`);
+      conditions.push(`dr.status = :status`);
       params.status = statuses[0];
     } else if (statuses.length > 1) {
       const placeholders = statuses.map((_, i) => `:status_${i}`);
-      conditions.push(`status IN (${placeholders.join(', ')})`);
+      conditions.push(`dr.status IN (${placeholders.join(', ')})`);
       statuses.forEach((s, i) => {
         params[`status_${i}`] = s;
       });
@@ -717,12 +717,12 @@ function buildHistoryFilter({ ownerColumn, ownerId, status, category, search, in
   }
 
   if (category) {
-    conditions.push(`category = :category`);
+    conditions.push(`dr.category = :category`);
     params.category = category;
   }
 
   if (search) {
-    conditions.push(`(description LIKE :search OR pickup_location LIKE :search)`);
+    conditions.push(`(dr.description LIKE :search OR dr.pickup_location LIKE :search)`);
     params.search = `%${search}%`;
   }
 
@@ -747,11 +747,26 @@ function buildHistoryFilter({ ownerColumn, ownerId, status, category, search, in
 async function queryHistory({ ownerColumn, ownerId, status, category, search, sortBy, sortOrder, limit, offset, includeAssignedMember = false }) {
   const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember });
 
-  const orderColumn = ALLOWED_HISTORY_SORT_COLUMNS.includes(sortBy) ? sortBy : 'created_at';
+  const orderColumn = ALLOWED_HISTORY_SORT_COLUMNS.includes(sortBy) ? `dr.${sortBy}` : 'dr.created_at';
   const orderDirection = sortOrder === 'asc' ? 'ASC' : 'DESC';
+  const prefixedBaseColumns = BASE_COLUMNS.split(',').map((c) => `dr.${c.trim()}`).join(',\n  ');
 
   const [rows] = await pool.query(
-    `SELECT ${BASE_COLUMNS} FROM donation_requests
+    `SELECT 
+       ${prefixedBaseColumns},
+       u_donor.name AS donor_name,
+       COALESCE(u_donor.profile_photo, u_donor.profile_picture) AS donor_photo,
+       u_donor.phone AS donor_phone,
+       COALESCE(u_vol.name, u_mem.name) AS volunteer_name,
+       COALESCE(u_vol.profile_photo, u_vol.profile_picture, u_mem.profile_photo, u_mem.profile_picture) AS volunteer_photo,
+       COALESCE(u_vol.phone, u_mem.phone) AS volunteer_phone,
+       u_mem.name AS assigned_member_name,
+       COALESCE(u_mem.profile_photo, u_mem.profile_picture) AS assigned_member_photo,
+       u_mem.phone AS assigned_member_phone
+     FROM donation_requests dr
+     LEFT JOIN users u_donor ON u_donor.id = dr.donor_id
+     LEFT JOIN users u_vol ON u_vol.id = dr.volunteer_id
+     LEFT JOIN users u_mem ON u_mem.id = dr.assigned_member_id
      WHERE ${whereClause}
      ORDER BY ${orderColumn} ${orderDirection}
      LIMIT :limit OFFSET :offset`,
@@ -775,7 +790,7 @@ async function countHistory({ ownerColumn, ownerId, status, category, search, in
   const { whereClause, params } = buildHistoryFilter({ ownerColumn, ownerId, status, category, search, includeAssignedMember });
 
   const [rows] = await pool.query(
-    `SELECT COUNT(*) AS total FROM donation_requests WHERE ${whereClause}`,
+    `SELECT COUNT(*) AS total FROM donation_requests dr WHERE ${whereClause}`,
     params
   );
   return rows[0].total;

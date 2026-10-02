@@ -49,9 +49,9 @@ export function AdminRecentDonations({ donations, loading }) {
   }
 
   return (
-    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden hover:shadow-pb-card transition-shadow duration-200">
+    <div className="bg-surface rounded-xl border border-border/60 overflow-hidden shadow-pb-subtle hover:shadow-pb-card transition-shadow duration-200">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-b border-border/50">
         <h2 className="text-sm font-bold text-text-primary">Recent Donations</h2>
         <button
           onClick={() => navigate('/admin/donations')}
@@ -77,16 +77,16 @@ export function AdminRecentDonations({ donations, loading }) {
           <table className="w-full">
             <thead>
               <tr className="bg-surface-hover/50">
-                <th className="text-left py-2.5 px-5 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                <th className="text-left py-2 px-4 text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
                   Donation
                 </th>
-                <th className="text-left py-2.5 px-3 text-[11px] font-semibold text-text-secondary uppercase tracking-wider">
+                <th className="text-left py-2 px-3 text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
                   Status
                 </th>
-                <th className="text-left py-2.5 px-3 text-[11px] font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">
+                <th className="text-left py-2 px-3 text-[10px] font-semibold text-text-secondary uppercase tracking-wider hidden md:table-cell">
                   Location
                 </th>
-                <th className="text-left py-2.5 px-3 text-[11px] font-semibold text-text-secondary uppercase tracking-wider hidden sm:table-cell">
+                <th className="text-left py-2 px-3 text-[10px] font-semibold text-text-secondary uppercase tracking-wider hidden sm:table-cell">
                   Date
                 </th>
               </tr>
@@ -107,10 +107,10 @@ export function AdminRecentDonations({ donations, loading }) {
                     className="group hover:bg-surface-hover/60 transition-colors cursor-pointer"
                     style={{ animation: 'rowIn 0.25s ease backwards', animationDelay: `${i * 30}ms` }}
                   >
-                    <td className="py-3 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${meta.iconBg} group-hover:scale-105 transition-transform duration-150`}>
-                          <Icon size={15} className={meta.iconColor} />
+                    <td className="py-2.5 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${meta.iconBg} group-hover:scale-105 transition-transform duration-150`}>
+                          <Icon size={14} className={meta.iconColor} />
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-text-primary truncate max-w-[200px]">
@@ -122,13 +122,13 @@ export function AdminRecentDonations({ donations, loading }) {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-3">
+                    <td className="py-2.5 px-3">
                       <StatusBadge status={donation.status} size="small" />
                     </td>
-                    <td className="py-3 px-3 text-xs text-text-secondary truncate max-w-[160px] hidden md:table-cell">
+                    <td className="py-2.5 px-3 text-xs text-text-secondary truncate max-w-[160px] hidden md:table-cell">
                       {donation.pickup_location || '—'}
                     </td>
-                    <td className="py-3 px-3 text-xs text-text-secondary whitespace-nowrap hidden sm:table-cell">
+                    <td className="py-2.5 px-3 text-xs text-text-secondary whitespace-nowrap hidden sm:table-cell">
                       {formatDate(donation.created_at)}
                     </td>
                   </tr>

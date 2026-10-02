@@ -471,8 +471,8 @@ export function GroupedBarChart({
 /** Donut chart with an interactive centre readout. */
 export function DonutChart({
   data = [],
-  size = 190,
-  thickness = 20,
+  size = 150,
+  thickness = 16,
   centerLabel = 'Total',
   ariaLabel = 'Distribution chart',
 }) {
@@ -533,16 +533,16 @@ export function DonutChart({
       </svg>
 
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="text-3xl font-bold leading-none tabular-nums text-text-primary">{centerValue}</span>
-        <span className="mt-1.5 text-xs font-medium text-text-secondary">{centerText}</span>
-        {centerSub && <span className="text-[11px] font-semibold text-text-muted">{centerSub}</span>}
+        <span className="text-xl sm:text-2xl font-bold leading-none tabular-nums text-text-primary">{centerValue}</span>
+        <span className="mt-1 text-[11px] font-medium text-text-secondary">{centerText}</span>
+        {centerSub && <span className="text-[10px] font-semibold text-text-muted">{centerSub}</span>}
       </div>
     </div>
   );
 }
 
 /** Circular progress gauge (0-100). */
-export function RadialGauge({ value = 0, size = 168, thickness = 14, label = 'complete' }) {
+export function RadialGauge({ value = 0, size = 136, thickness = 12, label = 'complete' }) {
   const reduce = useReducedMotion();
   const uid = noSpaces(useId());
   const pct = clamp(num(value), 0, 100);
@@ -584,11 +584,11 @@ export function RadialGauge({ value = 0, size = 168, thickness = 14, label = 'co
         )}
       </svg>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-4xl font-bold leading-none tabular-nums text-text-primary">
+        <span className="text-2xl sm:text-3xl font-bold leading-none tabular-nums text-text-primary">
           {pct}
-          <span className="text-xl font-semibold text-text-secondary">%</span>
+          <span className="text-lg font-semibold text-text-secondary">%</span>
         </span>
-        <span className="mt-1.5 text-xs font-medium text-text-secondary">{label}</span>
+        <span className="mt-1 text-[11px] font-medium text-text-secondary">{label}</span>
       </div>
     </div>
   );

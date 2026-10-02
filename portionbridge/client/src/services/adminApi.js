@@ -611,4 +611,104 @@ export const adminApi = {
       return { success: false, error: message, status };
     }
   },
+
+  /* ============================================================
+   * Admin Settings
+   * ============================================================ */
+
+  /**
+   * Load all admin platform settings.
+   * GET /admin/settings
+   */
+  getAdminSettings: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.settings };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch admin settings';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * Update one or more admin settings.
+   * PATCH /admin/settings
+   * @param {object} updates - Partial settings object
+   */
+  updateAdminSettings: async (updates) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.patch(`${API_BASE}/admin/settings`, updates, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.settings };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update admin settings';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * List active sessions for the current admin.
+   * GET /admin/settings/sessions
+   */
+  listSessions: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/settings/sessions`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true, data: response.data.data?.sessions };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to fetch sessions';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * Revoke a specific session.
+   * DELETE /admin/settings/sessions/:sessionId
+   */
+  revokeSession: async (sessionId) => {
+    try {
+      const token = getAuthToken();
+      await axios.delete(`${API_BASE}/admin/settings/sessions/${sessionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to revoke session';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * Download audit logs as CSV.
+   * GET /admin/audit-logs/export
+   */
+  exportAuditLogs: async (params = {}) => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/audit-logs/export`, {
+        params,
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `audit-logs-${Date.now()}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to export audit logs';
+      return { success: false, error: message };
+    }
+  },
 };

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Maximize2, Image as ImageIcon } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/mediaUrl';
 
 /**
  * ImageGallery component for displaying donation images with premium grid and lightbox
@@ -7,7 +8,10 @@ import { X, ChevronLeft, ChevronRight, Maximize2, Image as ImageIcon } from 'luc
 export function ImageGallery({ images = [], coverImage }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
 
-  const allImages = coverImage ? [coverImage, ...(images || [])] : (images || []);
+  const rawList = coverImage ? [coverImage, ...(images || [])] : (images || []);
+  const allImages = rawList
+    .map((img) => (typeof img === 'string' ? resolveMediaUrl(img) : resolveMediaUrl(img?.url || img?.path)))
+    .filter(Boolean);
 
   if (allImages.length === 0) {
     return (

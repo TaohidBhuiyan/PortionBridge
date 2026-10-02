@@ -6,7 +6,8 @@ const { pool } = require('../config/db');
 
 const MESSAGE_COLUMNS_WITH_SENDER = `
   cm.id, cm.donation_request_id, cm.sender_id, cm.message, cm.is_read, cm.created_at,
-  u.name AS sender_name, u.role AS sender_role
+  u.name AS sender_name, u.role AS sender_role,
+  COALESCE(u.profile_photo, u.profile_picture) AS sender_photo
 `;
 
 /**
