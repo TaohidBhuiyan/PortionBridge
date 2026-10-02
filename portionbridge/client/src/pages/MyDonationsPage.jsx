@@ -14,6 +14,11 @@ import {
   Download,
   FileSpreadsheet,
   FileText,
+  Package,
+  Sparkles,
+  CheckCircle2,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import { donationApi } from '../services/donationApi';
 import { DonationCard } from '../components/donation/DonationCard';
@@ -23,7 +28,7 @@ import { ErrorState } from '../components/dashboard/ErrorState';
 import { DashboardLayout } from '../components/dashboard';
 import { Button } from '../components/common/Button';
 import { ConfirmActionModal } from '../components/common/ConfirmActionModal';
-import { Package } from 'lucide-react';
+
 import jsPDF from 'jspdf';
 import { autoTable } from 'jspdf-autotable';
 
@@ -96,7 +101,8 @@ export function MyDonationsPage() {
     try {
       const result = await donationApi.getDonorHistorySummary();
       if (result.success) {
-        setSummary(result.data);
+        // Backend wraps the counts in { summary: { total, pending, … } }
+        setSummary(result.data?.summary ?? result.data);
       }
     } catch {
       // Failed to load summary
@@ -255,37 +261,48 @@ export function MyDonationsPage() {
       <DashboardLayout>
         <div className="max-w-7xl mx-auto pb-12 space-y-6">
           {/* Hero Header Card */}
-          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-dash-primary via-indigo-600 to-purple-600 p-6 sm:p-8 text-white shadow-xl">
-            {/* Background Decorative Circles */}
-            <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute right-1/3 -top-12 w-48 h-48 bg-purple-400/20 rounded-full blur-xl pointer-events-none" />
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-9 text-white shadow-2xl border border-white/10">
+            {/* Ambient Lighting & Mesh Grids */}
+            <div className="absolute -right-16 -top-16 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-16 -bottom-16 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute right-1/4 top-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <button
-                  onClick={() => navigate(-1)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-xs font-medium backdrop-blur-md transition-colors mb-3"
-                >
-                  <ArrowLeft size={14} />
-                  <span>Back to Dashboard</span>
-                </button>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3">
-                  <Package className="w-8 h-8 text-amber-300 shrink-0" />
-                  My Donation History
-                </h1>
-                <p className="text-white/80 text-sm mt-1 max-w-xl">
-                  {summary
-                    ? `You've created ${summary.total || 0} donation mission${summary.total === 1 ? '' : 's'} to nourish communities.`
-                    : 'Track, manage, and export all your contributions in one place.'}
-                </p>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold backdrop-blur-md border border-white/10 transition-all hover:scale-105 active:scale-95 text-white/90 shadow-sm"
+                  >
+                    <ArrowLeft size={13} />
+                    <span>Back to Dashboard</span>
+                  </button>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold uppercase tracking-wider shadow-sm">
+                    <Sparkles size={12} className="text-emerald-400" /> Donor Impact Center
+                  </span>
+                </div>
+
+                <div>
+                  <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                    <span className="p-2 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-400 text-slate-950 shadow-lg shadow-amber-500/20 shrink-0">
+                      <Package className="w-7 h-7" />
+                    </span>
+                    My Donation History
+                  </h1>
+                  <p className="text-white/70 text-sm mt-2 max-w-xl leading-relaxed">
+                    {summary
+                      ? `You've launched ${summary.total || 0} donation mission${summary.total === 1 ? '' : 's'} to nourish families and communities.`
+                      : 'Track, manage, and export all your community contributions in real-time.'}
+                  </p>
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
                 <button
                   onClick={handleExportCSV}
                   disabled={donations.length === 0}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/15 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl border border-white/15 text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg hover:shadow-emerald-500/10 hover:-translate-y-0.5 active:translate-y-0"
                   title="Export to CSV"
                 >
                   <FileSpreadsheet size={16} className="text-emerald-300" />
@@ -294,7 +311,7 @@ export function MyDonationsPage() {
                 <button
                   onClick={handleExportPDF}
                   disabled={donations.length === 0}
-                  className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/15 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white backdrop-blur-xl border border-white/15 text-xs font-bold transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-lg hover:shadow-rose-500/10 hover:-translate-y-0.5 active:translate-y-0"
                   title="Export to PDF"
                 >
                   <FileText size={16} className="text-rose-300" />
@@ -302,32 +319,65 @@ export function MyDonationsPage() {
                 </button>
                 <button
                   onClick={() => navigate('/donation/create')}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-dash-primary hover:bg-white/90 font-bold text-xs shadow-lg hover:shadow-white/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs shadow-xl shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all hover:scale-[1.03] active:scale-[0.98]"
                 >
-                  <Plus size={16} />
+                  <Plus size={16} strokeWidth={2.5} />
                   <span>Create Donation</span>
                 </button>
               </div>
             </div>
 
-            {/* Quick Stats Strip */}
+            {/* Quick Stats Grid */}
             {summary && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6 border-t border-white/15">
-                <div className="bg-white/10 backdrop-blur-md rounded-xl p-3.5 border border-white/10">
-                  <p className="text-[11px] font-medium text-white/70 uppercase tracking-wider">Total Donations</p>
-                  <p className="text-2xl font-extrabold mt-0.5">{summary.total || 0}</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-8 pt-6 border-t border-white/10">
+                {/* Total */}
+                <div className="bg-slate-800/50 hover:bg-slate-800/70 backdrop-blur-xl rounded-2xl p-4 border border-white/10 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-white/60 uppercase tracking-wider">Total Missions</span>
+                    <span className="p-1.5 rounded-xl bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
+                      <Package size={15} />
+                    </span>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-black text-white tracking-tight">{summary.total || 0}</p>
+                  <p className="text-[11px] font-medium text-white/50 mt-1">Total items donated</p>
                 </div>
-                <div className="bg-emerald-500/20 backdrop-blur-md rounded-xl p-3.5 border border-emerald-400/20">
-                  <p className="text-[11px] font-medium text-emerald-200 uppercase tracking-wider">Completed</p>
-                  <p className="text-2xl font-extrabold text-emerald-300 mt-0.5">{summary.completed || 0}</p>
+
+                {/* Completed */}
+                <div className="bg-emerald-950/30 hover:bg-emerald-950/50 backdrop-blur-xl rounded-2xl p-4 border border-emerald-500/30 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-500/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-emerald-300/80 uppercase tracking-wider">Completed</span>
+                    <span className="p-1.5 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300">
+                      <CheckCircle2 size={15} />
+                    </span>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-black text-emerald-300 tracking-tight">{summary.completed || 0}</p>
+                  <p className="text-[11px] font-medium text-emerald-400/70 mt-1">Handed over & verified</p>
                 </div>
-                <div className="bg-amber-500/20 backdrop-blur-md rounded-xl p-3.5 border border-amber-400/20">
-                  <p className="text-[11px] font-medium text-amber-200 uppercase tracking-wider">In Progress / Pending</p>
-                  <p className="text-2xl font-extrabold text-amber-300 mt-0.5">{summary.pending || 0}</p>
+
+                {/* In Progress */}
+                <div className="bg-amber-950/30 hover:bg-amber-950/50 backdrop-blur-xl rounded-2xl p-4 border border-amber-500/30 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-amber-500/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-amber-300/80 uppercase tracking-wider">In Progress</span>
+                    <span className="p-1.5 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-300">
+                      <Clock size={15} />
+                    </span>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-black text-amber-300 tracking-tight">
+                    {(summary.pending || 0) + (summary.accepted || 0) + (summary.scheduled || 0) + (summary.on_the_way || 0) + (summary.picked_up || 0)}
+                  </p>
+                  <p className="text-[11px] font-medium text-amber-400/70 mt-1">Pending & active pickup</p>
                 </div>
-                <div className="bg-rose-500/20 backdrop-blur-md rounded-xl p-3.5 border border-rose-400/20">
-                  <p className="text-[11px] font-medium text-rose-200 uppercase tracking-wider">Cancelled</p>
-                  <p className="text-2xl font-extrabold text-rose-300 mt-0.5">{summary.cancelled || 0}</p>
+
+                {/* Cancelled */}
+                <div className="bg-rose-950/30 hover:bg-rose-950/50 backdrop-blur-xl rounded-2xl p-4 border border-rose-500/30 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl hover:shadow-rose-500/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-rose-300/80 uppercase tracking-wider">Cancelled</span>
+                    <span className="p-1.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300">
+                      <XCircle size={15} />
+                    </span>
+                  </div>
+                  <p className="text-2xl sm:text-3xl font-black text-rose-300 tracking-tight">{summary.cancelled || 0}</p>
+                  <p className="text-[11px] font-medium text-rose-400/70 mt-1">Discontinued items</p>
                 </div>
               </div>
             )}

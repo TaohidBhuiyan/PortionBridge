@@ -262,24 +262,81 @@ export function AdminLiveOperations() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary mb-1">Live Operations</h1>
-            <p className="text-text-secondary text-sm">Real-time volunteers, teams, and missions in progress.</p>
+        {/* Gradient Hero Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-700 dark:from-cyan-900 dark:via-blue-950 dark:to-indigo-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-blue-300/20 blur-3xl" />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md shadow-inner shrink-0">
+                <Navigation size={28} className="text-white drop-shadow animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Live Operations Map</h1>
+                </div>
+                <p className="text-cyan-100/90 text-sm mt-1 max-w-xl">
+                  Real-time GPS tracking, active volunteer missions, team deployments, and routing telemetry.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 self-start md:self-auto">
+              <span className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl backdrop-blur-md text-xs font-bold shadow-sm border ${
+                connected
+                  ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/30'
+                  : 'bg-rose-500/20 text-rose-200 border-rose-400/30'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400 animate-ping' : 'bg-rose-400'}`} />
+                {connected ? <Wifi size={14} /> : <WifiOff size={14} />}
+                {connected ? 'Live Socket Stream' : 'Reconnecting...'}
+              </span>
+            </div>
           </div>
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-            connected ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'
-          }`}>
-            {connected ? <Wifi size={12} /> : <WifiOff size={12} />}
-            {connected ? 'Live' : 'Reconnecting...'}
-          </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <StatChip icon={Package} label="Active Missions" value={missions.length} />
-          <StatChip icon={UserCheck} label="Active Volunteers" value={activeVolunteerCount} />
-          <StatChip icon={Users} label="Active Teams" value={activeTeamCount} />
-          <StatChip icon={MapPin} label="Live Positions" value={Object.keys(positions).length} />
+        {/* Stat Chips */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-cyan-50 dark:bg-cyan-950/50 border border-cyan-100 dark:border-cyan-900 flex items-center justify-center shrink-0">
+              <Package size={20} className="text-cyan-600 dark:text-cyan-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-text-primary leading-tight">{missions.length}</p>
+              <p className="text-xs font-semibold text-text-secondary">Active Missions</p>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center shrink-0">
+              <UserCheck size={20} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-text-primary leading-tight">{activeVolunteerCount}</p>
+              <p className="text-xs font-semibold text-text-secondary">Active Volunteers</p>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/50 border border-purple-100 dark:border-purple-900 flex items-center justify-center shrink-0">
+              <Users size={20} className="text-purple-600 dark:text-purple-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-text-primary leading-tight">{activeTeamCount}</p>
+              <p className="text-xs font-semibold text-text-secondary">Active Teams</p>
+            </div>
+          </div>
+
+          <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-100 dark:border-emerald-900 flex items-center justify-center shrink-0">
+              <MapPin size={20} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <p className="text-2xl font-black text-text-primary leading-tight">{Object.keys(positions).length}</p>
+              <p className="text-xs font-semibold text-text-secondary">Live Telemetry</p>
+            </div>
+          </div>
         </div>
 
         {missions.length === 0 ? (

@@ -97,4 +97,40 @@ const resendVerificationLimiter = rateLimit({
   },
 });
 
-module.exports = { apiLimiter, loginLimiter, registerLimiter, forgotPasswordLimiter, resendVerificationLimiter };
+const supportCreateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  keyGenerator: (req) => (req.user ? String(req.user.id) : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Support ticket creation limit reached (max 10/hr). Please wait before opening another ticket.',
+    });
+  },
+});
+
+const supportMessageLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 40,
+  keyGenerator: (req) => (req.user ? String(req.user.id) : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Support message rate limit reached (max 40/15min). Please wait a moment before sending more messages.',
+    });
+  },
+});
+
+module.exports = {
+  apiLimiter,
+  loginLimiter,
+  registerLimiter,
+  forgotPasswordLimiter,
+  resendVerificationLimiter,
+  supportCreateLimiter,
+  supportMessageLimiter,
+};

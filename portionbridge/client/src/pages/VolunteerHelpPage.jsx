@@ -138,13 +138,21 @@ export function VolunteerHelpPage() {
                 Have a question that isn't answered here? Chat with our support team in real time.
               </p>
             </div>
-            <button
-              onClick={() => navigate('/messages')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-dash-primary text-white text-xs font-bold rounded-xl hover:bg-dash-primary-hover shadow-sm transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Contact Support Chat
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate('/support/new')}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-dash-primary text-white text-xs font-bold rounded-xl hover:bg-dash-primary-hover shadow-sm transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Open Support Ticket
+              </button>
+              <button
+                onClick={() => navigate('/support')}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-border bg-page hover:bg-surface-hover text-text-secondary hover:text-text-primary text-xs font-semibold rounded-xl transition-colors"
+              >
+                View My Tickets
+              </button>
+            </div>
           </div>
 
           <div className="pb-glass-card rounded-2xl p-5 border border-amber-500/30 shadow-sm flex flex-col justify-between space-y-4">

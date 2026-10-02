@@ -116,6 +116,15 @@ const migrations = [
     file: 'migration_025_status_history_actor_attribution_fix.sql',
     checks: [], // Trigger migration - no schema checks needed
   },
+  {
+    id: 'migration_026_support_tickets',
+    file: 'migration_026_support_tickets.sql',
+    checks: [
+      ['table', 'support_tickets'],
+      ['table', 'support_messages'],
+      ['enumValue', 'notifications', 'type', 'support_ticket_created'],
+    ],
+  },
 ];
 
 async function checkRequirement(connection, [type, table, value, extra]) {

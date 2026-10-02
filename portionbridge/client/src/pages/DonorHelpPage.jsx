@@ -168,13 +168,21 @@ export function DonorHelpPage() {
                 <p className="text-xs text-text-muted">Instant response from our team</p>
               </div>
             </div>
-            <button
-              onClick={() => navigate('/messages')}
-              className="w-full py-2.5 px-4 bg-dash-primary text-white rounded-xl text-xs font-bold hover:bg-dash-primary-hover transition-colors flex items-center justify-center gap-2"
-            >
-              <span>Open In-App Chat</span>
-              <Zap size={14} className="text-amber-300" />
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate('/support/new')}
+                className="w-full py-2.5 px-4 bg-dash-primary text-white rounded-xl text-xs font-bold hover:bg-dash-primary-hover transition-colors flex items-center justify-center gap-2"
+              >
+                <span>Open a Support Ticket</span>
+                <Zap size={14} className="text-amber-300" />
+              </button>
+              <button
+                onClick={() => navigate('/support')}
+                className="w-full py-2 px-4 border border-border bg-page hover:bg-surface-hover text-text-secondary hover:text-text-primary rounded-xl text-xs font-semibold transition-colors"
+              >
+                View My Tickets
+              </button>
+            </div>
           </div>
 
           <div className="bg-surface rounded-2xl p-5 border border-border shadow-pb-card hover:border-emerald-500/30 transition-all flex flex-col justify-between">

@@ -76,6 +76,11 @@ const AdminNotifications = safeLazy(() => import("./pages/AdminNotifications"));
 const AdminAnalytics = safeLazy(() => import("./pages/AdminAnalytics"));
 const AdminAuditLogs = safeLazy(() => import("./pages/AdminAuditLogs"));
 const AdminSettingsPage = safeLazy(() => import("./pages/AdminSettingsPage"));
+const SupportPage = safeLazy(() => import("./pages/SupportPage"));
+const SupportNewPage = safeLazy(() => import("./pages/SupportNewPage"));
+const SupportTicketPage = safeLazy(() => import("./pages/SupportTicketPage"));
+const AdminSupportPage = safeLazy(() => import("./pages/AdminSupportPage"));
+const AdminSupportTicketPage = safeLazy(() => import("./pages/AdminSupportTicketPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -438,11 +443,61 @@ function App() {
                 }
               />
               <Route
+                path="/admin/support"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminSupportPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/support/:id"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminSupportTicketPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/admin/:section"
                 element={
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminSectionPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/support"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <SupportPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/support/new"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <SupportNewPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/support/:id"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <SupportTicketPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 }

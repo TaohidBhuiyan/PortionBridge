@@ -711,4 +711,86 @@ export const adminApi = {
       return { success: false, error: message };
     }
   },
+  /**
+   * Download the full database as a JSON backup file.
+   * GET /admin/database/export
+   */
+
+  /**
+   * Download the full database as a raw SQL dump (.sql) file.
+   * Compatible with phpMyAdmin, MySQL CLI, Workbench, DBeaver, etc.
+   * GET /admin/database/export-sql
+   */
+  exportDatabaseSql: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/database/export-sql`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/plain' }));
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `portionbridge_backup_${timestamp}.sql`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to export SQL database';
+      return { success: false, error: message };
+    }
+  },
+  exportDatabase: async () => {
+    try {
+      const token = getAuthToken();
+      const response = await axios.get(`${API_BASE}/admin/database/export`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/json' }));
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `portionbridge_backup_${timestamp}.json`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      return { success: true };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to export database';
+      return { success: false, error: message };
+    }
+  },
+
+  /**
+   * Restore the full database from a JSON backup.
+   * POST /admin/database/import
+   * @param {Object} backupJson - Parsed JSON backup object
+   */
+  importDatabase: async (backupJson) => {
+    try {
+      const token = getAuthToken();
+      const csrfToken = getCsrfToken();
+      const response = await axios.post(
+        `${API_BASE}/admin/database/import`,
+        backupJson,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'x-csrf-token': csrfToken,
+            'Content-Type': 'application/json',
+          },
+          timeout: 120000, // 2 minutes — large DBs can take a while
+        }
+      );
+      return { success: true, data: response.data.data };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to import database';
+      return { success: false, error: message };
+    }
+  },
 };

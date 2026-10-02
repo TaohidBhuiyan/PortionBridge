@@ -34,6 +34,9 @@ const {
   listSessions,
   revokeSession,
   exportAuditLogs,
+  exportDatabase,
+  exportDatabaseSql,
+  importDatabase,
 } = require('../../controllers/admin.controller');
 
 const {
@@ -355,6 +358,28 @@ router.get(
   protect,
   authorize('admin'),
   exportAuditLogs
+);
+
+// --- Database Backup & Restore ---
+router.get(
+  '/database/export',
+  protect,
+  authorize('admin'),
+  exportDatabase
+);
+
+router.get(
+  '/database/export-sql',
+  protect,
+  authorize('admin'),
+  exportDatabaseSql
+);
+
+router.post(
+  '/database/import',
+  protect,
+  authorize('admin'),
+  importDatabase
 );
 
 module.exports = router;

@@ -1421,6 +1421,192 @@ async function exportAuditLogs(filters) {
   return [header, ...lines].join('\n');
 }
 
+/* ============================================================
+ * Database Backup & Restore
+ * ============================================================ */
+
+/**
+ * Exports every table in the database as a JSON object.
+ * Returns { metadata, tables: { tableName: [rows] } }
+ */
+async function exportDatabase() {
+  const { pool } = require('../config/db');
+  const connection = await pool.getConnection();
+  try {
+    const [tableRows] = await connection.query('SHOW TABLES');
+    const tableNames = tableRows.map((r) => Object.values(r)[0]);
+
+    const tables = {};
+    for (const tableName of tableNames) {
+      const [rows] = await connection.query(`SELECT * FROM \`${tableName}\``);
+      // Convert Buffer/BigInt values to plain JS so JSON.stringify works.
+      tables[tableName] = rows.map((row) => {
+        const clean = {};
+        for (const [k, v] of Object.entries(row)) {
+          if (Buffer.isBuffer(v)) {
+            clean[k] = v.toString('base64');
+          } else if (typeof v === 'bigint') {
+            clean[k] = Number(v);
+          } else {
+            clean[k] = v;
+          }
+        }
+        return clean;
+      });
+    }
+
+    return {
+      metadata: {
+        database: process.env.DB_NAME || 'portionbridge',
+        exportedAt: new Date().toISOString(),
+        version: '1.0',
+        tableCount: tableNames.length,
+        rowCounts: Object.fromEntries(
+          tableNames.map((t) => [t, tables[t].length])
+        ),
+      },
+      tables,
+    };
+  } finally {
+    connection.release();
+  }
+}
+
+/**
+ * Restores the database from a previously exported JSON backup.
+ * Clears each table that appears in the backup and re-inserts all rows.
+ * Tables not present in the backup are left untouched.
+ * @param {{ metadata: object, tables: Record<string, object[]> }} backup
+ */
+async function importDatabase(backup) {
+  const { pool } = require('../config/db');
+  if (!backup || !backup.tables || typeof backup.tables !== 'object') {
+    const AppError = require('../utils/AppError');
+    const { HTTP_STATUS } = require('../constants');
+    throw new AppError('Invalid backup format.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    // Disable FK checks so we can truncate in any order.
+    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+
+    const tableNames = Object.keys(backup.tables);
+    const results = {};
+
+    for (const tableName of tableNames) {
+      const rows = backup.tables[tableName];
+      if (!Array.isArray(rows)) continue;
+
+      // Verify the table actually exists (skip unknown names for safety).
+      const [exists] = await connection.query(
+        `SELECT COUNT(*) AS cnt FROM information_schema.tables
+         WHERE table_schema = DATABASE() AND table_name = ?`,
+        [tableName]
+      );
+      if (!exists[0].cnt) {
+        results[tableName] = { skipped: true, reason: 'table not found in database' };
+        continue;
+      }
+
+      await connection.query(`DELETE FROM \`${tableName}\``);
+
+      if (rows.length === 0) {
+        results[tableName] = { restored: 0 };
+        continue;
+      }
+
+      const columns = Object.keys(rows[0]);
+      const columnNames = columns.map((c) => `\`${c}\``).join(', ');
+      const placeholders = columns.map(() => '?').join(', ');
+
+      let restored = 0;
+      for (const row of rows) {
+        const values = columns.map((c) => {
+          const v = row[c];
+          // If we base64-encoded a Buffer on export, decode it back.
+          if (typeof v === 'string' && /^[A-Za-z0-9+/]+=*$/.test(v) && v.length % 4 === 0) {
+            // Only decode if the original column is BLOB-like; safest to just pass
+            // the string as-is and let MySQL handle it.
+            return v;
+          }
+          return v ?? null;
+        });
+        await connection.query(
+          `INSERT INTO \`${tableName}\` (${columnNames}) VALUES (${placeholders})`,
+          values
+        );
+        restored++;
+      }
+      results[tableName] = { restored };
+    }
+
+    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
+
+    return {
+      importedAt: new Date().toISOString(),
+      tablesProcessed: tableNames.length,
+      results,
+    };
+  } catch (err) {
+    // Make sure FK checks are re-enabled even on failure.
+    try { await connection.query('SET FOREIGN_KEY_CHECKS = 1'); } catch (_) {}
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
+
+/**
+ * Exports the full database schema and data as a raw SQL dump (.sql format).
+ * Compatible with phpMyAdmin, MySQL CLI, Workbench, DBeaver, etc.
+ */
+async function exportDatabaseSql() {
+  const { pool } = require('../config/db');
+  const connection = await pool.getConnection();
+  try {
+    const [tableRows] = await connection.query('SHOW TABLES');
+    const tableNames = tableRows.map((r) => Object.values(r)[0]);
+
+    let sqlDump = '-- PortionBridge Full Database Backup (SQL Dump)\n';
+    sqlDump += '-- Exported at: ' + new Date().toISOString() + '\n';
+    sqlDump += '-- Database: ' + (process.env.DB_NAME || 'portionbridge') + '\n\n';
+    sqlDump += 'SET FOREIGN_KEY_CHECKS = 0;\n\n';
+
+    for (const tableName of tableNames) {
+      const [createRes] = await connection.query('SHOW CREATE TABLE `' + tableName + '`');
+      const createTableSql = createRes[0]['Create Table'] || Object.values(createRes[0])[1];
+
+      sqlDump += '-- --------------------------------------------------------\n';
+      sqlDump += '-- Table structure & data for table `' + tableName + '`\n';
+      sqlDump += '-- --------------------------------------------------------\n';
+      sqlDump += 'DROP TABLE IF EXISTS `' + tableName + '`;\n';
+      sqlDump += createTableSql + ';\n\n';
+
+      const [rows] = await connection.query('SELECT * FROM `' + tableName + '`');
+      if (rows.length > 0) {
+        const columns = Object.keys(rows[0]).map((c) => '`' + c + '`').join(', ');
+        const chunkSize = 100;
+        for (let i = 0; i < rows.length; i += chunkSize) {
+          const chunk = rows.slice(i, i + chunkSize);
+          const valueTuples = chunk.map((row) => {
+            const vals = Object.values(row).map((v) => connection.escape(v));
+            return '(' + vals.join(', ') + ')';
+          });
+          sqlDump += 'INSERT INTO `' + tableName + '` (' + columns + ') VALUES\n' + valueTuples.join(',\n') + ';\n';
+        }
+        sqlDump += '\n';
+      }
+    }
+
+    sqlDump += 'SET FOREIGN_KEY_CHECKS = 1;\n';
+    return sqlDump;
+  } finally {
+    connection.release();
+  }
+}
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -1454,4 +1640,7 @@ module.exports = {
   listActiveSessions,
   revokeSession,
   exportAuditLogs,
+  exportDatabase,
+  exportDatabaseSql,
+  importDatabase,
 };

@@ -20,6 +20,8 @@ const uploadRoutes = require('./upload.routes');
 const volunteerDiscoveryRoutes = require('./volunteerDiscovery.routes');
 const achievementRoutes = require('./achievement.routes');
 const recurringDonationRoutes = require('./recurringDonation.routes');
+const supportRoutes = require('./support.routes');
+const adminSupportRoutes = require('./adminSupport.routes');
 
 // Root endpoint for API v1
 router.get('/', (req, res) => {
@@ -33,6 +35,8 @@ router.get('/', (req, res) => {
       donations: '/donations',
       volunteer: '/volunteer',
       admin: '/admin',
+      'admin-support': '/admin/support',
+      support: '/support',
       ratings: '/ratings',
       reports: '/reports',
       chat: '/chat',
@@ -56,7 +60,9 @@ router.use('/health', healthRoutes);
 router.use('/auth', authRoutes);
 router.use('/donations', donationRoutes);
 router.use('/volunteer', volunteerRoutes);
+router.use('/admin/support', adminSupportRoutes);
 router.use('/admin', adminRoutes);
+router.use('/support', supportRoutes);
 router.use('/ratings', ratingRoutes);
 router.use('/reports', reportRoutes);
 router.use('/chat', chatRoutes);

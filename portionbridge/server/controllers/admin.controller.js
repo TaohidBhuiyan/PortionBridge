@@ -425,6 +425,45 @@ const exportAuditLogs = asyncHandler(async (req, res) => {
   return res.send(csv);
 });
 
+/**
+ * GET /api/v1/admin/database/export
+ * Streams the full database as a downloadable JSON backup file.
+ */
+
+/**
+ * GET /api/v1/admin/database/export-sql
+ * Streams the full database as a downloadable raw SQL dump file (.sql) for phpMyAdmin / MySQL CLI.
+ */
+const exportDatabaseSql = asyncHandler(async (req, res) => {
+  const sqlDump = await adminService.exportDatabaseSql();
+  const filename = `portionbridge_backup_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.sql`;
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send(sqlDump);
+});
+
+const exportDatabase = asyncHandler(async (req, res) => {
+  const backup = await adminService.exportDatabase();
+  const filename = `portionbridge_backup_${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}.json`;
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  return res.send(JSON.stringify(backup, null, 2));
+});
+
+/**
+ * POST /api/v1/admin/database/import
+ * Accepts a JSON backup (sent as application/json body) and restores it.
+ * Body: { metadata, tables } — the same shape exportDatabase produces.
+ */
+const importDatabase = asyncHandler(async (req, res) => {
+  const result = await adminService.importDatabase(req.body);
+  return success(res, {
+    statusCode: HTTP_STATUS.OK,
+    message: 'Database imported successfully.',
+    data: result,
+  });
+});
+
 module.exports = {
   getDashboard,
   listUsers,
@@ -458,4 +497,7 @@ module.exports = {
   listSessions,
   revokeSession,
   exportAuditLogs,
+  exportDatabase,
+  exportDatabaseSql,
+  importDatabase,
 };

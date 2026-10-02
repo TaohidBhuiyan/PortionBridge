@@ -12,6 +12,8 @@ const REQUIRED_TABLES = [
   'user_preferences',
   'notification_settings',
   'volunteer_profiles',
+  'support_tickets',
+  'support_messages',
 ];
 
 const REQUIRED_COLUMNS = {

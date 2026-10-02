@@ -119,24 +119,37 @@ export function AdminDonationDetail() {
         </button>
 
         {/* Header */}
-        <div className="bg-surface rounded-lg border border-border/50 p-6">
-          <div className="flex items-start justify-between flex-wrap gap-3">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 dark:from-emerald-950 dark:via-teal-950 dark:to-cyan-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-teal-300/20 blur-3xl" />
+
+          <div className="relative flex items-start justify-between flex-wrap gap-4 z-10">
             <div>
-              <h1 className="text-xl font-bold text-text-primary mb-1">
-                {donation.title || `${donation.category} donation`}
-              </h1>
-              <p className="text-sm text-text-secondary capitalize">{donation.category} · Qty {donation.quantity}{donation.quantity_unit ? ` ${donation.quantity_unit}` : ''}</p>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-extrabold text-white">
+                  {donation.title || `${donation.category} donation`}
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 border border-white/30 backdrop-blur-sm text-white">
+                  #{donation.id}
+                </span>
+              </div>
+              <p className="text-emerald-100/90 text-sm font-semibold capitalize mt-1">
+                Category: {donation.category} • Quantity: {donation.quantity}{donation.quantity_unit ? ` ${donation.quantity_unit}` : ''}
+              </p>
             </div>
             <StatusBadge status={displayStatus} size="large" />
           </div>
-          {donation.pickup_location && (
-            <p className="flex items-center gap-1.5 text-sm text-text-secondary mt-3">
-              <MapPin size={14} /> {donation.pickup_location}
+
+          <div className="mt-5 pt-4 border-t border-white/15 relative z-10 space-y-1.5 text-white/90 text-xs font-medium">
+            {donation.pickup_location && (
+              <p className="flex items-center gap-2">
+                <MapPin size={15} className="text-emerald-200" /> {donation.pickup_location}
+              </p>
+            )}
+            <p className="flex items-center gap-2">
+              <Calendar size={15} className="text-emerald-200" /> Created on {formatDateTime(donation.created_at)}
             </p>
-          )}
-          <p className="flex items-center gap-1.5 text-sm text-text-secondary mt-1">
-            <Calendar size={14} /> Created {formatDateTime(donation.created_at)}
-          </p>
+          </div>
         </div>
 
         {/* Reports, if any */}

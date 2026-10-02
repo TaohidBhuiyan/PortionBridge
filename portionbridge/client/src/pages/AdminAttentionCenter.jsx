@@ -121,38 +121,70 @@ export function AdminAttentionCenter() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div className="flex items-start justify-between flex-wrap gap-3">
-          <div>
-            <h1 className="text-2xl font-bold text-text-primary mb-1">Attention Center</h1>
-            <p className="text-text-secondary text-sm">
-              Real donations, reports, and volunteers that need a look right now.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {generatedAt && (
-              <span className="text-xs text-text-secondary">Updated {timeAgo(generatedAt)}</span>
-            )}
-            <button
-              onClick={() => setRefreshTrigger((t) => t + 1)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/50 text-text-secondary text-xs font-medium hover:bg-surface-hover transition-colors"
-            >
-              <RefreshCw size={13} /> Refresh
-            </button>
+        {/* Gradient Hero Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 dark:from-amber-800 dark:via-orange-900 dark:to-red-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-yellow-300/20 blur-3xl" />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md shadow-inner shrink-0">
+                <ShieldAlert size={28} className="text-white drop-shadow" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Attention Center</h1>
+                </div>
+                <p className="text-amber-100/90 text-sm mt-1 max-w-xl">
+                  Real-time operational alerts, delayed deliveries, reported items, and idle resources.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 self-start md:self-auto">
+              {generatedAt && (
+                <span className="text-xs text-white/80 font-medium">Updated {timeAgo(generatedAt)}</span>
+              )}
+              <button
+                onClick={() => setRefreshTrigger((t) => t + 1)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 border border-white/25 backdrop-blur-md text-white text-xs font-semibold hover:bg-white/25 transition-all shadow-sm active:scale-95"
+              >
+                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Refresh
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
-            <p className="text-2xl font-bold text-danger">{counts.high}</p>
-            <p className="text-xs text-text-secondary">High Priority</p>
+        {/* Priority Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-surface rounded-2xl border border-rose-200 dark:border-rose-900/50 p-5 shadow-pb-card flex items-center justify-between transition-all hover:scale-[1.01]">
+            <div>
+              <p className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">High Priority</p>
+              <p className="text-3xl font-black text-rose-600 dark:text-rose-400 mt-1">{counts.high}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900 flex items-center justify-center">
+              <ShieldAlert className="w-6 h-6 text-rose-600 dark:text-rose-400" />
+            </div>
           </div>
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
-            <p className="text-2xl font-bold text-warning">{counts.medium}</p>
-            <p className="text-xs text-text-secondary">Medium Priority</p>
+
+          <div className="bg-surface rounded-2xl border border-amber-200 dark:border-amber-900/50 p-5 shadow-pb-card flex items-center justify-between transition-all hover:scale-[1.01]">
+            <div>
+              <p className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Medium Priority</p>
+              <p className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">{counts.medium}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+            </div>
           </div>
-          <div className="bg-surface rounded-lg border border-border/50 p-4 text-center transition-[box-shadow,transform] duration-150 hover:shadow-pb-card hover:-translate-y-0.5">
-            <p className="text-2xl font-bold text-info">{counts.low}</p>
-            <p className="text-xs text-text-secondary">Low Priority</p>
+
+          <div className="bg-surface rounded-2xl border border-blue-200 dark:border-blue-900/50 p-5 shadow-pb-card flex items-center justify-between transition-all hover:scale-[1.01]">
+            <div>
+              <p className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Low Priority</p>
+              <p className="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">{counts.low}</p>
+            </div>
+            <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-100 dark:border-blue-900 flex items-center justify-center">
+              <CheckCircle2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
         </div>
 
@@ -169,28 +201,41 @@ export function AdminAttentionCenter() {
               const { label, icon: Icon } = TYPE_META[type];
               const typeItems = grouped[type];
               return (
-                <div key={type} className="bg-surface rounded-lg border border-border/50 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Icon size={15} className="text-dash-primary" />
-                    <h2 className="text-sm font-semibold text-text-primary">{label}</h2>
-                    <span className="text-xs text-text-secondary">({typeItems.length})</span>
+                <div key={type} className="bg-surface rounded-2xl border border-border p-5 shadow-pb-card">
+                  <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-border">
+                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 flex items-center justify-center">
+                      <Icon size={16} className="text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <h2 className="text-base font-bold text-text-primary">{label}</h2>
+                    <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-page text-text-secondary border border-border">
+                      {typeItems.length}
+                    </span>
                   </div>
-                  <ul className="divide-y divide-border/50">
-                    {typeItems.map((item) => (
-                      <li
-                        key={item.id}
-                        onClick={() => navigate(item.link)}
-                        className="py-2.5 flex items-center justify-between gap-3 cursor-pointer hover:bg-surface-hover rounded-md px-2 -mx-2 transition-colors"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-xs text-text-primary truncate">{item.description}</p>
-                          <p className="text-[11px] text-text-secondary">{timeAgo(item.detectedAt)}</p>
-                        </div>
-                        <span className={`shrink-0 px-2 py-0.5 rounded-full text-[11px] font-medium ${SEVERITY_TONE[item.severity]}`}>
-                          {item.severity}
-                        </span>
-                      </li>
-                    ))}
+                  <ul className="divide-y divide-border/60">
+                    {typeItems.map((item) => {
+                      const severityBadges = {
+                        high: 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+                        medium: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-900',
+                        low: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+                      };
+                      return (
+                        <li
+                          key={item.id}
+                          onClick={() => navigate(item.link)}
+                          className="py-3 px-3 flex items-center justify-between gap-4 cursor-pointer hover:bg-surface-hover/80 rounded-xl transition-all group"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-text-primary group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors truncate">
+                              {item.description}
+                            </p>
+                            <p className="text-xs text-text-secondary mt-0.5">{timeAgo(item.detectedAt)}</p>
+                          </div>
+                          <span className={`shrink-0 px-3 py-1 rounded-full text-xs font-bold capitalize border ${severityBadges[item.severity] || 'bg-gray-100 text-gray-700'}`}>
+                            {item.severity}
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               );

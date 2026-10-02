@@ -136,15 +136,18 @@ export function AdminUserDetail() {
         </button>
 
         {/* Profile card */}
-        <div className="bg-surface rounded-lg border border-border/50 p-6">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-dash-primary-soft flex items-center justify-center shrink-0">
-                <RoleIcon size={22} className="text-dash-primary" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 dark:from-blue-950 dark:via-indigo-950 dark:to-violet-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-cyan-400/20 blur-3xl" />
+
+          <div className="relative flex items-start justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
+                <RoleIcon size={26} className="text-white drop-shadow" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-text-primary">{user.name}</h1>
-                <p className="text-sm text-text-secondary capitalize">{user.role}</p>
+                <h1 className="text-2xl font-extrabold text-white">{user.name}</h1>
+                <p className="text-blue-100/80 text-xs font-semibold capitalize tracking-wide mt-0.5">{user.role} Account • #{user.id}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -152,10 +155,10 @@ export function AdminUserDetail() {
               {!user.is_deleted && user.role !== 'admin' && (
                 <button
                   onClick={() => setConfirmOpen(true)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 ${
                     user.is_banned
-                      ? 'bg-success text-white hover:opacity-90'
-                      : 'bg-danger text-white hover:opacity-90'
+                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                      : 'bg-rose-500 hover:bg-rose-600 text-white'
                   }`}
                 >
                   {user.is_banned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
@@ -165,35 +168,35 @@ export function AdminUserDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-border/50">
-            <div className="flex items-center gap-2 text-sm">
-              <Mail size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">{user.email}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/15 relative z-10 text-white/90">
+            <div className="flex items-center gap-2.5 text-xs font-medium">
+              <Mail size={15} className="text-blue-200 shrink-0" />
+              <span className="text-white">{user.email}</span>
               {user.email_verified ? (
-                <span title="Verified"><ShieldCheck size={13} className="text-success" /></span>
+                <span title="Verified"><ShieldCheck size={14} className="text-emerald-300" /></span>
               ) : (
-                <span title="Unverified"><ShieldOff size={13} className="text-warning" /></span>
+                <span title="Unverified"><ShieldOff size={14} className="text-amber-300" /></span>
               )}
             </div>
             {user.phone && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone size={14} className="text-text-secondary shrink-0" />
-                <span className="text-text-primary">{user.phone}</span>
+              <div className="flex items-center gap-2.5 text-xs font-medium">
+                <Phone size={15} className="text-blue-200 shrink-0" />
+                <span className="text-white">{user.phone}</span>
               </div>
             )}
             {user.address && (
-              <div className="flex items-center gap-2 text-sm">
-                <MapPin size={14} className="text-text-secondary shrink-0" />
-                <span className="text-text-primary">{user.address}</span>
+              <div className="flex items-center gap-2.5 text-xs font-medium">
+                <MapPin size={15} className="text-blue-200 shrink-0" />
+                <span className="text-white">{user.address}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">Joined {formatDateTime(user.created_at)}</span>
+            <div className="flex items-center gap-2.5 text-xs font-medium">
+              <Calendar size={15} className="text-blue-200 shrink-0" />
+              <span className="text-white">Joined {formatDateTime(user.created_at)}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Clock size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">Last login {formatDateTime(user.last_login_at)}</span>
+            <div className="flex items-center gap-2.5 text-xs font-medium">
+              <Clock size={15} className="text-blue-200 shrink-0" />
+              <span className="text-white">Last login {formatDateTime(user.last_login_at)}</span>
             </div>
           </div>
         </div>

@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ArrowLeft, Lock, Bell, Moon, Shield, UserCog, Sliders,
   Search, Sparkles, User, Settings2, ShieldCheck, Database,
   Globe, AlertTriangle, Users, Activity, CheckCircle, XCircle,
   Loader2, Monitor, Smartphone, Laptop, Key, Download, Clock,
-  RefreshCw, Save, Eye, EyeOff, X,
+  RefreshCw, Save, Eye, EyeOff, X, Upload, HardDrive,
+  ArchiveRestore, FileJson, Info, Trash2,
 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
@@ -341,7 +342,7 @@ export function AdminSettingsPage() {
   const [exportingLogs, setExportingLogs] = useState(false);
 
   const tabParam = searchParams.get('tab');
-  const activeTab = tabParam && ['security', 'notifications', 'appearance', 'platform', 'audit', 'moderation'].includes(tabParam)
+  const activeTab = tabParam && ['security', 'notifications', 'appearance', 'platform', 'audit', 'moderation', 'database'].includes(tabParam)
     ? tabParam
     : 'security';
 
@@ -412,6 +413,74 @@ export function AdminSettingsPage() {
     else showToast('Audit logs exported successfully.');
   };
 
+  // ---- Database export/import state ----
+  const [exportingDb, setExportingDb] = useState(false);
+  const [importingDb, setImportingDb] = useState(false);
+  const [importResult, setImportResult] = useState(null); // null | { tablesProcessed, results }
+  const [importError, setImportError] = useState('');
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
+  const [pendingBackup, setPendingBackup] = useState(null); // parsed JSON object
+  const [pendingFilename, setPendingFilename] = useState('');
+  const importFileRef = useRef(null);
+
+  const handleExportDb = async () => {
+    setExportingDb(true);
+    const res = await adminApi.exportDatabase();
+    setExportingDb(false);
+    if (!res.success) showToast(res.error || 'Export failed.', 'error');
+    else showToast('Database exported and downloaded successfully.');
+  };
+
+  const [exportingSql, setExportingSql] = useState(false);
+  const handleExportDbSql = async () => {
+    setExportingSql(true);
+    const res = await adminApi.exportDatabaseSql();
+    setExportingSql(false);
+    if (!res.success) showToast(res.error || 'SQL export failed.', 'error');
+    else showToast('SQL backup downloaded — ready for phpMyAdmin / MySQL import!');
+  };
+
+  const handleImportFileChange = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setImportError('');
+    setImportResult(null);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const parsed = JSON.parse(ev.target.result);
+        if (!parsed.tables || typeof parsed.tables !== 'object') {
+          setImportError('Invalid backup file: missing "tables" key. Please use a file exported by PortionBridge.');
+          return;
+        }
+        setPendingBackup(parsed);
+        setPendingFilename(file.name);
+        setShowImportConfirm(true);
+      } catch {
+        setImportError('Could not parse file as JSON. Make sure you selected a valid PortionBridge backup.');
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleConfirmImport = async () => {
+    setShowImportConfirm(false);
+    setImportingDb(true);
+    setImportError('');
+    setImportResult(null);
+    const res = await adminApi.importDatabase(pendingBackup);
+    setImportingDb(false);
+    setPendingBackup(null);
+    if (res.success) {
+      setImportResult(res.data);
+      showToast('Database restored successfully!');
+    } else {
+      setImportError(res.error || 'Import failed.');
+      showToast(res.error || 'Import failed.', 'error');
+    }
+  };
+
   const tabs = [
     { id: 'security', label: 'Security & Access', icon: Lock, desc: 'Password, sessions & admin authentication' },
     { id: 'notifications', label: 'Notification Rules', icon: Bell, desc: 'System-wide notification preferences' },
@@ -419,6 +488,7 @@ export function AdminSettingsPage() {
     { id: 'platform', label: 'Platform Settings', icon: Globe, desc: 'General platform configuration' },
     { id: 'audit', label: 'Audit & Logs', icon: ShieldCheck, desc: 'Activity logs & compliance settings' },
     { id: 'moderation', label: 'Moderation Tools', icon: AlertTriangle, desc: 'Content moderation & spam controls' },
+    { id: 'database', label: 'Database Backup', icon: Database, desc: 'Export full DB & restore from backup' },
   ];
 
   const filteredTabs = tabs.filter((t) =>
@@ -914,6 +984,234 @@ export function AdminSettingsPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* ------------------------------------------------------------------ */}
+            {/* TAB: Database Backup                                                */}
+            {/* ------------------------------------------------------------------ */}
+            {!isLoading && activeTab === 'database' && (
+              <div className="space-y-6">
+                {/* Import confirmation modal */}
+                {showImportConfirm && pendingBackup && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-surface rounded-2xl border border-border/60 shadow-2xl p-6 w-full max-w-lg mx-4">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                          <AlertTriangle size={22} className="text-red-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-base font-bold text-text-primary">Confirm Database Restore</h3>
+                          <p className="text-xs text-text-secondary mt-0.5">This will overwrite all existing data</p>
+                        </div>
+                      </div>
+
+                      {/* Backup metadata */}
+                      {pendingBackup.metadata && (
+                        <div className="p-3 bg-page rounded-xl border border-border/40 mb-4 space-y-1.5">
+                          <p className="text-xs font-medium text-text-primary flex items-center gap-1.5">
+                            <FileJson size={13} className="text-violet-500" />
+                            {pendingFilename}
+                          </p>
+                          {pendingBackup.metadata.exportedAt && (
+                            <p className="text-xs text-text-muted">
+                              Exported: {new Date(pendingBackup.metadata.exportedAt).toLocaleString()}
+                            </p>
+                          )}
+                          <p className="text-xs text-text-muted">
+                            Tables: {pendingBackup.metadata.tableCount ?? Object.keys(pendingBackup.tables).length}
+                          </p>
+                          {pendingBackup.metadata.rowCounts && (
+                            <div className="mt-2 max-h-36 overflow-y-auto space-y-1">
+                              {Object.entries(pendingBackup.metadata.rowCounts).map(([t, n]) => (
+                                <div key={t} className="flex justify-between text-[11px] text-text-muted">
+                                  <span className="font-mono">{t}</span>
+                                  <span>{n} rows</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-5">
+                        <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                          ⚠️ All current data in every table listed above will be <strong>permanently replaced</strong>.
+                          This cannot be undone. Make sure you have a fresh export before proceeding.
+                        </p>
+                      </div>
+
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => { setShowImportConfirm(false); setPendingBackup(null); }}
+                          className="flex-1 px-4 py-2.5 text-sm font-medium bg-surface border border-border/60 text-text-secondary rounded-xl hover:bg-surface-hover transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleConfirmImport}
+                          className="flex-1 px-4 py-2.5 text-sm font-bold bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <ArchiveRestore size={14} />
+                          Yes, Restore Database
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Hidden file input */}
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".json,application/json"
+                  onChange={handleImportFileChange}
+                  className="hidden"
+                />
+
+                {/* Export card */}
+                <div className="bg-surface rounded-2xl border border-border/60 shadow-pb-card p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+                      <HardDrive size={20} className="text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-text-primary">Export Full Database</h3>
+                      <p className="text-xs text-text-secondary">Download every table as a JSON or SQL backup file</p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/50 rounded-xl mb-5">
+                    <ul className="space-y-1.5">
+                      {[
+                        'Exports ALL tables — users, donations, volunteers, teams, audit logs, etc.',
+                        'Save the file somewhere safe (your computer, Google Drive, etc.)',
+                        'If the database is ever wiped or corrupted, use Import (JSON) to restore via PortionBridge',
+                        'Use SQL export to restore directly in phpMyAdmin, MySQL CLI, or any SQL tool',
+                      ].map((txt) => (
+                        <li key={txt} className="flex items-start gap-2 text-xs text-emerald-800 dark:text-emerald-300">
+                          <CheckCircle size={13} className="mt-0.5 shrink-0 text-emerald-600" />
+                          {txt}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Two export buttons side by side */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      id="admin-db-export-btn"
+                      onClick={handleExportDb}
+                      disabled={exportingDb || exportingSql}
+                      className="w-full flex items-center justify-center gap-2.5 px-5 py-3 text-sm font-bold bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl transition-all disabled:opacity-60 shadow-md hover:shadow-lg active:scale-[0.99]"
+                    >
+                      {exportingDb ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                      {exportingDb ? 'Exporting…' : 'Export as JSON'}
+                    </button>
+
+                    <button
+                      id="admin-db-export-sql-btn"
+                      onClick={handleExportDbSql}
+                      disabled={exportingDb || exportingSql}
+                      className="w-full flex items-center justify-center gap-2.5 px-5 py-3 text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all disabled:opacity-60 shadow-md hover:shadow-lg active:scale-[0.99]"
+                    >
+                      {exportingSql ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                      {exportingSql ? 'Exporting SQL…' : 'Export as SQL (.sql)'}
+                    </button>
+                  </div>
+
+                  <p className="mt-2 text-center text-xs text-text-muted">
+                    <span className="font-semibold text-blue-600 dark:text-blue-400">SQL file</span> can be imported directly in <strong>phpMyAdmin</strong>, <strong>MySQL CLI</strong>, <strong>DBeaver</strong>, or <strong>MySQL Workbench</strong>.
+                  </p>
+                </div>
+
+                {/* Import card */}
+                <div className="bg-surface rounded-2xl border border-border/60 shadow-pb-card p-6">
+                  <div className="flex items-center gap-3 mb-5">
+                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30">
+                      <ArchiveRestore size={20} className="text-orange-600 dark:text-orange-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-text-primary">Import & Restore</h3>
+                      <p className="text-xs text-text-secondary">Restore all data from a previously exported backup file</p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 dark:bg-amber-900/15 border border-amber-200 dark:border-amber-800/50 rounded-xl mb-5 flex items-start gap-2.5">
+                    <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600" />
+                    <p className="text-xs text-amber-800 dark:text-amber-300">
+                      <strong>Destructive operation.</strong> Importing will <strong>overwrite</strong> all data in every table included
+                      in the backup. Export a fresh backup first if you want to preserve current data.
+                    </p>
+                  </div>
+
+                  {/* Import error */}
+                  {importError && (
+                    <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl mb-4 flex items-start gap-2">
+                      <XCircle size={14} className="shrink-0 mt-0.5 text-red-500" />
+                      <p className="text-xs text-red-700 dark:text-red-300">{importError}</p>
+                    </div>
+                  )}
+
+                  {/* Import success result */}
+                  {importResult && (
+                    <div className="p-4 bg-emerald-50 dark:bg-emerald-900/15 border border-emerald-200 dark:border-emerald-800/50 rounded-xl mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <CheckCircle size={16} className="text-emerald-600" />
+                        <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">Restore Successful</p>
+                      </div>
+                      <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-2">
+                        {importResult.tablesProcessed} tables processed at {new Date(importResult.importedAt).toLocaleString()}
+                      </p>
+                      <div className="max-h-44 overflow-y-auto space-y-1">
+                        {Object.entries(importResult.results || {}).map(([table, res]) => (
+                          <div key={table} className="flex justify-between text-[11px] text-emerald-700 dark:text-emerald-400">
+                            <span className="font-mono">{table}</span>
+                            <span>
+                              {res.skipped
+                                ? `⏭ skipped (${res.reason})`
+                                : `✓ ${res.restored} rows restored`}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    id="admin-db-import-btn"
+                    onClick={() => importFileRef.current?.click()}
+                    disabled={importingDb}
+                    className="w-full flex items-center justify-center gap-2.5 px-5 py-3 text-sm font-bold bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-xl transition-all disabled:opacity-60 shadow-md hover:shadow-lg active:scale-[0.99]"
+                  >
+                    {importingDb ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    {importingDb ? 'Restoring Database…' : 'Select Backup File to Restore'}
+                  </button>
+                </div>
+
+                {/* How-to guide */}
+                <div className="bg-surface rounded-2xl border border-border/60 shadow-pb-card p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Info size={16} className="text-violet-500" />
+                    <h4 className="text-sm font-bold text-text-primary">How to use Backup & Restore</h4>
+                  </div>
+                  <ol className="space-y-3">
+                    {[
+                      { step: '1', title: 'Export before anything risky', body: 'Always click "Export & Download Backup" before running seed scripts, making schema changes, or doing bulk updates.' },
+                      { step: '2', title: 'Store the backup file safely', body: 'Save the downloaded .json file to a secure location (Google Drive, external drive, etc.). One file holds the entire database.' },
+                      { step: '3', title: 'Restore when needed', body: 'If data is lost or corrupted, click "Select Backup File to Restore", choose the .json backup, review the table list in the confirmation dialog, then confirm.' },
+                      { step: '4', title: 'After restore', body: 'Refresh the page and verify your data is back. The restore replaces all table data — relationships and settings are preserved exactly as they were at export time.' },
+                    ].map(({ step, title, body }) => (
+                      <li key={step} className="flex gap-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-violet-600 text-white text-xs font-bold flex items-center justify-center">{step}</span>
+                        <div>
+                          <p className="text-xs font-semibold text-text-primary">{title}</p>
+                          <p className="text-xs text-text-secondary mt-0.5">{body}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               </div>
             )}

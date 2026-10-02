@@ -4,14 +4,15 @@
 -- Requires: MySQL 8.0.16+ or MariaDB 10.2.1+ (for CHECK constraint enforcement)
 -- Charset: utf8mb4 (full Unicode support, including emoji in chat messages)
 -- ============================================================================
--- This schema includes all structural changes from migrations 002-025
+-- This schema includes all structural changes from migrations 002-026
 -- (008 achievements, 012 google auth, 013 service areas, 014 announcement type,
 -- 015 report moderation, 016 cancelled status, 017 leaderboard opt-out,
 -- 018 notification templates, 019 recurring donations, 020 base location,
 -- 021 team-aware leaderboard, 022/023 team join requests, 024 donation
--- is_deleted/deleted_at). Migration 025 is a trigger change and lives in
--- triggers.sql. Migration history INSERTs and existing-data cleanup statements
--- are intentionally excluded because this file creates a fresh database.
+-- is_deleted/deleted_at, 026 support tickets, admin_settings). Migration 025
+-- is a trigger change and lives in triggers.sql. Migration history INSERTs and
+-- existing-data cleanup statements are intentionally excluded because this file
+-- creates a fresh database.
 -- ============================================================================
 --
 -- SETUP INSTRUCTIONS:
@@ -40,6 +41,8 @@ DROP TABLE IF EXISTS donation_assignments;
 DROP TABLE IF EXISTS recurring_donations;
 DROP TABLE IF EXISTS team_join_requests;
 DROP TABLE IF EXISTS notification_templates;
+DROP TABLE IF EXISTS support_messages;
+DROP TABLE IF EXISTS support_tickets;
 DROP TABLE IF EXISTS team_invitations;
 DROP TABLE IF EXISTS team_members;
 DROP TABLE IF EXISTS teams;
@@ -55,6 +58,7 @@ DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS chat_messages;
 DROP TABLE IF EXISTS donation_status_history;
 DROP TABLE IF EXISTS donation_requests;
+DROP TABLE IF EXISTS admin_settings;
 DROP TABLE IF EXISTS audit_logs;
 DROP TABLE IF EXISTS refresh_tokens;
 DROP TABLE IF EXISTS password_history;
@@ -120,6 +124,19 @@ CREATE TABLE schema_migrations (
   id VARCHAR(100) NOT NULL PRIMARY KEY,
   applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- ============================================================================
+-- TABLE: admin_settings
+-- Stores persisted admin configuration as key-value pairs.
+-- Each setting_key is unique; setting_value is stored as JSON.
+-- ============================================================================
+CREATE TABLE admin_settings (
+  id          INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(100) NOT NULL,
+  setting_value JSON NOT NULL,
+  updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_admin_settings_key (setting_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================================
 -- TABLES: Authentication security support
@@ -761,7 +778,11 @@ CREATE TABLE notifications (
                   'team_announcement',
                   'team_donation_assigned',
                   'team_donation_completed',
-                  'admin_announcement'
+                  'admin_announcement',
+                  'support_ticket_created',
+                  'support_ticket_user_reply',
+                  'support_ticket_reply',
+                  'support_ticket_status'
                 ) NOT NULL,
   title         VARCHAR(150) NOT NULL,
   message       VARCHAR(500) NOT NULL,
@@ -958,6 +979,64 @@ CREATE TABLE reports (
   CONSTRAINT chk_reports_target_present
     CHECK (reported_user_id IS NOT NULL OR reported_donation_id IS NOT NULL)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- ============================================================================
+-- TABLE: support_tickets
+-- Migration 026: Support Ticket System
+-- ============================================================================
+CREATE TABLE support_tickets (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id INT UNSIGNED NOT NULL,
+  subject VARCHAR(150) NOT NULL,
+  category ENUM('account', 'donation', 'pickup', 'technical', 'safety', 'feedback', 'other') NOT NULL,
+  priority ENUM('low', 'normal', 'high', 'urgent') NOT NULL DEFAULT 'normal',
+  status ENUM('open', 'in_progress', 'awaiting_user', 'resolved', 'closed') NOT NULL DEFAULT 'open',
+  donation_id INT UNSIGNED DEFAULT NULL,
+  assigned_admin_id INT UNSIGNED DEFAULT NULL,
+  user_unread TINYINT(1) NOT NULL DEFAULT 0,
+  admin_unread TINYINT(1) NOT NULL DEFAULT 1,
+  last_message_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  resolved_at DATETIME DEFAULT NULL,
+  closed_at DATETIME DEFAULT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  KEY idx_support_tickets_user_last_msg (user_id, last_message_at),
+  KEY idx_support_tickets_status_priority_last_msg (status, priority, last_message_at),
+
+  CONSTRAINT fk_support_tickets_user
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  CONSTRAINT fk_support_tickets_donation
+    FOREIGN KEY (donation_id) REFERENCES donation_requests(id) ON DELETE SET NULL ON UPDATE CASCADE,
+
+  CONSTRAINT fk_support_tickets_admin
+    FOREIGN KEY (assigned_admin_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================================================
+-- TABLE: support_messages
+-- Migration 026: Support Ticket System
+-- ============================================================================
+CREATE TABLE support_messages (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  ticket_id BIGINT UNSIGNED NOT NULL,
+  sender_id INT UNSIGNED NOT NULL,
+  sender_role ENUM('user', 'admin') NOT NULL,
+  message TEXT NOT NULL,
+  is_internal TINYINT(1) NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  KEY idx_support_messages_ticket_id (ticket_id, created_at),
+
+  CONSTRAINT fk_support_messages_ticket
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE ON UPDATE CASCADE,
+
+  CONSTRAINT fk_support_messages_sender
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 -- ============================================================================

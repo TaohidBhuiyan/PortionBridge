@@ -65,6 +65,10 @@ const NOTIFICATION_TYPES = {
   TEAM_DONATION_ASSIGNED: 'team_donation_assigned',
   TEAM_DONATION_COMPLETED: 'team_donation_completed',
   ADMIN_ANNOUNCEMENT: 'admin_announcement',
+  SUPPORT_TICKET_CREATED: 'support_ticket_created',
+  SUPPORT_TICKET_USER_REPLY: 'support_ticket_user_reply',
+  SUPPORT_TICKET_REPLY: 'support_ticket_reply',
+  SUPPORT_TICKET_STATUS: 'support_ticket_status',
 };
 
 const REPORT_TARGET_TYPES = {
@@ -166,6 +170,34 @@ const AUDIT_ACTIONS = {
   ADMIN_ANNOUNCEMENT_SENT: 'admin_announcement_sent',
   NOTIFICATION_TEMPLATE_CREATED: 'notification_template_created',
   NOTIFICATION_TEMPLATE_DELETED: 'notification_template_deleted',
+  SUPPORT_TICKET_CREATED: 'support_ticket_created',
+  SUPPORT_TICKET_UPDATED: 'support_ticket_updated',
+  SUPPORT_TICKET_REPLIED: 'support_ticket_replied',
+};
+
+const SUPPORT_TICKET_STATUSES = {
+  OPEN: 'open',
+  IN_PROGRESS: 'in_progress',
+  AWAITING_USER: 'awaiting_user',
+  RESOLVED: 'resolved',
+  CLOSED: 'closed',
+};
+
+const SUPPORT_CATEGORIES = {
+  ACCOUNT: 'account',
+  DONATION: 'donation',
+  PICKUP: 'pickup',
+  TECHNICAL: 'technical',
+  SAFETY: 'safety',
+  FEEDBACK: 'feedback',
+  OTHER: 'other',
+};
+
+const SUPPORT_PRIORITIES = {
+  LOW: 'low',
+  NORMAL: 'normal',
+  HIGH: 'high',
+  URGENT: 'urgent',
 };
 
 // --- Donation Form Enums ---
@@ -355,4 +387,7 @@ module.exports = {
   TEAM_MEMBER_ROLE,
   TEAM_INVITATION_STATUS,
   ASSIGNMENT_MODE,
+  SUPPORT_TICKET_STATUSES,
+  SUPPORT_CATEGORIES,
+  SUPPORT_PRIORITIES,
 };

@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Users,
   Bell,
+  Headset,
 } from 'lucide-react';
 
 // Every notification type the backend can actually emit
@@ -43,6 +44,10 @@ const TYPE_META = {
   team_announcement: { icon: Users, tone: 'primary' },
   team_donation_assigned: { icon: Package, tone: 'info' },
   team_donation_completed: { icon: CheckCircle, tone: 'success' },
+  support_ticket_created: { icon: Headset, tone: 'primary' },
+  support_ticket_user_reply: { icon: Headset, tone: 'info' },
+  support_ticket_reply: { icon: Headset, tone: 'info' },
+  support_ticket_status: { icon: Headset, tone: 'warning' },
 };
 
 const TONE_CLASSES = {
@@ -81,7 +86,13 @@ const DONATION_ROUTE_TYPES = new Set([
   'team_donation_completed',
 ]);
 
-export function getNotificationRoute(notification) {
+export function getNotificationRoute(notification, userRole) {
+  if (notification.related_id && notification.type?.startsWith('support_ticket_')) {
+    return userRole === 'admin'
+      ? `/admin/support/${notification.related_id}`
+      : `/support/${notification.related_id}`;
+  }
+
   if (notification.related_id && DONATION_ROUTE_TYPES.has(notification.type)) {
     return `/donations/${notification.related_id}`;
   }

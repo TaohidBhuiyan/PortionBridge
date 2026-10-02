@@ -25,6 +25,7 @@ import {
   AlertTriangle,
   FileText,
   ScrollText,
+  Headset,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -136,7 +137,8 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
     );
     moderationItems.push(
       { title: 'Attention Center', icon: AlertTriangle, path: '/admin/attention-center' },
-      { title: 'Reports', icon: FileText, path: '/admin/reports' }
+      { title: 'Reports', icon: FileText, path: '/admin/reports' },
+      { title: 'Support Inbox', icon: Headset, path: '/admin/support' }
     );
   }
 
@@ -157,6 +159,7 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
         { title: 'Settings', icon: Settings, path: '/admin/settings' },
       ]
     : [
+        { title: 'Support', icon: Headset, path: '/support' },
         { title: 'Messages', icon: MessageSquare, path: '/messages', badge: unreadMessageCount > 0 ? (unreadMessageCount > 99 ? '99+' : unreadMessageCount) : null },
         { title: 'Notifications', icon: Bell, path: '/notifications', badge: unreadCount > 0 ? unreadCount : null },
         { title: 'Help', icon: HelpCircle, path: userRole === 'donor' ? '/donor/help' : '/volunteer/help' },

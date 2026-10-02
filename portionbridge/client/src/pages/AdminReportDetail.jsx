@@ -112,22 +112,25 @@ export function AdminReportDetail() {
           <ArrowLeft size={16} /> Back to Reports
         </button>
 
-        <div className="bg-surface rounded-lg border border-border/50 p-6">
-          <div className="flex items-start justify-between flex-wrap gap-3 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-lg bg-dash-primary-soft flex items-center justify-center shrink-0">
-                {isDonation ? <Package size={16} className="text-dash-primary" /> : <User size={16} className="text-dash-primary" />}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 via-red-600 to-pink-700 dark:from-rose-950 dark:via-red-950 dark:to-pink-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-amber-400/20 blur-3xl" />
+
+          <div className="relative flex items-start justify-between flex-wrap gap-4 z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
+                {isDonation ? <Package size={26} className="text-white drop-shadow" /> : <User size={26} className="text-white drop-shadow" />}
               </div>
               <div>
-                <h1 className="text-lg font-bold text-text-primary">
+                <h1 className="text-2xl font-extrabold text-white">
                   {isDonation ? (report.donation_title || `Donation #${report.reported_donation_id}`) : (report.reported_user_name || 'Reported User')}
                 </h1>
-                <p className="text-xs text-text-secondary">
-                  {isDonation ? `Donation #${report.reported_donation_id} · ${report.donation_status}` : report.reported_user_email}
+                <p className="text-rose-100/90 text-xs font-semibold tracking-wide mt-0.5">
+                  {isDonation ? `Donation Flag • Status: ${report.donation_status}` : `User Account Flag • ${report.reported_user_email}`}
                 </p>
               </div>
             </div>
-            <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize ${STATUS_TONE[report.status]}`}>
+            <span className="px-3.5 py-1.5 rounded-full text-xs font-bold capitalize bg-white/20 border border-white/30 backdrop-blur-sm text-white shadow-sm">
               {report.status}
             </span>
           </div>

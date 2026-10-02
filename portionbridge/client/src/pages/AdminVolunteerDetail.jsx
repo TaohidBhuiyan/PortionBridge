@@ -102,20 +102,25 @@ export function AdminVolunteerDetail() {
         </button>
 
         {/* Profile card */}
-        <div className="bg-surface rounded-lg border border-border/50 p-6">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-dash-primary-soft flex items-center justify-center shrink-0">
-                <UserCheck size={22} className="text-dash-primary" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600 via-violet-600 to-indigo-700 dark:from-purple-950 dark:via-violet-950 dark:to-indigo-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-indigo-400/20 blur-3xl" />
+
+          <div className="relative flex items-start justify-between flex-wrap gap-4 z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
+                <UserCheck size={26} className="text-white drop-shadow" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-text-primary">{volunteer.name}</h1>
-                <p className="text-sm text-text-secondary">Volunteer</p>
+                <h1 className="text-2xl font-extrabold text-white">{volunteer.name}</h1>
+                <p className="text-purple-100/90 text-xs font-semibold tracking-wide mt-0.5">Volunteer Profile • #{volunteer.id}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                stats.isActive ? 'bg-warning-soft text-warning' : 'bg-success-soft text-success'
+              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border backdrop-blur-md ${
+                stats.isActive
+                  ? 'bg-amber-500/20 text-amber-200 border-amber-300/30'
+                  : 'bg-emerald-500/20 text-emerald-200 border-emerald-300/30'
               }`}>
                 {stats.currentStatus}
               </span>
@@ -123,20 +128,20 @@ export function AdminVolunteerDetail() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-border/50">
-            <div className="flex items-center gap-2 text-sm">
-              <Mail size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">{volunteer.email}</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t border-white/15 relative z-10 text-white/90">
+            <div className="flex items-center gap-2.5 text-xs font-medium">
+              <Mail size={15} className="text-purple-200 shrink-0" />
+              <span className="text-white">{volunteer.email}</span>
             </div>
             {volunteer.phone && (
-              <div className="flex items-center gap-2 text-sm">
-                <Phone size={14} className="text-text-secondary shrink-0" />
-                <span className="text-text-primary">{volunteer.phone}</span>
+              <div className="flex items-center gap-2.5 text-xs font-medium">
+                <Phone size={15} className="text-purple-200 shrink-0" />
+                <span className="text-white">{volunteer.phone}</span>
               </div>
             )}
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">Joined {formatDate(volunteer.created_at)}</span>
+            <div className="flex items-center gap-2.5 text-xs font-medium">
+              <Calendar size={15} className="text-purple-200 shrink-0" />
+              <span className="text-white">Joined {formatDate(volunteer.created_at)}</span>
             </div>
             {team && (
               <div className="flex items-center gap-2 text-sm">

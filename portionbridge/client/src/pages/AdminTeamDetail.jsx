@@ -117,32 +117,35 @@ export function AdminTeamDetail() {
         </button>
 
         {/* Header */}
-        <div className="bg-surface rounded-lg border border-border/50 p-6">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-12 h-12 rounded-lg bg-dash-primary-soft flex items-center justify-center shrink-0">
-              <Users size={22} className="text-dash-primary" />
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-violet-700 dark:from-indigo-950 dark:via-purple-950 dark:to-violet-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-pink-400/20 blur-3xl" />
+
+          <div className="relative flex items-center gap-4 z-10">
+            <div className="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
+              <Users size={26} className="text-white drop-shadow" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-text-primary">{team.name}</h1>
-              {team.description && <p className="text-sm text-text-secondary">{team.description}</p>}
+              <h1 className="text-2xl font-extrabold text-white">{team.name}</h1>
+              {team.description && <p className="text-indigo-100/90 text-sm mt-0.5 max-w-xl">{team.description}</p>}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-border/50">
-            <div className="flex items-center gap-2 text-sm">
-              <Crown size={14} className="text-warning shrink-0" />
-              <button onClick={() => navigate(`/admin/volunteers/${team.leader_id}`)} className="text-dash-primary hover:underline">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/15 relative z-10 text-white/90">
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <Crown size={15} className="text-amber-300 shrink-0" />
+              <button onClick={() => navigate(`/admin/volunteers/${team.leader_id}`)} className="text-white font-bold hover:underline">
                 {team.leader_name || 'Unknown'}
               </button>
-              <span className="text-text-secondary">(Leader)</span>
+              <span className="text-white/70">(Leader)</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Mail size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">{team.leader_email}</span>
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <Mail size={15} className="text-indigo-200 shrink-0" />
+              <span className="text-white">{team.leader_email}</span>
             </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar size={14} className="text-text-secondary shrink-0" />
-              <span className="text-text-primary">Created {formatDate(team.created_at)}</span>
+            <div className="flex items-center gap-2 text-xs font-medium">
+              <Calendar size={15} className="text-indigo-200 shrink-0" />
+              <span className="text-white">Created {formatDate(team.created_at)}</span>
             </div>
           </div>
         </div>

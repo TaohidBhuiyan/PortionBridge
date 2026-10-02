@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Flag, Package, User } from 'lucide-react';
+import { Search, Flag, Package, User, ShieldAlert } from 'lucide-react';
 import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
 import { SkeletonTable } from '../components/dashboard/skeletons';
 import { AdminPagination } from '../components/dashboard/admin';
@@ -103,44 +103,71 @@ export function AdminReports() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">Reports</h1>
-          <p className="text-text-secondary text-sm">Moderation queue for reported users and donations.</p>
+        {/* Gradient Hero Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600 via-red-600 to-pink-700 dark:from-rose-900 dark:via-red-950 dark:to-pink-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-amber-400/20 blur-3xl" />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-md shadow-inner shrink-0">
+                <Flag size={28} className="text-white drop-shadow" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Reports & Moderation</h1>
+                </div>
+                <p className="text-rose-100/80 text-sm mt-1 max-w-xl">
+                  Review reported content, user flags, and enforce community safety guidelines.
+                </p>
+              </div>
+            </div>
+
+            {/* Quick info chip */}
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-2.5 self-start md:self-auto">
+              <ShieldAlert className="w-4 h-4 text-amber-300" />
+              <span className="text-xs font-semibold text-white/90">Safety Center</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex gap-1.5">
-            {TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => handleTabChange(tab.key)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === tab.key
-                    ? 'bg-dash-primary text-white'
-                    : 'bg-surface border border-border/50 text-text-secondary hover:bg-surface-hover'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+        {/* Tab Switcher & Filter Bar */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+          <div className="flex p-1 bg-page border border-border rounded-xl gap-1">
+            {TABS.map((tab) => {
+              const isActive = activeTab === tab.key;
+              return (
+                <button
+                  key={tab.key}
+                  onClick={() => handleTabChange(tab.key)}
+                  className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+                    isActive
+                      ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-sm'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-surface'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2.5">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary w-4 h-4" aria-hidden="true" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-secondary w-4 h-4" aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search reason/details..."
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                className="pl-9 pr-3 py-2 border border-border rounded-lg bg-page text-text-primary text-sm w-56 focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+                className="pl-10 pr-4 py-2 border border-border rounded-xl bg-page text-text-primary text-sm w-full sm:w-60 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all shadow-sm"
                 aria-label="Search reports"
               />
             </div>
             <select
               value={targetType}
               onChange={(e) => { setTargetType(e.target.value); setPage(1); }}
-              className="px-3 py-2 border border-border rounded-lg bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
+              className="px-4 py-2 border border-border rounded-xl bg-page text-text-primary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all shadow-sm cursor-pointer"
               aria-label="Filter by target type"
             >
               <option value="">All Targets</option>
@@ -151,7 +178,7 @@ export function AdminReports() {
         </div>
 
         {loading ? (
-          <div className="bg-surface rounded-lg border border-border/50 p-4">
+          <div className="bg-surface rounded-2xl border border-border p-6 shadow-pb-card">
             <SkeletonTable rows={8} columns={5} />
           </div>
         ) : error ? (
@@ -165,45 +192,51 @@ export function AdminReports() {
           />
         ) : (
           <>
-            <div className="bg-surface rounded-lg border border-border/50 overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-border shadow-pb-card overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Target</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Reason</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Reporter</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Status</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Filed</th>
+                    <tr className="bg-page/60 border-b border-border">
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Target</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Reason</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Reporter</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Status</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Filed Date</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-border/60">
                     {reports.map((r) => {
                       const isDonation = !!r.reported_donation_id;
+                      const statusStyles = {
+                        pending: 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                        reviewed: 'bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+                        resolved: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+                        dismissed: 'bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-300 border-gray-200 dark:border-gray-800',
+                      };
                       return (
                         <tr
                           key={r.id}
                           onClick={() => navigate(`/admin/reports/${r.id}`)}
-                          className="border-b border-border/50 last:border-0 hover:bg-surface-hover transition-colors cursor-pointer"
+                          className="hover:bg-surface-hover/80 transition-all cursor-pointer group"
                         >
-                          <td className="py-2.5 px-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-md bg-dash-primary-soft flex items-center justify-center shrink-0">
-                                {isDonation ? <Package size={13} className="text-dash-primary" /> : <User size={13} className="text-dash-primary" />}
+                          <td className="py-3.5 px-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 border border-rose-100 dark:border-rose-900 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                                {isDonation ? <Package size={16} className="text-rose-600 dark:text-rose-400" /> : <User size={16} className="text-rose-600 dark:text-rose-400" />}
                               </div>
-                              <span className="text-xs font-medium text-text-primary truncate max-w-[160px]">
+                              <span className="text-sm font-semibold text-text-primary group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors truncate max-w-[160px]">
                                 {isDonation ? (r.donation_title || `Donation #${r.reported_donation_id}`) : (r.reported_user_name || 'User')}
                               </span>
                             </div>
                           </td>
-                          <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[220px]">{r.reason}</td>
-                          <td className="py-2.5 px-4 text-xs text-text-secondary truncate max-w-[140px]">{r.reporter_name || '—'}</td>
-                          <td className="py-2.5 px-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium capitalize ${STATUS_TONE[r.status]}`}>
+                          <td className="py-3.5 px-5 text-xs font-medium text-text-secondary truncate max-w-[220px]">{r.reason}</td>
+                          <td className="py-3.5 px-5 text-xs font-medium text-text-secondary truncate max-w-[140px]">{r.reporter_name || '—'}</td>
+                          <td className="py-3.5 px-5">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border capitalize ${statusStyles[r.status] || 'bg-gray-100 text-gray-700'}`}>
                               {r.status}
                             </span>
                           </td>
-                          <td className="py-2.5 px-4 text-xs text-text-secondary whitespace-nowrap">{formatDate(r.created_at)}</td>
+                          <td className="py-3.5 px-5 text-xs text-text-secondary font-medium whitespace-nowrap">{formatDate(r.created_at)}</td>
                         </tr>
                       );
                     })}

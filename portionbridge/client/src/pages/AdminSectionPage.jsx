@@ -130,18 +130,21 @@ export function AdminSectionPage() {
         </div>
 
         {/* Hero: identity + inline photo edit + admin quick links */}
-        <div className="bg-gradient-to-r from-dash-primary/15 via-dash-primary-soft to-surface rounded-2xl border border-border p-6 shadow-sm relative overflow-hidden">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-700 dark:from-violet-900 dark:via-purple-950 dark:to-indigo-950 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-pink-400/20 blur-3xl" />
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 z-10 relative">
             <div className="relative shrink-0">
-              <Avatar item={user} tone="dash" className="w-16 h-16 text-xl border-2 border-surface shadow-md" />
+              <Avatar item={user} tone="dash" className="w-16 h-16 text-xl border-2 border-white/30 shadow-md" />
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={photoUploading}
                 aria-label="Change profile photo"
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-dash-primary text-white flex items-center justify-center shadow-sm border-2 border-surface hover:brightness-110 transition-all disabled:opacity-60"
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-white text-violet-700 flex items-center justify-center shadow-md border-2 border-violet-600 hover:scale-105 transition-all disabled:opacity-60"
               >
-                {photoUploading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={12} />}
+                {photoUploading ? <Loader2 size={12} className="animate-spin" /> : <Camera size={13} />}
               </button>
               <input
                 ref={fileInputRef}
@@ -154,29 +157,29 @@ export function AdminSectionPage() {
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-lg font-bold text-text-primary">{user?.name || 'Administrator'}</h2>
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-dash-primary text-white uppercase tracking-wider flex items-center gap-1">
-                  <ShieldCheck size={11} /> Admin
+                <h2 className="text-xl font-extrabold text-white">{user?.name || 'Administrator'}</h2>
+                <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-white/20 border border-white/30 backdrop-blur-sm text-white flex items-center gap-1 uppercase tracking-wider">
+                  <ShieldCheck size={12} /> System Admin
                 </span>
               </div>
-              <p className="text-xs text-text-secondary mt-0.5 truncate">{user?.email}</p>
+              <p className="text-xs text-white/80 mt-0.5 truncate">{user?.email}</p>
               {joinedYear && (
-                <p className="text-[11px] text-text-muted mt-2">Administering PortionBridge since {joinedYear}</p>
+                <p className="text-xs text-white/70 mt-1 font-medium">Administering PortionBridge since {joinedYear}</p>
               )}
             </div>
           </div>
 
           {/* Quick links row */}
-          <div className="flex flex-wrap gap-2 mt-5 z-10 relative">
+          <div className="flex flex-wrap gap-2.5 mt-6 z-10 relative pt-4 border-t border-white/15">
             {QUICK_LINKS.map((link) => {
               const Icon = link.icon;
               return (
                 <button
                   key={link.path}
                   onClick={() => navigate(link.path)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-surface hover:bg-surface-hover border border-border text-text-primary text-xs font-medium rounded-lg transition-all shadow-xs"
+                  className="flex items-center gap-2 px-3.5 py-2 bg-white/15 hover:bg-white/25 border border-white/20 backdrop-blur-md text-white text-xs font-semibold rounded-xl transition-all shadow-sm active:scale-95"
                 >
-                  <Icon size={13} className="text-dash-primary" />
+                  <Icon size={14} className="text-white" />
                   {link.label}
                 </button>
               );

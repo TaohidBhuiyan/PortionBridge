@@ -102,57 +102,88 @@ export function AdminAuditLogs() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary mb-1">Audit Logs</h1>
-          <p className="text-text-secondary text-sm">A searchable trail of authentication, donation, and moderation events across the platform.</p>
+        {/* Gradient Hero Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 via-gray-800 to-zinc-900 shadow-pb-elevated p-6 md:p-8 text-white">
+          <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-blue-500/10 blur-3xl" />
+
+          <div className="relative flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md shadow-inner shrink-0">
+                <ScrollText size={28} className="text-white drop-shadow" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white">Audit & System Logs</h1>
+                  {meta?.totalItems !== undefined && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/15 border border-white/25 backdrop-blur-sm text-white">
+                      {meta.totalItems} entries
+                    </span>
+                  )}
+                </div>
+                <p className="text-slate-300 text-sm mt-1 max-w-xl">
+                  A searchable, immutable trail of authentication, donation, and moderation events across the system.
+                </p>
+              </div>
+            </div>
+
+            {/* Indicator badge */}
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-4 py-2.5 self-start md:self-auto">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold text-white/90">Live Audit Trail</span>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={action}
-            onChange={handleFilterChange(setAction)}
-            className="px-3 py-2 border border-border rounded-lg bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-            aria-label="Filter by action"
-          >
-            <option value="">All Actions</option>
-            {ACTION_OPTIONS.map((a) => (
-              <option key={a} value={a}>{formatAction(a)}</option>
-            ))}
-          </select>
-          <label className="flex items-center gap-1.5 text-xs text-text-secondary">
-            From
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={handleFilterChange(setDateFrom)}
-              max={dateTo || undefined}
-              className="px-2.5 py-2 border border-border rounded-lg bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-              aria-label="From date"
-            />
-          </label>
-          <label className="flex items-center gap-1.5 text-xs text-text-secondary">
-            To
-            <input
-              type="date"
-              value={dateTo}
-              onChange={handleFilterChange(setDateTo)}
-              min={dateFrom || undefined}
-              className="px-2.5 py-2 border border-border rounded-lg bg-page text-text-primary text-sm focus:outline-none focus:ring-2 focus:ring-dash-primary focus:border-transparent transition-all"
-              aria-label="To date"
-            />
-          </label>
-          {(action || dateFrom || dateTo) && (
-            <button
-              onClick={() => { setAction(''); setDateFrom(''); setDateTo(''); setPage(1); }}
-              className="px-3 py-2 text-xs font-medium text-text-secondary hover:text-text-primary transition-colors"
+        {/* Filters */}
+        <div className="bg-surface rounded-2xl border border-border p-4 shadow-pb-card">
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={action}
+              onChange={handleFilterChange(setAction)}
+              className="px-4 py-2.5 border border-border rounded-xl bg-page text-text-primary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all cursor-pointer shadow-sm"
+              aria-label="Filter by action"
             >
-              Clear filters
-            </button>
-          )}
+              <option value="">All Action Types</option>
+              {ACTION_OPTIONS.map((a) => (
+                <option key={a} value={a}>{formatAction(a)}</option>
+              ))}
+            </select>
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
+              From:
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={handleFilterChange(setDateFrom)}
+                max={dateTo || undefined}
+                className="px-3 py-2 border border-border rounded-xl bg-page text-text-primary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all shadow-sm"
+                aria-label="From date"
+              />
+            </label>
+            <label className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
+              To:
+              <input
+                type="date"
+                value={dateTo}
+                onChange={handleFilterChange(setDateTo)}
+                min={dateFrom || undefined}
+                className="px-3 py-2 border border-border rounded-xl bg-page text-text-primary text-sm font-medium focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent transition-all shadow-sm"
+                aria-label="To date"
+              />
+            </label>
+            {(action || dateFrom || dateTo) && (
+              <button
+                onClick={() => { setAction(''); setDateFrom(''); setDateTo(''); setPage(1); }}
+                className="px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline transition-colors"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
-          <div className="bg-surface rounded-lg border border-border/50 p-4">
+          <div className="bg-surface rounded-2xl border border-border p-6 shadow-pb-card">
             <SkeletonTable rows={10} columns={4} />
           </div>
         ) : error ? (
@@ -166,39 +197,49 @@ export function AdminAuditLogs() {
           />
         ) : (
           <>
-            <div className="bg-surface rounded-lg border border-border/50 overflow-hidden">
+            <div className="bg-surface rounded-2xl border border-border shadow-pb-card overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-border/50">
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Action</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">Actor</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">IP Address</th>
-                      <th className="text-left py-2.5 px-4 text-xs font-semibold text-text-secondary">When</th>
+                    <tr className="bg-page/60 border-b border-border">
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Action Event</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Actor / User</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">IP Address</th>
+                      <th className="py-3.5 px-5 text-xs font-bold text-text-secondary uppercase tracking-wider">Timestamp</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    {logs.map((log) => (
-                      <tr key={log.id} className="border-b border-border/50 last:border-0 hover:bg-surface-hover transition-colors">
-                        <td className="py-2.5 px-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${actionTone(log.action)}`}>
-                            {formatAction(log.action)}
-                          </span>
-                        </td>
-                        <td className="py-2.5 px-4 text-xs text-text-primary">
-                          {log.user_name ? (
-                            <div>
-                              <div className="font-medium truncate max-w-[180px]">{log.user_name}</div>
-                              <div className="text-text-secondary truncate max-w-[180px]">{log.user_email}</div>
-                            </div>
-                          ) : (
-                            <span className="text-text-secondary italic">Unknown / no account</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-4 text-xs text-text-secondary font-mono">{log.ip_address || '—'}</td>
-                        <td className="py-2.5 px-4 text-xs text-text-secondary whitespace-nowrap">{formatDateTime(log.created_at)}</td>
-                      </tr>
-                    ))}
+                  <tbody className="divide-y divide-border/60">
+                    {logs.map((log) => {
+                      const isDanger = DANGER_ACTIONS.has(log.action);
+                      const isSuccess = SUCCESS_ACTIONS.has(log.action);
+                      const toneClass = isDanger
+                        ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300 border-rose-200 dark:border-rose-900'
+                        : isSuccess
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900'
+                        : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
+
+                      return (
+                        <tr key={log.id} className="hover:bg-surface-hover/80 transition-all">
+                          <td className="py-3.5 px-5">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${toneClass}`}>
+                              {formatAction(log.action)}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-5 text-xs text-text-primary">
+                            {log.user_name ? (
+                              <div>
+                                <div className="font-semibold text-text-primary truncate max-w-[180px]">{log.user_name}</div>
+                                <div className="text-text-secondary truncate max-w-[180px]">{log.user_email}</div>
+                              </div>
+                            ) : (
+                              <span className="text-text-secondary italic">System / Guest</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-5 text-xs font-mono font-medium text-text-secondary">{log.ip_address || '—'}</td>
+                          <td className="py-3.5 px-5 text-xs text-text-secondary font-medium whitespace-nowrap">{formatDateTime(log.created_at)}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
