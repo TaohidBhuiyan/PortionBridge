@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Star, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { volunteerProfileApi } from '../../../services/volunteerProfileApi';
+import { Avatar } from '../../common/Avatar';
 
 /**
  * Volunteer Reviews Component
@@ -12,11 +13,12 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
   const [error, setError] = useState(null);
   const [sortBy] = useState('recent');
   const [showAll, setShowAll] = useState(false);
+  const [totalReviews, setTotalReviews] = useState(0);
 
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     const result = await volunteerProfileApi.getVolunteerReviews(volunteerId, {
       page: 1,
       limit: 10,
@@ -24,10 +26,11 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
 
     if (result.success) {
       setReviews(result.data.reviews || []);
+      setTotalReviews(result.meta?.total || 0);
     } else {
       setError(result.error);
     }
-    
+
     setLoading(false);
   }, [volunteerId]);
 
@@ -158,17 +161,11 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
             >
               <div className="flex items-start gap-4">
                 {/* Reviewer Avatar */}
-                {review.reviewer_photo ? (
-                  <img
-                    src={review.reviewer_photo}
-                    alt={review.reviewer_name}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-dash-primary flex items-center justify-center text-white font-semibold">
-                    {getReviewerInitials(review.reviewer_name)}
-                  </div>
-                )}
+                <Avatar
+                  item={{ name: review.reviewer_name, photo: review.reviewer_photo }}
+                  tone="dash"
+                  className="w-12 h-12 text-base"
+                />
 
                 {/* Review Content */}
                 <div className="flex-1 min-w-0">
@@ -206,7 +203,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
           ))}
 
           {/* Load More Button */}
-          {reviews.length > 3 && (
+          {totalReviews > 3 && (
             <button
               onClick={() => setShowAll(!showAll)}
               className="w-full flex items-center justify-center gap-2 py-2 text-sm text-dash-primary hover:text-dash-primary dark:hover:text-dash-primary font-medium"
@@ -218,7 +215,7 @@ const VolunteerReviews = ({ volunteerId, ratingSummary }) => {
                 </>
               ) : (
                 <>
-                  Show All Reviews ({reviews.length})
+                  Show All Reviews ({totalReviews})
                   <ChevronDown className="w-4 h-4" />
                 </>
               )}

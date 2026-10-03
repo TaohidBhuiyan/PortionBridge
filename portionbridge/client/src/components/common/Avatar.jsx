@@ -9,26 +9,32 @@ import { resolveMediaUrl } from "../../utils/mediaUrl";
  *   fallback background: "brand" (default, purple) for landing-page contexts,
  *   "dash" (sky-blue) for dashboard contexts. Existing callers are unaffected.
  */
-export function Avatar({ item, className, tone = "brand" }) {
+export function Avatar({ item, donor, volunteer, className = "", tone = "brand" }) {
   const [broken, setBroken] = useState(false);
-  const initials = (item?.name || "User").split(" ").map((w) => w[0]).slice(0, 2).join("");
+  const target = item || donor || volunteer || {};
+  const name = target.name || target.reviewer_name || target.donor_name || target.volunteer_name || "User";
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase() || "U";
+
   const bgVar = tone === "dash"
     ? "var(--color-dash-primary, #0284c7)"
     : "var(--color-primary, oklch(60.6% 0.25 292.717))";
 
-  // The API/DB uses `profile_photo` (manual upload) and, separately,
-  // `profile_picture` (synced from Google OAuth) — every call site in the
-  // app was passing the raw user/volunteer object straight in and this
-  // component only ever checked `.photo`, which neither field is named,
-  // so every avatar in the app silently fell back to initials even when a
-  // real photo existed. A manual upload should win over an auto-synced
-  // Google photo if both are somehow set, hence this order.
-  const photoUrl = resolveMediaUrl(item?.photo || item?.profile_photo || item?.profile_picture);
+  // The API/DB uses `profile_photo` (manual upload), `profile_picture` (synced from Google OAuth),
+  // or `reviewer_photo` / `photo`
+  const photoUrl = resolveMediaUrl(
+    target.photo || target.profile_photo || target.profile_picture || target.reviewer_photo || target.avatar
+  );
 
   if (!photoUrl || broken) {
     return (
       <div
-        className={`${className} rounded-full flex items-center justify-center text-white font-semibold shrink-0`}
+        className={`${className} rounded-full flex items-center justify-center text-white font-semibold shrink-0 select-none`}
         style={{ background: bgVar }}
       >
         {initials}
@@ -39,7 +45,7 @@ export function Avatar({ item, className, tone = "brand" }) {
   return (
     <img
       src={photoUrl}
-      alt={item.name}
+      alt={name}
       onError={() => setBroken(true)}
       className={`${className} rounded-full object-cover shrink-0`}
     />

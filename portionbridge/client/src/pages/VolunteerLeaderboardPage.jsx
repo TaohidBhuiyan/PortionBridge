@@ -4,6 +4,7 @@ import { ArrowLeft, Award, ChevronLeft, ChevronRight, Crown, HandHeart, Medal, S
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import leaderboardApi from '../services/leaderboardApi';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const PAGE_SIZE = 10;
 
@@ -36,11 +37,12 @@ const PODIUM_STYLES = {
 
 function Avatar({ volunteer, className = '' }) {
   const initial = (volunteer.name || '?').charAt(0).toUpperCase();
+  const photoUrl = resolveMediaUrl(volunteer.photo);
   return (
     <div className={`overflow-hidden rounded-full bg-gradient-to-br from-dash-primary via-indigo-500 to-emerald-500 p-[2px] ${className}`}>
       <div className="h-full w-full overflow-hidden rounded-full bg-surface">
-        {volunteer.photo ? (
-          <img src={volunteer.photo} alt={volunteer.name || 'Volunteer'} className="h-full w-full object-cover" />
+        {photoUrl ? (
+          <img src={photoUrl} alt={volunteer.name || 'Volunteer'} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-dash-primary-soft text-base font-extrabold text-dash-primary">
             {initial}

@@ -9,6 +9,20 @@ const { pool } = require('../config/db');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
 
 /**
+ * Helper function to convert relative file path to full URL
+ * @param {string} relativePath - Relative path from uploads directory
+ * @returns {string|null} Full URL or null if path is empty
+ */
+function getFileUrl(relativePath) {
+  if (!relativePath) return null;
+  if (/^(https?:)?\/\//.test(relativePath) || relativePath.startsWith('data:')) {
+    return relativePath;
+  }
+  const cleaned = relativePath.replace(/^(\/)?(uploads\/)?/, '');
+  return `/uploads/${cleaned}`;
+}
+
+/**
  * GET /api/v1/public/stats
  * Public statistics for landing page - no authentication required
  */
@@ -81,9 +95,10 @@ const getPublicDonorLeaderboard = asyncHandler(async (req, res) => {
 
   const meta = buildPaginationMeta({ page, limit, totalItems });
 
-  // Add derived fields for landing page compatibility
+  // Add derived fields for landing page compatibility and convert photo paths to URLs
   const donorsWithKind = donors.map(d => ({
     ...d,
+    profile_photo: getFileUrl(d.profile_photo),
     area: 'Various areas',
     kind: 'Mixed donations',
   }));
@@ -120,9 +135,10 @@ const getPublicVolunteerLeaderboard = asyncHandler(async (req, res) => {
 
   const meta = buildPaginationMeta({ page, limit, totalItems });
 
-  // Add derived fields for landing page compatibility
+  // Add derived fields for landing page compatibility and convert photo paths to URLs
   const volunteersWithKind = volunteers.map(v => ({
     ...v,
+    profile_photo: getFileUrl(v.profile_photo),
     area: 'Various zones',
     kind: 'Mixed pickups',
   }));
@@ -353,7 +369,7 @@ const getPublicZones = asyncHandler(async (req, res) => {
     leader: {
       id: z.leader_id,
       name: z.leader_name || 'Team Leader',
-      photo: z.leader_photo,
+      photo: getFileUrl(z.leader_photo),
     },
     volunteerCount: z.volunteer_count,
     stats: {
@@ -488,6 +504,10 @@ const getPublicVolunteerProfile = asyncHandler(async (req, res) => {
 
   const ratingSummary = ratingResult[0] || { total_ratings: 0, average_rating: 0 };
 
+  // Convert profile photo path to full URL
+  volunteer.profile_photo = getFileUrl(volunteer.profile_photo);
+  volunteer.profile_picture = getFileUrl(volunteer.profile_picture);
+
   return success(res, {
     statusCode: HTTP_STATUS.OK,
     message: 'Volunteer profile retrieved successfully.',
@@ -519,13 +539,13 @@ const getVolunteerReviews = asyncHandler(async (req, res) => {
 
   // Get reviews for this volunteer
   const [reviews] = await pool.query(
-    `SELECT 
+    `SELECT
        r.id,
        r.stars as rating,
        r.comment,
        r.created_at,
        u.name as reviewer_name,
-       u.profile_photo as reviewer_photo,
+       COALESCE(u.profile_photo, u.profile_picture) as reviewer_photo,
        dr.title as donation_title,
        dr.category as donation_category
      FROM ratings r
@@ -536,6 +556,12 @@ const getVolunteerReviews = asyncHandler(async (req, res) => {
      LIMIT :limit OFFSET :offset`,
     { id, limit, offset }
   );
+
+  // Convert relative photo paths to full URLs
+  const reviewsWithUrls = reviews.map(review => ({
+    ...review,
+    reviewer_photo: getFileUrl(review.reviewer_photo)
+  }));
 
   const [totalResult] = await pool.query(
     `SELECT COUNT(*) as total
@@ -551,7 +577,7 @@ const getVolunteerReviews = asyncHandler(async (req, res) => {
   return success(res, {
     statusCode: HTTP_STATUS.OK,
     message: 'Volunteer reviews retrieved successfully.',
-    data: { reviews },
+    data: { reviews: reviewsWithUrls },
     meta,
   });
 });
@@ -633,7 +659,7 @@ const getPublicZoneDetails = asyncHandler(async (req, res) => {
     leader: {
       id: zone.leader_id,
       name: zone.leader_name || 'Team Leader',
-      photo: zone.leader_photo,
+      photo: getFileUrl(zone.leader_photo),
     },
     volunteerCount: zone.volunteer_count,
     stats: {
@@ -653,7 +679,7 @@ const getPublicZoneDetails = asyncHandler(async (req, res) => {
     members: members.map(m => ({
       role: m.role,
       name: m.name,
-      photo: m.profile_photo,
+      photo: getFileUrl(m.profile_photo),
     })),
   };
 

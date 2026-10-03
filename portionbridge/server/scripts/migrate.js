@@ -125,6 +125,11 @@ const migrations = [
       ['enumValue', 'notifications', 'type', 'support_ticket_created'],
     ],
   },
+  {
+    id: 'migration_028_fix_volunteer_leaderboard_profile_picture',
+    file: 'migration_028_fix_volunteer_leaderboard_profile_picture.sql',
+    checks: [['index', 'top_volunteers', 'top_volunteers']], // View exists check
+  },
 ];
 
 async function checkRequirement(connection, [type, table, value, extra]) {

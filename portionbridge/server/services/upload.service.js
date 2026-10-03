@@ -103,7 +103,9 @@ async function uploadProfilePhoto(userId, filePath) {
  */
 function getFileUrl(relativePath) {
   if (!relativePath) return null;
-  return `/uploads/${relativePath}`;
+  // Normalize Windows backslashes to forward slashes
+  const normalizedPath = relativePath.replace(/\\/g, '/');
+  return `/uploads/${normalizedPath}`;
 }
 
 module.exports = {

@@ -7,7 +7,6 @@ import VolunteerStatistics from '../components/dashboard/donor/VolunteerStatisti
 import VolunteerReviews from '../components/dashboard/donor/VolunteerReviews';
 import VolunteerGallery from '../components/dashboard/donor/VolunteerGallery';
 import VolunteerTeamInfo from '../components/dashboard/donor/VolunteerTeamInfo';
-import VolunteerQuickActions from '../components/dashboard/donor/VolunteerQuickActions';
 import { AchievementsPanel } from '../components/common/AchievementsPanel';
 import { BaseLocationCard } from '../components/dashboard/volunteer/BaseLocationCard';
 import { volunteerProfileApi } from '../services/volunteerProfileApi';
@@ -61,10 +60,6 @@ const VolunteerProfilePage = () => {
   useEffect(() => {
     fetchVolunteerProfile();
   }, [fetchVolunteerProfile]);
-
-  const handleRequestPickup = (volunteerData) => {
-    navigate('/donation/create', { state: { preferredVolunteerId: volunteerData.id } });
-  };
 
   // Save updated base location for own volunteer profile
   const handleSaveLocation = async (data) => {
@@ -223,10 +218,6 @@ const VolunteerProfilePage = () => {
               )}
 
               <AchievementsPanel userId={volunteer.id} userRole="volunteer" />
-              <VolunteerQuickActions
-                volunteer={volunteer}
-                onRequestPickup={handleRequestPickup}
-              />
             </div>
           </div>
         </div>

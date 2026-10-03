@@ -1,5 +1,6 @@
 const leaderboardModel = require('../models/leaderboard.model');
 const { getPaginationParams, buildPaginationMeta } = require('../utils/helpers');
+const { getFileUrl } = require('./upload.service');
 
 const POINTS_PER_COMPLETED_DONATION = 50;
 
@@ -16,7 +17,7 @@ function mapDonorRow(row) {
   return {
     id: row.user_id,
     name: row.donor_name,
-    photo: row.profile_photo,
+    photo: getFileUrl(row.profile_photo),
     donationsCount: row.completed_count,
     totalDonations: row.total_donations,
     totalQuantityDonated: row.total_quantity_donated,
@@ -35,7 +36,7 @@ function mapVolunteerRow(row) {
   return {
     id: row.user_id,
     name: row.volunteer_name,
-    photo: row.profile_photo,
+    photo: getFileUrl(row.profile_photo),
     completedCount: row.completed_count,
     totalPickups: row.total_pickups,
     averageRating: row.average_rating,
