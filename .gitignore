@@ -5,3 +5,10 @@
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Temporary/debug scripts
+check_*.js
+seed_*.js
+
+# Patch files
+*.patch

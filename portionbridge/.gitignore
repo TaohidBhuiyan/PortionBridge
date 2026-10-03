@@ -37,6 +37,7 @@ server/uploads/chat/*
 
 # Database dumps (backups exported locally)
 database/*.sql
+backups/
 
 # Preview/screenshot images
 final-preview/
