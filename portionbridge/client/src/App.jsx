@@ -81,6 +81,14 @@ const SupportNewPage = safeLazy(() => import("./pages/SupportNewPage"));
 const SupportTicketPage = safeLazy(() => import("./pages/SupportTicketPage"));
 const AdminSupportPage = safeLazy(() => import("./pages/AdminSupportPage"));
 const AdminSupportTicketPage = safeLazy(() => import("./pages/AdminSupportTicketPage"));
+const DisasterReliefPage = safeLazy(() => import("./pages/DisasterReliefPage"));
+const DisasterIncidentPage = safeLazy(() => import("./pages/DisasterIncidentPage"));
+const ReliefRequestPage = safeLazy(() => import("./pages/ReliefRequestPage"));
+const MyReliefPledgesPage = safeLazy(() => import("./pages/MyReliefPledgesPage"));
+const ReliefPledgeDetailPage = safeLazy(() => import("./pages/ReliefPledgeDetailPage"));
+const VolunteerReliefTasksPage = safeLazy(() => import("./pages/VolunteerReliefTasksPage"));
+const ReliefTaskPage = safeLazy(() => import("./pages/ReliefTaskPage"));
+const AdminReliefReviewPage = safeLazy(() => import("./pages/AdminReliefReviewPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -532,15 +540,96 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/donor/discover-volunteers" 
+              <Route
+                path="/donor/discover-volunteers"
                 element={
                   <ProtectedRoute requiredRole="donor">
                     <AuthSocketProvider>
                       <VolunteerDiscoveryPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
-                } 
+                }
+              />
+              {/* Disaster Relief Routes */}
+              <Route
+                path="/relief"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <DisasterReliefPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/relief/incidents/:id"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <DisasterIncidentPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/relief/requests/:id"
+                element={
+                  <ProtectedRoute>
+                    <AuthSocketProvider>
+                      <ReliefRequestPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/donor/relief-pledges"
+                element={
+                  <ProtectedRoute requiredRole="donor">
+                    <AuthSocketProvider>
+                      <MyReliefPledgesPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/donor/relief-pledges/:id"
+                element={
+                  <ProtectedRoute requiredRole="donor">
+                    <AuthSocketProvider>
+                      <ReliefPledgeDetailPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/volunteer/relief-tasks"
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <VolunteerReliefTasksPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/volunteer/relief-tasks/:id"
+                element={
+                  <ProtectedRoute requiredRole="volunteer">
+                    <AuthSocketProvider>
+                      <ReliefTaskPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/relief"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminReliefReviewPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
               />
               <Route 
                 path="/volunteers/:id" 

@@ -130,6 +130,26 @@ const migrations = [
     file: 'migration_028_fix_volunteer_leaderboard_profile_picture.sql',
     checks: [['index', 'top_volunteers', 'top_volunteers']], // View exists check
   },
+  {
+    id: 'migration_029_disaster_relief_foundation',
+    file: 'migration_029_disaster_relief_foundation.sql',
+    checks: [
+      ['table', 'disaster_incidents'],
+      ['table', 'relief_requests'],
+      ['table', 'relief_request_items'],
+      ['table', 'relief_pledges'],
+    ],
+  },
+  {
+    id: 'migration_030_relief_pledge_logistics',
+    file: 'migration_030_relief_pledge_logistics.sql',
+    checks: [
+      ['table', 'relief_pledge_reports'],
+      ['column', 'relief_pledges', 'quantity_pending_verification'],
+      ['column', 'relief_requests', 'delivery_instructions'],
+      ['enumValue', 'relief_pledges', 'status', 'failed'],
+    ],
+  },
 ];
 
 async function checkRequirement(connection, [type, table, value, extra]) {
@@ -194,7 +214,7 @@ async function migrate() {
 
       const checks = await Promise.all(migration.checks.map((check) => checkRequirement(connection, check)));
       if (checks.every(Boolean)) {
-        await connection.query('INSERT INTO schema_migrations (id) VALUES (?)', [migration.id]);
+        await connection.query('INSERT IGNORE INTO schema_migrations (id) VALUES (?)', [migration.id]);
         console.log(`[Migrate] ${migration.id} already present in baseline schema; recorded.`);
         continue;
       }
@@ -205,7 +225,7 @@ async function migrate() {
 
       const sql = fs.readFileSync(path.join(migrationsDirectory, migration.file), 'utf8');
       await connection.query(sql);
-      await connection.query('INSERT INTO schema_migrations (id) VALUES (?)', [migration.id]);
+      await connection.query('INSERT IGNORE INTO schema_migrations (id) VALUES (?)', [migration.id]);
       console.log(`[Migrate] Applied ${migration.id}.`);
     }
   } finally {

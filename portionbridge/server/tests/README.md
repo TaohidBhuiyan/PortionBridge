@@ -48,6 +48,9 @@ Every test-created user has an `@example.test` email. An `after()` hook in each 
 | `team.test.js` | team creation, one-leader-per-volunteer constraint, invite authorization (leader-only), full team-donation-accept → assign-member flow, and the authorization fix that stops a non-member from accepting "on behalf of" a team they aren't in |
 | `chat.test.js` | donor/volunteer chat access on an accepted donation, rejection of unrelated users, chat unavailable before acceptance, unauthorized `sendMessage` rejection |
 | `notifications.test.js` | regression coverage for the two notification bugs fixed in this pass — no duplicate donor notification on team acceptance, and both the team leader AND a distinct assigned member each get exactly one completion notification |
+| `relief.test.js` | Disaster relief Phase 1 over real HTTP: incident reporting/verification permissions, public vs privileged field masking, relief requests (never auto-approved), item rules, pledge create/update/cancel, over-pledge prevention, idempotency, fulfilment (collect → deliver → partial close), request completion, audit trail, and real parallel-transaction concurrency tests |
+| `reliefTasks.test.js` | Disaster relief Phase 3 over real HTTP: pledges with pickup (atomic pledge + donation creation, validation, idempotency, concurrency), donor ownership, volunteer queue privacy and acceptance rules, status-order enforcement, partial pickup/delivery, reported vs verified delivery, admin verify/reject/resolve, failed deliveries, release/reassignment, verification policy, timeline privacy, audit trail, generic-donation guards and normal-donation regression |
+| `unit/reliefQuantity.test.js` | Exact decimal quantity parsing and the pledged/collected/delivered/remaining rules (no database) |
 
 ### A note on what's *not* covered
 

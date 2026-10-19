@@ -842,3 +842,36 @@ button:focus-visible {
   animation: pulseGlow 2.5s ease-in-out infinite;
 }
 
+
+/* ---------------------------------------------------------------------------
+   Disaster Relief map (Leaflet) — marker, popup and dark-theme styling
+   --------------------------------------------------------------------------- */
+.pb-disaster-map { z-index: 0; background: var(--pb-surface-hover, #e5e7eb); }
+.pb-marker-wrap { background: transparent; border: 0; }
+.pb-marker {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 9999px;
+  border: 2.5px solid #ffffff; box-shadow: 0 1px 6px rgba(15, 23, 42, 0.45);
+  transition: transform 0.12s ease;
+}
+.pb-marker--unverified { border-style: dashed; }
+.pb-marker__count { color: #ffffff; font-size: 14px; font-weight: 700; line-height: 1; }
+.pb-marker--resolved { opacity: 0.6; filter: grayscale(0.55); }
+.leaflet-marker-icon.is-selected { z-index: 1000 !important; }
+.leaflet-marker-icon.is-selected .pb-marker { transform: scale(1.25); box-shadow: 0 0 0 3px color-mix(in oklab, var(--pb-primary) 60%, transparent), 0 2px 8px rgba(15, 23, 42, 0.5); }
+.pb-popup { min-width: 180px; color: #0f172a; font-size: 13px; line-height: 1.35; }
+.pb-popup__title { display: block; font-size: 14px; margin-bottom: 4px; }
+.pb-popup__heading { font-weight: 700; margin-bottom: 6px; color: #0f172a; }
+.pb-popup__item + .pb-popup__item { margin-top: 10px; padding-top: 10px; border-top: 1px solid #e2e8f0; }
+.pb-popup__meta { color: #475569; margin-bottom: 2px; }
+.pb-popup__button {
+  margin-top: 8px; width: 100%; border: 0; border-radius: 8px; padding: 6px 10px;
+  background: var(--pb-primary-hover); color: #ffffff; font-weight: 600; cursor: pointer;
+}
+.pb-popup__button:hover { filter: brightness(0.92); }
+.pb-popup__button:focus-visible { outline: 2px solid var(--pb-primary-hover); outline-offset: 2px; }
+.dark .pb-disaster-map.leaflet-container { background: #1e293b; }
+.dark .pb-disaster-map .leaflet-tile-pane { filter: brightness(0.72) contrast(1.05) saturate(0.85); }
+.dark .pb-disaster-map .leaflet-control-attribution { background: rgba(15, 23, 42, 0.75); color: #cbd5e1; }
+.dark .pb-disaster-map .leaflet-control-attribution a { color: #7dd3fc; }
+

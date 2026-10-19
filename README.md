@@ -1,192 +1,369 @@
-# PortionBridge
+<div align="center">
 
-A full-stack food & clothes donation coordination platform connecting donors, volunteers, and volunteer teams. Donors post donations; individual volunteers or teams accept and fulfill them through a tracked pickup lifecycle, with real-time notifications and chat throughout.
+# 🌉 PortionBridge
 
-## Tech Stack
+### *Connecting Hearts, Bridging Meals & Powering Disaster Relief*
 
-**Backend:** Node.js, Express.js, MySQL (mysql2, raw SQL — no ORM), Socket.IO, JWT, bcrypt, Multer, express-validator, Swagger UI.
+A modern, full-stack platform designed to eliminate food and essential clothing waste while enabling rapid emergency response. PortionBridge coordinates donors, individual volunteers, organized volunteer teams, and field administrators across a unified, real-time lifecycle.
 
-**Frontend:** React 18 + Vite, Tailwind CSS, React Router, Socket.IO client, Axios.
+[![Node.js](https://img.shields.io/badge/Node.js-v18%2B-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-6-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0%2B-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Socket.IO](https://img.shields.io/badge/Socket.IO-Real--Time-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://socket.io/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-GIS_Maps-199900?style=for-the-badge&logo=leaflet&logoColor=white)](https://leafletjs.com/)
 
-**Architecture:** Layered MVC — `routes → controllers → services → models`, with `validators` for request-shape checks and `middleware` for cross-cutting concerns (auth, rate limiting, uploads, error handling).
+[Explore Features](#-key-features) • [Architecture](#-architecture--workflows) • [Quick Start](#-quick-start) • [Environment Variables](#-environment-variables) • [Testing](#-testing--quality) • [API Reference](#-api-documentation)
 
-## Implemented Features
+---
+</div>
 
-### Authentication & Security
-- Registration, login, logout, email verification, forgot/reset password
-- Google OAuth sign-in (server-side ID token verification)
-- JWT access tokens (short-lived, returned in the response body) + refresh tokens (long-lived, `httpOnly` cookie)
-- Refresh token rotation with replay detection (a reused/stale refresh token revokes the session)
-- Per-IP and per-account login rate limiting with account lockout after repeated failures
-- Registration and forgot-password endpoints are separately rate-limited
-- Role-based authorization (donor / volunteer / admin) enforced per-route
-- Audit logging of security-relevant actions (login, registration, team changes, donation lifecycle events, etc.)
+## 📌 Table of Contents
+- [Overview](#-overview)
+- [Key Features](#-key-features)
+  - [1. Disaster Relief & Emergency Aid (New)](#1--disaster-relief--emergency-aid-new)
+  - [2. Food & Clothes Donation Engine](#2--food--clothes-donation-engine)
+  - [3. Volunteer Logistics & Team Dispatch](#3--volunteer-logistics--team-dispatch)
+  - [4. Real-Time Chat & Notifications](#4--real-time-chat--notifications)
+  - [5. Trust, Security & Concurrency Safety](#5--trust-security--concurrency-safety)
+  - [6. Admin Oversight & Support Ticket Desk](#6--admin-oversight--support-ticket-desk)
+- [Architecture & Workflows](#-architecture--workflows)
+- [Tech Stack](#-tech-stack)
+- [Project Structure](#-project-structure)
+- [Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Database Setup](#step-1-database-setup)
+  - [Step 2: Backend Setup](#step-2-backend-setup)
+  - [Step 3: Frontend Setup](#step-3-frontend-setup)
+- [Environment Variables](#-environment-variables)
+- [Testing & Quality](#-testing--quality)
+- [API Documentation](#-api-documentation)
+- [Contributing & License](#-contributing--license)
 
-### Donations
-- Create, update, cancel donation requests (food or clothes category, with category-specific required fields)
-- Browsing/discovery with filters
-- Full status lifecycle: `pending → accepted → scheduled → on_the_way → picked_up → completed`
-- Individual-volunteer acceptance and team acceptance, both guarded against double-accept via row-level locking (`SELECT ... FOR UPDATE`) inside a transaction
-- Donor-side and volunteer-side donation history with summaries
-- Saved pickup addresses
+---
 
-### Volunteers & Teams
-- Volunteer profile (vehicle type, availability, service area)
-- Volunteer discovery for donors (nearby volunteers/teams, filterable)
-- Volunteer dashboard with real assignment data
-- Teams: create, invite, accept/decline invitation, promote, remove member, transfer leadership, leave
-- Team-assigned donations: a team leader accepts on behalf of the team and can assign a specific member to actually perform the pickup — the assigned member (not just the leader) is tracked and notified through the full lifecycle
+## 🌟 Overview
 
-### Notifications
-- Real-time delivery via Socket.IO (with DB-persisted history) for: donation accepted, donation status changes, team invitations, team-donation assignment, pickup completion, and more
-- Donation-status notifications are created once via a database trigger on `donation_requests` status changes and delivered to the relevant user(s) in real time — application code does not duplicate that trigger-created notification
-- For team donations, both the team leader and the specific assigned member receive their own completion notification (not just whoever is stored in `volunteer_id`), without duplicating a notification to someone who is both
+Every year, millions of tons of edible food and wearable clothing are discarded, while vulnerable communities face acute shortages — especially during sudden environmental calamities like floods, cyclones, and cold waves.
 
-### Chat
-- Socket.IO-based real-time chat scoped to a specific donation, restricted to the donation's donor and assigned volunteer/team member
+**PortionBridge** bridges this critical gap with:
+1. **Everyday Community Donations:** Allowing donors (individuals, restaurants, caterers) to post surplus food or clothing and having nearby volunteers quickly pick up and deliver them.
+2. **Disaster Relief Management:** Empowering disaster responders and communities with nationwide incident monitoring, live GIS mapping, multi-item relief requests, donor supply pledges, and verified field deliveries.
 
-### Ratings & Reports
-- Post-completion ratings between donor and volunteer
-- User/donation reporting
+---
 
-### Admin
-- User management, donation oversight, platform-level views
+## 🚀 Key Features
 
-### Other
-- Leaderboard (volunteer activity ranking)
-- Achievements (donor/volunteer milestone tracking) — schema present in `database/migrations/008_add_achievements.sql`; see **Known Limitations** below
-- Image uploads for donation photos and profile photos: MIME-type filtering, file size limits, randomized filenames, and file-content (magic-byte) signature verification to reject files whose actual bytes don't match a real image of the declared type
+### 1. 🚨 Disaster Relief & Emergency Aid *(New)*
+- **Nationwide Incident Monitoring:** Real-time logging of natural disasters (floods, cyclones, landslides, cold waves, fires, earthquakes) with severity levels (`low`, `medium`, `high`, `critical`) and verification statuses.
+- **Interactive GIS Disaster Map:** High-performance Leaflet mapping with dynamic color-coded markers, pulse alerts for critical zones, district filtering across all 64 districts of Bangladesh, and clustering.
+- **Multi-Item Relief Pledging:** Structured relief requests breakdown (dry foods, drinking water, medicine, emergency blankets) with exact unit arithmetic (kg, liters, units) and double-pledge prevention.
+- **Volunteer Task Coordination:** Area-only privacy masking before task acceptance; detailed delivery proof reporting with notes and optional quantity adjustments.
+- **Admin Verification Desk:** Dedicated moderation queue to verify delivery reports, inspect claims, resolve discrepancies, and adjust fulfilled quantities.
 
-## Project Structure
+### 2. 🍲 Food & Clothes Donation Engine
+- **Category Specifics:** Specialized fields for cooked food, perishable groceries, packaged items, and winter clothing.
+- **Lifecycle Tracking:** Strict state-machine progression:
+  $$\text{Pending} \longrightarrow \text{Accepted} \longrightarrow \text{Scheduled} \longrightarrow \text{On The Way} \longrightarrow \text{Picked Up} \longrightarrow \text{Completed}$$
+- **Atomic Locking:** Concurrency-guarded database transactions (`SELECT ... FOR UPDATE`) prevent race conditions and double-claims when multiple volunteers click simultaneously.
+- **Saved Pickup Addresses & Geo-Routing:** Radius-based discovery and location geocoding for hassle-free scheduling.
+
+### 3. 👥 Volunteer Logistics & Team Dispatch
+- **Individual or Team Mode:** Volunteers can work independently or organize into collaborative response teams.
+- **Team Delegation:** Team leaders accept assignments and designate specific members for physical pickups; tracking and notifications seamlessly adapt to the assigned member.
+- **Volunteer Discovery Radius:** Donors and organizers can search nearby active volunteers with vehicle types (bike, car, van, on-foot) and service availability.
+
+### 4. 💬 Real-Time Chat & Notifications
+- **Scoped Socket.IO Chat:** Instant, private chat channels dynamically created between the donor and the assigned volunteer/team member for each active donation.
+- **Event-Driven Alerts:** Real-time push notifications for assignment updates, schedule changes, team invitations, and task verifications backed by MySQL database triggers.
+
+### 5. 🛡️ Trust, Security & Concurrency Safety
+- **State-of-the-Art Authentication:**
+  - Short-lived JWT access tokens + rotating `httpOnly` refresh tokens.
+  - Automatic replay detection (stale refresh token usage revokes the entire compromised session).
+  - Google OAuth 2.0 integration with server-side ID token verification.
+- **Brute-Force & Rate Limiting:** Tiered in-memory rate limiters protecting authentication endpoints with account lockouts on repeated failures.
+- **Deep Image Verification:** Uploaded donation and profile images are inspected through MIME filtering, strict size limits, randomized UUID storage, and **magic-byte signature validation** (rejecting disguised malware payloads).
+- **Mutual Ratings & Moderation:** Post-completion mutual ratings (1-5 stars) and automated community reporting against spam or violations.
+
+### 6. 📊 Admin Oversight & Support Ticket Desk
+- **Comprehensive Administration:** User management, role elevation, incident verification, and global platform statistics.
+- **Ticketing System:** Full support ticket desk allowing users to file inquiries or dispute pickups, with threaded admin responses and status management (`open`, `in_progress`, `closed`).
+- **Leaderboard & Achievements:** Gamified milestone badges and volunteer contribution leaderboards to motivate active community champions.
+
+---
+
+## 📐 Architecture & Workflows
+
+### System Architecture
+PortionBridge follows a layered, predictable MVC design:
 
 ```
-portionbridge/
-├── client/                    # React frontend
-│   └── src/
-│       ├── components/        # Reusable UI components
-│       ├── context/           # Auth/Socket context providers
-│       ├── pages/             # Route-level pages
-│       ├── services/          # API client layer
-│       └── utils/
-├── server/                    # Express backend
-│   ├── config/                # DB pool, CORS, schema validation
-│   ├── constants/             # Shared enums/constants
-│   ├── controllers/           # Thin HTTP-layer handlers
-│   ├── middleware/            # Auth, rate limiting, uploads, error handling
-│   ├── models/                # Raw-SQL data access layer
-│   ├── routes/v1/             # API route definitions
-│   ├── services/              # Business logic
-│   ├── sockets/                # Socket.IO setup and event handlers
-│   ├── tests/                 # Automated tests (see Testing below)
-│   ├── utils/                 # Shared helpers
-│   └── validators/            # express-validator request rules
-└── database/
-    ├── main_schema.sql              # Consolidated current schema (source of truth for a fresh install)
-    ├── triggers.sql                 # DB triggers (e.g. donation-status notifications)
-    ├── dummy_data.sql               # Test data for development
-    └── migrations/                   # Historical/incremental migration files
+[ Client: React 18 + Vite + Tailwind + Leaflet ]
+                       │  HTTP REST / WebSocket (Socket.IO)
+                       ▼
+            [ Express.js Gateway ]
+                       │
+       ┌───────────────┼───────────────┐
+       ▼               ▼               ▼
+ [ Rate Limiters ] [ Auth / JWT ] [ File Uploads / Multer ]
+       │               │               │
+       └───────────────┼───────────────┘
+                       ▼
+             [ API Routers (v1) ]
+                       │
+          [ express-validator Rules ]
+                       │
+          [ Thin Controller Layer ]
+                       │
+         [ Business Services Layer ]
+                       │
+        [ Raw-SQL Data Models (mysql2) ]
+                       │
+            [ MySQL 8.0+ Database ]
+       (Triggers, Audit Logs, Row-Level Locks)
 ```
 
-## Getting Started
+### Donation Lifecycle Flowchart
+```mermaid
+flowchart LR
+    A[Donor creates request] --> B{Pending Review}
+    B -->|Volunteer Accepts| C[Accepted]
+    B -->|Team Leader Accepts| D[Team Assigned]
+    D -->|Leader Dispatches| C
+    C --> E[Scheduled]
+    E --> F[On The Way]
+    F --> G[Picked Up]
+    G --> H[Completed]
+    H --> I[Mutual Ratings & Feedback]
+```
+
+### Disaster Relief Coordination Flowchart
+```mermaid
+flowchart TD
+    Inc[Disaster Incident Reported] --> Map[Mapped on Interactive GIS]
+    Map --> Req[Relief Request Created: Rice, Water, Blankets]
+    Req --> Pld[Donor Submits Quantity Pledge]
+    Pld --> Tsk[Volunteer Task Generated]
+    Tsk --> Pick[Volunteer Picks Up Supplies]
+    Pick --> Del[Delivered to Affected Community]
+    Del --> Rep[Proof Report Submitted]
+    Rep --> Adm{Admin Review Desk}
+    Adm -->|Verified| Done[Fulfilled & Recorded]
+    Adm -->|Discrepancy| Adj[Quantity Adjusted / Resolved]
+```
+
+---
+
+## 🛠 Tech Stack
+
+| Domain | Technologies & Libraries |
+|---|---|
+| **Frontend** | React 18, Vite 6, Tailwind CSS, Lucide Icons, React Router v6, Axios, Leaflet & React-Leaflet |
+| **Backend** | Node.js, Express.js, Socket.IO, JWT, bcrypt, Multer, express-validator, Google Auth Library |
+| **Database** | MySQL 8.0+ (Raw SQL via `mysql2/promise` with transactions & row-level locks — no bulky ORM overhead) |
+| **Testing** | Vitest & React Testing Library (Client), Node.js Native Test Runner (`node --test`) & Supertest (Server) |
+| **Documentation** | Swagger UI (`/api-docs`), OpenAPI Specification |
+
+---
+
+## 📂 Project Structure
+
+```
+PortionBridge/
+├── portionbridge/
+│   ├── client/                      # Frontend Application (React 18 + Vite)
+│   │   ├── src/
+│   │   │   ├── components/          # Reusable UI (dashboard, relief, ui widgets)
+│   │   │   ├── context/             # AuthContext, SocketContext
+│   │   │   ├── hooks/               # Custom React hooks (useApiResource, useGeolocation)
+│   │   │   ├── pages/               # Route views (DisasterRelief, Donations, Admin, etc.)
+│   │   │   ├── services/            # API client layer (Axios endpoints)
+│   │   │   └── utils/               # Bangladesh districts, quantity helpers, validators
+│   │   └── vitest.config.js         # Vitest configuration & test setup
+│   │
+│   ├── server/                      # Backend Application (Node.js + Express)
+│   │   ├── config/                  # DB pool connection, CORS, relief settings
+│   │   ├── constants/               # Status enums, units, role constants
+│   │   ├── controllers/             # Request handlers
+│   │   ├── middleware/              # Auth guard, rate-limit, upload, error handlers
+│   │   ├── models/                  # SQL queries (raw mysql2)
+│   │   ├── routes/v1/               # API endpoint definitions
+│   │   ├── services/                # Core business logic (locking, pledges, tasks)
+│   │   ├── sockets/                 # Socket.IO connection & event handlers
+│   │   ├── tests/                   # Integration and unit tests
+│   │   └── utils/                   # Password crypto, serializers, transaction helpers
+│   │
+│   └── database/                    # SQL Database Scripts
+│       ├── main_schema.sql          # Complete, current MySQL database schema
+│       ├── triggers.sql             # Notification & audit logging triggers
+│       ├── dummy_data.sql           # Development seed data
+│       └── migrations/              # Incremental SQL migration history
+│
+├── README.md                        # Project documentation
+├── docker-compose.yml               # Container deployment configuration
+└── setup_database.bat               # Windows quick setup script
+```
+
+---
+
+## 🏁 Quick Start
 
 ### Prerequisites
-- Node.js v18+
-- MySQL 8.0+ (or MariaDB 10.2.1+ — required for `CHECK` constraint support)
+- [Node.js](https://nodejs.org/) v18.0.0 or higher
+- [MySQL](https://www.mysql.com/) 8.0+ (or MariaDB 10.2.1+ supporting `CHECK` constraints)
+- Git
 
-### 1. Database Setup
+---
+
+### Step 1: Database Setup
+
+Log into your local MySQL server and initialize the schema, triggers, and optional seed data:
 
 ```bash
-mysql -u root -p < database/main_schema.sql
-mysql -u root -p portionbridge < database/triggers.sql
-mysql -u root -p portionbridge < database/dummy_data.sql
+# 1. Import consolidated schema
+mysql -u root -p < portionbridge/database/main_schema.sql
+
+# 2. Add database triggers (triggers automatic status notifications)
+mysql -u root -p portionbridge < portionbridge/database/triggers.sql
+
+# 3. (Optional) Load development dummy data
+mysql -u root -p portionbridge < portionbridge/database/dummy_data.sql
 ```
 
-`main_schema.sql` is the consolidated, current schema — importing it gives you a complete, up-to-date database in one step. You do not need to separately run older migration files against a fresh database. The triggers.sql file adds database-level audit logging and notification triggers, and dummy_data.sql provides test data for development.
+> [!NOTE]
+> `main_schema.sql` represents the complete source of truth. You do not need to run older historical migrations for a clean installation.
 
-> **MySQL 8.0.19+ note:** two `CHECK` constraints (`chk_ratings_not_self` on `ratings`, `chk_reports_target_present` on `reports`) reference columns that are also part of a foreign key with a `CASCADE` action. MySQL 8.0.19+ rejects this combination (`ERROR 3823`). If your import fails on either of these lines, remove that one `CONSTRAINT ... CHECK (...)` clause from `portionbridge_schema.sql` before importing — the rest of the schema is unaffected. This is a known limitation of the current schema file, not something you need to work around by hand each time (a proper fix means restructuring the FK actions, which is out of scope of a schema-preserving fix).
+---
 
-### 2. Backend Setup
+### Step 2: Backend Setup
 
 ```bash
-cd server
+# Navigate to server
+cd portionbridge/server
+
+# Install dependencies
 npm install
+
+# Copy environment template
 cp .env.example .env
 ```
 
-Edit `.env` — see [Environment Variables](#environment-variables) below.
+Open `.env` in your editor and configure your database credentials and secrets (see [Environment Variables](#-environment-variables)).
 
 ```bash
-npm run migrate   # verifies/records schema state against the code's expectations
-npm run dev        # or: npm start
-```
+# Verify schema state
+npm run migrate
 
-Backend runs on `http://localhost:5000` by default (`PORT` in `.env`).
-
-### 3. Frontend Setup
-
-```bash
-cd client
-npm install
-cp .env.example .env
+# Start development server
 npm run dev
 ```
+The API server will start on **`http://localhost:5000`**.
 
-Frontend runs on `http://localhost:5173`.
+---
 
-## Environment Variables
-
-### Backend (`server/.env`)
-
-| Variable | Required | Notes |
-|---|---|---|
-| `PORT` | | Default `5000` |
-| `NODE_ENV` | | `development` or `production` — controls Swagger UI, error detail in responses, and dev-mode email console logging |
-| `CLIENT_URL` | Yes | Frontend origin, used for CORS. Must be `https://` in production |
-| `ALLOWED_ORIGINS` | | Comma-separated additional CORS origins |
-| `TRUST_PROXY` | | Number of reverse-proxy hops in front of this server, if any |
-| `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_PORT` | Yes | MySQL connection |
-| `JWT_ACCESS_SECRET` | Yes | Must be a long random string (32+ chars) |
-| `JWT_ACCESS_EXPIRES_IN` | | e.g. `15m` |
-| `JWT_REFRESH_SECRET` | Yes | Different from the access secret |
-| `GOOGLE_CLIENT_ID` | For Google login | From Google Cloud Console |
-| `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_SECURE`, `EMAIL_USER`, `EMAIL_PASSWORD`, `EMAIL_FROM`, `EMAIL_FROM_NAME` | In production | In development, emails are logged to the console instead of sent |
-| `SUPPORT_URL` | | Linked from transactional emails |
-
-### Frontend (`client/.env`)
-
-| Variable | Notes |
-|---|---|
-| `VITE_API_BASE_URL` | e.g. `http://localhost:5000/api/v1` |
-| `VITE_SOCKET_URL` | e.g. `http://localhost:5000` |
-| `VITE_GOOGLE_CLIENT_ID` | For Google login |
-
-## API Documentation
-
-In development mode: `http://localhost:5000/api-docs` (Swagger UI). Socket.IO event reference: `server/docs/socketEvents.md`.
-
-## Testing
+### Step 3: Frontend Setup
 
 ```bash
-cd server
+# Navigate to client
+cd ../client
+
+# Install dependencies
+npm install
+
+# Copy environment template
+cp .env.example .env
+
+# Start client development server
+npm run dev
+```
+The client app will launch on **`http://localhost:5173`**.
+
+---
+
+## ⚙️ Environment Variables
+
+### Backend Configuration (`server/.env`)
+
+| Variable | Required | Default | Purpose / Notes |
+|---|---|---|---|
+| `PORT` | Optional | `5000` | Port for Express API server |
+| `NODE_ENV` | Yes | `development` | `development` or `production` |
+| `CLIENT_URL` | Yes | `http://localhost:5173` | Allowed frontend origin for CORS |
+| `DB_HOST` | Yes | `localhost` | MySQL host address |
+| `DB_PORT` | Optional | `3306` | MySQL port |
+| `DB_USER` | Yes | `root` | Database username |
+| `DB_PASSWORD` | Yes | — | Database password |
+| `DB_NAME` | Yes | `portionbridge` | Database name |
+| `JWT_ACCESS_SECRET` | Yes | — | Random secret (32+ chars) for access tokens |
+| `JWT_ACCESS_EXPIRES_IN` | Optional | `15m` | Lifetime of access token |
+| `JWT_REFRESH_SECRET` | Yes | — | Separate secret for rotating refresh tokens |
+| `GOOGLE_CLIENT_ID` | Optional | — | Google OAuth client ID for social login |
+| `EMAIL_USER` / `EMAIL_PASSWORD` | In Prod | — | SMTP credentials (emails logged to console in dev) |
+
+### Frontend Configuration (`client/.env`)
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `VITE_API_BASE_URL` | Yes | `http://localhost:5000/api/v1` | Base REST endpoint |
+| `VITE_SOCKET_URL` | Yes | `http://localhost:5000` | Socket.IO server URL |
+| `VITE_GOOGLE_CLIENT_ID` | Optional | — | Google Client ID for OAuth button |
+
+---
+
+## 🧪 Testing & Quality
+
+Both the frontend and backend have automated test suites covering critical security, quantity calculation, and UI user journeys:
+
+### Run Client Tests (Vitest)
+```bash
+cd portionbridge/client
 npm test
 ```
+*Executes 220+ component and hook tests covering pledge dialogs, GIS disaster map interactions, filters, and role-based permissions.*
 
-See `server/tests/README.md` for what's covered and how to point the integration tests at a test database.
+### Run Backend Tests (Node Test Runner)
+```bash
+cd portionbridge/server
+npm run test:unit
+```
+*Executes unit tests verifying milli-arithmetic quantity parsing, password complexity checks, token security, and validation rules.*
 
-## Security Notes
+---
 
-- Refresh tokens are `httpOnly` cookies with rotation + replay detection; access tokens are short-lived bearer tokens, never cookie-stored.
-- Passwords are hashed with bcrypt; never logged.
-- Uploaded images are validated by declared MIME type, file size, and actual file-content signature (magic bytes) — not filename or extension alone.
-- Rate limiting is in-memory/process-local by default; for horizontal scaling behind a load balancer, back it with a shared store (e.g. Redis) instead.
-- Set `NODE_ENV=production` before deploying — this disables Swagger UI, suppresses stack traces in API error responses, and enforces HTTPS-only CORS origins.
+## 📖 API Documentation
 
-## Known Limitations
+In development mode, explore and test the interactive OpenAPI/Swagger specification directly in your browser:
 
-- The `achievements` feature is incomplete at the database level. `database/migrations/008_add_achievements.sql` creates `user_achievements` (which is not included in `portionbridge_schema.sql` either — apply that migration if you want it), but the code (`models/achievement.model.js`) also queries a second table, `achievement_definitions`, which has no migration file anywhere in this repo. Until that table is added, donation completion's achievement check will log an "achievement check failed" error and skip silently — it does not fail or block the donation completion request itself.
-- The two `CHECK` constraints noted above may need to be removed for a clean import on MySQL 8.0.19+, depending on your server version.
-- Rate limiting does not share state across multiple server instances (see Security Notes).
+🔗 **`http://localhost:5000/api-docs`**
 
-## License
+### Key REST Route Collections
 
-Educational/personal project.
+- **`/api/v1/auth`** — Register, login, refresh tokens, Google OAuth, password recovery.
+- **`/api/v1/donations`** — Food and clothing donation CRUD, lifecycle status updates, acceptance locking.
+- **`/api/v1/relief`** — Disaster incident listings, GIS coordinates, multi-item requests, pledges, volunteer tasks, and admin review queue.
+- **`/api/v1/teams`** — Team creation, member invites, roster management, and leadership handover.
+- **`/api/v1/support`** — User support ticket management and threaded messaging.
+- **`/api/v1/users`** — User profiles, saved pickup addresses, and avatar uploads.
+
+---
+
+## 🤝 Contributing & Community
+
+Contributions are what make the open-source community an incredible place to learn, inspire, and create.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'feat: Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+<div align="center">
+  <sub>Built with ❤️ for resilient communities by <a href="https://github.com/TaohidBhuiyan">Taohid Bhuiyan</a> and community contributors.</sub>
+</div>

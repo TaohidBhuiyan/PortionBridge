@@ -173,6 +173,35 @@ const AUDIT_ACTIONS = {
   SUPPORT_TICKET_CREATED: 'support_ticket_created',
   SUPPORT_TICKET_UPDATED: 'support_ticket_updated',
   SUPPORT_TICKET_REPLIED: 'support_ticket_replied',
+
+  // --- Disaster Response & Relief (Phase 1) ---
+  DISASTER_INCIDENT_REPORTED: 'disaster_incident_reported',
+  DISASTER_INCIDENT_UPDATED: 'disaster_incident_updated',
+  DISASTER_INCIDENT_STATUS_CHANGED: 'disaster_incident_status_changed',
+  RELIEF_REQUEST_CREATED: 'relief_request_created',
+  RELIEF_REQUEST_UPDATED: 'relief_request_updated',
+  RELIEF_REQUEST_STATUS_CHANGED: 'relief_request_status_changed',
+  RELIEF_ITEM_ADDED: 'relief_item_added',
+  RELIEF_ITEM_UPDATED: 'relief_item_updated',
+  RELIEF_ITEM_REMOVED: 'relief_item_removed',
+  RELIEF_PLEDGE_CREATED: 'relief_pledge_created',
+  RELIEF_PLEDGE_UPDATED: 'relief_pledge_updated',
+  RELIEF_PLEDGE_CANCELLED: 'relief_pledge_cancelled',
+  RELIEF_PLEDGE_COLLECTED: 'relief_pledge_collected',
+  RELIEF_PLEDGE_DELIVERED: 'relief_pledge_delivered',
+  RELIEF_PLEDGE_CLOSED_PARTIAL: 'relief_pledge_closed_partial',
+
+  // --- Disaster Relief Phase 3: volunteer tasks & delivery verification ---
+  RELIEF_TASK_ACCEPTED: 'relief_task_accepted',
+  RELIEF_TASK_RELEASED: 'relief_task_released',
+  RELIEF_TASK_STATUS_UPDATED: 'relief_task_status_updated',
+  RELIEF_PICKUP_REPORTED: 'relief_pickup_reported',
+  RELIEF_DELIVERY_REPORTED: 'relief_delivery_reported',
+  RELIEF_DELIVERY_VERIFIED: 'relief_delivery_verified',
+  RELIEF_DELIVERY_REJECTED: 'relief_delivery_rejected',
+  RELIEF_PROBLEM_REPORTED: 'relief_problem_reported',
+  RELIEF_REPORT_RESOLVED: 'relief_report_resolved',
+  RELIEF_PLEDGE_FAILED: 'relief_pledge_failed',
 };
 
 const SUPPORT_TICKET_STATUSES = {
@@ -353,6 +382,55 @@ const ASSIGNMENT_MODE = {
   TEAM: 'team',
 };
 
+// --- Disaster Response & Relief (Phase 1) ---
+// Values mirror the ENUMs in migration_029_disaster_relief_foundation.sql.
+const RELIEF = {
+  DISASTER_TYPES: ['flood', 'flash_flood', 'fire', 'building_collapse', 'earthquake', 'cyclone', 'storm', 'other'],
+  SEVERITIES: ['low', 'moderate', 'high', 'critical'],
+  PRIORITIES: ['low', 'normal', 'high', 'urgent'],
+  INCIDENT_SOURCE_TYPES: ['user_report', 'admin_entry', 'official_source', 'media', 'other'],
+  INCIDENT_STATUS: {
+    REPORTED: 'reported',
+    UNDER_REVIEW: 'under_review',
+    VERIFIED: 'verified',
+    ACTIVE: 'active',
+    RESOLVED: 'resolved',
+    REJECTED: 'rejected',
+  },
+  // Incident states visible to the public. Everything else is moderation-only.
+  PUBLIC_INCIDENT_STATUSES: ['verified', 'active', 'resolved'],
+  // Incident states in which new relief requests / pledges are allowed.
+  OPEN_INCIDENT_STATUSES: ['verified', 'active'],
+  REQUEST_STATUS: {
+    PENDING_REVIEW: 'pending_review',
+    APPROVED: 'approved',
+    REJECTED: 'rejected',
+    COMPLETED: 'completed',
+    CANCELLED: 'cancelled',
+    EXPIRED: 'expired',
+  },
+  PUBLIC_REQUEST_STATUSES: ['approved', 'completed'],
+  ITEM_CATEGORIES: ['drinking_water', 'dry_food', 'ready_to_eat_food', 'clothing', 'blanket', 'hygiene_kit', 'other'],
+  ITEM_UNITS: ['piece', 'packet', 'box', 'set', 'kg', 'liter'],
+  // Only these units may carry fractional quantities; all others are whole numbers.
+  FRACTIONAL_UNITS: ['kg', 'liter'],
+  PLEDGE_STATUS: {
+    PLEDGED: 'pledged',
+    COLLECTED: 'collected',
+    DELIVERED: 'delivered',
+    PARTIALLY_FULFILLED: 'partially_fulfilled',
+    CANCELLED: 'cancelled',
+    FAILED: 'failed',
+  },
+  REPORT_TYPES: ['pickup', 'delivery', 'failed_delivery', 'problem', 'release'],
+  QUANTITY_SCALE: 1000, // DECIMAL(12,3) -> integer milli-units for exact arithmetic
+  MAX_QUANTITY: 999999999.999,
+  // Public coordinates are rounded to this many decimals (~1.1 km) — see disasterRelief serializers.
+  PUBLIC_COORD_DECIMALS: 2,
+  // Generous bounding box around Bangladesh for API-level sanity validation.
+  BD_BOUNDS: { minLat: 20.0, maxLat: 27.0, minLng: 87.5, maxLng: 93.0 },
+};
+
 module.exports = {
   HTTP_STATUS,
   USER_ROLES,
@@ -390,4 +468,5 @@ module.exports = {
   SUPPORT_TICKET_STATUSES,
   SUPPORT_CATEGORIES,
   SUPPORT_PRIORITIES,
+  RELIEF,
 };

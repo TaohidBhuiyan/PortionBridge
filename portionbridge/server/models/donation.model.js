@@ -173,8 +173,8 @@ async function create({
   savedAddressId,
   pickupAddressDetails,
   assignmentMode,
-}) {
-  const [result] = await pool.query(
+}, connection = pool) {
+  const [result] = await connection.query(
     `INSERT INTO donation_requests
        (donor_id, title, category, quantity, quantity_unit, number_of_servings,
         pickup_location, pickup_time, pickup_date, pickup_time_slot, expiry_date,
@@ -304,9 +304,11 @@ async function updateById(id, fields, connection = pool) {
  * as updateById above.
  * @param {number} id - Donation ID
  * @param {Object} [connection=pool] - Active transaction connection, or pool for a standalone call
+ * @param {number|null} [actorId] - Optional authenticated user ID performing this change
  * @returns {Promise<void>}
  */
-async function softDelete(id, connection = pool) {
+async function softDelete(id, connection = pool, actorId = null) {
+  if (actorId) await setStatusChangeActor(connection, actorId);
   await connection.query(
     `UPDATE donation_requests SET is_deleted = 1, deleted_at = NOW(), status = 'cancelled' WHERE id = :id`,
     { id }
@@ -324,7 +326,13 @@ async function softDelete(id, connection = pool) {
  * @returns {Object} Object containing whereClause string and params object
  */
 function buildBrowseFilter({ category, location, search }) {
-  const conditions = [`is_deleted = 0`, `status = 'pending'`];
+  // Donations created for a disaster-relief pledge are offered through the relief task
+  // queue (which shows the incident, item and quantity), not the general browse feed.
+  const conditions = [
+    `is_deleted = 0`,
+    `status = 'pending'`,
+    `NOT EXISTS (SELECT 1 FROM relief_pledges rp WHERE rp.donation_request_id = donation_requests.id)`,
+  ];
   const params = {};
 
   if (category) {
@@ -637,6 +645,34 @@ async function findByIdForUpdate(connection, id) {
     { id }
   );
   return parseJsonFields(rows[0] || null);
+}
+
+/** True when this donation was created for (is linked to) a disaster-relief pledge. */
+async function isReliefLinked(donationId, connection = pool) {
+  const [rows] = await connection.query(
+    'SELECT 1 FROM relief_pledges WHERE donation_request_id = :id LIMIT 1',
+    { id: donationId }
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Returns an accepted/scheduled/on_the_way donation to the pending pool so another
+ * volunteer can take it (used when a volunteer releases a relief task or an admin
+ * reassigns it). Individual-mode donations only; never touches picked_up/completed.
+ * The status trigger records the accepted -> pending change in donation_status_history.
+ * Call inside a transaction holding the row lock. Returns true if a row changed.
+ */
+async function releaseToPending(connection, donationId, actorId) {
+  if (actorId) await setStatusChangeActor(connection, actorId);
+  const [result] = await connection.query(
+    `UPDATE donation_requests
+     SET status = 'pending', volunteer_id = NULL, accepted_at = NULL, scheduled_at = NULL
+     WHERE id = :id AND is_deleted = 0 AND assignment_mode = 'individual'
+       AND status IN ('accepted', 'scheduled', 'on_the_way')`,
+    { id: donationId }
+  );
+  return result.affectedRows === 1;
 }
 
 /**
@@ -1101,6 +1137,8 @@ async function updateAssignmentStatus(assignmentId, status, completedAt = null) 
 }
 
 module.exports = {
+  isReliefLinked,
+  releaseToPending,
   create,
   findById,
   updateById,

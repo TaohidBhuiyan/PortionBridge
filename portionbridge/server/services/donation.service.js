@@ -15,6 +15,24 @@ const ratingModel = require('../models/rating.model');
 const { calculateDistance } = require('../models/volunteerDiscovery.model');
 
 /**
+ * Donations that belong to a disaster-relief pledge carry quantities that must
+ * be reported through the relief task endpoints (partial pickup/delivery,
+ * verification). Editing, cancelling, picking up or completing them through
+ * the generic donation endpoints would desynchronise the pledge, so those
+ * generic actions are refused with a pointer to the relief flow. Normal
+ * (non-relief) donations are completely unaffected.
+ */
+async function assertNotReliefManaged(donationId) {
+  if (await donationModel.isReliefLinked(donationId)) {
+    throw new AppError(
+      'This donation belongs to a disaster-relief pledge. Manage it from the Disaster Relief section.',
+      HTTP_STATUS.CONFLICT,
+      'RELIEF_MANAGED_DONATION'
+    );
+  }
+}
+
+/**
  * Broadcasts a real-time 'donation_status_updated' event for one donation,
  * to both its own tracking room (donor + assigned volunteer, already
  * consumed by useDonationTracking.js/TrackingPanel.jsx) and the admin
@@ -298,6 +316,7 @@ async function createDonation(donorId, data) {
  * @returns {Promise<Object>} The updated donation object
  */
 async function updateDonation(donationId, donorId, updates, { ipAddress, userAgent } = {}) {
+  await assertNotReliefManaged(donationId);
   const fields = mapToSnakeCase(updates);
 
   const connection = await pool.getConnection();
@@ -357,6 +376,7 @@ async function updateDonation(donationId, donorId, updates, { ipAddress, userAge
  * @returns {Promise<void>}
  */
 async function cancelDonation(donationId, donorId, { ipAddress, userAgent } = {}) {
+  await assertNotReliefManaged(donationId);
   const connection = await pool.getConnection();
 
   try {
@@ -837,6 +857,7 @@ async function markOnTheWay(donation, volunteerId, { ipAddress, userAgent } = {}
  * @returns {Promise<Object>} The updated donation object
  */
 async function markPickedUp(donation, volunteerId, { ipAddress, userAgent } = {}) {
+  await assertNotReliefManaged(donation.id);
   assertAssignedVolunteer(donation, volunteerId);
   assertOnTheWayStatus(donation);
 
@@ -902,7 +923,9 @@ async function markPickedUp(donation, volunteerId, { ipAddress, userAgent } = {}
  * @param {string} [auditContext.userAgent]
  * @returns {Promise<Object>} The updated donation object
  */
-async function completeDonation(donationId, volunteerId, { ipAddress, userAgent } = {}) {
+async function completeDonation(donationId, volunteerId, { ipAddress, userAgent, viaRelief = false } = {}) {
+  if (!viaRelief) await assertNotReliefManaged(donationId);
+
   const connection = await pool.getConnection();
   let updatedDonation;
 
@@ -941,6 +964,20 @@ async function completeDonation(donationId, volunteerId, { ipAddress, userAgent 
   // had already been marked completed. A retry would then fail against
   // an already-completed donation, with no clear explanation why.
 
+  await afterDonationCompleted(updatedDonation, volunteerId, { ipAddress, userAgent });
+
+  return updatedDonation;
+}
+
+/**
+ * Everything that happens AFTER a donation's 'completed' transaction has
+ * committed: achievements, notifications, realtime updates and the audit
+ * entry. Extracted unchanged from completeDonation so the disaster-relief
+ * delivery verification can run exactly the same side effects when it
+ * completes a relief-linked donation inside its own transaction.
+ * Never throws for notification/achievement failures (see comments inside).
+ */
+async function afterDonationCompleted(updatedDonation, volunteerId, { ipAddress, userAgent } = {}) {
   // Check and unlock achievements for donor
   try {
     await achievementService.checkAndUnlockAchievements(updatedDonation.donor_id, 'donor');
@@ -1064,14 +1101,12 @@ async function completeDonation(donationId, volunteerId, { ipAddress, userAgent 
   }
 
   await auditService.record({
-    userId: donorId,
+    userId: updatedDonation.donor_id,
     action: AUDIT_ACTIONS.DONATION_COMPLETED,
     ipAddress,
     userAgent,
-    metadata: { donationId },
+    metadata: { donationId: updatedDonation.id },
   });
-
-  return updatedDonation;
 }
 
 /**
@@ -1501,6 +1536,8 @@ module.exports = {
   markOnTheWay,
   markPickedUp,
   completeDonation,
+  afterDonationCompleted,
+  emitDonationStatusUpdate,
   getDonorHistory,
   getVolunteerHistory,
   getDonorHistorySummary,

@@ -125,6 +125,25 @@ const supportMessageLimiter = rateLimit({
   },
 });
 
+/**
+ * Disaster incident reporting: any authenticated user may report, so cap the
+ * rate per user to keep the moderation queue from being flooded. Same shape as
+ * supportCreateLimiter; relaxed in development like apiLimiter.
+ */
+const incidentReportLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: process.env.NODE_ENV === 'development' ? 1000 : 5,
+  keyGenerator: (req) => (req.user ? String(req.user.id) : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Incident report limit reached (max 5/hr). Please wait before submitting another report.',
+    });
+  },
+});
+
 module.exports = {
   apiLimiter,
   loginLimiter,
@@ -133,4 +152,5 @@ module.exports = {
   resendVerificationLimiter,
   supportCreateLimiter,
   supportMessageLimiter,
+  incidentReportLimiter,
 };
