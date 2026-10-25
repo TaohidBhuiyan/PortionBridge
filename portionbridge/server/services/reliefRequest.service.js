@@ -3,6 +3,7 @@ const reliefRequestModel = require('../models/reliefRequest.model');
 const reliefItemModel = require('../models/reliefRequestItem.model');
 const reliefPledgeModel = require('../models/reliefPledge.model');
 const auditService = require('./audit.service');
+const alertService = require('./disasterAlert.service');
 const AppError = require('../utils/AppError');
 const { runInTransaction } = require('../utils/dbTransaction');
 const { serializeRequest, serializeItem, withItems } = require('../utils/reliefSerializers');
@@ -138,7 +139,12 @@ async function createRequest(user, incidentId, input, ctx = {}) {
     }, connection);
 
     for (const item of items) {
-      await insertOrReactivateItem(id, item, connection);
+      const { id: itemId } = await insertOrReactivateItem(id, item, connection);
+      // Phase 5: the requested quantities as first submitted are part of the quantity history
+      await recordQuantityHistory(connection, {
+        request: { id, status: R.PENDING_REVIEW }, itemId, name: item.name, unit: item.unit, changeType: 'added',
+        oldMilli: null, newMilli: parseQuantity(item.quantity), reason: 'Initial request', userId: user.id,
+      });
     }
     return id;
   });
@@ -229,6 +235,8 @@ async function updateRequest(id, user, input, ctx = {}) {
     });
     const columns = Object.keys(updates);
     if (columns.length === 0) throw new AppError('No valid fields provided to update.', HTTP_STATUS.BAD_REQUEST);
+    // Phase 5: the requester resubmitting after an admin asked for corrections clears that request.
+    const clearCorrection = !isAdmin(user) && row.correction_requested_at;
 
     const lat = updates.latitude !== undefined ? updates.latitude : row.latitude;
     const lng = updates.longitude !== undefined ? updates.longitude : row.longitude;
@@ -236,7 +244,7 @@ async function updateRequest(id, user, input, ctx = {}) {
       throw new AppError('Latitude and longitude must be provided together.', HTTP_STATUS.UNPROCESSABLE_ENTITY);
     }
 
-    await reliefRequestModel.updateById(id, updates, connection);
+    await reliefRequestModel.updateById(id, clearCorrection ? { ...updates, correction_requested_at: null, correction_note: null } : updates, connection);
     const prior = {};
     columns.forEach((c) => { prior[c] = row[c] === undefined ? null : row[c]; });
     return { before: prior, fields: updates };
@@ -318,8 +326,12 @@ async function changeRequestStatus(id, user, { status, notes }, ctx = {}) {
     }
 
     await reliefRequestModel.updateById(id, fields, connection);
-    return { from: row.status, releasedPledges };
+    const alertEventIds = status === R.APPROVED
+      ? await alertService.onReliefRequestApproved(connection, { requestId: id, incidentId: row.incident_id, actorId: user.id })
+      : [];
+    return { from: row.status, releasedPledges, alertEventIds };
   });
+  alertService.dispatch(result.alertEventIds);
 
   await auditService.record({
     userId: user.id,
@@ -351,12 +363,42 @@ async function completeRequestIfFulfilled(requestId, connection) {
 // Items
 // ----------------------------------------------------------------------------
 
+
+/**
+ * Phase 5: every change to a requested quantity is written to relief_item_quantity_history
+ * inside the same transaction. On an APPROVED request (pledges may already rely on the numbers)
+ * an administrator must give a reason.
+ */
+function assertQuantityChangeReason(request, reason) {
+  if (request.status === R.APPROVED && !(typeof reason === 'string' && reason.trim().length >= 3)) {
+    throw new AppError('A reason is required when changing items or quantities of an approved request.', HTTP_STATUS.UNPROCESSABLE_ENTITY, 'REASON_REQUIRED');
+  }
+}
+
+async function recordQuantityHistory(connection, { request, itemId, name, unit, changeType, oldMilli, newMilli, reason, userId }) {
+  await connection.query(
+    `INSERT INTO relief_item_quantity_history
+       (relief_request_id, item_id, item_name, unit, change_type, old_quantity, new_quantity, request_status, reason, changed_by)
+     VALUES (:requestId, :itemId, :name, :unit, :changeType, :oldQ, :newQ, :status, :reason, :userId)`,
+    {
+      requestId: request.id, itemId, name, unit, changeType,
+      oldQ: oldMilli === null ? null : milliToDb(oldMilli), newQ: newMilli === null ? null : milliToDb(newMilli),
+      status: request.status, reason: reason ? String(reason).trim().slice(0, 500) : null, userId,
+    }
+  );
+}
+
 async function addItem(requestId, user, input, ctx = {}) {
   const itemId = await runInTransaction(async (connection) => {
     const request = await reliefRequestModel.findByIdForUpdate(requestId, connection);
     if (!request) throw new AppError('Relief request not found.', HTTP_STATUS.NOT_FOUND);
     assertCanModify(request, user);
+    assertQuantityChangeReason(request, input.reason);
     const { id } = await insertOrReactivateItem(requestId, input, connection);
+    await recordQuantityHistory(connection, {
+      request, itemId: id, name: input.name, unit: input.unit, changeType: 'added',
+      oldMilli: null, newMilli: parseQuantity(input.quantity), reason: input.reason, userId: user.id,
+    });
     return id;
   });
 
@@ -378,7 +420,7 @@ async function getItem(requestId, itemId, user) {
 }
 
 async function updateItem(requestId, itemId, user, input, ctx = {}) {
-  const { before, after } = await runInTransaction(async (connection) => {
+  const { before, after, alertEventIds } = await runInTransaction(async (connection) => {
     // lock order: request -> item (same as every pledge operation)
     const request = await reliefRequestModel.findByIdForUpdate(requestId, connection);
     if (!request) throw new AppError('Relief request not found.', HTTP_STATUS.NOT_FOUND);
@@ -433,12 +475,27 @@ async function updateItem(requestId, itemId, user, input, ctx = {}) {
     }
     if (Object.keys(updates).length === 0) throw new AppError('No valid fields provided to update.', HTTP_STATUS.BAD_REQUEST);
 
+    if (updates.quantity_requested !== undefined && milliToDb(dbToMilli(item.quantity_requested)) !== updates.quantity_requested) {
+      assertQuantityChangeReason(request, input.reason);
+    }
     await reliefItemModel.updateById(itemId, updates, connection);
+    if (updates.quantity_requested !== undefined && milliToDb(dbToMilli(item.quantity_requested)) !== updates.quantity_requested) {
+      await recordQuantityHistory(connection, {
+        request, itemId, name: updates.item_name || item.item_name, unit: updates.unit || item.unit, changeType: 'quantity_changed',
+        oldMilli: dbToMilli(item.quantity_requested), newMilli: dbToMilli(updates.quantity_requested), reason: input.reason, userId: user.id,
+      });
+    }
+    // Phase 4: a changed requested quantity on an APPROVED request is worth one relief update.
+    const alertEventIds = (updates.quantity_requested !== undefined && request.status === R.APPROVED)
+      ? await alertService.onReliefQuantityChanged(connection, { requestId, incidentId: request.incident_id, actorId: user.id })
+      : [];
     return {
       before: { name: item.item_name, unit: item.unit, category: item.item_category, quantityRequested: Number(item.quantity_requested), priority: item.priority },
       after: { ...updates },
+      alertEventIds,
     };
   });
+  alertService.dispatch(alertEventIds);
 
   await auditService.record({
     userId: user.id,
@@ -450,7 +507,7 @@ async function updateItem(requestId, itemId, user, input, ctx = {}) {
   return getItem(requestId, itemId, user);
 }
 
-async function removeItem(requestId, itemId, user, ctx = {}) {
+async function removeItem(requestId, itemId, user, ctx = {}, reason = null) {
   const mode = await runInTransaction(async (connection) => {
     const request = await reliefRequestModel.findByIdForUpdate(requestId, connection);
     if (!request) throw new AppError('Relief request not found.', HTTP_STATUS.NOT_FOUND);
@@ -460,15 +517,20 @@ async function removeItem(requestId, itemId, user, ctx = {}) {
     if (!item || item.relief_request_id !== requestId) throw new AppError('Item not found.', HTTP_STATUS.NOT_FOUND);
     if (item.status !== 'active') throw new AppError('This item has already been removed.', HTTP_STATUS.CONFLICT);
 
+    assertQuantityChangeReason(request, reason);
     const pledges = await reliefItemModel.countPledges(itemId, connection);
     if (pledges.nonCancelled > 0) {
       throw new AppError('This item has active or delivered pledges and cannot be removed. Cancel those pledges first.', HTTP_STATUS.CONFLICT, 'ITEM_HAS_PLEDGES');
     }
+    await recordQuantityHistory(connection, {
+      request, itemId, name: item.item_name, unit: item.unit, changeType: 'removed',
+      oldMilli: dbToMilli(item.quantity_requested), newMilli: null, reason, userId: user.id,
+    });
     if (pledges.total > 0) {
       await reliefItemModel.updateById(itemId, { status: 'cancelled' }, connection); // keep pledge history
       return 'cancelled';
     }
-    await reliefItemModel.deleteById(itemId, connection);
+    await reliefItemModel.deleteById(itemId, connection); // history row keeps item_name/unit (item_id FK-free)
     return 'deleted';
   });
 

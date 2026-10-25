@@ -196,13 +196,18 @@ async function broadcastToTeam(teamId, notificationData, excludeUserId = null) {
  * @param {number} notificationData.relatedId - Related entity ID
  * @returns {Promise<number>} Notification ID
  */
-async function createNotification(userId, { type, title, message, relatedId }) {
+async function createNotification(userId, {
+  type, title, message, relatedId, incidentId, reliefRequestId, reliefPledgeId,
+}) {
   const notificationId = await notificationModel.create(pool, {
     userId,
     type,
     title,
     message,
     relatedId,
+    incidentId,
+    reliefRequestId,
+    reliefPledgeId,
   });
 
   await deliverById(userId, notificationId);
@@ -278,6 +283,7 @@ async function sendAdminAnnouncement(userIds, senderId, { title, message }) {
 }
 
 module.exports = {
+  emitToUser,
   deliver,
   deliverById,
   deliverLatestForRelated,

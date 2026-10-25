@@ -356,36 +356,36 @@ describe('disaster relief: incidents, requests, items, pledges', () => {
     if (!dbReady) return t.skip('no test database reachable');
     const { requestId, itemIds } = await approvedRequest(items(['Rice', 'kg', 10, 'dry_food']));
     const riceId = itemIds[0];
-    const dup = await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { name: ' rice ', unit: 'kg', quantity: 3, category: 'dry_food' } });
+    const dup = await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { reason: 'assessment update', name: ' rice ', unit: 'kg', quantity: 3, category: 'dry_food' } });
     assert.equal(dup.status, 409);
     assert.equal(dup.body.code, 'DUPLICATE_ITEM');
-    assert.equal((await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { name: 'Rice', unit: 'packet', quantity: 3, category: 'dry_food' } })).status, 201); // different unit = different item
-    assert.equal((await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { name: 'Blanket', unit: 'piece', quantity: 2.5, category: 'blanket' } })).status, 422);
+    assert.equal((await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { reason: 'assessment update', name: 'Rice', unit: 'packet', quantity: 3, category: 'dry_food' } })).status, 201); // different unit = different item
+    assert.equal((await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { reason: 'assessment update', name: 'Blanket', unit: 'piece', quantity: 2.5, category: 'blanket' } })).status, 422);
     assert.equal((await api('POST', `/requests/${requestId}/items`, { token: donor.accessToken, body: { name: 'X', unit: 'kg', quantity: 1, category: 'other' } })).status, 403);
 
     assert.equal((await pledge(donor, riceId, 6)).status, 201);
-    const low = await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { quantity: 5 } });
+    const low = await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { reason: 'assessment update', quantity: 5 } });
     assert.equal(low.status, 409);
     assert.equal(low.body.code, 'QUANTITY_BELOW_COMMITTED');
-    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { quantity: 6 } })).status, 200);
-    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { unit: 'liter' } })).status, 409); // identity locked once pledged
-    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { quantity: 0 } })).status, 422);
-    assert.equal((await api('DELETE', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken })).status, 409); // has an active pledge
-    assert.equal((await api('PATCH', `/requests/${requestId}/items/999999999`, { token: admin.accessToken, body: { quantity: 6 } })).status, 404);
+    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { reason: 'assessment update', quantity: 6 } })).status, 200);
+    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { reason: 'assessment update', unit: 'liter' } })).status, 409); // identity locked once pledged
+    assert.equal((await api('PATCH', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { reason: 'assessment update', quantity: 0 } })).status, 422);
+    assert.equal((await api('DELETE', `/requests/${requestId}/items/${riceId}`, { token: admin.accessToken, body: { reason: 'assessment update' } })).status, 409); // has an active pledge
+    assert.equal((await api('PATCH', `/requests/${requestId}/items/999999999`, { token: admin.accessToken, body: { reason: 'assessment update', quantity: 6 } })).status, 404);
   });
 
   test('item removal: hard delete without history; soft-cancel with only cancelled pledges; re-adding reactivates', async (t) => {
     if (!dbReady) return t.skip('no test database reachable');
     const { requestId, itemIds } = await approvedRequest(items(['Rice', 'kg', 10], ['Dal', 'kg', 5]));
     const [rice, dal] = itemIds;
-    const del = await api('DELETE', `/requests/${requestId}/items/${dal}`, { token: admin.accessToken });
+    const del = await api('DELETE', `/requests/${requestId}/items/${dal}`, { token: admin.accessToken, body: { reason: 'assessment update' } });
     assert.equal(del.body.data.mode, 'deleted');
     const p = await pledge(donor, rice, 4);
     await api('POST', `/pledges/${p.body.data.pledge.id}/cancel`, { token: donor.accessToken, body: {} });
-    const soft = await api('DELETE', `/requests/${requestId}/items/${rice}`, { token: admin.accessToken });
+    const soft = await api('DELETE', `/requests/${requestId}/items/${rice}`, { token: admin.accessToken, body: { reason: 'assessment update' } });
     assert.equal(soft.body.data.mode, 'cancelled');
     assert.equal((await summaryOf(requestId)).items.length, 0);
-    const re = await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { name: 'Rice', unit: 'kg', quantity: 8, category: 'dry_food' } });
+    const re = await api('POST', `/requests/${requestId}/items`, { token: admin.accessToken, body: { reason: 'assessment update', name: 'Rice', unit: 'kg', quantity: 8, category: 'dry_food' } });
     assert.equal(re.status, 201);
     assert.equal(re.body.data.item.id, rice);
     assert.equal(re.body.data.item.quantities.requested, 8);
@@ -717,7 +717,7 @@ describe('disaster relief: incidents, requests, items, pledges', () => {
   test('audit trail: verification, approval, quantity changes, pledges, cancellation and delivery are logged without secrets', async (t) => {
     if (!dbReady) return t.skip('no test database reachable');
     const { requestId, itemIds } = await approvedRequest(items(['Rice', 'kg', 10]));
-    await api('PATCH', `/requests/${requestId}/items/${itemIds[0]}`, { token: admin.accessToken, body: { quantity: 12 } });
+    await api('PATCH', `/requests/${requestId}/items/${itemIds[0]}`, { token: admin.accessToken, body: { reason: 'assessment update', quantity: 12 } });
     const p = (await pledge(donor, itemIds[0], 3)).body.data.pledge;
     await api('POST', `/pledges/${p.id}/collection`, { token: admin.accessToken, body: { quantity: 3 } });
     await api('POST', `/pledges/${p.id}/delivery`, { token: admin.accessToken, body: { quantity: 3 } });

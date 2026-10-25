@@ -23,6 +23,8 @@ const recurringDonationRoutes = require('./recurringDonation.routes');
 const supportRoutes = require('./support.routes');
 const adminSupportRoutes = require('./adminSupport.routes');
 const reliefRoutes = require('./relief.routes');
+const alertRoutes = require('./alert.routes');
+const adminOpsRoutes = require('./adminOps.routes');
 
 // Root endpoint for API v1
 router.get('/', (req, res) => {
@@ -52,7 +54,9 @@ router.get('/', (req, res) => {
       'volunteer-discovery': '/volunteer-discovery',
       achievements: '/achievements',
       'recurring-donations': '/recurring-donations',
-      relief: '/relief'
+      relief: '/relief',
+      alerts: '/alerts',
+      'admin-ops': '/admin/ops'
     }
   });
 });
@@ -63,6 +67,7 @@ router.use('/auth', authRoutes);
 router.use('/donations', donationRoutes);
 router.use('/volunteer', volunteerRoutes);
 router.use('/admin/support', adminSupportRoutes);
+router.use('/admin/ops', adminOpsRoutes);
 router.use('/admin', adminRoutes);
 router.use('/support', supportRoutes);
 router.use('/ratings', ratingRoutes);
@@ -80,5 +85,6 @@ router.use('/volunteer-discovery', volunteerDiscoveryRoutes);
 router.use('/achievements', achievementRoutes);
 router.use('/recurring-donations', recurringDonationRoutes);
 router.use('/relief', reliefRoutes);
+router.use('/alerts', alertRoutes);
 
 module.exports = router;

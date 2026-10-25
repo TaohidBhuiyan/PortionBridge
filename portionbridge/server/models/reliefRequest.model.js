@@ -6,6 +6,7 @@ const WRITABLE = new Set([
   'title', 'description', 'location_name', 'address', 'delivery_instructions', 'latitude', 'longitude', 'priority',
   'status', 'requesting_organization', 'approved_by', 'approved_at', 'review_notes',
   'expires_at', 'closed_at',
+  'reassessment_flagged_at', 'reassessment_flagged_by', 'reassessment_reason', 'correction_requested_at', 'correction_note',
 ]);
 
 const SELECT = `

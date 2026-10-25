@@ -12,6 +12,7 @@ import {
   Users,
   Bell,
   Headset,
+  Siren,
 } from 'lucide-react';
 
 // Every notification type the backend can actually emit
@@ -48,6 +49,24 @@ const TYPE_META = {
   support_ticket_user_reply: { icon: Headset, tone: 'info' },
   support_ticket_reply: { icon: Headset, tone: 'info' },
   support_ticket_status: { icon: Headset, tone: 'warning' },
+  disaster_alert: { icon: Siren, tone: 'warning' },
+};
+
+// Alert severity reuses the incident severity enum (low | moderate | high | critical).
+const SEVERITY_TONE = { low: 'info', moderate: 'warning', high: 'danger', critical: 'danger' };
+export const ALERT_SEVERITY_LABELS = {
+  low: 'Information',
+  moderate: 'Warning',
+  high: 'High priority',
+  critical: 'Critical emergency',
+};
+export const INCIDENT_STATUS_LABELS = {
+  verified: 'Verified',
+  active: 'Active',
+  resolved: 'Resolved',
+  reported: 'Reported (not verified)',
+  under_review: 'Under review (not verified)',
+  rejected: 'Rejected',
 };
 
 const TONE_CLASSES = {
@@ -59,8 +78,9 @@ const TONE_CLASSES = {
   neutral: 'bg-page border border-border text-text-secondary',
 };
 
-export function getNotificationMeta(type) {
-  const meta = TYPE_META[type] || { icon: Bell, tone: 'neutral' };
+export function getNotificationMeta(type, severity) {
+  const meta = { ...(TYPE_META[type] || { icon: Bell, tone: 'neutral' }) };
+  if (type === 'disaster_alert' && SEVERITY_TONE[severity]) meta.tone = SEVERITY_TONE[severity];
   return { Icon: meta.icon, toneClass: TONE_CLASSES[meta.tone] };
 }
 
@@ -87,6 +107,16 @@ const DONATION_ROUTE_TYPES = new Set([
 ]);
 
 export function getNotificationRoute(notification, userRole) {
+  // Phase 4: alert / relief notifications link to the authoritative incident, request or pledge/task.
+  if (notification.type === 'disaster_alert' || notification.incident_id || notification.relief_request_id || notification.relief_pledge_id) {
+    if (notification.relief_pledge_id) {
+      if (userRole === 'volunteer') return `/volunteer/relief-tasks/${notification.relief_pledge_id}`;
+      if (userRole === 'donor') return `/donor/relief-pledges/${notification.relief_pledge_id}`;
+    }
+    if (notification.relief_request_id) return `/relief/requests/${notification.relief_request_id}`;
+    if (notification.incident_id) return `/relief/incidents/${notification.incident_id}`;
+  }
+
   if (notification.related_id && notification.type?.startsWith('support_ticket_')) {
     return userRole === 'admin'
       ? `/admin/support/${notification.related_id}`

@@ -3,6 +3,29 @@ require('dotenv').config();
 const { pool } = require('../config/db');
 const { DONATION_CATEGORY, DONATION_STATUS } = require('../constants');
 
+// donation_requests.pickup_time is a legacy NOT NULL DATETIME column (the app receives it from the client).
+// These seed rows only carry pickup_date + pickup_time_slot, so derive the same clock times the older
+// importDummyDonations.js script used for each slot.
+const SLOT_CLOCK = { morning: '10:00:00', afternoon: '15:00:00', evening: '19:00:00' };
+function withPickupTime(columns, placeholders, values) {
+  if (!columns.includes('pickup_time') && values.pickup_date && SLOT_CLOCK[values.pickup_time_slot]) {
+    columns.push('pickup_time');
+    placeholders.push(':pickup_time');
+    values.pickup_time = `${values.pickup_date} ${SLOT_CLOCK[values.pickup_time_slot]}`;
+  }
+}
+
+/**
+ * The sample rows name their donor (previously a hard-coded numeric id that only matched the author's database and
+ * could attach a donation to the wrong person elsewhere). The donor is looked up by name; the accounts come from
+ * seedDemoUsers.js / seedRandomUsers.js.
+ */
+async function findDonorIdByName(name) {
+  const [rows] = await pool.query("SELECT id FROM users WHERE name = ? AND role = 'donor' AND is_deleted = 0 ORDER BY id LIMIT 1", [name]);
+  if (!rows.length) throw new Error(`donor account "${name}" not found (run seedDemoUsers.js / seedRandomUsers.js first)`);
+  return rows[0].id;
+}
+
 /**
  * Seed script to create nearby opportunities for volunteer discovery
  * These donations have proper pickup_address_details with coordinates for distance calculation
@@ -10,7 +33,7 @@ const { DONATION_CATEGORY, DONATION_STATUS } = require('../constants');
 
 const NEARBY_DONATIONS = [
   {
-    donor_id: 11, // Rahim Ahmed
+    donor_name: 'Rahim Ahmed',
     category: DONATION_CATEGORY.FOOD,
     title: 'Fresh Bakery Items',
     food_type: 'packaged',
@@ -19,55 +42,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'piece',
     number_of_servings: 80,
     pickup_location: 'Dhanmondi, Dhaka - Road 27, House 15',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Dhanmondi, Dhaka - Road 27, House 15',
-      latitude: 23.7465,
-      longitude: 90.3775,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Dhanmondi, Dhaka - Road 27, House 15',
       latitude: 23.7465,
       longitude: 90.3775,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-09-29',
     pickup_time_slot: 'morning',
     expiry_date: '2026-09-30',
@@ -82,7 +61,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 12, // Fatima Begum
+    donor_name: 'Fatima Begum',
     category: DONATION_CATEGORY.FOOD,
     title: 'Cooked Vegetables',
     food_type: 'cooked',
@@ -91,55 +70,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'kg',
     number_of_servings: 45,
     pickup_location: 'Gulshan, Dhaka - Avenue 5, House 10',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Gulshan, Dhaka - Avenue 5, House 10',
-      latitude: 23.7925,
-      longitude: 90.4035,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Gulshan, Dhaka - Avenue 5, House 10',
       latitude: 23.7925,
       longitude: 90.4035,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-09-29',
     pickup_time_slot: 'afternoon',
     expiry_date: '2026-09-29',
@@ -154,7 +89,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 13, // Karim Uddin
+    donor_name: 'Karim Uddin',
     category: DONATION_CATEGORY.CLOTHES,
     title: 'Summer T-Shirts',
     clothing_category: 't_shirt',
@@ -164,55 +99,11 @@ const NEARBY_DONATIONS = [
     quantity: 25,
     quantity_unit: 'piece',
     pickup_location: 'Mirpur, Dhaka - Section 10, Road 5',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Mirpur, Dhaka - Section 10, Road 5',
-      latitude: 23.8225,
-      longitude: 90.3655,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Mirpur, Dhaka - Section 10, Road 5',
       latitude: 23.8225,
       longitude: 90.3655,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-09-30',
     pickup_time_slot: 'evening',
     expiry_date: '2026-11-30',
@@ -223,7 +114,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 14, // Ayesha Khan
+    donor_name: 'Ayesha Khan',
     category: DONATION_CATEGORY.FOOD,
     title: 'Rice and Dal',
     food_type: 'cooked',
@@ -232,55 +123,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'kg',
     number_of_servings: 60,
     pickup_location: 'Uttara, Dhaka - Sector 7, House 20',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Uttara, Dhaka - Sector 7, House 20',
-      latitude: 23.8735,
-      longitude: 90.3925,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Uttara, Dhaka - Sector 7, House 20',
       latitude: 23.8735,
       longitude: 90.3925,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-09-30',
     pickup_time_slot: 'morning',
     expiry_date: '2026-09-30',
@@ -295,7 +142,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 15, // Jamal Hossain
+    donor_name: 'Jamal Hossain',
     category: DONATION_CATEGORY.CLOTHES,
     title: 'Kids Winter Wear',
     clothing_category: 'jacket',
@@ -305,55 +152,11 @@ const NEARBY_DONATIONS = [
     quantity: 18,
     quantity_unit: 'piece',
     pickup_location: 'Mohammadpur, Dhaka - Geneva Camp, Block A',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Mohammadpur, Dhaka - Geneva Camp, Block A',
-      latitude: 23.7525,
-      longitude: 90.3625,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Mohammadpur, Dhaka - Geneva Camp, Block A',
       latitude: 23.7525,
       longitude: 90.3625,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-01',
     pickup_time_slot: 'afternoon',
     expiry_date: '2026-12-31',
@@ -364,7 +167,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 9, // Taohid Donor
+    donor_name: 'Taohid Donor',
     category: DONATION_CATEGORY.FOOD,
     title: 'Beverage Packets',
     food_type: 'packaged',
@@ -373,55 +176,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'piece',
     number_of_servings: 100,
     pickup_location: 'Kurmitola, Dhaka - House 12, Road 5',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Kurmitola, Dhaka - House 12, Road 5',
-      latitude: 23.8103,
-      longitude: 90.4125,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Kurmitola, Dhaka - House 12, Road 5',
       latitude: 23.8103,
       longitude: 90.4125,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-02',
     pickup_time_slot: 'morning',
     expiry_date: '2026-10-15',
@@ -436,7 +195,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 11, // Rahim Ahmed
+    donor_name: 'Rahim Ahmed',
     category: DONATION_CATEGORY.CLOTHES,
     title: 'Adult Jeans Collection',
     clothing_category: 'jeans',
@@ -446,55 +205,11 @@ const NEARBY_DONATIONS = [
     quantity: 12,
     quantity_unit: 'piece',
     pickup_location: 'Dhanmondi, Dhaka - Road 27, Market Area',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Dhanmondi, Dhaka - Road 27, Market Area',
-      latitude: 23.7485,
-      longitude: 90.3795,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Dhanmondi, Dhaka - Road 27, Market Area',
       latitude: 23.7485,
       longitude: 90.3795,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-03',
     pickup_time_slot: 'evening',
     expiry_date: '2026-12-31',
@@ -505,7 +220,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 12, // Fatima Begum
+    donor_name: 'Fatima Begum',
     category: DONATION_CATEGORY.FOOD,
     title: 'Packaged Snacks',
     food_type: 'packaged',
@@ -514,55 +229,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'packet',
     number_of_servings: 200,
     pickup_location: 'Gulshan, Dhaka - Avenue 5, Shopping Complex',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Gulshan, Dhaka - Avenue 5, Shopping Complex',
-      latitude: 23.7945,
-      longitude: 90.4055,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Gulshan, Dhaka - Avenue 5, Shopping Complex',
       latitude: 23.7945,
       longitude: 90.4055,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-04',
     pickup_time_slot: 'afternoon',
     expiry_date: '2026-11-30',
@@ -577,7 +248,7 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 13, // Karim Uddin
+    donor_name: 'Karim Uddin',
     category: DONATION_CATEGORY.FOOD,
     title: 'Fresh Fish Curry',
     food_type: 'cooked',
@@ -586,55 +257,11 @@ const NEARBY_DONATIONS = [
     quantity_unit: 'kg',
     number_of_servings: 36,
     pickup_location: 'Mirpur, Dhaka - Section 10, Local Market',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Mirpur, Dhaka - Section 10, Local Market',
-      latitude: 23.8245,
-      longitude: 90.3675,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Mirpur, Dhaka - Section 10, Local Market',
       latitude: 23.8245,
       longitude: 90.3675,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-05',
     pickup_time_slot: 'evening',
     expiry_date: '2026-10-05',
@@ -649,65 +276,21 @@ const NEARBY_DONATIONS = [
     status: DONATION_STATUS.PENDING,
   },
   {
-    donor_id: 14, // Ayesha Khan
+    donor_name: 'Ayesha Khan',
     category: DONATION_CATEGORY.CLOTHES,
     title: 'Babies Clothing Set',
-    clothing_category: 'other',
+    clothing_category: 'others',
     gender: 'unisex',
     age_group: 'baby',
     item_condition: 'like_new',
     quantity: 30,
     quantity_unit: 'piece',
     pickup_location: 'Uttara, Dhaka - Sector 7, Residential Area',
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-    pickup_address_details: JSON.stringify({
-      address: 'Uttara, Dhaka - Sector 7, Residential Area',
-      latitude: 23.8755,
-      longitude: 90.3945,
-    }),
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_address_details: {
       address: 'Uttara, Dhaka - Sector 7, Residential Area',
       latitude: 23.8755,
       longitude: 90.3945,
     },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
     pickup_date: '2026-10-06',
     pickup_time_slot: 'morning',
     expiry_date: '2026-12-31',
@@ -727,6 +310,7 @@ async function seedNearbyOpportunities() {
       const columns = [];
       const values = {};
       const placeholders = [];
+      const donorId = await findDonorIdByName(donation.donor_name);
       
       if (donation.category === DONATION_CATEGORY.FOOD) {
         columns.push('donor_id', 'category', 'title', 'food_type', 'food_name', 'quantity', 
@@ -739,53 +323,21 @@ async function seedNearbyOpportunities() {
           if (key !== 'category' && key !== 'food_type' && key !== 'food_name' && key !== 'clothing_category' &&
               key !== 'gender' && key !== 'age_group' && key !== 'item_condition' && key !== 'size' && key !== 'season') {
             values[key] = donation[key];
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
             if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
               values[key] = JSON.stringify(donation[key]);
             }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
           }
         });
         
+        values.donor_id = donorId;
         values.category = donation.category;
         values.food_type = donation.food_type;
         values.food_name = donation.food_name;
         values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
         values.storage_requirement = donation.storage_requirement;
-        values.is_vegetarian = donation.is_vegetarian ? 1 : 0;
-        values.is_halal = donation.is_halal ? 1 : 0;
-        values.refrigeration_required = donation.refrigeration_required ? 1 : 0;
+        values.is_vegetarian = donation.is_vegetarian ? 'vegetarian' : 'non_vegetarian';
+        values.is_halal = donation.is_halal ? 'yes' : 'no';
+        values.refrigeration_required = donation.refrigeration_required ? 'yes' : 'no';
         
         placeholders.push(':donor_id', ':category', ':title', ':food_type', ':food_name', ':quantity',
                         ':quantity_unit', ':number_of_servings', ':pickup_location', ':pickup_address_details',
@@ -802,45 +354,13 @@ async function seedNearbyOpportunities() {
           if (key !== 'category' && key !== 'food_type' && key !== 'food_name' && key !== 'clothing_category' &&
               key !== 'gender' && key !== 'age_group' && key !== 'item_condition' && key !== 'size' && key !== 'season') {
             values[key] = donation[key];
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
             if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
               values[key] = JSON.stringify(donation[key]);
             }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
-=======
-            if (key === 'pickup_address_details' && typeof donation[key] === 'object') {
-              values[key] = JSON.stringify(donation[key]);
-            }
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedNearbyOpportunities.js
           }
         });
         
+        values.donor_id = donorId;
         values.category = donation.category;
         values.clothing_category = donation.clothing_category;
         values.gender = donation.gender;
@@ -855,6 +375,7 @@ async function seedNearbyOpportunities() {
                         ':status');
       }
       
+      withPickupTime(columns, placeholders, values);
       const sql = `INSERT INTO donation_requests (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`;
       const [result] = await pool.query(sql, values);
       

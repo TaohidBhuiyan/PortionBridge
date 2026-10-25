@@ -12,3 +12,8 @@ seed_*.js
 
 # Patch files
 *.patch
+
+# Environment files (secrets) — never commit; keep only the *.example templates
+.env
+.env.*
+!.env.example

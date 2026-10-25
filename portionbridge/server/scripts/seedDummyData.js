@@ -7,6 +7,24 @@ const userModel = require('../models/user.model');
 const passwordHistoryModel = require('../models/passwordHistory.model');
 const volunteerProfileModel = require('../models/volunteerProfile.model');
 
+// donation_requests.pickup_time is a legacy NOT NULL DATETIME column (the app receives it from the client).
+// These seed rows only carry pickup_date + pickup_time_slot, so derive the same clock times the older
+// importDummyDonations.js script used for each slot.
+const SLOT_CLOCK = { morning: '10:00:00', afternoon: '15:00:00', evening: '19:00:00' };
+function withPickupTime(columns, placeholders, values) {
+  // is_vegetarian / is_halal / refrigeration_required are ENUM columns ('vegetarian'|'non_vegetarian', 'yes'|'no'),
+  // not booleans; rows copied verbatim from the sample data may still carry booleans.
+  if (typeof values.is_vegetarian === 'boolean') values.is_vegetarian = values.is_vegetarian ? 'vegetarian' : 'non_vegetarian';
+  ['is_halal', 'refrigeration_required'].forEach((k) => {
+    if (typeof values[k] === 'boolean') values[k] = values[k] ? 'yes' : 'no';
+  });
+  if (!columns.includes('pickup_time') && values.pickup_date && SLOT_CLOCK[values.pickup_time_slot]) {
+    columns.push('pickup_time');
+    placeholders.push(':pickup_time');
+    values.pickup_time = `${values.pickup_date} ${SLOT_CLOCK[values.pickup_time_slot]}`;
+  }
+}
+
 /**
  * Comprehensive seed script that creates:
  * 1. Donor and Volunteer accounts with auto-verification
@@ -97,44 +115,6 @@ const SAMPLE_DONATIONS = [
     size: 'L',
     season: 'winter',
   },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
   {
     donor_email: 'tauhidtbm2@gmail.com',
     category: DONATION_CATEGORY.FOOD,
@@ -239,43 +219,6 @@ const SAMPLE_DONATIONS = [
     is_halal: true,
     refrigeration_required: true,
   },
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
 ];
 
 async function seedUsers() {
@@ -389,67 +332,11 @@ async function seedDonations(userIds) {
         values.contact_phone = donation.contact_phone;
         values.description = donation.description;
         values.ingredients = donation.ingredients;
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-        values.allergens = donation.allergens;
-=======
         values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-        values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
         values.storage_requirement = donation.storage_requirement;
-        values.is_vegetarian = donation.is_vegetarian ? 1 : 0;
-        values.is_halal = donation.is_halal ? 1 : 0;
-        values.refrigeration_required = donation.refrigeration_required ? 1 : 0;
+        values.is_vegetarian = donation.is_vegetarian ? 'vegetarian' : 'non_vegetarian';
+        values.is_halal = donation.is_halal ? 'yes' : 'no';
+        values.refrigeration_required = donation.refrigeration_required ? 'yes' : 'no';
         values.status = DONATION_STATUS.PENDING;
         
         placeholders.push(':donorId', ':category', ':title', ':food_type', ':food_name', ':quantity',
@@ -486,6 +373,7 @@ async function seedDonations(userIds) {
                         ':pickup_time_slot', ':expiry_date', ':contact_phone', ':description', ':size', ':season', ':status');
       }
       
+      withPickupTime(columns, placeholders, values);
       const sql = `INSERT INTO donation_requests (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`;
       await pool.query(sql, values);
       
@@ -496,44 +384,6 @@ async function seedDonations(userIds) {
   }
 }
 
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
 async function seedVolunteerActivity(volunteerId, donorId) {
   console.log('[SeedDummyData] Creating volunteer activity data...');
   
@@ -616,9 +466,9 @@ async function seedVolunteerActivity(volunteerId, donorId) {
           values.food_name = donation.food_name;
           values.allergens = donation.allergens ? JSON.stringify([donation.allergens]) : null;
           values.storage_requirement = donation.storage_requirement;
-          values.is_vegetarian = donation.is_vegetarian ? 1 : 0;
-          values.is_halal = donation.is_halal ? 1 : 0;
-          values.refrigeration_required = donation.refrigeration_required ? 1 : 0;
+          values.is_vegetarian = donation.is_vegetarian ? 'vegetarian' : 'non_vegetarian';
+          values.is_halal = donation.is_halal ? 'yes' : 'no';
+          values.refrigeration_required = donation.refrigeration_required ? 'yes' : 'no';
           
           placeholders.push(':donor_id', ':volunteer_id', ':category', ':title', ':food_type', ':food_name', ':quantity',
                           ':quantity_unit', ':number_of_servings', ':pickup_location', ':pickup_date',
@@ -652,6 +502,7 @@ async function seedVolunteerActivity(volunteerId, donorId) {
                           ':status', ':accepted_at', ':completed_at');
         }
         
+        withPickupTime(columns, placeholders, values);
         const sql = `INSERT INTO donation_requests (${columns.join(', ')}) VALUES (${placeholders.join(', ')})`;
         const [result] = await pool.query(sql, values);
         
@@ -676,114 +527,14 @@ async function seedVolunteerActivity(volunteerId, donorId) {
   }
 }
 
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
 async function seedDummyData() {
   try {
     const userIds = await seedUsers();
     
     // Create volunteer profile for the volunteer
+    const donorId = userIds['tauhidtbm2@gmail.com'];
+    
     const volunteerId = userIds['mintumohammad15678@gmail.com'];
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
-    const donorId = userIds['tauhidtbm2@gmail.com'];
-    
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
     if (volunteerId) {
       await seedVolunteerProfile(volunteerId);
     }
@@ -791,86 +542,11 @@ async function seedDummyData() {
     // Create sample donations
     await seedDonations(userIds);
     
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
     // Create volunteer activity data (completed donations and ratings)
     if (volunteerId && donorId) {
       await seedVolunteerActivity(volunteerId, donorId);
     }
     
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/seedDummyData.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/seedDummyData.js
     console.log('[SeedDummyData] Dummy data seeding completed successfully!');
   } catch (error) {
     console.error('[SeedDummyData] Failed:', error.message);

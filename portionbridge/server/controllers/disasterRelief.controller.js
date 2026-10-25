@@ -95,7 +95,7 @@ const updateItem = asyncHandler(async (req, res) => {
 });
 
 const removeItem = asyncHandler(async (req, res) => {
-  const result = await requestService.removeItem(req.params.id, req.params.itemId, req.user, ctxOf(req));
+  const result = await requestService.removeItem(req.params.id, req.params.itemId, req.user, ctxOf(req), req.body && req.body.reason);
   return success(res, { message: 'Item removed successfully.', data: result });
 });
 

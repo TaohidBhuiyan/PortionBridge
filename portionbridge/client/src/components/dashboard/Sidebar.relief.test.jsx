@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ user: { id: 1, name: 'Test User', role: 'donor' } }) }));
@@ -59,5 +59,18 @@ describe('Sidebar navigation (regression + new entry)', () => {
     const mine = active('/donor/relief-pledges')[0];
     const browse = active('/relief')[0];
     expect(mine).not.toBe(browse);
+  });
+
+  it('Disaster Alerts management is admin-only', () => {
+    renderSidebar('admin');
+    expect(hrefs()).toContain('/admin/alerts');
+    expect(hrefs()).toContain('/admin/operations');
+    cleanup();
+    ['donor', 'volunteer'].forEach((role) => {
+      renderSidebar(role);
+      expect(hrefs()).not.toContain('/admin/alerts');
+      expect(hrefs()).not.toContain('/admin/operations');
+      cleanup();
+    });
   });
 });

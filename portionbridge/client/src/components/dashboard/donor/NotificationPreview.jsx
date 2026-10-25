@@ -133,7 +133,7 @@ export function NotificationPreview() {
         ) : (
           <div className="space-y-2">
             {notifications.slice(0, 4).map((notification) => {
-              const { Icon, toneClass } = getNotificationMeta(notification.type);
+              const { Icon, toneClass } = getNotificationMeta(notification.type, notification.severity);
               const isUnread = !notification.is_read;
 
               return (

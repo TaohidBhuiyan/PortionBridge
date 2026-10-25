@@ -144,6 +144,24 @@ const incidentReportLimiter = rateLimit({
   },
 });
 
+/**
+ * Mass-notification guard: administrators may publish / update / correct at most 30 alerts
+ * per hour (keyed per user). Relaxed in development like the other limiters.
+ */
+const alertPublishLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: process.env.NODE_ENV === 'development' ? 1000 : 30,
+  keyGenerator: (req) => (req.user ? String(req.user.id) : req.ip),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    return error(res, {
+      statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+      message: 'Alert publishing limit reached (max 30/hr). Please wait before publishing again.',
+    });
+  },
+});
+
 module.exports = {
   apiLimiter,
   loginLimiter,
@@ -153,4 +171,5 @@ module.exports = {
   supportCreateLimiter,
   supportMessageLimiter,
   incidentReportLimiter,
+  alertPublishLimiter,
 };

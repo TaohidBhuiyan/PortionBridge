@@ -69,6 +69,7 @@ const NOTIFICATION_TYPES = {
   SUPPORT_TICKET_USER_REPLY: 'support_ticket_user_reply',
   SUPPORT_TICKET_REPLY: 'support_ticket_reply',
   SUPPORT_TICKET_STATUS: 'support_ticket_status',
+  DISASTER_ALERT: 'disaster_alert',
 };
 
 const REPORT_TARGET_TYPES = {
@@ -202,6 +203,32 @@ const AUDIT_ACTIONS = {
   RELIEF_PROBLEM_REPORTED: 'relief_problem_reported',
   RELIEF_REPORT_RESOLVED: 'relief_report_resolved',
   RELIEF_PLEDGE_FAILED: 'relief_pledge_failed',
+
+  // --- Disaster Relief Phase 4: nationwide alerts & notifications ---
+  DISASTER_ALERT_ISSUED: 'disaster_alert_issued',
+  DISASTER_ALERT_AUTO_ISSUED: 'disaster_alert_auto_issued',
+  DISASTER_ALERT_UPDATED: 'disaster_alert_updated',
+  DISASTER_ALERT_ESCALATED: 'disaster_alert_escalated',
+  DISASTER_ALERT_CORRECTED: 'disaster_alert_corrected',
+  DISASTER_ALERT_RESOLVED: 'disaster_alert_resolved',
+  DISASTER_ALERT_CANCELLED: 'disaster_alert_cancelled',
+  DISASTER_ALERT_EVENT_RETRIED: 'disaster_alert_event_retried',
+  DISASTER_ALERT_PREFERENCES_UPDATED: 'disaster_alert_preferences_updated',
+
+  // --- Disaster Relief Phase 5: admin operations ---
+  OPS_INCIDENT_INFO_REQUESTED: 'ops_incident_info_requested',
+  OPS_INCIDENT_MERGED: 'ops_incident_merged',
+  OPS_INCIDENT_REOPENED: 'ops_incident_reopened',
+  OPS_REQUEST_CORRECTION_REQUESTED: 'ops_request_correction_requested',
+  OPS_REQUEST_REASSESSMENT_FLAGGED: 'ops_request_reassessment_flagged',
+  OPS_REQUEST_REASSESSMENT_CLEARED: 'ops_request_reassessment_cleared',
+  OPS_REQUEST_QUANTITY_CHANGED: 'ops_request_quantity_changed',
+  OPS_TASK_ASSIGNED: 'ops_task_assigned',
+  OPS_TASK_REASSIGNED: 'ops_task_reassigned',
+  OPS_TASK_RELEASED: 'ops_task_released',
+  OPS_TASK_CANCELLED: 'ops_task_cancelled',
+  OPS_DELIVERY_CORRECTED: 'ops_delivery_corrected',
+  OPS_EXPORT_GENERATED: 'ops_export_generated',
 };
 
 const SUPPORT_TICKET_STATUSES = {
@@ -396,6 +423,7 @@ const RELIEF = {
     ACTIVE: 'active',
     RESOLVED: 'resolved',
     REJECTED: 'rejected',
+    MERGED: 'merged', // Phase 5: duplicate folded into another incident (terminal; record kept)
   },
   // Incident states visible to the public. Everything else is moderation-only.
   PUBLIC_INCIDENT_STATUSES: ['verified', 'active', 'resolved'],
@@ -429,6 +457,17 @@ const RELIEF = {
   PUBLIC_COORD_DECIMALS: 2,
   // Generous bounding box around Bangladesh for API-level sanity validation.
   BD_BOUNDS: { minLat: 20.0, maxLat: 27.0, minLng: 87.5, maxLng: 93.0 },
+  // Phase 4 — alerts REUSE the incident severity enum (low < moderate < high < critical);
+  // the labels are display wording only, not a second severity model.
+  ALERT: {
+    SCOPES: ['local', 'regional', 'nationwide'],
+    STATUS: { ACTIVE: 'active', RESOLVED: 'resolved', CANCELLED: 'cancelled' },
+    EVENT_TYPES: ['issued', 'updated', 'escalated', 'area_expanded', 'relief_update', 'correction', 'resolved', 'cancelled'],
+    SEVERITY_ORDER: ['low', 'moderate', 'high', 'critical'],
+    SEVERITY_LABELS: { low: 'Information', moderate: 'Warning', high: 'High priority', critical: 'Critical emergency' },
+    DEFAULT_RADIUS_KM: 25,
+    MAX_RADIUS_KM: 500,
+  },
 };
 
 module.exports = {

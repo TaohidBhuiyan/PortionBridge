@@ -39,6 +39,7 @@ export const INCIDENT_STATUS_LABELS = {
   active: 'Active',
   resolved: 'Resolved',
   rejected: 'Rejected',
+  merged: 'Merged (duplicate)',
 };
 
 export const REQUEST_STATUS_LABELS = {

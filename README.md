@@ -367,3 +367,10 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <div align="center">
   <sub>Built with ❤️ for resilient communities by <a href="https://github.com/TaohidBhuiyan">Taohid Bhuiyan</a> and community contributors.</sub>
 </div>
+
+
+## Disaster response — documentation index
+- Setup, migration order, backup/rollback, Git procedure, pre-deploy checks: `docs/SETUP_AND_DEPLOYMENT.md`
+- Final audit (verified results, issues, limitations): `docs/FINAL_AUDIT_REPORT.md`
+- Status models and valid transitions: `docs/STATUS_TRANSITIONS.md`
+- Alerts (Phase 4): `docs/DISASTER_ALERTS_PHASE4_IMPLEMENTATION.md` · Admin operations (Phase 5): `docs/ADMIN_OPERATIONS_PHASE5_IMPLEMENTATION.md`

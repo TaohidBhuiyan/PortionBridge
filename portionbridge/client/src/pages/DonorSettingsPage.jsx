@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '../components/dashboard';
 import { SecuritySettings } from '../components/dashboard/settings/SecuritySettings';
 import { NotificationSettings } from '../components/dashboard/settings/NotificationSettings';
+import { DisasterAlertSettings } from '../components/dashboard/settings/DisasterAlertSettings';
 import { AppearanceSettings } from '../components/dashboard/settings/AppearanceSettings';
 import { PrivacySettings } from '../components/dashboard/settings/PrivacySettings';
 import { AccountTypeSettings } from '../components/dashboard/settings/AccountTypeSettings';
@@ -187,7 +188,12 @@ export function DonorSettingsPage() {
           {/* Right Main Content Area */}
           <div className="col-span-1 lg:col-span-8 space-y-6">
             {activeTab === 'security' && <SecuritySettings />}
-            {activeTab === 'notifications' && <NotificationSettings />}
+            {activeTab === 'notifications' && (
+              <>
+                <NotificationSettings />
+                <DisasterAlertSettings />
+              </>
+            )}
             {activeTab === 'appearance' && <AppearanceSettings />}
             {activeTab === 'preferences' && <DonorPreferencesSettings />}
             {activeTab === 'privacy' && <PrivacySettings />}

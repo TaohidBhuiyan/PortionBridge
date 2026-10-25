@@ -49,6 +49,9 @@ async function startServer() {
 
   await validateDatabaseSchema();
 
+  // Phase 4: re-processes pending / stuck / failed alert deliveries (see config/alerts.js).
+  require('./services/alertDispatcher.service').startSweeper();
+
   httpServer.listen(PORT, () => {
     console.log(`[Server] PortionBridge API running on http://localhost:${PORT}`);
     console.log(`[Server] API base: http://localhost:${PORT}/api/v1`);

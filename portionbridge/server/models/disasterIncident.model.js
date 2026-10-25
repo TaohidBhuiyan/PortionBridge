@@ -10,6 +10,7 @@ const WRITABLE = new Set([
   'title', 'description', 'disaster_type', 'severity', 'priority', 'latitude', 'longitude',
   'address', 'district', 'affected_area', 'status', 'source_type', 'source_reference',
   'verification_status', 'verified_by', 'verified_at', 'verification_notes', 'resolved_at',
+  'merged_into_id', 'merged_at', 'merged_by', 'info_requested_at', 'info_requested_by', 'info_request_note',
 ]);
 
 const SELECT = `

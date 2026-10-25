@@ -17,14 +17,18 @@ import {
   ArrowRight,
   Sparkles,
   CheckCircle2,
+  Siren,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useAuthSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 import { DashboardLayout } from '../components/dashboard';
 import {
   getNotificationMeta,
   getNotificationRoute,
+  ALERT_SEVERITY_LABELS,
+  INCIDENT_STATUS_LABELS,
   formatNotificationTimestamp,
 } from '../utils/notificationMeta';
 import axios from 'axios';
@@ -54,6 +58,7 @@ const MESSAGE_TYPES = new Set(['new_message']);
 export function NotificationsPage() {
   const navigate = useNavigate();
   const { socket, connected, unreadCount } = useAuthSocket();
+  const { user } = useAuth();
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -180,7 +185,7 @@ export function NotificationsPage() {
     if (!notification.is_read) {
       handleMarkAsRead(notification.id);
     }
-    const route = getNotificationRoute(notification);
+    const route = getNotificationRoute(notification, user?.role);
     if (route) {
       navigate(route);
     }
@@ -199,7 +204,8 @@ export function NotificationsPage() {
       if (filter === 'unread' && item.is_read) return false;
       if (filter === 'donations' && !DONATION_TYPES.has(item.type)) return false;
       if (filter === 'messages' && !MESSAGE_TYPES.has(item.type)) return false;
-      if (filter === 'system' && (DONATION_TYPES.has(item.type) || MESSAGE_TYPES.has(item.type))) {
+      if (filter === 'alerts' && item.type !== 'disaster_alert') return false;
+      if (filter === 'system' && (DONATION_TYPES.has(item.type) || MESSAGE_TYPES.has(item.type) || item.type === 'disaster_alert')) {
         return false;
       }
 
@@ -266,6 +272,7 @@ export function NotificationsPage() {
     { id: 'all', label: 'All', count: stats.total },
     { id: 'unread', label: 'Unread', count: stats.unread, highlight: stats.unread > 0 },
     { id: 'donations', label: 'Donations & Pickups', icon: Package },
+    { id: 'alerts', label: 'Disaster Alerts', icon: Siren },
     { id: 'messages', label: 'Messages', icon: MessageSquare },
     { id: 'system', label: 'System & Notices', icon: Shield },
   ];
@@ -632,8 +639,10 @@ export function NotificationsPage() {
  */
 function NotificationCard({ notification, onCardClick, onMarkAsRead, isMarking }) {
   const isUnread = !notification.is_read;
-  const { Icon, toneClass } = getNotificationMeta(notification.type);
-  const route = getNotificationRoute(notification);
+  const { user } = useAuth();
+  const { Icon, toneClass } = getNotificationMeta(notification.type, notification.severity);
+  const route = getNotificationRoute(notification, user?.role);
+  const isAlert = notification.type === 'disaster_alert';
 
   // Category Tag Helper
   const getCategoryBadge = (type) => {
@@ -649,7 +658,18 @@ function NotificationCard({ notification, onCardClick, onMarkAsRead, isMarking }
     return { label: 'Notice', color: 'text-text-secondary bg-page border-border/60' };
   };
 
-  const badge = getCategoryBadge(notification.type);
+  const ALERT_BADGE_COLORS = {
+    low: 'text-sky-600 bg-sky-500/10 border-sky-500/20',
+    moderate: 'text-amber-600 bg-amber-500/10 border-amber-500/20',
+    high: 'text-rose-600 bg-rose-500/10 border-rose-500/20',
+    critical: 'text-rose-600 bg-rose-500/15 border-rose-500/40',
+  };
+  const badge = isAlert
+    ? {
+        label: ALERT_SEVERITY_LABELS[notification.severity] || 'Disaster alert',
+        color: ALERT_BADGE_COLORS[notification.severity] || ALERT_BADGE_COLORS.moderate,
+      }
+    : getCategoryBadge(notification.type);
 
   return (
     <motion.div
@@ -727,13 +747,28 @@ function NotificationCard({ notification, onCardClick, onMarkAsRead, isMarking }
           {notification.message}
         </p>
 
+        {/* Live incident state (read from the incident record, not copied into the notice) */}
+        {isAlert && notification.incident_status && (
+          <p className="mt-1.5 text-[11px] text-text-muted" data-testid="alert-incident-status">
+            Incident now:{' '}
+            <span className="font-semibold text-text-secondary">
+              {INCIDENT_STATUS_LABELS[notification.incident_status] || notification.incident_status}
+            </span>
+            {notification.incident_updated_at && <> · updated {formatNotificationTimestamp(notification.incident_updated_at)}</>}
+          </p>
+        )}
+
         {/* Action Link Footer */}
         {route && (
           <div className="mt-2.5 flex items-center gap-1 text-xs font-semibold text-dash-primary group-hover:text-dash-primary-hover group-hover:translate-x-0.5 transition-all">
             <span>
               {notification.type.includes('message')
                 ? 'Open conversation'
-                : 'View donation details'}
+                : isAlert
+                  ? 'View incident & relief needs'
+                  : notification.relief_pledge_id || notification.relief_request_id || notification.incident_id
+                    ? 'View relief details'
+                    : 'View donation details'}
             </span>
             <ArrowRight size={13} />
           </div>

@@ -102,12 +102,14 @@ describe('achievement: eligibility, duplicate prevention, and N+1-fix correctnes
     const { achievements: donorAchievements } = await achievementService.getUserAchievements(donor.id);
     assert.ok(!donorAchievements.some((a) => a.achievement_type === 'first_pickup' || a.achievement_type === 'top_volunteer'));
 
-    // Unlike the donor side, completeDonation() does not auto-check
-    // volunteer-side achievements, so this call is expected to freshly
-    // unlock them here.
-    const volunteerUnlocked = await achievementService.checkAndUnlockAchievements(volunteer.id, 'volunteer');
-    const volunteerTypes = volunteerUnlocked.map((a) => a.type).sort();
-    assert.deepEqual(volunteerTypes, ['first_pickup', 'top_volunteer']);
+    // completeDonation() now auto-checks the volunteer side as well (donation.service.js), so the
+    // volunteer already holds exactly the volunteer-only achievements and an explicit re-check unlocks nothing new.
+    const { achievements: volunteerAchievements } = await achievementService.getUserAchievements(volunteer.id);
+    assert.deepEqual(volunteerAchievements.map((a) => a.achievement_type).sort(), ['first_pickup', 'top_volunteer']);
+    const recheck = await achievementService.checkAndUnlockAchievements(volunteer.id, 'volunteer');
+    assert.deepEqual(recheck, []);
+    // and the volunteer never receives donor-only achievements
+    assert.ok(!volunteerAchievements.some((a) => a.achievement_type === 'first_donation' || a.achievement_type === 'top_donor'));
   });
 
   test('N+1 fix regression: batch-fetched unlocked-types check produces the exact same result as checking one at a time would', async (t) => {

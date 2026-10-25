@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { ActiveAlertBanner } from '../components/relief/ActiveAlertBanner';
 import { ArrowLeft, ShieldCheck, ShieldQuestion, MapPinOff, ExternalLink, Package } from 'lucide-react';
 import { DashboardLayout, EmptyState, ErrorState } from '../components/dashboard';
 import { DisasterMap } from '../components/relief/DisasterMap';
@@ -89,6 +90,7 @@ export function DisasterIncidentPage() {
             </header>
 
             <VerificationBanner incident={incident} />
+            {incident.isVerified && <ActiveAlertBanner incidentId={incident.id} />}
 
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
               <section aria-label="Incident details" className="space-y-5 rounded-2xl border border-border bg-surface p-5">

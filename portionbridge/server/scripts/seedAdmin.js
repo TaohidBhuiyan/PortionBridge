@@ -2,14 +2,14 @@ require('dotenv').config();
 
 const { pool } = require('../config/db');
 const { USER_ROLES } = require('../constants');
-const { hashPassword } = require('../utils/password');
+const { hashPassword, validatePasswordPolicy } = require('../utils/password');
 const userModel = require('../models/user.model');
 const passwordHistoryModel = require('../models/passwordHistory.model');
 
 /**
  * Startup-safe admin account initializer.
  *
- * Creates (or upgrades) exactly one hard-coded Admin account using the
+ * Creates (or upgrades) exactly one Admin account whose e-mail/password are supplied via environment variables using the
  * project's existing auth stack — same bcrypt hashing (utils/password),
  * same users table / user.model.js data-access layer, same role system
  * (USER_ROLES.ADMIN) already enforced by middleware/auth.middleware.js's
@@ -28,11 +28,25 @@ const passwordHistoryModel = require('../models/passwordHistory.model');
  * Run with: npm run seed:admin
  */
 
-const ADMIN_NAME = 'Taohid Bhuiyan';
-const ADMIN_EMAIL = 'taohid_admin@gmail.com';
-const ADMIN_PASSWORD = 'Admin1@Taohid';
+// Credentials come from the environment — nothing is hard-coded in source control.
+//   SEED_ADMIN_EMAIL     (required)
+//   SEED_ADMIN_PASSWORD  (required; must satisfy the normal password policy)
+//   SEED_ADMIN_NAME      (optional, default "Administrator")
+// Example (PowerShell):  $env:SEED_ADMIN_EMAIL="you@example.org"; $env:SEED_ADMIN_PASSWORD="<strong password>"; npm run seed:admin
+const ADMIN_NAME = (process.env.SEED_ADMIN_NAME || 'Administrator').trim();
+const ADMIN_EMAIL = (process.env.SEED_ADMIN_EMAIL || '').trim().toLowerCase();
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || '';
+
+function assertConfigured() {
+  if (!ADMIN_EMAIL || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ADMIN_EMAIL)) {
+    throw new Error('Set SEED_ADMIN_EMAIL to a valid e-mail address.');
+  }
+  const policy = validatePasswordPolicy(ADMIN_PASSWORD);
+  if (!policy.valid) throw new Error(`SEED_ADMIN_PASSWORD rejected: ${policy.message}`);
+}
 
 async function seedAdmin() {
+  assertConfigured();
   const existing = await userModel.findByEmail(ADMIN_EMAIL);
 
   if (existing) {

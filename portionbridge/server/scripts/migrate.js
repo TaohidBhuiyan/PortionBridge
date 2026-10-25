@@ -150,6 +150,29 @@ const migrations = [
       ['enumValue', 'relief_pledges', 'status', 'failed'],
     ],
   },
+  {
+    id: 'migration_031_disaster_alerts',
+    file: 'migration_031_disaster_alerts.sql',
+    checks: [
+      ['table', 'disaster_alerts'],
+      ['table', 'disaster_alert_events'],
+      ['table', 'disaster_alert_preferences'],
+      ['column', 'notifications', 'alert_event_id'],
+      ['enumValue', 'notifications', 'type', 'disaster_alert'],
+    ],
+  },
+  {
+    id: 'migration_032_admin_disaster_operations',
+    file: 'migration_032_admin_disaster_operations.sql',
+    checks: [
+      ['table', 'disaster_incident_history'],
+      ['table', 'relief_item_quantity_history'],
+      ['table', 'relief_task_assignments'],
+      ['table', 'relief_delivery_corrections'],
+      ['column', 'disaster_incidents', 'merged_into_id'],
+      ['column', 'relief_requests', 'reassessment_flagged_at'],
+    ],
+  },
 ];
 
 async function checkRequirement(connection, [type, table, value, extra]) {
@@ -185,6 +208,11 @@ async function checkRequirement(connection, [type, table, value, extra]) {
     [database, table, value]
   );
   return rows.length > 0;
+}
+
+/** Removes `USE <db>;` lines so a migration can only ever run against the configured database. */
+function stripUseStatements(sql) {
+  return sql.replace(/^[ \t]*USE[ \t]+`?[A-Za-z0-9_$]+`?[ \t]*;[ \t]*$/gim, '-- (USE statement removed by the migration runner)');
 }
 
 async function migrate() {
@@ -223,8 +251,13 @@ async function migrate() {
         throw new Error(`Migration ${migration.id} is only partially applied. Resolve the partial schema state before retrying.`);
       }
 
-      const sql = fs.readFileSync(path.join(migrationsDirectory, migration.file), 'utf8');
+      const raw = fs.readFileSync(path.join(migrationsDirectory, migration.file), 'utf8');
+      // Several historical migrations start with a hard-coded `USE portionbridge;`. Left in place it would
+      // silently switch this connection to that database (wrong target when DB_NAME differs, e.g. an isolated
+      // test database) and every later bookkeeping query would read the wrong schema_migrations table.
+      const sql = stripUseStatements(raw);
       await connection.query(sql);
+      await connection.query(`USE ${mysql.escapeId(database)}`); // belt and braces
       await connection.query('INSERT IGNORE INTO schema_migrations (id) VALUES (?)', [migration.id]);
       console.log(`[Migrate] Applied ${migration.id}.`);
     }
@@ -233,7 +266,9 @@ async function migrate() {
   }
 }
 
-migrate().catch((error) => {
+module.exports = { stripUseStatements };
+
+if (require.main === module) migrate().catch((error) => {
   console.error('[Migrate] Failed:', error.message);
   process.exit(1);
 });

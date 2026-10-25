@@ -1525,6 +1525,8 @@ async function getDonationHistory(donationId, userId, userRole) {
 }
 
 module.exports = {
+  assertDonationWithinRadius,
+  getDonationPickupCoords,
   createDonation,
   updateDonation,
   cancelDonation,

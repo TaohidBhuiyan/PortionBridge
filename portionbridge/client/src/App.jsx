@@ -89,6 +89,9 @@ const ReliefPledgeDetailPage = safeLazy(() => import("./pages/ReliefPledgeDetail
 const VolunteerReliefTasksPage = safeLazy(() => import("./pages/VolunteerReliefTasksPage"));
 const ReliefTaskPage = safeLazy(() => import("./pages/ReliefTaskPage"));
 const AdminReliefReviewPage = safeLazy(() => import("./pages/AdminReliefReviewPage"));
+const AdminAlertsPage = safeLazy(() => import("./pages/AdminAlertsPage"));
+const AdminOperationsPage = safeLazy(() => import("./pages/AdminOperationsPage"));
+const AdminIncidentOpsPage = safeLazy(() => import("./pages/AdminIncidentOpsPage"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -627,6 +630,36 @@ function App() {
                   <ProtectedRoute requiredRole="admin">
                     <AuthSocketProvider>
                       <AdminReliefReviewPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/operations"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminOperationsPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/operations/incidents/:id"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminIncidentOpsPage />
+                    </AuthSocketProvider>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/alerts"
+                element={
+                  <ProtectedRoute requiredRole="admin">
+                    <AuthSocketProvider>
+                      <AdminAlertsPage />
                     </AuthSocketProvider>
                   </ProtectedRoute>
                 }

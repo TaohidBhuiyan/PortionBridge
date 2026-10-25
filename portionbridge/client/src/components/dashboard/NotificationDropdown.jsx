@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bell, X, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthSocket } from '../../context/SocketContext';
+import { useAuth } from '../../context/AuthContext';
 import { getNotificationMeta, getNotificationRoute, formatNotificationTimestamp } from '../../utils/notificationMeta';
 import axios from 'axios';
 
@@ -14,6 +15,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api
 export function NotificationDropdown({ isOpen, onClose }) {
   const navigate = useNavigate();
   const { socket, connected, unreadCount } = useAuthSocket();
+  const { user } = useAuth();
 
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -102,7 +104,7 @@ export function NotificationDropdown({ isOpen, onClose }) {
       handleMarkAsRead(notification.id);
     }
 
-    const route = getNotificationRoute(notification);
+    const route = getNotificationRoute(notification, user?.role);
     if (route) {
       navigate(route);
     }
@@ -166,7 +168,7 @@ export function NotificationDropdown({ isOpen, onClose }) {
           </div>
         ) : (
           notifications.map((notification) => {
-            const { Icon, toneClass } = getNotificationMeta(notification.type);
+            const { Icon, toneClass } = getNotificationMeta(notification.type, notification.severity);
             return (
               <button
                 key={notification.id}

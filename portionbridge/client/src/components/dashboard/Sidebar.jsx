@@ -29,6 +29,7 @@ import {
   LifeBuoy,
   ClipboardList,
   ShieldCheck,
+  Siren,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useAuthSocket } from '../../context/SocketContext';
@@ -134,6 +135,8 @@ export function Sidebar({ collapsed, open, onToggle, onMobileToggle, userRole, c
   if (userRole === 'donor') mainItems.push({ title: 'My Relief Pledges', icon: HandHeart, path: '/donor/relief-pledges' });
   if (userRole === 'volunteer') mainItems.push({ title: 'Relief Tasks', icon: ClipboardList, path: '/volunteer/relief-tasks' });
   if (userRole === 'admin') mainItems.push({ title: 'Relief Review', icon: ShieldCheck, path: '/admin/relief' });
+  if (userRole === 'admin') mainItems.push({ title: 'Disaster Operations', icon: Activity, path: '/admin/operations' });
+  if (userRole === 'admin') mainItems.push({ title: 'Disaster Alerts', icon: Siren, path: '/admin/alerts' });
 
   const operationsItems = [];
   const moderationItems = [];

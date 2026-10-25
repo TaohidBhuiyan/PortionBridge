@@ -45,10 +45,13 @@ async function backupDatabase() {
     console.log(`[Backup] Connected to MySQL server`);
     
     // Get all tables
-    const [tables] = await connection.query(`SHOW TABLES FROM \`${DB_NAME}\``);
-    const tableNames = tables.map(row => Object.values(row)[0]);
+    // Base tables are dumped with data; views (top_donors, top_volunteers, ...) are dumped as definitions only.
+    const [tables] = await connection.query(`SHOW FULL TABLES FROM \`${DB_NAME}\``);
+    const nameOf = (row) => Object.values(row)[0];
+    const tableNames = tables.filter(row => row.Table_type === 'BASE TABLE').map(nameOf);
+    const viewNames = tables.filter(row => row.Table_type === 'VIEW').map(nameOf);
     
-    console.log(`[Backup] Found ${tableNames.length} tables to backup`);
+    console.log(`[Backup] Found ${tableNames.length} tables and ${viewNames.length} views to backup`);
     
     let sqlContent = `-- PortionBridge Database Backup\n`;
     sqlContent += `-- Generated: ${new Date().toISOString()}\n`;
@@ -75,45 +78,6 @@ async function backupDatabase() {
         const columnNames = columns.map(col => `\`${col}\``).join(', ');
         
         for (const row of rows) {
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/backupDatabase.js
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/backupDatabase.js
-          const values = columns.map(col => {
-            const value = row[col];
-            if (value === null) {
-              return 'NULL';
-            } else if (typeof value === 'string') {
-              return `'${value.replace(/'/g, "''").replace(/\\/g, '\\\\')}'`;
-            } else if (typeof value === 'number') {
-              return value;
-            } else if (value instanceof Date) {
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/backupDatabase.js
-              return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`;
-            } else if (Buffer.isBuffer(value)) {
-              return `'${value.toString('hex')}'`;
-            } else {
-              return `'${String(value).replace(/'/g, "''")}'`;
-=======
-              const dateStr = value.toISOString();
-              if (dateStr === 'Invalid Date') {
-                return 'NULL';
-              }
-              return `'${dateStr.slice(0, 19).replace('T', ' ')}'`;
-            } else if (Buffer.isBuffer(value)) {
-              return `'${value.toString('hex')}'`;
-            } else {
-              const strValue = String(value);
-              if (strValue === 'Invalid Date' || strValue === 'NaN') {
-                return 'NULL';
-              }
-              return `'${strValue.replace(/'/g, "''")}'`;
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/backupDatabase.js
-            }
-          }).join(', ');
-          
-          sqlContent += `INSERT INTO \`${tableName}\` (${columnNames}) VALUES (${values});\n`;
-=======
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/backupDatabase.js
           try {
             const values = columns.map(col => {
               const value = row[col];
@@ -124,11 +88,10 @@ async function backupDatabase() {
               } else if (typeof value === 'number') {
                 return value;
               } else if (value instanceof Date) {
-                const dateStr = value.toISOString();
-                if (dateStr === 'Invalid Date') {
-                  return 'NULL';
+                if (Number.isNaN(value.getTime())) {
+                  return 'NULL'; // toISOString() would throw RangeError for an invalid Date
                 }
-                return `'${dateStr.slice(0, 19).replace('T', ' ')}'`;
+                return `'${value.toISOString().slice(0, 19).replace('T', ' ')}'`;
               } else if (Buffer.isBuffer(value)) {
                 return `'${value.toString('hex')}'`;
               } else {
@@ -147,16 +110,27 @@ async function backupDatabase() {
             // Skip this row but continue with others
             continue;
           }
-<<<<<<< C:/Users/HP/Desktop/PortionBridge/portionbridge/server/scripts/backupDatabase.js
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/backupDatabase.js
-=======
->>>>>>> c:/Users/HP/.windsurf/worktrees/PortionBridge/PortionBridge-gilded-pascal/portionbridge/server/scripts/backupDatabase.js
         }
         
         sqlContent += `UNLOCK TABLES;\n\n`;
       }
     }
     
+    // Views come after every table they may read from. DEFINER is dropped so the dump restores for any user.
+    for (const viewName of viewNames) {
+      console.log(`[Backup] Backing up view: ${viewName}`);
+      const [createView] = await connection.query(`SHOW CREATE VIEW \`${DB_NAME}\`.\`${viewName}\``);
+      // SHOW CREATE VIEW qualifies the view and its tables with the SOURCE database name; left in, a restore into any
+      // other database would read from / write to the source database. Strip the qualifier (and the DEFINER).
+      const qualifier = new RegExp(`\`${DB_NAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\`\\.`, 'g');
+      const definition = createView[0]['Create View']
+        .replace(/DEFINER=`[^`]*`@`[^`]*`\s*/i, '')
+        .replace(qualifier, '');
+      sqlContent += `-- View ${viewName}\n`;
+      sqlContent += `DROP VIEW IF EXISTS \`${viewName}\`;\n`;
+      sqlContent += `${definition};\n\n`;
+    }
+
     sqlContent += `SET FOREIGN_KEY_CHECKS = 1;\n`;
     sqlContent += `-- Backup completed successfully\n`;
     
@@ -208,15 +182,19 @@ async function restoreDatabase(backupFile) {
   
   let connection;
   try {
+    // The dump contains no USE statement, so the target database must be selected here (previously none was,
+    // and every restore failed with ER_NO_DB_ERROR).
     connection = await mysql.createConnection({
       host: DB_HOST,
       user: DB_USER,
       password: DB_PASSWORD,
       port: DB_PORT,
+      database: DB_NAME,
       multipleStatements: true,
     });
     
     console.log(`[Restore] Connected to MySQL server`);
+    console.warn(`[Restore] WARNING: the dump drops and recreates every table in "${DB_NAME}". Restore only into the database you intend to overwrite.`);
     
     const sqlContent = fs.readFileSync(backupFile, 'utf8');
     

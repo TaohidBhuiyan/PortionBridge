@@ -1,5 +1,7 @@
 const disasterIncidentModel = require('../models/disasterIncident.model');
 const auditService = require('./audit.service');
+const alertService = require('./disasterAlert.service');
+const { recordIncidentHistory } = require('../utils/incidentHistory');
 const AppError = require('../utils/AppError');
 const { runInTransaction } = require('../utils/dbTransaction');
 const { serializeIncident } = require('../utils/reliefSerializers');
@@ -135,9 +137,13 @@ async function getIncident(id, user) {
 
 async function updateIncident(id, user, input, ctx = {}) {
   const admin = isAdmin(user);
-  const { before, after, changed } = await runInTransaction(async (connection) => {
+  const { before, after, changed, alertEventIds } = await runInTransaction(async (connection) => {
     const row = await disasterIncidentModel.findByIdForUpdate(id, connection);
     if (!row) throw new AppError('Incident not found.', HTTP_STATUS.NOT_FOUND);
+    // a merged duplicate is a read-only record: its data lives on the surviving incident
+    if (row.status === S.MERGED) {
+      throw new AppError('This incident was merged into another incident and can no longer be edited.', HTTP_STATUS.CONFLICT, 'INCIDENT_MERGED');
+    }
 
     const isOwner = row.reported_by === user.id;
     if (!admin) {
@@ -167,8 +173,23 @@ async function updateIncident(id, user, input, ctx = {}) {
     }
 
     await disasterIncidentModel.updateById(id, fields, connection);
-    return { before: snapshot(row, columns), after: fields, changed: columns };
+    // Phase 4: an admin raising the severity of a verified incident escalates its live alert
+    // (outbox row written in this same transaction; delivery happens after commit).
+    let alertEventIds = [];
+    if (admin && fields.severity !== undefined) {
+      alertEventIds = await alertService.onIncidentSeverityChange(connection, {
+        before: row, after: { ...row, ...fields }, actorId: user.id,
+      });
+    }
+    if (admin) {
+      await recordIncidentHistory(connection, {
+        incidentId: id, action: 'corrected', fromStatus: row.status, toStatus: row.status, reason: input.reason,
+        details: { changedFields: columns, before: snapshot(row, columns), after: fields }, actorId: user.id,
+      });
+    }
+    return { before: snapshot(row, columns), after: fields, changed: columns, alertEventIds };
   });
+  alertService.dispatch(alertEventIds);
 
   await auditService.record({
     userId: user.id,
@@ -188,7 +209,7 @@ async function updateIncident(id, user, input, ctx = {}) {
 async function changeStatus(id, user, { status, notes }, ctx = {}) {
   if (!isAdmin(user)) throw new AppError('Only an administrator can change an incident status.', HTTP_STATUS.FORBIDDEN);
 
-  const { from } = await runInTransaction(async (connection) => {
+  const { from, alertEventIds } = await runInTransaction(async (connection) => {
     const row = await disasterIncidentModel.findByIdForUpdate(id, connection);
     if (!row) throw new AppError('Incident not found.', HTTP_STATUS.NOT_FOUND);
 
@@ -224,8 +245,17 @@ async function changeStatus(id, user, { status, notes }, ctx = {}) {
     if (notes !== undefined) fields.verification_notes = notes;
 
     await disasterIncidentModel.updateById(id, fields, connection);
-    return { from: row.status };
+    const alertEventIds = await alertService.onIncidentStatusChange(connection, {
+      incident: { ...row, ...fields }, to: status, actorId: user.id,
+    });
+    const historyAction = status === S.VERIFIED ? 'verified' : status === S.REJECTED ? 'rejected'
+      : (row.status === S.RESOLVED && status === S.ACTIVE) ? 'reopened' : status === S.RESOLVED ? 'resolved' : 'status_change';
+    await recordIncidentHistory(connection, {
+      incidentId: id, action: historyAction, fromStatus: row.status, toStatus: status, reason: notes, actorId: user.id,
+    });
+    return { from: row.status, alertEventIds };
   });
+  alertService.dispatch(alertEventIds);
 
   await auditService.record({
     userId: user.id,

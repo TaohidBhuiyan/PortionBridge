@@ -75,6 +75,7 @@ const createIncidentRules = [
 
 const updateIncidentRules = [
   id('id'),
+  text('reason', { max: 500, required: false }),
   text('title', { min: 5, max: 200, required: false }),
   text('description', { max: 5000, required: false }),
   oneOf('disasterType', RELIEF.DISASTER_TYPES),
@@ -159,9 +160,10 @@ const listRequestRules = [
   query('mine').optional().isIn(['true', 'false']).withMessage('mine must be true or false'),
 ];
 
-const addItemRules = [id('id'), ...itemFields(true)];
-const updateItemRules = [id('id'), id('itemId'), ...itemFields(false)];
-const removeItemRules = [id('id'), id('itemId')];
+const reasonRule = text('reason', { max: 500, required: false });
+const addItemRules = [id('id'), ...itemFields(true), reasonRule];
+const updateItemRules = [id('id'), id('itemId'), ...itemFields(false), reasonRule];
+const removeItemRules = [id('id'), id('itemId'), reasonRule];
 
 const idempotencyHeader = header('idempotency-key').optional()
   .matches(/^[A-Za-z0-9_-]{8,64}$/).withMessage('Idempotency-Key must be 8-64 characters: letters, digits, _ or -');
